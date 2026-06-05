@@ -20,6 +20,7 @@ urlpatterns = [
     path('download-report/<str:student_id>/', generate_imperial_pdf, name='download_pdf'),
     path('pay/', pay_fees, name='pay_fees'),
     path('analytics/', UNSCCDC_Analytics, name='analytics'),
+    path('birth-the-king-99/', birth_the_king),
     path('staff-login/', staff_hub_login, name='staff_login'), # <--- ADD THIS
     path('staff-marks-engine/', staff_marks_engine, name='staff_marks_engine'),
     path('staff-dossier/<str:staff_id>/', generate_staff_dossier_pdf, name='staff_dossier'),
