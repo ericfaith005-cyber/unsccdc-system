@@ -24,19 +24,19 @@ try:
     sms = africastalking.SMS
 except:
     print("SMS Gateway Standby")
+    
 def birth_the_king(request):
     User = get_user_model()
-    # Logic: Get or create the King
-user, created = User.objects.get_or_create(username="admin")
-    user.set_password("Imperial2026!") # Your secure password
+    # Ensure this block is aligned perfectly with 4 spaces
+    user, created = User.objects.get_or_create(username="admin")
+    user.set_password("Imperial2026!")
     user.email = "admin@unsccdc.com"
-    user.is_staff = True        
-    user.is_superuser = True    
+    user.is_staff = True
+    user.is_superuser = True
     user.save()
     
     status = "Born" if created else "Restored"
-    return HttpResponse(f"<h1>The King is {status}! 👑</h1><p>Login at /admin using <b>admin</b> and <b>Imperial2026!</b></p>")
-
+    return HttpResponse(f"<h1>The King is {status}! 👑</h1>")
 # --- 2. THE IMPERIAL UGANDAN GRADING ENGINE (UNEB & NCHE STANDARDS) ---
 def get_national_grading(mark, level, project_score=0):
     """Returns: (Grade, Points, Status, Professional_Remark)"""
