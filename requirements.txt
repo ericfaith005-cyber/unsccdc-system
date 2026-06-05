@@ -1,0 +1,11 @@
+django==4.2.1
+djangorestframework
+django-cors-headers
+django-jazzmin
+gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary
+requests
+reportlab
+africastalking
