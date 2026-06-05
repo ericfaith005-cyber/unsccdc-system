@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 from .models import *
 # --- 🏛️ SURGERY: PDF IMPORTS (api/views.py) ---
 from django.http import HttpResponse
@@ -23,6 +24,18 @@ try:
     sms = africastalking.SMS
 except:
     print("SMS Gateway Standby")
+def birth_the_king(request):
+    User = get_user_model()
+    # Logic: Get or create the King
+user, created = User.objects.get_or_create(username="admin")
+    user.set_password("Imperial2026!") # Your secure password
+    user.email = "admin@unsccdc.com"
+    user.is_staff = True        
+    user.is_superuser = True    
+    user.save()
+    
+    status = "Born" if created else "Restored"
+    return HttpResponse(f"<h1>The King is {status}! 👑</h1><p>Login at /admin using <b>admin</b> and <b>Imperial2026!</b></p>")
 
 # --- 2. THE IMPERIAL UGANDAN GRADING ENGINE (UNEB & NCHE STANDARDS) ---
 def get_national_grading(mark, level, project_score=0):
