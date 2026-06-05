@@ -4,9 +4,16 @@ import string
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone  # <--- THE FIX IS HERE!
+from django.contrib.auth.models import AbstractUser, UserManager
 
 class User(AbstractUser):
+    """Sovereign Identity System for Staff and Admin"""
     is_staff_member = models.BooleanField(default=False)
+
+    objects = UserManager() 
+
+class Meta:
+        db_table = 'auth_user'
 
 # --- 🏛️ THE COMPLETE IMPERIAL SCHOOL REGISTRY (api/models.py) ---
 
