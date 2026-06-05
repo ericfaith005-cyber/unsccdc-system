@@ -1,0 +1,16 @@
+<<<<<<< HEAD
+django
+gunicorn
+whitenoise
+=======
+django
+djangorestframework
+django-cors-headers
+gunicorn
+whitenoise
+dj-database-url
+psycopg2-binary
+requests
+reportlab
+africastalking
+>>>>>>> 02499f8 (Fixing requirements)

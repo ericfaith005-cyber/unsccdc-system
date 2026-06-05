@@ -1,0 +1,62 @@
+/* --- UNSCCDC SOVEREIGN MASTER UI: EXTREME SPECIFICITY --- */
+
+/* 1. FORCE THE CINEMATIC BLACK BACKGROUND */
+html body, html body.login-page, html body .wrapper, html body .content-wrapper {
+    background: #000000 !important;
+    background-image: radial-gradient(circle at center, #111 0%, #000 100%) !important;
+}
+
+/* 2. FORCE THE GOLDEN SIDEBAR */
+html body .main-sidebar {
+    background-color: #000 !important;
+    border-right: 5px solid #D4AF37 !important;
+    box-shadow: 10px 0 30px rgba(0,0,0,1) !important;
+}
+
+/* 3. THE UGANDAN FLAG STRIP (SIDEBAR) */
+html body .main-sidebar::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 18px;
+    background: linear-gradient(to right, 
+        #000 0%, #000 16%, #FCDC04 16%, #FCDC04 33%, #D90000 33%, #D90000 50%, 
+        #000 50%, #000 66%, #FCDC04 66%, #FCDC04 83%, #D90000 83%, #D90000 100%
+    ) !important;
+    z-index: 1000;
+}
+
+/* 4. FORCE GOLD ON "ADD" BUTTONS (TARGETING YOUR PHOTO) */
+html body .btn-success, html body .addlink, html body a.addlink {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%) !important;
+    border: 1px solid #FCDC04 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.6) !important;
+}
+
+/* 5. FORCE RED ON "CHANGE" BUTTONS (TARGETING YOUR PHOTO) */
+html body .btn-info, html body .btn-primary, html body .changelink, html body a.changelink {
+    background: linear-gradient(135deg, #D90000 0%, #8B0000 100%) !important;
+    border: 1px solid #D4AF37 !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 15px rgba(217, 0, 0, 0.6) !important;
+}
+
+/* 6. NEON GOLD HEADERS */
+html body h1, html body h2, html body h3, html body .brand-text {
+    color: #D4AF37 !important;
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.8) !important;
+    text-transform: uppercase !important;
+}
+
+/* 7. DASHBOARD CARDS (THE FUTURE LOOK) */
+html body .card {
+    background: rgba(20, 20, 20, 0.9) !important;
+    border: 2px solid rgba(212, 175, 55, 0.4) !important;
+    border-radius: 20px !important;
+    backdrop-filter: blur(10px);
+}
