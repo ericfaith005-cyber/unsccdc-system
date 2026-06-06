@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-4">
+    <!-- Pillar 1: Metrics -->
+    <div class="col-md-12">
+        <div class="card imperial-card bg-dark text-white p-4">
+            <h5 class="text-warning">LIVE INSTITUTIONAL METRICS</h5>
+            <div class="row text-center mt-3">
+                <div class="col-3"><h6>Enrollment</h6><h3>{{ stats.enrollment }}</h3></div>
+                <div class="col-3"><h6>Attendance</h6><h3>{{ stats.attendance }}</h3></div>
+                <div class="col-3"><h6>Collection</h6><h3>{{ stats.collection_rate }}</h3></div>
+                <div class="col-3"><h6>Calendar</h6><h3 class="fs-6">{{ stats.milestone }}</h3></div>
+            </div>
+        </div>
+    </div>
+    <!-- Pillar 2: Ecosystem -->
+    <div class="col-md-8">
+        <div class="card imperial-card p-4 h-100">
+            <h4>Connected School Ecosystem</h4>
+            <p class="text-muted">A unified triple-interface connecting Admin, Staff, and Parents into a single synchronized database.</p>
+            <hr>
+            <div class="d-flex align-items-center mb-3">
+                <div class="p-3 bg-light rounded-circle me-3">📟</div>
+                <div>
+                    <h6 class="mb-0">Parent-School Bridge (USSD)</h6>
+                    <small>Bypassing internet barriers via *165# and *185# integration.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Pillar 3: Notice Board -->
+    <div class="col-md-4">
+        <div class="card imperial-card p-4 h-100">
+            <h5>Notice Board</h5>
+            {% for notice in notices %}
+            <div class="mb-3">
+                <span class="badge badge-uns mb-1">{{ notice.date }}</span>
+                <p class="fw-bold mb-0">{{ notice.title }}</p>
+                <small class="text-muted">{{ notice.msg }}</small>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

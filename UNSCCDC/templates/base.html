@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNSCCDC | National Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --uns-gold: #D4AF37; --uns-dark: #0a0a0a; --uns-royal: #002366; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background-color: var(--uns-dark) !important; border-bottom: 3px solid var(--uns-gold); }
+        .nav-link { color: #fff !important; font-weight: 600; font-size: 0.9rem; letter-spacing: 1px; padding: 1rem 1.5rem !important; }
+        .nav-link:hover, .nav-link.active { color: var(--uns-gold) !important; }
+        .imperial-card { border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .badge-uns { background-color: var(--uns-gold); color: #000; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+            <span style="color: var(--uns-gold); font-weight: 900; font-size: 1.5rem;">UNSCCDC</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto text-uppercase">
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">About</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'academics' %}active{% endif %}" href="{% url 'academics' %}">Academics</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'finances' %}active{% endif %}" href="{% url 'finances' %}">Finances</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}">Profile</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
