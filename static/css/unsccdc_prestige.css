@@ -1,150 +1,170 @@
-/* 🇺🇬 UNSCCDC: THE LIQUID FLAG NATIONAL MATRIX (ULTRA-ADVANCED) */
+/* 🇺🇬 UNSCCDC: THE NATIONAL HYPER-DRIVE HUD (OMNIVERSE EDITION) */
 
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Montserrat:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@500;700&display=swap');
 
-/* 1. THE VIBRANT LIQUID FLAG BACKGROUND */
+/* 1. THE LIVING MESH GALAXY BACKGROUND */
 body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
     background: #000 !important;
     background-image: 
-        linear-gradient(45deg, #000000 25%, #FCDC0405 50%, #D9000005 75%, #000000 100%),
-        radial-gradient(circle at top left, #D9000015, transparent 40%),
-        radial-gradient(circle at bottom right, #FCDC0415, transparent 40%) !important;
-    background-size: 400% 400% !important;
-    animation: flagEnergy 12s ease-in-out infinite !important;
-    font-family: 'Montserrat', sans-serif !important;
+        radial-gradient(at 0% 0%, #000000 0, transparent 50%),
+        radial-gradient(at 50% 0%, #FCDC0410 0, transparent 50%),
+        radial-gradient(at 100% 0%, #D9000010 0, transparent 50%),
+        radial-gradient(at 50% 50%, #000000 0, transparent 100%),
+        /* The High-Tech Scanline Effect */
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 2px) !important;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 4px !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    overflow-x: hidden;
 }
 
-@keyframes flagEnergy {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+/* 2. THE FLOATING RADAR SCAN */
+body::after {
+    content: "";
+    position: fixed;
+    top: -100%; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(252, 220, 4, 0.05), transparent);
+    z-index: 9998;
+    pointer-events: none;
+    animation: radarScan 8s linear infinite;
 }
 
-/* 2. THE TOP GLOWING NATIONAL RIBBON */
+@keyframes radarScan {
+    0% { top: -100%; }
+    100% { top: 100%; }
+}
+
+/* 3. THE SOVEREIGN TOP STATUS BAR */
 body::before {
     content: "";
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 8px;
+    top: 0; left: 0; width: 100%; height: 6px;
     z-index: 9999;
-    background: linear-gradient(90deg, #000, #FCDC04, #D90000, #000, #FCDC04, #D90000, #000);
-    background-size: 300% 100%;
-    animation: ribbonFlow 6s linear infinite;
-    box-shadow: 0 5px 20px #D9000099;
+    background: linear-gradient(90deg, #000 0%, #FCDC04 33%, #D90000 66%, #000 100%);
+    background-size: 200% 100%;
+    animation: flagFlow 3s linear infinite;
+    box-shadow: 0 0 20px #FCDC0466;
 }
 
-@keyframes ribbonFlow {
-    0% { background-position: 300% 0%; }
+@keyframes flagFlow {
+    0% { background-position: 200% 0%; }
     100% { background-position: 0% 0%; }
 }
 
-/* 3. NEON BRANDING: UNSCCDC CENTRAL CONTROL */
+/* 4. BRANDING: THE CENTRAL CONTROL HOLOGRAPH */
 .brand-link {
-    background: rgba(0, 0, 0, 0.5) !important;
-    border-bottom: 2px solid #D90000 !important;
-    padding: 25px 15px !important;
-    text-align: center;
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 30px 10px !important;
+    transition: 0.5s;
 }
 
 .brand-text {
     font-family: 'Orbitron', sans-serif !important;
-    color: #FCDC04 !important;
     font-weight: 900 !important;
-    letter-spacing: 3px !important;
+    color: #fff !important;
     text-transform: uppercase;
+    letter-spacing: 4px !important;
     text-shadow: 0 0 10px #FCDC04, 0 0 20px #D90000;
-    animation: textGlow 3s ease-in-out infinite alternate;
+    background: linear-gradient(to bottom, #fff 0%, #FCDC04 50%, #D90000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic 4s infinite alternate;
 }
 
-@keyframes textGlow {
-    from { filter: drop-shadow(0 0 2px #FCDC04); }
-    to { filter: drop-shadow(0 0 10px #D90000); }
+@keyframes holographic {
+    from { filter: hue-rotate(0deg) brightness(1); }
+    to { filter: hue-rotate(15deg) brightness(1.5); }
 }
 
-/* 4. SOVEREIGN CAPSULE MODULES (DASHBOARD ROWS) */
+/* 5. THE DATA CAPSULES (DASHBOARD ROWS) */
 .card-body .model-row {
-    background: rgba(20, 20, 20, 0.8) !important;
+    background: rgba(255, 255, 255, 0.02) !important;
     margin-bottom: 15px !important;
-    padding: 20px !important;
-    border-radius: 15px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-left: 5px solid #FCDC04 !important;
-    transition: 0.4s all;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    border-radius: 4px !important; /* Sharp Tech Look */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 15px 25px !important;
+    position: relative;
+    transition: 0.3s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .card-body .model-row:hover {
-    transform: scale(1.02) translateX(15px);
-    border-left: 5px solid #D90000 !important;
-    background: rgba(40, 40, 40, 0.9) !important;
-    box-shadow: -10px 0 20px #D9000044;
+    background: rgba(255, 255, 255, 0.05) !important;
+    transform: scale(1.02) translateX(10px);
+    border: 1px solid #FCDC04 !important;
+    box-shadow: 0 0 30px rgba(252, 220, 4, 0.15);
 }
 
-.card-body .model-row th a {
-    color: #fff !important;
-    font-size: 14px !important;
-    font-weight: 900 !important;
-    letter-spacing: 1.5px;
+/* The L-Shaped Brackets for the Rows */
+.card-body .model-row::before {
+    content: "";
+    position: absolute;
+    top: -1px; left: -1px; width: 10px; height: 10px;
+    border-top: 2px solid #D90000; border-left: 2px solid #D90000;
 }
 
-/* 5. TRICOLOR ENERGY BUTTONS (ADD & CHANGE) */
-/* THE SUCCESS/ADD BUTTON */
-.btn-success, .addlink {
-    background: #000 !important;
-    color: #FCDC04 !important;
-    border: 2px solid #FCDC04 !important;
-    border-radius: 50px !important;
-    padding: 8px 25px !important;
+/* 6. HYPER-DRIVE BUTTONS (ADD & CHANGE) */
+.btn-success, .addlink, .btn-info, .changelink {
+    border-radius: 2px !important;
+    text-transform: uppercase;
     font-weight: 900 !important;
+    letter-spacing: 2px;
+    transition: 0.4s;
+    background: transparent !important;
     position: relative;
-    overflow: hidden;
-    z-index: 1;
+}
+
+.btn-success, .addlink {
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
 }
 
 .btn-success:hover {
-    color: #fff !important;
-    border-color: #D90000 !important;
-    box-shadow: 0 0 20px #D90000;
+    background: #00ff00 !important;
+    color: #000 !important;
+    box-shadow: 0 0 25px #00ff00;
 }
 
-/* THE INFO/CHANGE BUTTON */
 .btn-info, .changelink {
-    background: transparent !important;
-    color: #fff !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 50px !important;
-    padding: 8px 25px !important;
-    font-weight: 900 !important;
-    transition: 0.3s;
+    border: 1px solid #3498db !important;
+    color: #3498db !important;
 }
 
 .btn-info:hover {
-    background: #D90000 !important;
-    border-color: #D90000 !important;
-    box-shadow: 0 0 20px #D90000;
+    background: #3498db !important;
+    color: #fff !important;
+    box-shadow: 0 0 25px #3498db;
 }
 
-/* 6. SIDEBAR PRESTIGE */
-.nav-pills .nav-link.active {
-    background: linear-gradient(90deg, #FCDC04, #D90000) !important;
-    color: #000 !important;
-    font-weight: 900 !important;
+/* 7. THE SIDEBAR (COMMAND DECK) */
+.main-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
 }
 
-.nav-sidebar .nav-link p {
-    color: #aaa !important;
+.nav-link {
+    border-radius: 0 !important;
+    margin: 5px 0 !important;
+    border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+    border-left: 3px solid #FCDC04 !important;
+    background: linear-gradient(90deg, rgba(252, 220, 4, 0.1), transparent) !important;
+}
+
+.nav-link p {
+    font-size: 11px !important;
     font-weight: 700;
+    letter-spacing: 2px;
 }
 
-.nav-sidebar .nav-link:hover p {
-    color: #FCDC04 !important;
+/* 8. TABLE PRESTIGE */
+.card {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-top: 2px solid #FCDC04 !important;
 }
 
-/* 7. CUSTOM SCROLLBAR (TRICOLOR) */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb {
-    background: linear-gradient(#000, #FCDC04, #D90000);
-    border-radius: 10px;
-}
+/* Scrollbar Control */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #FCDC04; }
