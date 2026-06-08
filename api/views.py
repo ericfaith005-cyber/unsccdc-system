@@ -853,7 +853,7 @@ def about_tab(request):
             moving Uganda Education into a paperless, digitally transparent future."</p>
 
             <p style="font-size:18px;"><b>Technical Architecture and Reliability Specs</b></p>
-            
+
 
             <!-- 🚀 THE NATIONAL DOWNLOAD BUTTON -->
             <div style="margin-top:40px;">
@@ -959,3 +959,36 @@ def force_registry_rebuild(request):
         return HttpResponse("<h1>NATIONAL REGISTRY BUILT SUCCESSFULLY! 🏆</h1>")
     except Exception as e:
         return HttpResponse(f"Registry Error: {str(e)}")
+
+
+# --- 💰 THE SCHOOLPAY SETTLEMENT SIMULATOR ---
+from .models import Student, School, SchoolPayLedger
+import random
+
+def simulate_payment(request):
+    """Simulates a real USSD/Mobile Money payment through SchoolPay"""
+    try:
+        # 1. Pick a student (Ensure you have at least one student in the DB!)
+        student = Student.objects.first() 
+        if not student: return HttpResponse("Registry Error: Add a student first!")
+        
+        # 2. Create a fake Receipt
+        receipt = f"RCPT-{random.randint(100000, 999999)}"
+        amount = 50000 # 50k UGX
+        
+        # 3. Create the Ledger Entry
+        ledger = SchoolPayLedger.objects.create(
+            student=student,
+            school=student.school,
+            receipt_number=receipt,
+            amount=amount,
+            raw_data={"sourceChannel": "MTN_MOMO", "transactionID": receipt}
+        )
+        
+        # 4. Trigger the Math Update (This mimics the worker)
+        student.school.total_revenue_collected += amount
+        student.school.save()
+
+        return HttpResponse(f"<h1>💰 PAYMENT SUCCESS</h1><p>Student {student.full_name} paid UGX {amount}. Receipt: {receipt}</p>")
+    except Exception as e:
+        return HttpResponse(f"Simulation Failed: {str(e)}")
