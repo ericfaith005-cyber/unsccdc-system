@@ -1,134 +1,150 @@
-/* 🇺🇬 UNSCCDC: CYBER-SOVEREIGN HUB (FUTURE TECH EDITION) */
+/* 🇺🇬 UNSCCDC: THE LIQUID FLAG NATIONAL MATRIX (ULTRA-ADVANCED) */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Montserrat:wght@700;900&display=swap');
 
-/* 1. THE DEEP SPACE FLAG MATRIX */
+/* 1. THE VIBRANT LIQUID FLAG BACKGROUND */
 body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
     background: #000 !important;
     background-image: 
-        /* The Moving Flag Waves */
-        linear-gradient(-45deg, #000000, #FCDC0415, #D9000015, #000000),
-        /* The Tactical Digital Grid */
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
-    background-size: 400% 400%, 40px 40px, 40px 40px !important;
-    animation: flagWaves 20s ease infinite, gridScroll 60s linear infinite !important;
+        linear-gradient(45deg, #000000 25%, #FCDC0405 50%, #D9000005 75%, #000000 100%),
+        radial-gradient(circle at top left, #D9000015, transparent 40%),
+        radial-gradient(circle at bottom right, #FCDC0415, transparent 40%) !important;
+    background-size: 400% 400% !important;
+    animation: flagEnergy 12s ease-in-out infinite !important;
     font-family: 'Montserrat', sans-serif !important;
-    color: #e0e0e0 !important;
 }
 
-@keyframes gridScroll {
-    from { background-position: 0% 50%, 0 0, 0 0; }
-    to { background-position: 100% 50%, 0 1000px, 1000px 0; }
-}
-
-@keyframes flagWaves {
+@keyframes flagEnergy {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
 
-/* 2. THE TOP SOVEREIGN STATUS BAR */
+/* 2. THE TOP GLOWING NATIONAL RIBBON */
 body::before {
     content: "";
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 4px;
+    top: 0; left: 0; width: 100%; height: 8px;
     z-index: 9999;
-    background: linear-gradient(90deg, #000 0%, #FCDC04 33%, #D90000 66%, #000 100%);
-    background-size: 200% 100%;
-    animation: flagFlow 4s linear infinite;
+    background: linear-gradient(90deg, #000, #FCDC04, #D90000, #000, #FCDC04, #D90000, #000);
+    background-size: 300% 100%;
+    animation: ribbonFlow 6s linear infinite;
+    box-shadow: 0 5px 20px #D9000099;
 }
 
-/* 3. THE HUD CARDS (GLASS + CORNER BRACKETS) */
-.card {
-    background: rgba(10, 10, 10, 0.7) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 4px !important; /* Sharp futuristic edges */
-    position: relative;
-    margin-bottom: 25px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+@keyframes ribbonFlow {
+    0% { background-position: 300% 0%; }
+    100% { background-position: 0% 0%; }
 }
 
-/* Creating the Cyber-Corners */
-.card::before, .card::after {
-    content: "";
-    position: absolute;
-    width: 20px; height: 20px;
-    border: 2px solid var(--uns-gold, #D4AF37);
-    pointer-events: none;
+/* 3. NEON BRANDING: UNSCCDC CENTRAL CONTROL */
+.brand-link {
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-bottom: 2px solid #D90000 !important;
+    padding: 25px 15px !important;
+    text-align: center;
 }
-.card::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-.card::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
 
-/* 4. DASHBOARD MODULES: TACTICAL LIST */
+.brand-text {
+    font-family: 'Orbitron', sans-serif !important;
+    color: #FCDC04 !important;
+    font-weight: 900 !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px #FCDC04, 0 0 20px #D90000;
+    animation: textGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes textGlow {
+    from { filter: drop-shadow(0 0 2px #FCDC04); }
+    to { filter: drop-shadow(0 0 10px #D90000); }
+}
+
+/* 4. SOVEREIGN CAPSULE MODULES (DASHBOARD ROWS) */
 .card-body .model-row {
-    background: rgba(255, 255, 255, 0.02) !important;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    margin-bottom: 12px;
+    background: rgba(20, 20, 20, 0.8) !important;
+    margin-bottom: 15px !important;
     padding: 20px !important;
-    transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    border-radius: 15px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 5px solid #FCDC04 !important;
+    transition: 0.4s all;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .card-body .model-row:hover {
-    background: rgba(252, 220, 4, 0.05) !important;
-    border-color: #FCDC04;
-    transform: scale(1.02) translateX(10px);
+    transform: scale(1.02) translateX(15px);
+    border-left: 5px solid #D90000 !important;
+    background: rgba(40, 40, 40, 0.9) !important;
+    box-shadow: -10px 0 20px #D9000044;
 }
 
-/* 5. BREATHING NEON BUTTONS */
-/* ADD BUTTON */
+.card-body .model-row th a {
+    color: #fff !important;
+    font-size: 14px !important;
+    font-weight: 900 !important;
+    letter-spacing: 1.5px;
+}
+
+/* 5. TRICOLOR ENERGY BUTTONS (ADD & CHANGE) */
+/* THE SUCCESS/ADD BUTTON */
 .btn-success, .addlink {
-    background: rgba(0, 255, 0, 0.05) !important;
-    border: 1px solid #00ff00 !important;
-    color: #00ff00 !important;
+    background: #000 !important;
+    color: #FCDC04 !important;
+    border: 2px solid #FCDC04 !important;
+    border-radius: 50px !important;
+    padding: 8px 25px !important;
     font-weight: 900 !important;
-    letter-spacing: 2px;
-    padding: 10px 20px !important;
-    animation: neonGreen 3s infinite;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
 }
 
-/* CHANGE BUTTON */
+.btn-success:hover {
+    color: #fff !important;
+    border-color: #D90000 !important;
+    box-shadow: 0 0 20px #D90000;
+}
+
+/* THE INFO/CHANGE BUTTON */
 .btn-info, .changelink {
-    background: rgba(52, 152, 219, 0.05) !important;
-    border: 1px solid #3498db !important;
-    color: #3498db !important;
+    background: transparent !important;
+    color: #fff !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    border-radius: 50px !important;
+    padding: 8px 25px !important;
     font-weight: 900 !important;
-    letter-spacing: 2px;
-    padding: 10px 20px !important;
-    animation: neonBlue 3s infinite;
-}
-
-@keyframes neonGreen {
-    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
-}
-
-@keyframes neonBlue {
-    0%, 100% { box-shadow: 0 0 5px rgba(52, 152, 219, 0.2); }
-    50% { box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
-}
-
-/* 6. SIDEBAR: TACTICAL NAVIGATION */
-.nav-sidebar .nav-link {
-    text-transform: uppercase;
-    font-weight: 700;
-    letter-spacing: 2px;
-    font-size: 11px;
-    border-left: 3px solid transparent;
     transition: 0.3s;
 }
 
-.nav-sidebar .nav-link:hover {
-    border-left: 3px solid #FCDC04 !important;
-    background: rgba(255, 255, 255, 0.05) !important;
+.btn-info:hover {
+    background: #D90000 !important;
+    border-color: #D90000 !important;
+    box-shadow: 0 0 20px #D90000;
 }
 
-/* 7. SCROLLBAR FROM THE FUTURE */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #FCDC04; border-radius: 10px; }
+/* 6. SIDEBAR PRESTIGE */
+.nav-pills .nav-link.active {
+    background: linear-gradient(90deg, #FCDC04, #D90000) !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+}
 
-/* 8. HIDING LEGACY UI ELEMENTS */
-.content-header { border: none !important; }
-.main-header { border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
+.nav-sidebar .nav-link p {
+    color: #aaa !important;
+    font-weight: 700;
+}
+
+.nav-sidebar .nav-link:hover p {
+    color: #FCDC04 !important;
+}
+
+/* 7. CUSTOM SCROLLBAR (TRICOLOR) */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(#000, #FCDC04, #D90000);
+    border-radius: 10px;
+}
