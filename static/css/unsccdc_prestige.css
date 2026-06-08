@@ -1,13 +1,25 @@
-/* 🇺🇬 UNSCCDC: THE NATIONAL FLAG MATRIX 4.0 */
+/* 🇺🇬 UNSCCDC: CYBER-SOVEREIGN HUB (FUTURE TECH EDITION) */
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&display=swap');
 
-/* 1. THE LIVE ANIMATED FLAG BACKGROUND */
+/* 1. THE DEEP SPACE FLAG MATRIX */
 body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
-    background: linear-gradient(-45deg, #000000, #FCDC0422, #D9000022, #000000) !important;
-    background-size: 400% 400% !important;
-    animation: flagWaves 15s ease infinite !important;
+    background: #000 !important;
+    background-image: 
+        /* The Moving Flag Waves */
+        linear-gradient(-45deg, #000000, #FCDC0415, #D9000015, #000000),
+        /* The Tactical Digital Grid */
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) !important;
+    background-size: 400% 400%, 40px 40px, 40px 40px !important;
+    animation: flagWaves 20s ease infinite, gridScroll 60s linear infinite !important;
     font-family: 'Montserrat', sans-serif !important;
+    color: #e0e0e0 !important;
+}
+
+@keyframes gridScroll {
+    from { background-position: 0% 50%, 0 0, 0 0; }
+    to { background-position: 100% 50%, 0 1000px, 1000px 0; }
 }
 
 @keyframes flagWaves {
@@ -16,97 +28,107 @@ body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
     100% { background-position: 0% 50%; }
 }
 
-/* 2. THE TOP SOVEREIGN RIBBON */
+/* 2. THE TOP SOVEREIGN STATUS BAR */
 body::before {
     content: "";
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 6px;
+    top: 0; left: 0; width: 100%; height: 4px;
     z-index: 9999;
     background: linear-gradient(90deg, #000 0%, #FCDC04 33%, #D90000 66%, #000 100%);
     background-size: 200% 100%;
-    animation: flagFlow 3s linear infinite;
+    animation: flagFlow 4s linear infinite;
 }
 
-@keyframes flagFlow {
-    0% { background-position: 200% 0%; }
-    100% { background-position: 0% 0%; }
+/* 3. THE HUD CARDS (GLASS + CORNER BRACKETS) */
+.card {
+    background: rgba(10, 10, 10, 0.7) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important; /* Sharp futuristic edges */
+    position: relative;
+    margin-bottom: 25px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
 }
 
-/* 3. TRANSFORMING THE DASHBOARD ROWS INTO SQUARE MODULES */
+/* Creating the Cyber-Corners */
+.card::before, .card::after {
+    content: "";
+    position: absolute;
+    width: 20px; height: 20px;
+    border: 2px solid var(--uns-gold, #D4AF37);
+    pointer-events: none;
+}
+.card::before { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
+.card::after { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+/* 4. DASHBOARD MODULES: TACTICAL LIST */
 .card-body .model-row {
-    background: rgba(255, 255, 255, 0.03) !important;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    padding: 15px !important;
-    border: 1px solid rgba(252, 220, 4, 0.1);
-    transition: 0.4s;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 12px;
+    padding: 20px !important;
+    transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .card-body .model-row:hover {
-    background: rgba(255, 255, 255, 0.07) !important;
-    transform: scale(1.01);
+    background: rgba(252, 220, 4, 0.05) !important;
     border-color: #FCDC04;
+    transform: scale(1.02) translateX(10px);
 }
 
-/* 4. RE-DESIGNING THE 'ADD' AND 'CHANGE' BUTTONS (NEON STYLE) */
-/* The Green 'Add' Button */
+/* 5. BREATHING NEON BUTTONS */
+/* ADD BUTTON */
 .btn-success, .addlink {
-    background: transparent !important;
-    border: 2px solid #00ff00 !important;
+    background: rgba(0, 255, 0, 0.05) !important;
+    border: 1px solid #00ff00 !important;
     color: #00ff00 !important;
-    border-radius: 8px !important;
     font-weight: 900 !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    letter-spacing: 2px;
+    padding: 10px 20px !important;
+    animation: neonGreen 3s infinite;
 }
 
-.btn-success:hover {
-    background: #00ff00 !important;
-    color: #000 !important;
-    box-shadow: 0 0 20px #00ff00;
-}
-
-/* The Blue 'Change' Button */
+/* CHANGE BUTTON */
 .btn-info, .changelink {
-    background: transparent !important;
-    border: 2px solid #3498db !important;
+    background: rgba(52, 152, 219, 0.05) !important;
+    border: 1px solid #3498db !important;
     color: #3498db !important;
-    border-radius: 8px !important;
     font-weight: 900 !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    box-shadow: 0 0 10px rgba(52, 152, 219, 0.2);
+    letter-spacing: 2px;
+    padding: 10px 20px !important;
+    animation: neonBlue 3s infinite;
 }
 
-.btn-info:hover {
-    background: #3498db !important;
-    color: #fff !important;
-    box-shadow: 0 0 20px #3498db;
+@keyframes neonGreen {
+    0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
 }
 
-/* 5. SIDEBAR SQUARE MODULES */
+@keyframes neonBlue {
+    0%, 100% { box-shadow: 0 0 5px rgba(52, 152, 219, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(52, 152, 219, 0.5); }
+}
+
+/* 6. SIDEBAR: TACTICAL NAVIGATION */
 .nav-sidebar .nav-link {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    margin: 5px 10px !important;
-    border-radius: 10px !important;
-    background: rgba(255, 255, 255, 0.02) !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 2px;
+    font-size: 11px;
+    border-left: 3px solid transparent;
+    transition: 0.3s;
 }
 
 .nav-sidebar .nav-link:hover {
-    border-color: #FCDC04 !important;
-    background: rgba(252, 220, 4, 0.05) !important;
+    border-left: 3px solid #FCDC04 !important;
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
-/* 6. HIDING THE UGLY WHITE/GREY AREAS */
-.content-header, .main-header {
-    background: transparent !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-}
+/* 7. SCROLLBAR FROM THE FUTURE */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #FCDC04; border-radius: 10px; }
 
-.card {
-    background: rgba(0, 0, 0, 0.4) !important;
-    backdrop-filter: blur(15px) !important;
-    border: 2px solid rgba(255, 255, 255, 0.05) !important;
-    border-radius: 20px !important;
-}
+/* 8. HIDING LEGACY UI ELEMENTS */
+.content-header { border: none !important; }
+.main-header { border-bottom: 1px solid rgba(255,255,255,0.1) !important; }
