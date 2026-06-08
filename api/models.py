@@ -80,7 +80,7 @@ class Student(models.Model):
         blank=True, 
         help_text="Student's SchoolPay PRN"
     )
-    school_code = models.CharField(max_length=30, blank=True, help_text="Provided by SchoolPay")
+    school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     api_password = models.CharField(max_length=255, blank=True, help_text="Secret password for API sync")
     stream = models.CharField(max_length=50, default="North")
     account_number = models.CharField(max_length=30, unique=True, editable=False)
@@ -102,7 +102,7 @@ class AcademicResult(models.Model):
     project_work = models.FloatField(default=0)
 
 class Transaction(models.Model):
-    transaction_id = models.CharField(max_length=50, unique=True)
+    transaction_id = models.CharField(max_length=100, unique=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='transactions')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, null=True)
     category = models.CharField(max_length=100, default="Tuition")
