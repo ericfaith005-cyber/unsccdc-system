@@ -12,6 +12,7 @@ from .views import (
     birth_the_king,
     create_initial_king, 
     generate_imperial_pdf, 
+    simulate_payment,
     generate_staff_dossier_pdf, 
     generate_payslip_pdf,
     bursar_notification_stream,
@@ -37,6 +38,7 @@ urlpatterns = [
 
     path('', include(router.urls)),
     path('birth-the-king-99/', birth_the_king), 
+    path('simulate-pay-99/', views.simulate_payment),
 
     path('download-report/<str:student_id>/', generate_imperial_pdf, name='download_pdf'),
     path('staff-dossier/<str:staff_id>/', generate_staff_dossier_pdf, name='staff_dossier'),
