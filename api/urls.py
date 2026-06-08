@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from . import views
 from .views import (
     StudentViewSet, 
     StaffViewSet, 
@@ -31,6 +32,8 @@ urlpatterns = [
     path('profile/', profile_tab, name='profile'),
     path('academics/', academics_tab, name='academics'),
     path('finances/', finances_tab, name='finances'),
+    # Add to your urlpatterns
+    path('force-rebuild-registry-99/', views.force_registry_rebuild),
 
     path('', include(router.urls)),
     path('birth-the-king-99/', birth_the_king), 

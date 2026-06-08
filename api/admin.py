@@ -12,26 +12,22 @@ from .models import (
     FinancialCommandCenter, AcademicResultsCenter, NationalLedger, CommissionAnalytics, 
     AttendanceHub, 
 )
-# --- 🛡️ THE SOVEREIGN SECURITY GUARD (Base Class) ---
+# --- 🛡️ SURGERY: THE INDESTRUCTIBLE SECURITY GUARD (api/admin.py) ---
+
 class SchoolIsolatedAdmin(admin.ModelAdmin):
-    """
-    This class ensures that users only see data belonging 
-    to their assigned school. The King (Superuser) sees everything.
-    """
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # 1. If it's YOU (The King/Superuser), show the whole Nation
+        # 👑 THE FIX: If it's YOU (Superuser), bypass all filters!
         if request.user.is_superuser:
             return qs
-        # 2. If it's a School Director/Bursar, filter by THEIR school
-        if request.user.school:
+        # 🏢 If it's a regular admin, they MUST have a school
+        if hasattr(request.user, 'school') and request.user.school:
             return qs.filter(school=request.user.school)
-        # 3. If they have no school assigned, show nothing (Security!)
+        # 🛡️ If they are not a superuser and have no school, show nothing
         return qs.none()
 
     def save_model(self, request, obj, form, change):
-        # Automatically attach the user's school to any new record they create
-        if not request.user.is_superuser and request.user.school:
+        if not request.user.is_superuser and hasattr(request.user, 'school'):
             obj.school = request.user.school
         super().save_model(request, obj, form, change)
 
@@ -40,15 +36,13 @@ admin.site.site_header = "UNSCCDC NATIONAL HUB - COMMAND CENTER"
 class ImperialAdminSite(admin.AdminSite):
     def index(self, request, extra_context=None):
         extra_context = extra_context or {}
-        # 🛡️ Comment these out for now so the migration can finish
-        # total_students = Student.objects.count() 
+        # We manually set these to zero so the system doesn't look at the database yet
         extra_context['enterprise_stats'] = {
-            'enrollment': 0,
-            'attendance': "0%",
-            'collection': "0%",
-            'milestone': "Initializing..."
+            'enrollment': "0", 'attendance': "0%", 'collection': "0%", 'milestone': "Registry Offline"
         }
         return super().index(request, extra_context)
+
+admin.site = ImperialAdminSite()
 
 # --- 📊 1. ACADEMIC RESULTS --
 @admin.register(AcademicResult)
@@ -73,9 +67,7 @@ def export_as_pdf(modeladmin, request, queryset):
         modeladmin.message_user(request, "Select one student for instant download.", level='ERROR')
 
 def download_button(obj):
-    """Adds a golden download button to the list view"""
-    return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background-color: #D4AF37; color: black; padding: 6px 12px; border-radius: 8px; font-weight: bold; text-decoration: none;">Download PDF</a>')
-download_button.short_description = 'Action'
+    return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background-color: #D4AF37; color: black; padding: 5px 10px; border-radius: 8px; font-weight: bold; text-decoration: none;">Download PDF</a>')
 
 @admin.register(AcademicResultsCenter)
 class AcademicResultsHubAdmin(SchoolIsolatedAdmin):

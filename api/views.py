@@ -32,6 +32,8 @@ from django.http import HttpResponse
 def birth_the_king(request):
     User = get_user_model()
     User.objects.filter(username="admin").delete()
+    
+    # 💎 Create the King with all switches ON
     user = User.objects.create_superuser(
         username="admin",
         email="admin@unsccdc.com",
@@ -39,8 +41,10 @@ def birth_the_king(request):
     )
     user.is_staff = True
     user.is_superuser = True
+    user.is_active = True
     user.save()
-    return HttpResponse("<h1>THE KING IS BORN! 👑</h1>")
+    
+    return HttpResponse("<h1>THE KING IS FULLY AUTHORIZED! 👑</h1>")
 
 def get_national_grading(mark, level, project_score=0):
     """Returns: (Grade, Points, Status, Professional_Remark)"""
@@ -904,3 +908,14 @@ def get_hub_metrics(request):
         "academic_week": "Week 6, Term II",
     }
     return JsonResponse(data)
+
+from django.core.management import call_command
+from django.db import connection
+
+def force_registry_rebuild(request):
+    try:
+        # This physically builds your 100-character tables in Supabase
+        call_command('migrate', interactive=False)
+        return HttpResponse("<h1>NATIONAL REGISTRY BUILT SUCCESSFULLY! 🏆</h1>")
+    except Exception as e:
+        return HttpResponse(f"Registry Error: {str(e)}")
