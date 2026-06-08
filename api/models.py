@@ -1,21 +1,26 @@
 # --- 💎 SURGERY: RESTORING IMPERIAL IMPORTS 💎 ---
 import random
 import string
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone  # <--- THE FIX IS HERE!
-from django.contrib.auth.models import AbstractUser, UserManager
 
+# --- 🏛️ SURGERY: TETHERING USERS TO SCHOOLS ---
 class User(AbstractUser):
-    """Sovereign Identity System for Staff and Admin"""
+    """Sovereign Identity tethered to a specific Institution"""
     is_staff_member = models.BooleanField(default=False)
+    
+    # 💎 THE MASTER KEY: Every Admin/Bursar belongs to ONE school
+    school = models.ForeignKey(
+        'School', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        help_text="Which school does this administrator manage?"
+    )
 
-    objects = UserManager() 
-
-class Meta:
-        db_table = 'auth_user'
-
-# --- 🏛️ THE COMPLETE IMPERIAL SCHOOL REGISTRY (api/models.py) ---
+    objects = UserManager()
 
 class School(models.Model):
     name = models.CharField(max_length=255)
@@ -23,12 +28,12 @@ class School(models.Model):
     address = models.CharField(max_length=255)
     district = models.CharField(max_length=100, default="Kampala")
     school_motto = models.CharField(max_length=255)
-    school_account_id = models.CharField(max_length=8, unique=True, editable=False)
+    school_account_id = models.CharField(max_length=100, unique=True, editable=False)
     
     # 💎 PRESTIGE REGISTRY DATA 💎
     uneb_center_number = models.CharField(max_length=20, default="U0000")
     school_type = models.CharField(max_length=100, default="Secondary / Boarding")
-    rating = models.CharField(max_length=10, default="⭐⭐⭐⭐⭐")
+    rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
     mission = models.TextField(default="To provide high-quality education.")
     vision = models.TextField(default="A lead institution of excellence.")
     core_values = models.TextField(default="Integrity, Excellence, Discipline")
@@ -40,7 +45,7 @@ class School(models.Model):
     )
 
     # 💎 BANKING & API CREDENTIALS 💎
-    school_code = models.CharField(max_length=20, blank=True)
+    school_code = models.CharField(max_length=100, blank=True)
     api_password = models.CharField(max_length=255, blank=True)
     total_revenue_collected = models.BigIntegerField(default=0)
     total_commission_earned = models.BigIntegerField(default=0)
@@ -69,16 +74,16 @@ class Student(models.Model):
     current_class = models.CharField(max_length=50)
     # 💎 THE CORE FIX: This field MUST exist here for the Admin to see it!
     payment_code = models.CharField(
-        max_length=20, 
+        max_length=100, 
         unique=True, 
         null=True, 
         blank=True, 
         help_text="Student's SchoolPay PRN"
     )
-    school_code = models.CharField(max_length=20, blank=True, help_text="Provided by SchoolPay")
+    school_code = models.CharField(max_length=30, blank=True, help_text="Provided by SchoolPay")
     api_password = models.CharField(max_length=255, blank=True, help_text="Secret password for API sync")
     stream = models.CharField(max_length=50, default="North")
-    account_number = models.CharField(max_length=10, unique=True, editable=False)
+    account_number = models.CharField(max_length=30, unique=True, editable=False)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
@@ -117,19 +122,19 @@ class Staff(models.Model):
     cv_pdf = models.FileField(upload_to='staff/cvs/', null=True, blank=True)
     
     # SYSTEM ACCESS
-    staff_id = models.CharField(max_length=12, unique=True, editable=False)
+    staff_id = models.CharField(max_length=100, unique=True, editable=False)
     secure_pin = models.CharField(max_length=6, blank=True)
     
     # HR & AUDIT DATA
-    tin_number = models.CharField(max_length=15, blank=True, verbose_name="URA TIN")
-    nssf_number = models.CharField(max_length=20, blank=True, verbose_name="NSSF No.")
+    tin_number = models.CharField(max_length=30, blank=True, verbose_name="URA TIN")
+    nssf_number = models.CharField(max_length=30, blank=True, verbose_name="NSSF No.")
     next_of_kin = models.CharField(max_length=255, blank=True)
-    next_of_kin_phone = models.CharField(max_length=15, blank=True)
+    next_of_kin_phone = models.CharField(max_length=30, blank=True)
     
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='staff_registry')
     designation = models.CharField(max_length=100, default="Instructor")
-    phone = models.CharField(max_length=15)
-    momo_number = models.CharField(max_length=15, blank=True, null=True)
+    phone = models.CharField(max_length=30)
+    momo_number = models.CharField(max_length=30, blank=True, null=True)
 
     def __str__(self): return f"{self.full_name} ({self.designation})"
 
@@ -159,7 +164,7 @@ class Attendance(models.Model):
     STATUS_CHOICES = [('PRESENT', 'Present'), ('ABSENT', 'Absent'), ('LATE', 'Late'), ('SICK', 'Sick')]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
     date = models.DateField(default=timezone.now)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PRESENT')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PRESENT')
     remarks = models.CharField(max_length=255, blank=True, help_text="e.g. 'Arrived at 9AM'")
 
     class Meta:
@@ -182,7 +187,7 @@ class FeesTracker(models.Model):
 
 class StaffPayroll(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='payrolls')
-    month = models.CharField(max_length=20)
+    month = models.CharField(max_length=30)
     year = models.IntegerField(default=2026)
     
     # FINANCIALS
@@ -195,7 +200,7 @@ class StaffPayroll(models.Model):
     
     net_pay = models.DecimalField(max_digits=12, decimal_places=2, editable=False)
     payment_date = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=[('PAID', 'Paid'), ('PENDING', 'Pending')], default='PENDING')
+    status = models.CharField(max_length=30, choices=[('PAID', 'Paid'), ('PENDING', 'Pending')], default='PENDING')
 
     def save(self, *args, **kwargs):
         # 🧮 AUTOMATED UGANDAN TAX MATH
@@ -239,3 +244,14 @@ class FinancialCommandCenter(School):
         proxy = True
         verbose_name = "📊 NATIONAL FINANCIAL COMMAND"
         verbose_name_plural = "📊 NATIONAL FINANCIAL COMMAND"
+
+# --- 🛰️ SURGERY: NATIONAL HUB INSTANT ALERTS ---
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=SchoolPayLedger)
+def notify_king_of_payment(sender, instance, created, **kwargs):
+    if created:
+        # 💎 This prints to your cloud log immediately
+        print(f"💰 NATIONAL HUB ALERT: {instance.student.full_name} paid {instance.amount} to {instance.school.name}")
+        # Logic to send you an SMS via Africa's Talking can be added here!

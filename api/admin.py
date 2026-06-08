@@ -8,10 +8,47 @@ from datetime import timedelta
 from .models import *
 from .models import (
     Student, School, Parent, FeesTracker, 
-    SchoolPayLedger, 
+    SchoolPayLedger, AcademicResult, NationalTopPerformer, SchoolPost, BioAndCareer, Staff, StaffPayroll, 
+    FinancialCommandCenter, AcademicResultsCenter, NationalLedger, CommissionAnalytics, 
+    AttendanceHub, 
 )
+# --- 🛡️ THE SOVEREIGN SECURITY GUARD (Base Class) ---
+class SchoolIsolatedAdmin(admin.ModelAdmin):
+    """
+    This class ensures that users only see data belonging 
+    to their assigned school. The King (Superuser) sees everything.
+    """
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # 1. If it's YOU (The King/Superuser), show the whole Nation
+        if request.user.is_superuser:
+            return qs
+        # 2. If it's a School Director/Bursar, filter by THEIR school
+        if request.user.school:
+            return qs.filter(school=request.user.school)
+        # 3. If they have no school assigned, show nothing (Security!)
+        return qs.none()
+
+    def save_model(self, request, obj, form, change):
+        # Automatically attach the user's school to any new record they create
+        if not request.user.is_superuser and request.user.school:
+            obj.school = request.user.school
+        super().save_model(request, obj, form, change)
 
 admin.site.site_header = "UNSCCDC NATIONAL HUB - COMMAND CENTER"
+
+class ImperialAdminSite(admin.AdminSite):
+    def index(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        # 🛡️ Comment these out for now so the migration can finish
+        # total_students = Student.objects.count() 
+        extra_context['enterprise_stats'] = {
+            'enrollment': 0,
+            'attendance': "0%",
+            'collection': "0%",
+            'milestone': "Initializing..."
+        }
+        return super().index(request, extra_context)
 
 # --- 📊 1. ACADEMIC RESULTS --
 @admin.register(AcademicResult)
@@ -35,15 +72,13 @@ def export_as_pdf(modeladmin, request, queryset):
         from django.contrib import messages
         modeladmin.message_user(request, "Select one student for instant download.", level='ERROR')
 
-# --- ⚡ 2. THE ROW-BY-ROW DOWNLOAD BUTTON ---
 def download_button(obj):
-    # This creates the physical golden button you see in the list
+    """Adds a golden download button to the list view"""
     return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background-color: #D4AF37; color: black; padding: 6px 12px; border-radius: 8px; font-weight: bold; text-decoration: none;">Download PDF</a>')
-
-download_button.short_description = 'Imperial Action'
+download_button.short_description = 'Action'
 
 @admin.register(AcademicResultsCenter)
-class AcademicResultsHubAdmin(admin.ModelAdmin):
+class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     # 💎 Add the bulk action tool here
     actions = [export_as_pdf] 
     
@@ -55,7 +90,7 @@ class AcademicResultsHubAdmin(admin.ModelAdmin):
 
 # --- 🛡️ 2. UNEDITABLE NATIONAL LEDGER ---
 @admin.register(NationalLedger)
-class NationalLedgerAdmin(admin.ModelAdmin):
+class NationalLedgerAdmin(SchoolIsolatedAdmin):
     list_display = ('transaction_id', 'school', 'child_name', 'category', 'amount_paid', 'system_tax', 'timestamp')
     readonly_fields = ('transaction_id', 'school', 'student', 'category', 'amount_paid', 'system_tax', 'timestamp')
     def child_name(self, obj): return obj.student.full_name if obj.student else "N/A"
@@ -65,7 +100,7 @@ class NationalLedgerAdmin(admin.ModelAdmin):
 
 # --- 💰 3. COMMISSION ANALYTICS DASHBOARD ---
 @admin.register(CommissionAnalytics)
-class CommissionAnalyticsAdmin(admin.ModelAdmin):
+class CommissionAnalyticsAdmin(SchoolIsolatedAdmin):
     list_display = ('name', 'district', 'total_revenue', 'my_commission')
     def total_revenue(self, obj):
         rev = Transaction.objects.filter(school=obj).aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
@@ -88,7 +123,7 @@ class CommissionAnalyticsAdmin(admin.ModelAdmin):
 # --- ✅ ADD TO api/admin.py ---
 
 @admin.register(AttendanceHub)
-class AttendanceHubAdmin(admin.ModelAdmin):
+class AttendanceHubAdmin(SchoolIsolatedAdmin):
     list_display = ('student', 'get_class', 'get_stream', 'date', 'status', 'remarks')
     list_filter = ('date', 'status', 'student__school', 'student__current_class')
     search_fields = ('student__full_name', 'student__account_number')
@@ -103,7 +138,7 @@ class AttendanceHubAdmin(admin.ModelAdmin):
 
 # --- 📱 4. HD TIKTOK FEED (RESTORED) ---
 @admin.register(SchoolPost)
-class SchoolPostAdmin(admin.ModelAdmin):
+class SchoolPostAdmin(SchoolIsolatedAdmin):
     list_display = ('title', 'school', 'likes_count', 'date')
     search_fields = ('title', 'description', 'school__name')
 
@@ -114,7 +149,7 @@ admin.site.register([Subject, Parent, FeesTracker, NationalTopPerformer, BioAndC
 # --- 🛡️ SURGERY: RESTORING ALL REGISTRY WINDOWS (api/admin.py) ---
 
 @admin.register(School)
-class SchoolAdmin(admin.ModelAdmin):
+class SchoolAdmin(SchoolIsolatedAdmin):
     # What you see in the main list
     list_display = ('name', 'uneb_center_number', 'school_code', 'district', 'total_revenue_collected')
     
@@ -135,8 +170,8 @@ class SchoolAdmin(admin.ModelAdmin):
     )
     readonly_fields = ('school_account_id', 'total_revenue_collected', 'total_commission_earned')
 @admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
-    # Show PRN in the student list
+class StudentAdmin(SchoolIsolatedAdmin): # 💎 SHIELD ACTIVE
+    
     list_display = ('full_name', 'account_number', 'payment_code', 'school', 'current_class')
     # Add PRN to the 'Edit' page
     fields = ('full_name', 'gender', 'age', 'current_class', 'school', 'level_category', 'payment_code', 'photo')
@@ -165,7 +200,7 @@ def dossier_button(obj):
 dossier_button.short_description = 'HR ARCHIVE'
 
 @admin.register(Staff)
-class StaffAdmin(admin.ModelAdmin):
+class StaffAdmin(SchoolIsolatedAdmin):
     # The Executive View
     list_display = ('full_name', 'designation', 'school', dossier_button)
     list_display = ('full_name', 'designation', 'tin_number', 'nssf_number', 'school')
@@ -201,7 +236,7 @@ def payslip_button(obj):
 payslip_button.short_description = 'Finance Action'
 
 @admin.register(StaffPayroll)
-class StaffPayrollAdmin(admin.ModelAdmin):
+class StaffPayrollAdmin(SchoolIsolatedAdmin):
     list_display = ('staff', 'month', 'gross_salary', 'paye_tax', 'nssf_deduction', 'net_pay', 'status')
     list_filter = ('month', 'status', 'staff__school')
     
@@ -213,7 +248,7 @@ class StaffPayrollAdmin(admin.ModelAdmin):
         # Logic to trigger PDF payslip generation
         pass
 @admin.register(SchoolPayLedger)
-class SchoolPayLedgerAdmin(admin.ModelAdmin):
+class SchoolPayLedgerAdmin(SchoolIsolatedAdmin):
     # What to show in the list view
     list_display = ('receipt_number', 'get_student_name', 'get_school_name', 'amount', 'timestamp')
     
@@ -240,7 +275,7 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
 
 # --- 🛡️ SURGERY: ALIGNING THE TEMPLATE PATH ---
 @admin.register(FinancialCommandCenter)
-class FinancialCommandAdmin(admin.ModelAdmin):
+class FinancialCommandAdmin(SchoolIsolatedAdmin):
     # This path must match your folder structure exactly!
     change_list_template = "admin/api/financialcommandcenter/change_list.html"
     
@@ -275,7 +310,6 @@ class FinancialCommandAdmin(admin.ModelAdmin):
     
     total_national_revenue.short_description = "Total Collected"
 
-    # --- 📈 THE ANALYTICS DASHBOARD INJECTION (Pumps data into your Charts) ---
     def changelist_view(self, request, extra_context=None):
         now = timezone.now()
         today = now.date()
@@ -283,28 +317,25 @@ class FinancialCommandAdmin(admin.ModelAdmin):
         
         extra_context = extra_context or {}
 
-        # 1. Math for the Top Cards
+        # 1. 🧮 GOLIATH MATHEMATICS
         extra_context['daily_sub'] = txs.filter(timestamp__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
         extra_context['weekly_sub'] = txs.filter(timestamp__date__gte=today - timedelta(days=7)).aggregate(Sum('amount'))['amount__sum'] or 0
         extra_context['monthly_sub'] = txs.filter(timestamp__month=today.month).aggregate(Sum('amount'))['amount__sum'] or 0
         extra_context['termly_sub'] = txs.filter(timestamp__date__gte=today - timedelta(days=120)).aggregate(Sum('amount'))['amount__sum'] or 0
 
-        # 2. Math for the Bar Chart
+        # 2. 📈 TREND CHART (7 DAYS)
         bar_data = []
-        for i in range(5, -1, -1):
-            d = today - timedelta(days=i*30)
-            amt = txs.filter(timestamp__month=d.month, timestamp__year=d.year).aggregate(Sum('amount'))['amount__sum'] or 0
-            bar_data.append({"x": d.strftime('%b'), "y": float(amt)})
+        for i in range(6, -1, -1):
+            d = today - timedelta(days=i)
+            amt = txs.filter(timestamp__date=d).aggregate(Sum('amount'))['amount__sum'] or 0
+            bar_data.append({"x": d.strftime('%a'), "y": float(amt)})
         extra_context['bar_json'] = json.dumps(bar_data)
 
-        # 3. Math for the Pie Chart
+        # 3. 📱 PIE CHART (NETWORK DISTRIBUTION)
+        # Assuming SchoolPay sends 'MTN' or 'AIRTEL' in raw_data
         mtn = txs.filter(raw_data__sourceChannel__icontains="MTN").count()
         airtel = txs.filter(raw_data__sourceChannel__icontains="AIRTEL").count()
         other = max(0, txs.count() - (mtn + airtel))
         extra_context['pie_data_json'] = json.dumps([mtn, airtel, other])
 
-        extra_context['title'] = "NATIONAL TREASURY COMMAND"
         return super().changelist_view(request, extra_context=extra_context)
-
-    def has_add_permission(self, request): return False
-    

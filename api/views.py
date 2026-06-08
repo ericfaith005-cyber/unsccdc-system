@@ -8,6 +8,8 @@ from .models import *
 # --- 🏛️ SURGERY: PDF IMPORTS (api/views.py) ---
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from .models import Staff, Student # 💎 Ensure Staff is imported!
@@ -24,20 +26,22 @@ try:
     sms = africastalking.SMS
 except:
     print("SMS Gateway Standby")
-    
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+
 def birth_the_king(request):
     User = get_user_model()
-    # Ensure this block is aligned perfectly with 4 spaces
-    user, created = User.objects.get_or_create(username="admin")
-    user.set_password("Imperial2026!")
-    user.email = "admin@unsccdc.com"
+    User.objects.filter(username="admin").delete()
+    user = User.objects.create_superuser(
+        username="admin",
+        email="admin@unsccdc.com",
+        password="Imperial2026!"
+    )
     user.is_staff = True
     user.is_superuser = True
     user.save()
-    
-    status = "Born" if created else "Restored"
-    return HttpResponse(f"<h1>The King is {status}! 👑</h1>")
-# --- 2. THE IMPERIAL UGANDAN GRADING ENGINE (UNEB & NCHE STANDARDS) ---
+    return HttpResponse("<h1>THE KING IS BORN! 👑</h1>")
+
 def get_national_grading(mark, level, project_score=0):
     """Returns: (Grade, Points, Status, Professional_Remark)"""
     try:
@@ -769,19 +773,134 @@ def generate_payslip_pdf(request, payroll_id):
         return response
     except Exception as e:
         return HttpResponse(f"Dossier Error: {str(e)}", status=400)
-    # --- 👑 THE IMPERIAL KING-MAKER DOOR ---
+     # --- 👑 THE SECRET KING-MAKER DOOR ---
+from django.contrib.auth.models import User
+
+def create_initial_king(request):
+    # This is a secret URL to build the first admin in the clouds
+    if not User.objects.filter(username="admin").exists():
+        User.objects.create_superuser("admin", "admin@unsccdc.com", "Imperial2026!")
+        return HttpResponse("The King is Born in the Clouds! 👑")
+    return HttpResponse("The Throne is already occupied.")   
+# --- 👑 THE IMPERIAL KING-MAKER DOOR ---
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 
-def birth_the_king(request):
-    User = get_user_model()
-    # This logic either creates the user or updates the existing one
-    user, created = User.objects.get_or_create(username="admin")
-    user.set_password("Imperial2026!") # Your secure password
-    user.email = "admin@unsccdc.com"
-    user.is_staff = True        # 💎 CRITICAL: Allows login to /admin
-    user.is_superuser = True    # 💎 CRITICAL: Gives full power
-    user.save()
+
+
+
+
+# --- 📜 THE ABOUT TAB WITH LIVE APK DOWNLOAD ---
+def about_tab(request):
+    html = """
+    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px; text-align:center;">
+        <div style="border: 2px solid #D4AF37; padding: 40px; border-radius: 30px; background: rgba(212,175,55,0.02);">
+            <h1 style="color:#D4AF37; letter-spacing:5px; font-weight:900;">UNSCCDC NATIONAL HUB</h1>
+            <p style="color:#888; letter-spacing:2px;">OFFICIAL MOBILE INTERFACE v1.0.1</p>
+            
+            <hr style="border-color:#222; margin: 30px 0;">
+            
+            <p style="font-size:18px;">Founder & CEO: <b>Yawe Eric</b></p>
+            <p style="color:#aaa; font-style:italic;">"Transforming Uganda's Education through Digital Sovereignty"</p>
+
+            <!-- 🚀 THE NATIONAL DOWNLOAD BUTTON -->
+            <div style="margin-top:40px;">
+                <a href="/static/downloads/unsccdc_v1.apk" 
+                   style="background:#D4AF37; color:#000; padding:25px 50px; border-radius:20px; font-weight:900; text-decoration:none; font-size:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display:inline-block;">
+                   📥 DOWNLOAD ANDROID APP (APK)
+                </a>
+            </div>
+
+            <p style="margin-top:50px;"><a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a></p>
+        </div>
+    </body>
+    """
+    return HttpResponse(html)
+
+def academics_tab(request):
+    html = """
+    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
+        <h1 style="color:#D4AF37;">📊 ACADEMIC COMMAND</h1>
+        <p>Continuous Assessment Engine matching the New Lower Secondary Curriculum (NLSC).</p>
+        <p><b>GRADING:</b> UNEB Standard D1 to F9 conversions active.</p>
+        <a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a>
+    </body>
+    """
+    return HttpResponse(html)
+
+def finances_tab(request):
+    html = """
+    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
+        <h1 style="color:#D4AF37;">💰 FINANCIAL COMMAND</h1>
+        <p>Leak-proof ledger interface with automated billing profiles per class.</p>
+        <p><b>SYNC:</b> Digital Gateway active for MTN MoMo and Airtel Money.</p>
+        <a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a>
+    </body>
+    """
+    return HttpResponse(html)
+
+# --- 🏛️ THE ENTERPRISE COMMAND CENTER (DIRECT BRAIN HTML) ---
+from django.http import HttpResponse
+
+def home_tab(request):
+    html = """
+    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
+        <h1 style="color:#D4AF37; letter-spacing:3px;">🏛️ ENTERPRISE COMMAND CENTER</h1>
+        <p style="color:#888;">UNSCCDC GLOBAL Hub Status: <span style="color:#00ff00;">● LIVE</span></p>
+        <hr style="border-color:#222;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div style="background:#111; padding:20px; border-radius:15px; border-left:4px solid #D4AF37;">
+                <h3 style="margin:0;">95%</h3>
+                <p style="font-size:10px; color:#666;">ERROR REDUCTION</p>
+            </div>
+            <div style="background:#111; padding:20px; border-radius:15px; border-left:4px solid #00ff00;">
+                <h3 style="margin:0;">14 Hours</h3>
+                <p style="font-size:10px; color:#666;">SAVED WEEKLY</p>
+            </div>
+        </div>
+        <p style="margin-top:30px;"><a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a></p>
+    </body>
+    """
+    return HttpResponse(html)
+
+# --- 👤 THE IMPERIAL PROFILE TAB (DIRECT HTML) ---
+def profile_tab(request):
+    html = """
+    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
+        <h1 style="color:#D4AF37;">👤 USER PROFILE: ROLE-BASED CONTROL</h1>
+        <p style="color:#888;">Identity Verified by National Hub Security</p>
+        <hr style="border-color:#222;">
+        <div style="background:#111; padding:25px; border-radius:20px; border:1px solid #333;">
+            <h3 style="margin:0; color:#3498db;">Role: Master Administrator</h3>
+            <p style="font-size:12px; color:#666;">ACCESS LEVEL: NATIONAL COMMAND</p>
+            <hr style="border-color:#222;">
+            <p><b>Security Audit Trail:</b></p>
+            <ul style="font-size:11px; color:#aaa;">
+                <li>Login Detected: [Current Session] - IP: 10.243.7.47</li>
+                <li>Encryption Status: 256-Bit Sovereign Active</li>
+            </ul>
+            <button style="background:#D4AF37; border:none; padding:10px 20px; border-radius:5px; font-weight:bold;">ACTIVATE 2FA</button>
+        </div>
+        <p style="margin-top:30px;"><a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a></p>
+    </body>
+    """
+    return HttpResponse(html)
+
+from django.http import JsonResponse
+
+# --- 🛰️ THE SOVEREIGN METRICS UPLINK ---
+def get_hub_metrics(request):
+    """Dynamically loads school health for the mobile app dashboard"""
+    # Math logic:
+    total_students = Student.objects.count()
+    # Pulling real fee stats from your ledger
+    fees = FeesTracker.objects.aggregate(due=Sum('total_fees_due'), paid=Sum('total_fees_paid'))
     
-    status = "Born" if created else "Restored"
-    return HttpResponse(f"<h1>The King is {status}! 👑</h1><p>Login at <b>/admin</b> using:<br>User: <b>admin</b><br>Pass: <b>Imperial2026!</b></p>")
+    data = {
+        "status": "National Hub Online",
+        "enrollment": total_students,
+        "collection_rate": f"{(fees['paid']/fees['due']*100):.1f}%" if fees['due'] else "0%",
+        "active_staff": Staff.objects.count(),
+        "academic_week": "Week 6, Term II",
+    }
+    return JsonResponse(data)

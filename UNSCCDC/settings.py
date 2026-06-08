@@ -1,35 +1,44 @@
+import dj_database_url  # 💎 THE MISSING PASSPORT
 import os
 from pathlib import Path
+import dj_database_url
 
-# --- 1. BASE DIRECTORY ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- 2. SECURITY CONFIGURATION ---
+DATABASES = {
+    'default': dj_database_url.config(
+        # 💎 THE MASTER FALLBACK:
+        # If DATABASE_URL is missing (on your laptop), it uses local SQLite
+        default=f'sqlite:///{os.path.join(BASE_DIR, "db.sqlite3")}',
+        conn_max_age=600
+    )
+}
+
 SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
-DEBUG = True
+DEBUG = False
 
-# --- ⚠️ UPDATED ALLOWED HOSTS (NEW NATIONAL IP) ---
-ALLOWED_HOSTS = ['*', '127.0.0.1', 'localhost', '10.122.38.47']
-
+ALLOWED_HOSTS = ['unsccdc-system.onrender.com', 'localhost', '127.0.0.1', 'unsccdc-hub.onrender.com', 
+    '.onrender.com',]
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'jazzmin',  # MUST BE AT THE TOP FOR THE GALAXY DESIGN
+    'corsheaders',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # POWER TOOLS FOR NATIONAL INFRASTRUCTURE
     'rest_framework',
-    'corsheaders',  # THE KEY TO FIXING "OFFLINE" ERRORS
     'api',          # THE SOVEREIGN CORE APP
 ]
 
+# --- 🏛️ 1. MIDDLEWARE: THE ABSOLUTE ORDER OF POWER ---
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # MUST BE AT THE VERY TOP FOR UPLINK
+    'corsheaders.middleware.CorsMiddleware',  # 💎 MUST BE LINE 1
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -38,9 +47,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --- 4. CORS OVERDRIVE (NATIONAL OPEN ACCESS) ---
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = True 
 CORS_ALLOW_CREDENTIALS = True
+
+# 💎 THE TRUSTED ORIGINS (Replace with your exact GitHub link)
+CSRF_TRUSTED_ORIGINS = [
+    "https://unsccdc-system.onrender.com",
+    "https://ericfaith005-cyber.github.io",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept", "accept-encoding", "authorization", "content-type",
+    "dnt", "origin", "user-agent", "x-csrftoken", "x-requested-with",
+]
 
 ROOT_URLCONF = 'UNSCCDC.urls'
 
@@ -48,7 +67,10 @@ ROOT_URLCONF = 'UNSCCDC.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], # LINK TO THE GALAXY STARS HTML
+        'DIRS': [
+            os.path.join(BASE_DIR, 'frontend'), # 💎 #1 PRIORITY (THE APP)
+            os.path.join(BASE_DIR, 'templates'), # 💎 #2 PRIORITY (THE SOFTWARE)
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,15 +83,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'UNSCCDC.wsgi.application'
 
-# --- 6. DATABASE (NATIONAL LEDGER) ---
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+WSGI_APPLICATION = 'UNSCCDC.wsgi.application'
 
 AUTH_USER_MODEL = 'api.User'
 
@@ -81,29 +96,55 @@ USE_TZ = True
 
 # --- 8. STATIC & MEDIA (NATIONAL ASSETS HUB) ---
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'api/static')]
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'frontend'),]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+ROOT_URLCONF = 'UNSCCDC.urls'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+WHITENOISE_MANIFEST_STRICT = False
 
-# --- 9. JAZZMIN PRESTIGE DASHBOARD (ALL ICONS PRESERVED) ---
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# =============================================================
+# 🏛️ THE IMPERIAL COMMAND CENTER BRANDING (settings.py)
+# =============================================================
+
 JAZZMIN_SETTINGS = {
-    "site_title": "UNSCCDC NATIONAL HUB",
-    "site_header": "UNSCCDC HUB",
-    "site_brand": "NATIONAL HUB",
-    "welcome_sign": "AUTHENTICATING NATIONAL SOVEREIGN ACCESS",
-    "copyright": "UNSCCDC Global Ltd",
-    "search_model": ["api.Student", "api.Staff"],
-    "show_sidebar": True,
+    # 💎 THE TITLES
+    "site_title": "UNSCCDC GLOBAL",
+    "site_header": "UNSCCDC",
+    "site_brand": "CENTRAL CONTROL CENTRE", # Full name at the top
+    "welcome_sign": "Welcome to the Uganda National Schools Central Control Digital Centre",
+    "copyright": "UNSCCDC GLOBAL Hub 2026",
+    "user_avatar": None,
+
+    # 🔗 THE TOP MENU LINKS (This is your "Website" inside the system)
+    "topmenu_links": [
+        {"name": "1. HOME", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "2. ABOUT FOUNDER", "url": "/api/about/", "new_window": False},
+        {"name": "3. ACADEMICS", "url": "/api/academics/", "new_window": False},
+        {"name": "4. FINANCES", "url": "/api/finances/", "new_window": False},
+    ],
+
+    # 🛠️ SIDEBAR SETTINGS
     "navigation_expanded": True,
-    
-    # FUTURE DESIGN OVERRIDE (Moving Kinetic Grid)
-    "custom_css": "css/sovereign.css", 
-    "custom_js": None,
-    
+    "hide_apps": [],
+    "hide_models": [],
+    "icons": {
+        "api.Student": "fas fa-user-graduate",
+        "api.School": "fas fa-university",
+        "api.Staff": "fas fa-chalkboard-teacher",
+        "api.SchoolPayLedger": "fas fa-money-check-alt",
+        "api.FinancialCommandCenter": "fas fa-chart-line",
+    },
+
+    # 🎨 THE DESIGN (DIAMOND OBSIDIAN)
+    "theme": "darkly", # Deep Black Theme
+    "dark_mode_theme": "darkly",
+
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {
         "auth": "fas fa-users-cog",
@@ -136,21 +177,20 @@ JAZZMIN_SETTINGS = {
     ],
 }
 
-# --- 10. JAZZMIN UI TWEAKS (DARK SOVEREIGN GOLD) ---
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
-    "footer_small_text": False,
+    "footer_small_text": True,
     "body_small_text": False,
     "brand_small_text": False,
-    "brand_colour": "navbar-dark",
-    "accent": "accent-warning",
+    "brand_colour": "navbar-warning", # Golden Brand
+    "accent": "accent-warning",       # Golden Accents
     "navbar": "navbar-dark",
-    "no_navbar_border": True,
+    "no_navbar_border": False,
     "navbar_fixed": True,
     "layout_boxed": False,
     "footer_fixed": False,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-warning", # GOLD SIDEBAR
+    "sidebar": "sidebar-dark-warning", # Golden Sidebar highlights
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": True,
@@ -159,4 +199,19 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_flat_style": False,
     "theme": "darkly",
     "dark_mode_theme": "darkly",
+    "button_classes": {
+        "primary": "btn-outline-warning", # Golden buttons
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success"
+    }
 }
+# --- 🛡️ THE SOVEREIGN SECURITY SHIELD ---
+SECURE_SSL_REDIRECT = True # Forces all connections to be HTTPS
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
