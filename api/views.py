@@ -847,7 +847,13 @@ def about_tab(request):
             <hr style="border-color:#222; margin: 30px 0;">
             
             <p style="font-size:18px;">Founder & CEO: <b>Yawe Eric</b></p>
-            <p style="color:#aaa; font-style:italic;">"Transforming Uganda's Education through Digital Sovereignty"</p>
+            <p style="color:#aaa; font-style:italic;">"In 2025, at the age of 20, Uganda Software developer and Tech Entrepeneur Yawe Eric recognized a critical gap in the nation's educational infrastructure: 
+            schools were overwhelmed by disorganized manual paperwork, fee tracking was prone to leakages, and parents remained in the dark about thier children's daily performance."</p>
+            <p style="color:#aaa;">"With a bold vision to completely transform Uganda's Education sector, Eric engineered UNSCCDC. His mission is to brig world-class, cloud-based digital infrastructure to every school in Uganda-starting with better Institutions-ensuring accountability, 
+            moving Uganda Education into a paperless, digitally transparent future."</p>
+
+            <p style="font-size:18px;"><b>Technical Architecture and Reliability Specs</b></p>
+            
 
             <!-- 🚀 THE NATIONAL DOWNLOAD BUTTON -->
             <div style="margin-top:40px;">

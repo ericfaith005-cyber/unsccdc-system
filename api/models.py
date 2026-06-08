@@ -93,6 +93,21 @@ class Student(models.Model):
         super().save(*args, **kwargs)
     def __str__(self): return self.full_name
 
+# --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---
+class SubjectAssignment(models.Model):
+    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='assignments')
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    target_class = models.CharField(max_length=50, help_text="e.g., S.1 North")
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "Subject Assignment"
+        # 💎 THE FIX: Add the missing 'l' to plural
+        verbose_name_plural = "Subject Assignments" 
+
+    def __str__(self):
+        return f"{self.staff.full_name} - {self.subject.name} ({self.target_class})"
+
 class AcademicResult(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='marks')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)

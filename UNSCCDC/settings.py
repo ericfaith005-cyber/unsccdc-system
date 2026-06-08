@@ -115,14 +115,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 JAZZMIN_SETTINGS = {
     "site_title": "UNSCCDC GLOBAL",
     "site_header": "UNSCCDC",
-    "site_brand": "CENTRAL CONTROL CENTRE",
+    "site_brand": "UNSCCDC",
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL Hub 2026",
     "custom_css": "css/unsccdc_prestige.css",
     "custom_js": None,
     
     "theme": "darkly",
-    "site_brand": "UNSCCDC: CENTRAL CONTROL",
+    "site_brand": "UNSCCDC",
     
     # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
     "topmenu_links": [

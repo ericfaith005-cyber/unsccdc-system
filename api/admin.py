@@ -230,14 +230,18 @@ def payslip_button(obj):
     ''')
 payslip_button.short_description = 'Finance Action'
 
+# --- 🛰️ 1. THE ASSIGNMENT INLINE ---
+class AssignmentInline(admin.TabularInline):
+    model = SubjectAssignment
+    extra = 1
+    verbose_name = "Academic Workload"
+
+# --- 👔 2. THE TABBED STAFF COMMAND ---
 @admin.register(Staff)
 class StaffAdmin(admin.ModelAdmin):
-    # What you see in the main list
-    list_display = ('full_name', 'designation', 'school', 'tin_number', 'nssf_number', dossier_button)
-    search_fields = ('full_name', 'staff_id', 'tin_number')
-    list_filter = ('school', 'designation')
-
-    # 💎 THE CATEGORIZED TABS (FIELDSETS)
+    list_display = ('full_name', 'designation', 'school', 'staff_id')
+    inlines = [AssignmentInline] # 💎 This allows assigning subjects inside the profile
+    
     fieldsets = (
         ('👤 BIOMETRIC IDENTITY', {
             'description': "Official Identity and Document Registry",
