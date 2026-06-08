@@ -271,28 +271,36 @@ class StaffPayrollAdmin(SchoolIsolatedAdmin):
         # Logic to trigger PDF payslip generation
         pass
 
+# =============================================================
+# 💰 THE AUDIT-PROOF LEDGER (FIXING E108 ERRORS)
+# =============================================================
 @admin.register(SchoolPayLedger)
 class SchoolPayLedgerAdmin(admin.ModelAdmin):
-    # 💎 FIX 1: Keep 'payment_mode' in list_display but REMOVE it from list_filter 
-    # (Methods cannot be used in filters, only real database fields)
+    # 💎 THE LIST (Must match the methods defined below)
     list_display = ('receipt_number', 'student', 'school', 'amount_formatted', 'payment_mode', 'timestamp')
-    list_filter = ('school', 'timestamp') 
+    list_filter = ('school', 'timestamp')
     search_fields = ('receipt_number', 'student__full_name')
-    readonly_fields = ('receipt_number', 'timestamp', 'raw_data')
+    
+    # 🛡️ THE NATIONAL AUDIT LOCK (UNEDITABLE)
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False
 
+    # 💎 THE MISSING METHOD 1: Format the Shillings
     def amount_formatted(self, obj):
-        return f"UGX {obj.amount:,.0f}"
-    amount_formatted.short_description = "Value"
+        return mark_safe(f'<span style="color: #00ff00; font-weight:900;">+ {obj.amount:,.0f}</span>')
+    amount_formatted.short_description = "Value (UGX)"
 
-    # 💎 FIX 2: Define 'payment_mode' here so the list_display can find it
+    # 💎 THE MISSING METHOD 2: Identify the Payment Channel (Airtel/MTN)
     def payment_mode(self, obj):
         try:
-            # This reaches into the SchoolPay JSON to find if it's MTN or AIRTEL
-            return obj.raw_data.get('sourceChannel', 'BANK/AGENT')
+            # We look inside the 'raw_data' JSON we got from SchoolPay
+            channel = obj.raw_data.get('sourceChannel', 'BANK/AGENT')
+            color = "#FCDC04" if "MTN" in channel.upper() else "#D90000"
+            return mark_safe(f'<span style="background:{color}; color:#000; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:900;">{channel}</span>')
         except:
             return "Digital Sync"
     payment_mode.short_description = "Channel"
-    
 # --- 🛡️ SURGERY: ALIGNING THE TEMPLATE PATH ---
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):

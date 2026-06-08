@@ -69,7 +69,7 @@ class Subject(models.Model):
 
 class Student(models.Model):
     full_name = models.CharField(max_length=255)
-    gender = models.CharField(max_length=1, default='M')
+    gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')], default='M')
     age = models.IntegerField(default=15)
     current_class = models.CharField(max_length=50)
     # 💎 THE CORE FIX: This field MUST exist here for the Admin to see it!
@@ -178,8 +178,8 @@ class Attendance(models.Model):
     """Real-time Student Presence Registry"""
     STATUS_CHOICES = [('PRESENT', 'Present'), ('ABSENT', 'Absent'), ('LATE', 'Late'), ('SICK', 'Sick')]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
-    date = models.DateField(default=timezone.now)
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='PRESENT')
+    date = models.DateField(auto_now_add=True)
+    status = models.BooleanField(default=True)
     remarks = models.CharField(max_length=255, blank=True, help_text="e.g. 'Arrived at 9AM'")
 
     class Meta:
