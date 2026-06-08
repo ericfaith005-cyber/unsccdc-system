@@ -69,18 +69,28 @@ def export_as_pdf(modeladmin, request, queryset):
 def download_button(obj):
     return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background-color: #D4AF37; color: black; padding: 5px 10px; border-radius: 8px; font-weight: bold; text-decoration: none;">Download PDF</a>')
 
+class MarksInline(admin.TabularInline):
+    model = AcademicResult
+    # 💎 THE MATRIX LOGIC: Shows all 7 assessment fields in a horizontal line
+    fields = ('subject', 'aoi_1', 'aoi_2', 'mid_term', 'aoi_3', 'aoi_4', 'project_work', 'eot_score', 'grade')
+    extra = 0 # Don't show empty rows by default
+    classes = ['collapse'] # Only show when clicking 'Show'
+
 @admin.register(AcademicResultsCenter)
 class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     # 💎 Add the bulk action tool here
     actions = [export_as_pdf] 
     
     # 💎 Add 'download_button' to the end of this list
-    list_display = ('full_name', 'account_number', 'school', 'current_class', download_button)
+    list_display = ('full_name', 'account_number', 'school', 'current_class', 'stream', 'national_rank', download_button)
     
     search_fields = ('full_name', 'account_number')
     inlines = [MarksInline]
 
-# --- 🛡️ 2. UNEDITABLE NATIONAL LEDGER ---
+    def national_rank(self, obj):
+        return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
+    
+
 @admin.register(NationalLedger)
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     list_display = ('transaction_id', 'school', 'child_name', 'category', 'amount_paid', 'system_tax', 'timestamp')
@@ -90,7 +100,6 @@ class NationalLedgerAdmin(SchoolIsolatedAdmin):
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
 
-# --- 💰 3. COMMISSION ANALYTICS DASHBOARD ---
 @admin.register(CommissionAnalytics)
 class CommissionAnalyticsAdmin(SchoolIsolatedAdmin):
     list_display = ('name', 'district', 'total_revenue', 'my_commission')
@@ -112,7 +121,6 @@ class CommissionAnalyticsAdmin(SchoolIsolatedAdmin):
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
 
-# --- ✅ ADD TO api/admin.py ---
 
 @admin.register(AttendanceHub)
 class AttendanceHubAdmin(SchoolIsolatedAdmin):
@@ -135,32 +143,51 @@ class SchoolPostAdmin(SchoolIsolatedAdmin):
     search_fields = ('title', 'description', 'school__name')
 
 # --- 🏛️ 5. OTHER REGISTRIES ---
-admin.site.register([Subject, Parent, FeesTracker, NationalTopPerformer, BioAndCareer, SovereignProfessionalInsights ])
+admin.site.register([
+    Subject, 
+    Parent,
+    School,
+    Staff,
+    Student, 
+    AcademicResult,
+    AttendanceHub, 
+    StaffPayroll,
+    SchoolPayLedger,
+    AcademicResultsCenter,
+    SchoolPost, 
+    FeesTracker, 
+    User,
+    NationalTopPerformer, 
+    BioAndCareer, 
+    NationalLedger,
+    SovereignProfessionalInsights,
+    CommissionAnalytics,
+    FinancialCommandCenter
+    ])
 
 
 # --- 🛡️ SURGERY: RESTORING ALL REGISTRY WINDOWS (api/admin.py) ---
 
 @admin.register(School)
-class SchoolAdmin(SchoolIsolatedAdmin):
-    # What you see in the main list
-    list_display = ('name', 'uneb_center_number', 'school_code', 'district', 'total_revenue_collected')
+class SchoolAdmin(admin.ModelAdmin):
+    list_display = ('name', 'school_code', 'district', 'is_verified')
     
-    # --- 🏗️ HOW THE EDIT PAGE IS ORGANIZED ---
+    # 💎 THE CATEGORIZED TABS (FIELDSETS)
     fieldsets = (
-        ('CORE IDENTITY', {
+        ('🏢 INSTITUTIONAL PROFILE', {
             'fields': ('name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
         }),
-        ('PRESTIGE & BRANDING', {
-            'fields': ('school_type', 'rating', 'mission', 'vision', 'core_values', 'is_verified', 'followers_count')
-        }),
-        ('USSD GATEWAY SETTINGS', {
+        ('📟 USSD GATEWAY INSTRUCTIONS', {
+            'description': "What parents see when they dial *165#",
             'fields': ('ussd_instructions',)
         }),
-        ('SCHOOLPAY API CREDENTIALS', {
+        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
+            'description': "Bank-Level Gateway Credentials",
             'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
         }),
     )
-    readonly_fields = ('school_account_id', 'total_revenue_collected', 'total_commission_earned')
+    readonly_fields = ('total_revenue_collected', 'total_commission_earned')
+
 @admin.register(Student)
 class StudentAdmin(SchoolIsolatedAdmin): # 💎 SHIELD ACTIVE
     
@@ -169,10 +196,6 @@ class StudentAdmin(SchoolIsolatedAdmin): # 💎 SHIELD ACTIVE
     fields = ('full_name', 'gender', 'age', 'current_class', 'school', 'level_category', 'payment_code', 'photo')
     readonly_fields = ('account_number',)
 
-# --- 🛡️ SURGERY: HR MANAGER DASHBOARD (api/admin.py) ---
-# --- 🛡️ SURGERY: HR DOSSIER DOWNLOAD BUTTON ---
-
-# --- 🛡️ SURGERY: ABSOLUTE DOWNLOAD LINK ---
 def dossier_button(obj):
     # We added 'http://127.0.0.1:8001' to force the computer to find the Brain
     url = f"/api/staff-dossier/{obj.staff_id}/"
@@ -191,26 +214,6 @@ def dossier_button(obj):
     ''')
 dossier_button.short_description = 'HR ARCHIVE'
 
-@admin.register(Staff)
-class StaffAdmin(SchoolIsolatedAdmin):
-    # The Executive View
-    list_display = ('full_name', 'designation', 'school', dossier_button)
-    list_display = ('full_name', 'designation', 'tin_number', 'nssf_number', 'school')
-    search_fields = ('full_name', 'tin_number', 'nssf_number')
-    
-    # 📂 ORGANIZED HR TABS
-    fieldsets = (
-        ('PERSONAL BIOMETRICS', {
-            'fields': ('full_name', 'passport_photo', 'national_id_copy', 'cv_pdf')
-        }),
-        ('GOVERNMENT REGISTRY', {
-            'fields': ('tin_number', 'nssf_number', 'designation')
-        }),
-        ('SECURITY & CONTACT', {
-            'fields': ('secure_pin', 'phone', 'momo_number', 'next_of_kin', 'next_of_kin_phone', 'school')
-        }),
-    )
-# --- 🛡️ 1. THE PAYSLIP BUTTON WORKER (PASTE ABOVE THE CLASS) ---
 def payslip_button(obj):
     url = f"/api/download-payslip/{obj.id}/"
     return mark_safe(f'''
@@ -227,6 +230,30 @@ def payslip_button(obj):
     ''')
 payslip_button.short_description = 'Finance Action'
 
+@admin.register(Staff)
+class StaffAdmin(admin.ModelAdmin):
+    # What you see in the main list
+    list_display = ('full_name', 'designation', 'school', 'tin_number', 'nssf_number', dossier_button)
+    search_fields = ('full_name', 'staff_id', 'tin_number')
+    list_filter = ('school', 'designation')
+
+    # 💎 THE CATEGORIZED TABS (FIELDSETS)
+    fieldsets = (
+        ('👤 BIOMETRIC IDENTITY', {
+            'description': "Official Identity and Document Registry",
+            'fields': ('full_name', 'passport_photo', 'national_id_copy', 'cv_pdf')
+        }),
+        ('🏛️ GOVERNMENT COMPLIANCE', {
+            'description': "URA and NSSF Regulatory Data",
+            'fields': ('tin_number', 'nssf_number', 'designation')
+        }),
+        ('📞 COMMUNICATIONS & FINANCE', {
+            'description': "Security and Payment Uplink Data",
+            'fields': ('secure_pin', 'phone', 'momo_number', 'next_of_kin', 'next_of_kin_phone', 'school')
+        }),
+    )
+    readonly_fields = ('staff_id',)
+
 @admin.register(StaffPayroll)
 class StaffPayrollAdmin(SchoolIsolatedAdmin):
     list_display = ('staff', 'month', 'gross_salary', 'paye_tax', 'nssf_deduction', 'net_pay', 'status')
@@ -239,32 +266,29 @@ class StaffPayrollAdmin(SchoolIsolatedAdmin):
     def download_payslips(self, request, queryset):
         # Logic to trigger PDF payslip generation
         pass
+
 @admin.register(SchoolPayLedger)
-class SchoolPayLedgerAdmin(SchoolIsolatedAdmin):
-    # What to show in the list view
-    list_display = ('receipt_number', 'get_student_name', 'get_school_name', 'amount', 'timestamp')
+class SchoolPayLedgerAdmin(admin.ModelAdmin):
+    # 💎 FIX 1: Keep 'payment_mode' in list_display but REMOVE it from list_filter 
+    # (Methods cannot be used in filters, only real database fields)
+    list_display = ('receipt_number', 'student', 'school', 'amount_formatted', 'payment_mode', 'timestamp')
+    list_filter = ('school', 'timestamp') 
+    search_fields = ('receipt_number', 'student__full_name')
+    readonly_fields = ('receipt_number', 'timestamp', 'raw_data')
+
+    def amount_formatted(self, obj):
+        return f"UGX {obj.amount:,.0f}"
+    amount_formatted.short_description = "Value"
+
+    # 💎 FIX 2: Define 'payment_mode' here so the list_display can find it
+    def payment_mode(self, obj):
+        try:
+            # This reaches into the SchoolPay JSON to find if it's MTN or AIRTEL
+            return obj.raw_data.get('sourceChannel', 'BANK/AGENT')
+        except:
+            return "Digital Sync"
+    payment_mode.short_description = "Channel"
     
-    # Powerful filters for the Bursar/King
-    list_filter = ('school', 'timestamp')
-    search_fields = ('receipt_number', 'student__full_name', 'student__payment_code')
-    
-    # 💎 THE IMMUTABILITY SHIELD 💎
-    # This prevents anyone (even staff) from adding, deleting, or editing SchoolPay records manually
-    def has_add_permission(self, request): return False
-    def has_change_permission(self, request, obj=None): return False
-    def has_delete_permission(self, request, obj=None): return False
-
-    # Helpers to show names instead of IDs
-    def get_student_name(self, obj):
-        return obj.student.full_name
-    get_student_name.short_description = "Student"
-
-    def get_school_name(self, obj):
-        return obj.school.name
-    get_school_name.short_description = "School"
-
-# --- 📊 THE REINFORCED FINANCIAL COMMAND ENGINE (api/admin.py) ---
-
 # --- 🛡️ SURGERY: ALIGNING THE TEMPLATE PATH ---
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):

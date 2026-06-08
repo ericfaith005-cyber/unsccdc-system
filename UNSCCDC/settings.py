@@ -113,21 +113,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # =============================================================
 
 JAZZMIN_SETTINGS = {
-    # 💎 THE TITLES
     "site_title": "UNSCCDC GLOBAL",
     "site_header": "UNSCCDC",
-    "site_brand": "CENTRAL CONTROL CENTRE", # Full name at the top
-    "welcome_sign": "Welcome to the Uganda National Schools Central Control Digital Centre",
+    "site_brand": "CENTRAL CONTROL CENTRE",
+    "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL Hub 2026",
-    "user_avatar": None,
-
-    # 🔗 THE TOP MENU LINKS (This is your "Website" inside the system)
+    "custom_css": "css/unsccdc_prestige.css",
+    "custom_js": None,
+    
+    "theme": "darkly",
+    "site_brand": "UNSCCDC: CENTRAL CONTROL",
+    
+    # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
     "topmenu_links": [
-        {"name": "1. HOME", "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "2. ABOUT FOUNDER", "url": "/api/about/", "new_window": False},
+        {"name": "1. HOME", "url": "/api/home/", "new_window": False},
+        {"name": "2. ABOUT", "url": "/api/about/", "new_window": False},
         {"name": "3. ACADEMICS", "url": "/api/academics/", "new_window": False},
         {"name": "4. FINANCES", "url": "/api/finances/", "new_window": False},
+        {"name": "5. PROFILE", "url": "/api/profile/", "new_window": False},
+        {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
     ],
+
+    "theme": "darkly",
+    "show_ui_builder": False,
+
 
     # 🛠️ SIDEBAR SETTINGS
     "navigation_expanded": True,
@@ -198,6 +207,10 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": False,
     "theme": "darkly",
+    "use_google_fonts": True,
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "changeform_format": "horizontal_tabs",
     "dark_mode_theme": "darkly",
     "button_classes": {
         "primary": "btn-outline-warning", # Golden buttons

@@ -790,10 +790,52 @@ def create_initial_king(request):
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 
+FLAG_STYLE = """
+<style>
+    body { 
+        background: #050505; color: #fff; font-family: 'Courier New', monospace; 
+        padding: 50px; margin: 0; overflow-x: hidden;
+        background-image: radial-gradient(circle at 50% 50%, rgba(252, 220, 4, 0.05) 0%, transparent 80%);
+    }
+    .flag-bar { 
+        position: fixed; top: 0; left: 0; width: 100%; height: 5px; display: flex; 
+        box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    }
+    .b { flex: 1; background: #000; } .y { flex: 1; background: #FCDC04; } .r { flex: 1; background: #D90000; }
+    
+    .glass-tab {
+        background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 40px; border-radius: 30px; backdrop-filter: blur(10px);
+        border-top: 4px solid #FCDC04; position: relative; animation: slideIn 0.8s ease-out;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .nav-btn {
+        display: inline-block; padding: 12px 25px; border-radius: 10px; text-decoration: none;
+        font-weight: 900; font-size: 11px; letter-spacing: 2px; transition: 0.3s;
+        border: 1px solid #333; color: #888; margin-right: 10px;
+    }
+    .nav-btn:hover { background: #FCDC04; color: #000; box-shadow: 0 0 20px #FCDC04; }
+    .active-btn { background: #D90000 !important; color: #fff !important; border: none; box-shadow: 0 0 20px #D90000; }
+    
+    .pulse-dot { height: 8px; width: 8px; background: #00ff00; border-radius: 50%; display: inline-block; margin-right: 10px; animation: blink 1.5s infinite; }
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+</style>
 
+<div class="flag-bar">
+    <div class="b"></div><div class="y"></div><div class="r"></div>
+    <div class="b"></div><div class="y"></div><div class="r"></div>
+</div>
 
-
-
+<div style="margin-bottom: 40px;">
+    <a href="/api/home/" class="nav-btn {{home_act}}">1. HOME</a>
+    <a href="/api/about/" class="nav-btn {{about_act}}">2. ABOUT</a>
+    <a href="/api/academics/" class="nav-btn {{acad_act}}">3. ACADEMICS</a>
+    <a href="/api/finances/" class="nav-btn {{fin_act}}">4. FINANCES</a>
+    <a href="/api/profile/" class="nav-btn {{prof_act}}">5. PROFILE</a>
+    <a href="/admin/" class="nav-btn" style="float:right;">← BACK TO CONTROL</a>
+</div>
+"""
 # --- 📜 THE ABOUT TAB WITH LIVE APK DOWNLOAD ---
 def about_tab(request):
     html = """
@@ -822,26 +864,29 @@ def about_tab(request):
     return HttpResponse(html)
 
 def academics_tab(request):
-    html = """
-    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
-        <h1 style="color:#D4AF37;">📊 ACADEMIC COMMAND</h1>
-        <p>Continuous Assessment Engine matching the New Lower Secondary Curriculum (NLSC).</p>
-        <p><b>GRADING:</b> UNEB Standard D1 to F9 conversions active.</p>
-        <a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a>
-    </body>
-    """
-    return HttpResponse(html)
+    content = f"""{FLAG_STYLE.replace('{{acad_act}}', 'active-btn')}
+    <div class="glass-tab">
+        <h1 style="color:#FCDC04;">📊 ACADEMIC ASSESSMENT ENGINE</h1>
+        <p>Fully aligned with the <b>New Lower Secondary Curriculum (NLSC)</b>.</p>
+        <ul style="color:#ccc; line-height:2;">
+            <li>✅ UNEB Standard D1-F9 Conversions</li>
+            <li>✅ Automated AOI 1-4 Performance Tracking</li>
+            <li>✅ Real-Time National Rank Calculation</li>
+        </ul>
+    </div>"""
+    return HttpResponse(content)
 
 def finances_tab(request):
-    html = """
-    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
-        <h1 style="color:#D4AF37;">💰 FINANCIAL COMMAND</h1>
-        <p>Leak-proof ledger interface with automated billing profiles per class.</p>
-        <p><b>SYNC:</b> Digital Gateway active for MTN MoMo and Airtel Money.</p>
-        <a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a>
-    </body>
-    """
-    return HttpResponse(html)
+    content = f"""{FLAG_STYLE.replace('{{fin_act}}', 'active-btn')}
+    <div class="glass-tab">
+        <h1 style="color:#FCDC04;">💰 FINANCIAL LEAK-PROOF LEDGER</h1>
+        <p>Real-time synchronization with National Payment Gateways.</p>
+        <div style="display:flex; gap:20px; margin-top:20px;">
+            <div style="flex:1; background:#f1c40f; color:#000; padding:15px; border-radius:10px; font-weight:900; text-align:center;">MTN MoMo</div>
+            <div style="flex:1; background:#D90000; color:#fff; padding:15px; border-radius:10px; font-weight:900; text-align:center;">AIRTEL MONEY</div>
+        </div>
+    </div>"""
+    return HttpResponse(content)
 
 # --- 🏛️ THE ENTERPRISE COMMAND CENTER (DIRECT BRAIN HTML) ---
 from django.http import HttpResponse
@@ -867,28 +912,17 @@ def home_tab(request):
     """
     return HttpResponse(html)
 
-# --- 👤 THE IMPERIAL PROFILE TAB (DIRECT HTML) ---
 def profile_tab(request):
-    html = """
-    <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
-        <h1 style="color:#D4AF37;">👤 USER PROFILE: ROLE-BASED CONTROL</h1>
-        <p style="color:#888;">Identity Verified by National Hub Security</p>
-        <hr style="border-color:#222;">
-        <div style="background:#111; padding:25px; border-radius:20px; border:1px solid #333;">
-            <h3 style="margin:0; color:#3498db;">Role: Master Administrator</h3>
-            <p style="font-size:12px; color:#666;">ACCESS LEVEL: NATIONAL COMMAND</p>
-            <hr style="border-color:#222;">
-            <p><b>Security Audit Trail:</b></p>
-            <ul style="font-size:11px; color:#aaa;">
-                <li>Login Detected: [Current Session] - IP: 10.243.7.47</li>
-                <li>Encryption Status: 256-Bit Sovereign Active</li>
-            </ul>
-            <button style="background:#D4AF37; border:none; padding:10px 20px; border-radius:5px; font-weight:bold;">ACTIVATE 2FA</button>
+    content = f"""{FLAG_STYLE.replace('{{prof_act}}', 'active-btn')}
+    <div class="glass-tab">
+        <h1 style="color:#FCDC04;">👤 USER PROFILE: NATIONAL IDENTITY</h1>
+        <div style="background:#111; padding:30px; border-radius:20px;">
+            <h3>Role: Master Administrator</h3>
+            <p style="color:#00ff00; font-weight:bold;">ACCESS LEVEL: NATIONAL CONTROL</p>
+            <button style="background:#D90000; color:#fff; border:none; padding:10px 20px; border-radius:5px;">2FA ACTIVE</button>
         </div>
-        <p style="margin-top:30px;"><a href="/admin/" style="color:#D4AF37; text-decoration:none;">← BACK TO CONTROL CENTRE</a></p>
-    </body>
-    """
-    return HttpResponse(html)
+    </div>"""
+    return HttpResponse(content)
 
 from django.http import JsonResponse
 
