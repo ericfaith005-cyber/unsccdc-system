@@ -272,59 +272,77 @@ class StaffPayrollAdmin(SchoolIsolatedAdmin):
         pass
 
 # =============================================================
-# 💰 THE NATIONAL AUDIT LEDGER (100% UNEDITABLE & ADVANCED)
+# 💰 THE IMPERIAL NATIONAL AUDIT LEDGER (LEVEL 10,000)
 # =============================================================
 @admin.register(SchoolPayLedger)
 class SchoolPayLedgerAdmin(admin.ModelAdmin):
-    # 💎 THE VIEW: Professional columns
-    list_display = ('txn_id', 'student_name', 'amount_formatted', 'channel_badge', 'timestamp')
+    # 💎 THE COLUMNS: Every detail you requested
+    list_display = (
+        'transaction_id_badge', 
+        'student_name', 
+        'code_number', 
+        'reason_for_payment',
+        'amount_paid', 
+        'remaining_balance',
+        'channel_badge', 
+        'timestamp'
+    )
+    
     list_filter = ('school', 'timestamp')
     search_fields = ('receipt_number', 'student__full_name', 'student__payment_code')
     
-    # 🏛️ THE TREASURY TEMPLATE: We will create this in Step 2
-    change_list_template = "admin/api/schoolpayledger/change_list.html"
-
-    # 🛡️ THE SOVEREIGN LOCKDOWN (Makes it uneditable)
+    # 🛡️ THE SOVEREIGN LOCKDOWN (HARD-LOCK)
+    # This physically removes all "Add", "Delete", and "Save" buttons
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
+    
+    # All fields become non-clickable "Read-Only" views
+    readonly_fields = [f.name for f in SchoolPayLedger._meta.fields]
 
-    # --- 🧮 LIVE CALCULATION LOGIC ---
-    def changelist_view(self, request, extra_context=None):
-        now = timezone.now()
-        today = now.date()
-        txs = self.get_queryset(request) # Respects school isolation
-        
-        extra_context = extra_context or {}
-        # Daily Total
-        extra_context['d_total'] = txs.filter(timestamp__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-        # Weekly Total
-        extra_context['w_total'] = txs.filter(timestamp__date__gte=today - timedelta(days=7)).aggregate(Sum('amount'))['amount__sum'] or 0
-        # Monthly Total
-        extra_context['m_total'] = txs.filter(timestamp__date__gte=today - timedelta(days=30)).aggregate(Sum('amount'))['amount__sum'] or 0
-        
-        return super().changelist_view(request, extra_context=extra_context)
+    # --- 🧮 LIVE CALCULATION METHODS ---
 
-    # --- 💎 VISUAL BADGES ---
-    def txn_id(self, obj):
-        return mark_safe(f'<b style="color:#D4AF37;">{obj.receipt_number}</b>')
-    txn_id.short_description = "TXN ID"
+    def transaction_id_badge(self, obj):
+        return mark_safe(f'<b style="color:#D4AF37; font-family:monospace;">{obj.receipt_number}</b>')
+    transaction_id_badge.short_description = "TXN ID"
 
     def student_name(self, obj):
         return obj.student.full_name.upper()
-    student_name.short_description = "Depositor"
+    student_name.short_description = "Student Name"
 
-    def amount_formatted(self, obj):
-        return mark_safe(f'<span style="color:#00ff00; font-weight:bold;">+ {obj.amount:,.0f} UGX</span>')
-    amount_formatted.short_description = "Amount"
+    def code_number(self, obj):
+        return mark_safe(f'<span style="color:#aaa;">{obj.student.payment_code}</span>')
+    code_number.short_description = "Code (PRN)"
+
+    def reason_for_payment(self, obj):
+        # Dynamically extracts the reason from the bank metadata
+        reason = obj.raw_data.get('narration', 'Tuition & Functional Fees')
+        return reason.upper()
+    reason_for_payment.short_description = "Reason"
+
+    def amount_paid(self, obj):
+        return mark_safe(f'<span style="color:#00ff00; font-weight:bold;">{obj.amount:,.0f} UGX</span>')
+    amount_paid.short_description = "Paid"
+
+    def remaining_balance(self, obj):
+        # 💎 THE MATH: Finds the student's debt and subtracts what was paid
+        try:
+            tracker = obj.student.feestracker_set.first()
+            if tracker:
+                balance = tracker.total_fees_due - tracker.total_fees_paid
+                color = "#D90000" if balance > 0 else "#00ff00"
+                return mark_safe(f'<b style="color:{color};">{balance:,.0f} UGX</b>')
+        except:
+            pass
+        return "0 UGX"
+    remaining_balance.short_description = "Balance"
 
     def channel_badge(self, obj):
         channel = obj.raw_data.get('sourceChannel', 'BANK').upper()
-        # MTN Yellow, Airtel Red
         color = "#FCDC04" if "MTN" in channel else "#D90000"
-        text_color = "#000" if "MTN" in channel else "#fff"
-        return mark_safe(f'<span style="background:{color}; color:{text_color}; padding:3px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
-    channel_badge.short_description = "Gateway"
+        t_color = "#000" if "MTN" in channel else "#fff"
+        return mark_safe(f'<span style="background:{color}; color:{t_color}; padding:2px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
+    channel_badge.short_description = "Method"
 
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):
