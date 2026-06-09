@@ -272,36 +272,60 @@ class StaffPayrollAdmin(SchoolIsolatedAdmin):
         pass
 
 # =============================================================
-# 💰 THE AUDIT-PROOF LEDGER (FIXING E108 ERRORS)
+# 💰 THE NATIONAL AUDIT LEDGER (100% UNEDITABLE & ADVANCED)
 # =============================================================
 @admin.register(SchoolPayLedger)
 class SchoolPayLedgerAdmin(admin.ModelAdmin):
-    # 💎 THE LIST (Must match the methods defined below)
-    list_display = ('receipt_number', 'student', 'school', 'amount_formatted', 'payment_mode', 'timestamp')
+    # 💎 THE VIEW: Professional columns
+    list_display = ('txn_id', 'student_name', 'amount_formatted', 'channel_badge', 'timestamp')
     list_filter = ('school', 'timestamp')
-    search_fields = ('receipt_number', 'student__full_name')
+    search_fields = ('receipt_number', 'student__full_name', 'student__payment_code')
     
-    # 🛡️ THE NATIONAL AUDIT LOCK (UNEDITABLE)
+    # 🏛️ THE TREASURY TEMPLATE: We will create this in Step 2
+    change_list_template = "admin/api/schoolpayledger/change_list.html"
+
+    # 🛡️ THE SOVEREIGN LOCKDOWN (Makes it uneditable)
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
 
-    # 💎 THE MISSING METHOD 1: Format the Shillings
-    def amount_formatted(self, obj):
-        return mark_safe(f'<span style="color: #00ff00; font-weight:900;">+ {obj.amount:,.0f}</span>')
-    amount_formatted.short_description = "Value (UGX)"
+    # --- 🧮 LIVE CALCULATION LOGIC ---
+    def changelist_view(self, request, extra_context=None):
+        now = timezone.now()
+        today = now.date()
+        txs = self.get_queryset(request) # Respects school isolation
+        
+        extra_context = extra_context or {}
+        # Daily Total
+        extra_context['d_total'] = txs.filter(timestamp__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
+        # Weekly Total
+        extra_context['w_total'] = txs.filter(timestamp__date__gte=today - timedelta(days=7)).aggregate(Sum('amount'))['amount__sum'] or 0
+        # Monthly Total
+        extra_context['m_total'] = txs.filter(timestamp__date__gte=today - timedelta(days=30)).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        return super().changelist_view(request, extra_context=extra_context)
 
-    # 💎 THE MISSING METHOD 2: Identify the Payment Channel (Airtel/MTN)
-    def payment_mode(self, obj):
-        try:
-            # We look inside the 'raw_data' JSON we got from SchoolPay
-            channel = obj.raw_data.get('sourceChannel', 'BANK/AGENT')
-            color = "#FCDC04" if "MTN" in channel.upper() else "#D90000"
-            return mark_safe(f'<span style="background:{color}; color:#000; padding:2px 8px; border-radius:4px; font-size:9px; font-weight:900;">{channel}</span>')
-        except:
-            return "Digital Sync"
-    payment_mode.short_description = "Channel"
-# --- 🛡️ SURGERY: ALIGNING THE TEMPLATE PATH ---
+    # --- 💎 VISUAL BADGES ---
+    def txn_id(self, obj):
+        return mark_safe(f'<b style="color:#D4AF37;">{obj.receipt_number}</b>')
+    txn_id.short_description = "TXN ID"
+
+    def student_name(self, obj):
+        return obj.student.full_name.upper()
+    student_name.short_description = "Depositor"
+
+    def amount_formatted(self, obj):
+        return mark_safe(f'<span style="color:#00ff00; font-weight:bold;">+ {obj.amount:,.0f} UGX</span>')
+    amount_formatted.short_description = "Amount"
+
+    def channel_badge(self, obj):
+        channel = obj.raw_data.get('sourceChannel', 'BANK').upper()
+        # MTN Yellow, Airtel Red
+        color = "#FCDC04" if "MTN" in channel else "#D90000"
+        text_color = "#000" if "MTN" in channel else "#fff"
+        return mark_safe(f'<span style="background:{color}; color:{text_color}; padding:3px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
+    channel_badge.short_description = "Gateway"
+
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):
     # This path must match your folder structure exactly!
