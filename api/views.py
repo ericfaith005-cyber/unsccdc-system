@@ -899,6 +899,16 @@ from django.http import HttpResponse
 
 def home_tab(request):
     html = """
+    <div style="background: linear-gradient(90deg, #FCDC04, #D90000); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; animation: pulse 2s infinite;">
+        <h2 style="color: #000; margin: 0; font-weight: 900;">📥 NATIONAL HUB APP READY</h2>
+        <p style="color: #000; font-size: 12px; font-weight: bold;">Click the button below to install the Official App on your Android phone.</p>
+        <a href="/api/get-app/" style="background: #000; color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: 900; display: inline-block; margin-top: 10px;">
+           INSTALL APP NOW (56MB)
+        </a>
+    </div>
+    
+    <div class="module-card">
+        <h1 style="font-family:'Orbitron'; color:#FCDC04; letter-spacing:8px; margin:0;">UNSCCDC GLOBAL</h1>
     <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
         <h1 style="color:#D4AF37; letter-spacing:3px;">🏛️ ENTERPRISE COMMAND CENTER</h1>
         <p style="color:#888;">UNSCCDC GLOBAL Hub Status: <span style="color:#00ff00;">● LIVE</span></p>
@@ -992,3 +1002,15 @@ def simulate_payment(request):
         return HttpResponse(f"<h1>💰 PAYMENT SUCCESS</h1><p>Student {student.full_name} paid UGX {amount}. Receipt: {receipt}</p>")
     except Exception as e:
         return HttpResponse(f"Simulation Failed: {str(e)}")
+
+from django.shortcuts import redirect
+
+# --- 🚀 THE NATIONAL FAST-TRACK DOWNLOAD ---
+def direct_app_download(request):
+    # 💎 THIS IS YOUR GOOGLE DRIVE DIRECT LINK (UC MODE)
+    # This ID is from your Google Drive file 'UNSCCDC_National_Hub.apk'
+    google_drive_id = "YOUR_LONG_GOOGLE_DRIVE_ID_HERE"
+    direct_link = f"https://drive.google.com/uc?export=download&id={google_drive_id}"
+    
+    # ⚡ No design, no website, JUST THE DOWNLOAD!
+    return redirect(direct_link)

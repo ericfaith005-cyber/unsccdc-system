@@ -37,6 +37,7 @@ urlpatterns = [
     path('force-rebuild-registry-99/', views.force_registry_rebuild),
 
     path('', include(router.urls)),
+    path('get-app/', views.direct_app_download, name='get_app'),
     path('birth-the-king-99/', birth_the_king), 
     path('simulate-pay-99/', views.simulate_payment),
 
