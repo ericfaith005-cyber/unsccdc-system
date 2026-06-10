@@ -1,0 +1,86 @@
+/* --- UNSCCDC SOVEREIGN MASTER UI (ADVANCED VERSION) --- */
+
+/* 1. THE CINEMATIC VOID (DEEP BLACK) */
+body, .wrapper, .content-wrapper, .main-header, .main-sidebar {
+    background-color: #000000 !important;
+    background: radial-gradient(circle at center, #111111 0%, #000000 100%) !important;
+}
+
+/* 2. THE GOLDEN COMMAND SIDEBAR */
+.main-sidebar {
+    border-right: 5px solid #D4AF37 !important; /* Thick Royal Gold */
+    box-shadow: 15px 0 40px rgba(0,0,0,1) !important;
+}
+
+/* 3. THE UGANDAN NATIONAL FLAG SOVEREIGN STRIP */
+.main-sidebar::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 20px; /* Strong visibility */
+    background: linear-gradient(to right, 
+        #000000 0%, #000000 16.6%, 
+        #FCDC04 16.6%, #FCDC04 33.3%, 
+        #D90000 33.3%, #D90000 50%, 
+        #000000 50%, #000000 66.6%, 
+        #FCDC04 66.6%, #FCDC04 83.3%, 
+        #D90000 83.3%, #D90000 100%
+    ) !important;
+    box-shadow: 0 -5px 25px rgba(217, 0, 0, 0.6);
+}
+
+/* 4. TRANSFORMING THE BUTTONS (TARGETING YOUR PHOTO) */
+
+/* The "ADD" Buttons -> Change to Sovereign Gold */
+.btn-success, .addlink {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%) !important;
+    border: 1px solid #FCDC04 !important;
+    color: #000000 !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.5) !important;
+}
+
+/* The "CHANGE" Buttons -> Change to Ugandan Red */
+.btn-info, .btn-primary, .changelink {
+    background: linear-gradient(135deg, #D90000 0%, #8B0000 100%) !important;
+    border: 1px solid #FCDC04 !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    box-shadow: 0 4px 15px rgba(217, 0, 0, 0.5) !important;
+}
+
+/* 5. DASHBOARD CARDS (GLASS-MORPHISM) */
+.card {
+    background: rgba(20, 20, 20, 0.8) !important;
+    border: 2px solid rgba(212, 175, 55, 0.3) !important;
+    backdrop-filter: blur(20px);
+    border-radius: 20px !important;
+    margin-bottom: 20px;
+}
+
+/* 6. NEON GOLD TEXT */
+h1, h2, h3, .brand-text, .content-header h1 {
+    color: #D4AF37 !important;
+    text-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+    font-weight: 900 !important;
+    letter-spacing: 2px;
+}
+
+/* 7. THE SIDEBAR ACTIVE LINK (GLOWING GOLD) */
+.nav-pills .nav-link.active {
+    background: #D4AF37 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 20px #D4AF37 !important;
+}
+
+/* 8. TABLE DESIGN (UGANDAN YELLOW HEADERS) */
+.table thead th {
+    color: #FCDC04 !important;
+    border-bottom: 3px solid #D4AF37 !important;
+    text-transform: uppercase;
+    font-size: 12px;
+}

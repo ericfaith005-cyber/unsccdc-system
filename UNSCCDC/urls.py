@@ -18,6 +18,15 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('', TemplateView.as_view(template_name="index.html"), name='app_front_door'),
+    path('manifest.json', TemplateView.as_view(
+        template_name='manifest.json', 
+        content_type='application/json'
+    ), name='manifest.json'),
+    
+    path('serviceworker.js', TemplateView.as_view(
+        template_name='serviceworker.js', 
+        content_type='application/javascript'
+    ), name='serviceworker.js'),
 ]
 
 # FORCING MEDIA AND STATIC FILES TO APPEAR
