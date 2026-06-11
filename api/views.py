@@ -857,7 +857,7 @@ def about_tab(request):
 
             <!-- 🚀 THE NATIONAL DOWNLOAD BUTTON -->
             <div style="margin-top:40px;">
-                <a href="https://drive.google.com/file/d/1sDKmk8YJp3kLA2t15DI1DP0xM-M61EGR/view?usp=sharing" 
+                <a href="1uVswBKYlTe6xC-5gIxhkGwcsAu_lxd67" 
                    style="background:#D4AF37; color:#000; padding:25px 50px; border-radius:20px; font-weight:900; text-decoration:none; font-size:20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display:inline-block;">
                    📥 DOWNLOAD ANDROID APP (APK)
                 </a>
