@@ -147,7 +147,6 @@ admin.site.register([
     Subject, 
     Parent,
     School,
-    Staff,
     StaffAdmin, 
     Student, 
     AcademicResult,
