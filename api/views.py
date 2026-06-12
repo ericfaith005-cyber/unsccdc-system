@@ -592,21 +592,6 @@ def generate_imperial_pdf(request, student_id):
     p.save()
     return response
 
-# --- 📜 THE GOLIATH PDF GENERATION ENGINE (STANDALONE) ---
-from django.http import HttpResponse
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
-
-# --- 📜 THE GOLIATH NATIONAL PRINTING ENGINE (BRAIN EDITION) ---
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
-from django.http import HttpResponse
-import datetime
-
 def generate_imperial_pdf(request, student_id):
     """
     Standalone Python Engine to draw the 1,000-Level National Certificate.
