@@ -13,6 +13,60 @@
     .data-pill { background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #D90000; }
 </style>
 
+<!-- 🛡️ THE SECURITY TOKEN (Must be inside the body) -->
+{% csrf_token %}
+
+<div class="container">
+    <!-- 📦 ROOM 1: THE REGISTRY GATE (Visible by default) -->
+    <div id="identity-form">
+        <!-- We use the IDs exactly as the JavaScript expects them -->
+        <div class="input-group">
+            <label>NATIONAL ACCESS CODE</label>
+            <input type="text" id="national_access_code" placeholder="e.g. PS 001">
+        </div>
+
+        <div class="input-group">
+            <label>STUDENT FULL NAME</label>
+            <input type="text" id="student_name" placeholder="Enter student name">
+        </div>
+
+        <div class="input-group">
+            <label>PARENT NAME</label>
+            <input type="text" id="parent_name" placeholder="Enter guardian name">
+        </div>
+
+        <div class="input-group">
+            <label>PHONE NUMBER</label>
+            <input type="text" id="phone_number" placeholder="256...">
+        </div>
+        
+        <!-- 💎 THE TRIGGER BUTTON -->
+        <button onclick="handleNationalVerification()" class="gold-button">
+            VERIFY IDENTITY
+        </button>
+    </div>
+
+    <!-- ⏳ THE LOADING BAR (Hidden until button is clicked) -->
+    <div id="loading-bar" style="display: none;">
+        Establishing National Link...
+    </div>
+
+    <!-- 🔑 ROOM 2: THE PIN VAULT (Hidden until Identity is Verified) -->
+    <div id="pin-screen" style="display: none;">
+        <h2 style="color: #D4AF37;">IDENTITY CONFIRMED ✅</h2>
+        <p style="color: #666; font-size: 10px;">ENTER YOUR SOVEREIGN PIN TO ACCESS THE HUB</p>
+        
+        <!-- PIN inputs here -->
+        <div class="pin-container">
+             <input type="password" id="pin_code" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 10px;">
+        </div>
+
+        <button onclick="handleFinalLogin()" class="gold-button" style="margin-top: 20px;">
+            AUTHORIZE ACCESS
+        </button>
+    </div>
+</div>
+
 <div class="enterprise-command">
     <h2 style="color: #FCDC04; letter-spacing: 4px; font-weight: 900;">🏛️ NATIONAL CONTROL HUB: LIVE ANALYSIS</h2>
     
@@ -62,104 +116,96 @@
 </div>
 
 <script>
-    // 🛡️ Ensure elements are hidden on boot
+    // --- 🛡️ 1. INITIAL LOCKDOWN ---
+    // This ensures everything is hidden properly when the page loads
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('loading-bar').style.display = 'none';
-        document.getElementById('pin-screen').style.display = 'none';
+        const loadingBar = document.getElementById('loading-bar');
+        const pinScreen = document.getElementById('pin-screen');
+        const identityForm = document.getElementById('identity-form');
+
+        if (loadingBar) loadingBar.style.display = 'none';
+        if (pinScreen) pinScreen.style.display = 'none';
+        if (identityForm) identityForm.style.display = 'block';
+        
+        console.log("--- 🏛️ NATIONAL REGISTRY GATEWAY ONLINE ---");
     });
 
-    async function handleVerifyIdentity() {
-        const loader = document.getElementById('loading-bar');
-        
-        // 1. Capture Inputs
-        const code = document.getElementById('access_code').value.trim();
+    // --- ⚡ 2. THE IDENTITY HANDSHAKE (Fired only on click) ---
+    async function handleNationalVerification() {
+        // A. Identify UI Components
+        const loadingBar = document.getElementById('loading-bar');
+        const identityForm = document.getElementById('identity-form');
+        const pinScreen = document.getElementById('pin-screen');
+
+        // B. Capture the Values
+        const code = document.getElementById('national_access_code').value.trim();
         const student = document.getElementById('student_name').value.trim();
         const parent = document.getElementById('parent_name').value.trim();
         const phone = document.getElementById('phone_number').value.trim();
 
-        // 🛡️ 2. THE VALIDATION SHIELD
+        // 🛡️ C. THE VALIDATION SHIELD
+        // This stops the infinite spinning before the network is even touched!
         if (!code || !student || !parent || !phone) {
-            alert("NATIONAL HUB: Please fill in all 4 registration fields.");
-            return;
+            alert("NATIONAL HUB: Please fill in all your registration details before proceeding.");
+            return; // 🛑 Halt execution
         }
 
-        // 🚀 3. ACTIVATE LINK
-        loader.style.display = 'flex';
-        loader.innerText = "Establishing National Link... Please wait 📡";
+        // 🚀 D. WAKE UP THE LINK
+        loadingBar.style.display = 'flex';
+        loadingBar.innerHTML = "Establishing National Link... Please wait 📡";
 
         try {
+            // E. THE CLOUD UPLINK
             const response = await fetch('/api/verify-identity/', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({code, student, parent, phone})
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken() // Security standard
+                },
+                body: JSON.stringify({
+                    code: code,
+                    student: student,
+                    parent: parent,
+                    phone: phone
+                })
             });
 
             const result = await response.json();
 
-            if (result.status === 'success') {
-                // 💎 Transition to PIN
-                document.getElementById('entry-form').style.display = 'none';
-                document.getElementById('pin-screen').style.display = 'block';
-                loader.style.display = 'none';
+            if (response.status === 200 && result.status === 'success') {
+                // 💎 --- PHASE 3: THE TRANSITION --- 💎
+                console.log("Registry Sync Success. Opening PIN Screen.");
+                
+                // Hide Stage 1
+                identityForm.style.display = 'none';
+                loadingBar.style.display = 'none';
+                
+                // Show Stage 2 (PIN)
+                pinScreen.style.display = 'block';
+                pinScreen.classList.add('animate-fade-in'); // Standard CSS animation
+                
+                // Success message feedback
+                showToast("Identity Verified. Enter Secure PIN.");
             } else {
-                loader.style.display = 'none';
-                alert(result.message);
+                // 🛑 ACCESS DENIED
+                loadingBar.style.display = 'none';
+                alert(result.message || "National Registry: Match not found.");
             }
+
         } catch (error) {
-            loader.style.display = 'none';
-            alert("Network Error: Brain is waking up. Try again in 10s.");
+            // ⚠️ NETWORK INTERRUPT
+            loadingBar.style.display = 'none';
+            alert("National Link Interrupted: Check your internet connection.");
+            console.error("Critical Uplink Error:", error);
         }
     }
-</script><script>
-    // 🛡️ Ensure elements are hidden on boot
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('loading-bar').style.display = 'none';
-        document.getElementById('pin-screen').style.display = 'none';
-    });
 
-    async function handleVerifyIdentity() {
-        const loader = document.getElementById('loading-bar');
-        
-        // 1. Capture Inputs
-        const code = document.getElementById('access_code').value.trim();
-        const student = document.getElementById('student_name').value.trim();
-        const parent = document.getElementById('parent_name').value.trim();
-        const phone = document.getElementById('phone_number').value.trim();
+    // Helper to get CSRF token for Django
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
 
-        // 🛡️ 2. THE VALIDATION SHIELD
-        if (!code || !student || !parent || !phone) {
-            alert("NATIONAL HUB: Please fill in all 4 registration fields.");
-            return;
-        }
-
-        // 🚀 3. ACTIVATE LINK
-        loader.style.display = 'flex';
-        loader.innerText = "Establishing National Link... Please wait 📡";
-
-        try {
-            const response = await fetch('/api/verify-identity/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({code, student, parent, phone})
-            });
-
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                // 💎 Transition to PIN
-                document.getElementById('entry-form').style.display = 'none';
-                document.getElementById('pin-screen').style.display = 'block';
-                loader.style.display = 'none';
-            } else {
-                loader.style.display = 'none';
-                alert(result.message);
-            }
-        } catch (error) {
-            loader.style.display = 'none';
-            alert("Network Error: Brain is waking up. Try again in 10s.");
-        }
+    function showToast(msg) {
+        console.log("SYSTEM NOTIFICATION:", msg);
     }
 </script>
-
-{{ block.super }}
-{% endblock %}
