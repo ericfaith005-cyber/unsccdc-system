@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -261,42 +262,43 @@ def verify_student_portal(request):
             'message': 'No matching records found in the National Hub.'
         }, status=401)
 
-@api_view(['POST'])
-def verify_identity(request):
+@csrf_exempt # 💎 EMERGENCY BYPASS: Allows the form to hit the server from any origin
+def verify_student_portal(request):
     """
-    STRICT NATIONAL IDENTITY VERIFICATION
-    Stage 1: Multi-parameter Database Match
+    STAGE 1: NATIVE FORM POST VALIDATION
     """
-    # 1. Capture incoming data
-    incoming_code = request.data.get('code', '').strip()
-    incoming_student = request.data.get('student', '').strip()
-    incoming_parent = request.data.get('parent', '').strip()
-    incoming_phone = request.data.get('phone', '').strip()
+    if request.method == 'POST':
+        # 1. Capture values directly from the POST body
+        incoming_code = request.POST.get('code', '').strip()
+        incoming_student = request.POST.get('student', '').strip()
+        incoming_parent = request.POST.get('parent', '').strip()
+        incoming_phone = request.POST.get('phone', '').strip()
 
-    # 🛡️ SOVEREIGN SHIELD: Prevent empty requests
-    if not all([incoming_code, incoming_student, incoming_parent, incoming_phone]):
-        return Response({'status': 'error', 'message': 'Registration registry incomplete.'}, status=400)
+        # 2. THE MASTER SEARCH
+        # Searching the National Registry for a 4-point match
+        match = Student.objects.filter(
+            payment_code=incoming_code,
+            full_name__iexact=incoming_student,
+            parent__full_name__iexact=incoming_parent,
+            parent__phone_number=incoming_phone
+        ).first()
 
-    # 🔎 STRICT DATABASE QUERY
-    # We check if a student exists with this code AND name AND parent details
-    student = Student.objects.filter(
-        payment_code=incoming_code,
-        full_name__iexact=incoming_student,
-        parent__full_name__iexact=incoming_parent,
-        parent__phone_number=incoming_phone
-    ).first()
+        if match:
+            # ✅ SUCCESS: Identity Confirmed
+            # Instantly transition to the PIN entry screen
+            return render(request, 'pin_entry.html', {
+                'student': match,
+                'status': 'authenticated'
+            })
+        else:
+            # 🛑 DENIED: Return to login with error
+            return render(request, 'index.html', {
+                'error': 'Identity Denied. No matching records found in the National Registry.',
+                'old_data': request.POST # Keeps the typed text so they don't re-type
+            })
 
-    if student:
-        return Response({
-            'status': 'success', 
-            'message': 'Identity Verified. Proceed to Secure PIN.',
-            'student_id': student.account_number
-        })
-    else:
-        return Response({
-            'status': 'error', 
-            'message': 'No matching records found in the National Registry.'
-        }, status=401)
+    # If it's a GET request, just show the login page
+    return render(request, 'index.html')
 
 @api_view(['GET'])
 def staff_hub_login(request):

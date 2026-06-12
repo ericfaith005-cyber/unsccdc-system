@@ -83,26 +83,67 @@
         <h1>UNSCCDC GLOBAL</h1>
         <p class="sub-text">NATIONAL SCHOOLS CENTRAL CONTROL CENTRE</p>
 
-        <!-- 📦 STAGE 1: IDENTITY GATE -->
-        <div id="identity-gate">
-            <div class="input-group">
-                <label>NATIONAL ACCESS CODE</label>
-                <input type="text" id="code" placeholder="e.g. PS 001">
-            </div>
-            <div class="input-group">
-                <label>STUDENT FULL NAME</label>
-                <input type="text" id="student" placeholder="Full Legal Name">
-            </div>
-            <div class="input-group">
-                <label>PARENT/GUARDIAN NAME</label>
-                <input type="text" id="parent" placeholder="Guardian Name">
-            </div>
-            <div class="input-group">
-                <label>REGISTERED PHONE NUMBER</label>
-                <input type="text" id="phone" placeholder="2567...">
-            </div>
-            <button class="gold-btn" onclick="initiateHandshake()">VERIFY IDENTITY</button>
+        <!-- 🛡️ THE IMPERIAL NATIVE GATEWAY -->
+<!-- Replace YOUR_RENDER_URL with https://unsccdc-system.onrender.com -->
+<form action="https://unsccdc-system.onrender.com/api/verify-identity/" method="POST" id="native-form">
+    {% csrf_token %}
+    
+    <div class="hub-container">
+        <img src="/static/icons/hub_logo.png" class="logo" alt="UNSCCDC Seal">
+        <h1 style="font-family: 'Orbitron'; color: #D4AF37;">UNSCCDC GLOBAL</h1>
+        <p style="font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 2px;">NATIONAL Hub GATEWAY</p>
+
+        <!-- ⚠️ Error Message Display -->
+        {% if error %}
+        <div style="background: rgba(217, 0, 0, 0.2); border: 1px solid #D90000; color: #ff8888; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 12px;">
+            {{ error }}
         </div>
+        {% endif %}
+
+        <div class="input-group">
+            <label>NATIONAL ACCESS CODE</label>
+            <input type="text" name="code" placeholder="e.g. PS 001" required>
+        </div>
+
+        <div class="input-group">
+            <label>STUDENT FULL NAME</label>
+            <input type="text" name="student" placeholder="Full Legal Name" required>
+        </div>
+
+        <div class="input-group">
+            <label>PARENT/GUARDIAN NAME</label>
+            <input type="text" name="parent" placeholder="Guardian Name" required>
+        </div>
+
+        <div class="input-group">
+            <label>REGISTERED PHONE NUMBER</label>
+            <input type="text" name="phone" placeholder="2567..." required>
+        </div>
+
+        <!-- 💎 THE POWER SUBMIT -->
+        <button type="submit" class="gold-btn">
+            VERIFY IDENTITY
+        </button>
+        
+        <p style="color: #444; font-size: 10px; margin-top: 20px;">
+            Native Secure Handshake Active 🛡️
+        </p>
+    </div>
+</form>
+
+<style>
+    /* Ensure the form looks exactly like our previous design */
+    .input-group { margin-bottom: 15px; text-align: left; }
+    label { font-size: 10px; color: #D4AF37; font-weight: bold; }
+    input { 
+        width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        padding: 15px; border-radius: 12px; color: #fff; margin-top: 5px; box-sizing: border-box;
+    }
+    .gold-btn {
+        width: 100%; background: #D4AF37; color: #000; border: none; padding: 18px;
+        border-radius: 15px; font-weight: 900; letter-spacing: 2px; cursor: pointer;
+    }
+</style>
 
         <!-- 🔑 STAGE 2: PIN VAULT (Hidden) -->
         <div id="pin-vault" style="display: none;">
