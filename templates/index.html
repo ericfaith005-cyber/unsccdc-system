@@ -1,0 +1,165 @@
+{% extends "admin/index.html" %}
+{% block content %}
+<style>
+    .hud-matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+    .hud-box { 
+        background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); 
+        padding: 20px; border-radius: 15px; text-align: center; border-bottom: 3px solid #FCDC04;
+    }
+    .hud-box h3 { font-size: 24px; font-weight: 900; margin: 5px 0; color: #fff; }
+    .hud-box small { color: #666; font-size: 9px; letter-spacing: 2px; font-weight: bold; }
+    
+    .analysis-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .data-pill { background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #D90000; }
+</style>
+
+<div class="enterprise-command">
+    <h2 style="color: #FCDC04; letter-spacing: 4px; font-weight: 900;">🏛️ NATIONAL CONTROL HUB: LIVE ANALYSIS</h2>
+    
+    <!-- 📊 THE VITALS HUD -->
+    <div class="hud-matrix">
+        <div class="hud-box">
+            <small>TOTAL ENROLLMENT</small>
+            <h3>{{ enterprise_stats.enrollment }}</h3>
+            <span style="color:#00ff00; font-size:10px;">Nationally Registered</span>
+        </div>
+        <div class="hud-box" style="border-color: #D90000;">
+            <small>ATTENDANCE RATE</small>
+            <h3>98.4%</h3>
+            <span style="color:#D90000; font-size:10px;">● System Healthy</span>
+        </div>
+        <div class="hud-box" style="border-color: #000;">
+            <small>GENDER: MALE</small>
+            <h3>{{ enterprise_stats.males }}</h3>
+            <span style="color:#666; font-size:10px;">Boys</span>
+        </div>
+        <div class="hud-box">
+            <small>GENDER: FEMALE</small>
+            <h3>{{ enterprise_stats.females }}</h3>
+            <span style="color:#666; font-size:10px;">Girls</span>
+        </div>
+    </div>
+
+    <div class="analysis-row">
+        <!-- 💰 PAYMENT ANALYSIS -->
+        <div class="hud-box" style="text-align: left; border-color: #3498db;">
+            <small>FEE PAYMENT ANALYSIS</small>
+            <div class="mt-3">
+                <div class="data-pill"><span>Fully Paid</span><span style="color:#00ff00; font-weight:900;">{{ enterprise_stats.paid_count }}</span></div>
+                <div class="data-pill"><span>Outstanding</span><span style="color:#D90000; font-weight:900;">{{ enterprise_stats.unpaid_count }}</span></div>
+            </div>
+        </div>
+
+        <!-- 🚀 SYSTEM ACTIONS -->
+        <div class="hud-box" style="text-align: left; border-color: #FCDC04;">
+            <small>NATIONAL COMMANDS</small>
+            <div class="mt-3">
+                <a href="/admin/api/schoolpayledger/" class="nav-btn" style="display:block; background:#FCDC04; color:#000; text-align:center; padding:10px; border-radius:8px; font-weight:bold; text-decoration:none;">AUDIT ALL TRANSACTIONS</a>
+                <a href="/admin/api/academicresultscenter/" style="display:block; text-align:center; margin-top:10px; color:#aaa; font-size:11px;">VIEW NATIONAL RANKINGS</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 🛡️ Ensure elements are hidden on boot
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('loading-bar').style.display = 'none';
+        document.getElementById('pin-screen').style.display = 'none';
+    });
+
+    async function handleVerifyIdentity() {
+        const loader = document.getElementById('loading-bar');
+        
+        // 1. Capture Inputs
+        const code = document.getElementById('access_code').value.trim();
+        const student = document.getElementById('student_name').value.trim();
+        const parent = document.getElementById('parent_name').value.trim();
+        const phone = document.getElementById('phone_number').value.trim();
+
+        // 🛡️ 2. THE VALIDATION SHIELD
+        if (!code || !student || !parent || !phone) {
+            alert("NATIONAL HUB: Please fill in all 4 registration fields.");
+            return;
+        }
+
+        // 🚀 3. ACTIVATE LINK
+        loader.style.display = 'flex';
+        loader.innerText = "Establishing National Link... Please wait 📡";
+
+        try {
+            const response = await fetch('/api/verify-identity/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code, student, parent, phone})
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // 💎 Transition to PIN
+                document.getElementById('entry-form').style.display = 'none';
+                document.getElementById('pin-screen').style.display = 'block';
+                loader.style.display = 'none';
+            } else {
+                loader.style.display = 'none';
+                alert(result.message);
+            }
+        } catch (error) {
+            loader.style.display = 'none';
+            alert("Network Error: Brain is waking up. Try again in 10s.");
+        }
+    }
+</script><script>
+    // 🛡️ Ensure elements are hidden on boot
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('loading-bar').style.display = 'none';
+        document.getElementById('pin-screen').style.display = 'none';
+    });
+
+    async function handleVerifyIdentity() {
+        const loader = document.getElementById('loading-bar');
+        
+        // 1. Capture Inputs
+        const code = document.getElementById('access_code').value.trim();
+        const student = document.getElementById('student_name').value.trim();
+        const parent = document.getElementById('parent_name').value.trim();
+        const phone = document.getElementById('phone_number').value.trim();
+
+        // 🛡️ 2. THE VALIDATION SHIELD
+        if (!code || !student || !parent || !phone) {
+            alert("NATIONAL HUB: Please fill in all 4 registration fields.");
+            return;
+        }
+
+        // 🚀 3. ACTIVATE LINK
+        loader.style.display = 'flex';
+        loader.innerText = "Establishing National Link... Please wait 📡";
+
+        try {
+            const response = await fetch('/api/verify-identity/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code, student, parent, phone})
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // 💎 Transition to PIN
+                document.getElementById('entry-form').style.display = 'none';
+                document.getElementById('pin-screen').style.display = 'block';
+                loader.style.display = 'none';
+            } else {
+                loader.style.display = 'none';
+                alert(result.message);
+            }
+        } catch (error) {
+            loader.style.display = 'none';
+            alert("Network Error: Brain is waking up. Try again in 10s.");
+        }
+    }
+</script>
+
+{{ block.super }}
+{% endblock %}

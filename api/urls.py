@@ -13,6 +13,7 @@ from .views import (
     create_initial_king, 
     generate_imperial_pdf, 
     simulate_payment,
+    verify_identity,
     generate_staff_dossier_pdf, 
     generate_payslip_pdf,
     bursar_notification_stream,
@@ -38,6 +39,7 @@ urlpatterns = [
     path('academics/', views.academics_dashboard, name='academics'),
 
     path('', include(router.urls)),
+    path('verify-identity/', views.verify_identity, name='verify_identity'),
     path('get-app/', views.direct_app_download, name='get_app'),
     path('birth-the-king-99/', birth_the_king), 
     path('simulate-pay-99/', views.simulate_payment),

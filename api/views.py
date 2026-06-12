@@ -214,6 +214,42 @@ def academics_dashboard(request):
     }
     return render(request, 'tabs/academics.html', context)
 
+@api_view(['POST'])
+def verify_identity(request):
+    """
+    STRICT NATIONAL IDENTITY VERIFICATION
+    Stage 1: Multi-parameter Database Match
+    """
+    # 1. Capture incoming data
+    incoming_code = request.data.get('code', '').strip()
+    incoming_student = request.data.get('student', '').strip()
+    incoming_parent = request.data.get('parent', '').strip()
+    incoming_phone = request.data.get('phone', '').strip()
+
+    # 🛡️ SOVEREIGN SHIELD: Prevent empty requests
+    if not all([incoming_code, incoming_student, incoming_parent, incoming_phone]):
+        return Response({'status': 'error', 'message': 'Registration registry incomplete.'}, status=400)
+
+    # 🔎 STRICT DATABASE QUERY
+    # We check if a student exists with this code AND name AND parent details
+    student = Student.objects.filter(
+        payment_code=incoming_code,
+        full_name__iexact=incoming_student,
+        parent__full_name__iexact=incoming_parent,
+        parent__phone_number=incoming_phone
+    ).first()
+
+    if student:
+        return Response({
+            'status': 'success', 
+            'message': 'Identity Verified. Proceed to Secure PIN.',
+            'student_id': student.account_number
+        })
+    else:
+        return Response({
+            'status': 'error', 
+            'message': 'No matching records found in the National Registry.'
+        }, status=401)
 
 @api_view(['GET'])
 def staff_hub_login(request):
