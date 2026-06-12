@@ -12,7 +12,48 @@ from .models import (
     FinancialCommandCenter, AcademicResultsCenter, NationalLedger, CommissionAnalytics, 
     AttendanceHub, 
 )
-# --- 🛡️ SURGERY: THE INDESTRUCTIBLE SECURITY GUARD (api/admin.py) ---
+
+# =============================================================
+# 👔 THE IMPERIAL HR COMMAND (STAFF DOSSIER REGISTRY)
+# =============================================================
+
+@admin.register(Staff)
+class StaffAdmin(admin.ModelAdmin):
+    # 💎 1. THE LIST VIEW (Scannable Columns)
+    list_display = ('full_name', 'designation', 'school', 'staff_id', 'tin_number', 'dossier_button_link')
+    search_fields = ('full_name', 'staff_id', 'tin_number')
+    list_filter = ('school', 'designation')
+
+    # 💎 2. THE CATEGORIZED TABS (The 'Fieldsets' logic you requested!)
+    fieldsets = (
+        ('👤 CORE IDENTITY', {
+            'description': "Basic profile and institutional designation",
+            'fields': (('full_name', 'designation'), 'school', 'staff_id')
+        }),
+        ('📂 OFFICIAL DOCUMENTATION', {
+            'description': "Legal bio-metrics and career documents",
+            'classes': ('collapse',), # Makes it collapsible for prestige
+            'fields': ('passport_photo', 'national_id_copy', 'cv_pdf')
+        }),
+        ('🏛️ GOVERNMENT COMPLIANCE', {
+            'description': "URA Tax and NSSF Regulatory information",
+            'fields': (('tin_number', 'nssf_number'),)
+        }),
+        ('📞 COMMUNICATION & KINSHIP', {
+            'fields': ('phone', 'next_of_kin', 'next_of_kin_phone')
+        }),
+        ('🔒 SECURITY & PAYMENTS', {
+            'fields': (('momo_number', 'secure_pin'),)
+        }),
+    )
+
+    # 🛡️ PROTECTION
+    readonly_fields = ('staff_id',)
+
+    # 📥 THE DOSSIER BUTTON (Inside the list)
+    def dossier_button_link(self, obj):
+        return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
+    dossier_button_link.short_description = 'HR Archive'
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
@@ -147,7 +188,6 @@ admin.site.register([
     Subject, 
     Parent,
     School,
-    StaffAdmin, 
     Student, 
     AcademicResult,
     AttendanceHub, 
@@ -236,44 +276,6 @@ class AssignmentInline(admin.TabularInline):
     extra = 1
     verbose_name = "Academic Workload"
 
-# =============================================================
-# 👔 THE IMPERIAL HR COMMAND (STAFF DOSSIER REGISTRY)
-# =============================================================
-@admin.register(Staff)
-class StaffAdmin(admin.ModelAdmin):
-    # 1. THE VIEW: High-level scannable columns
-    list_display = ('full_name', 'designation', 'school', 'staff_id', 'tin_number')
-    search_fields = ('full_name', 'staff_id', 'tin_number')
-    list_filter = ('school', 'designation')
-
-    # 💎 2. THE CATEGORIZED FIELDSETS (The Organize logic)
-    fieldsets = (
-        ('👤 CORE IDENTITY', {
-            'description': "Basic profile and institutional designation",
-            'fields': (('full_name', 'designation'), 'school', 'staff_id')
-        }),
-        ('📂 OFFICIAL DOCUMENTATION', {
-            'description': "Legal bio-metrics and career documents",
-            'fields': ('passport_photo', 'national_id_copy', 'cv_pdf')
-        }),
-        ('🏛️ GOVERNMENT COMPLIANCE', {
-            'description': "URA Tax and NSSF Regulatory information",
-            'fields': (('tin_number', 'nssf_number'),)
-        }),
-        ('📞 COMMUNICATION & KINSHIP', {
-            'description': "Contact registry and emergency protocols",
-            'fields': ('phone', 'next_of_kin', 'next_of_kin_phone')
-        }),
-        ('🔒 SECURITY & PAYMENTS', {
-            'description': "Financial uplink and secure access credentials",
-            'fields': (('momo_number', 'secure_pin'),)
-        }),
-    )
-
-    # Make the ID and certain fields read-only to prevent accidental tampering
-    readonly_fields = ('staff_id',)
-
-    # 🛰️ Layout Trick: Grouping fields on the same line using tuples ( )
 
 @admin.register(StaffPayroll)
 class StaffPayrollAdmin(SchoolIsolatedAdmin):
@@ -371,9 +373,6 @@ class FinancialCommandAdmin(SchoolIsolatedAdmin):
     list_filter = ('district', 'school_type', 'is_verified') 
     search_fields = ('name', 'school_account_id', 'district')
 
-    # =============================================================
-    # 🧮 THE GOLIATH MATHEMATICAL FORMULAS (KILLS E108 ERRORS)
-    # =============================================================
     
     def current_term_subtotal(self, obj):
         """Calculates rolling 120-day termly revenue for this specific school row"""
