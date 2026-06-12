@@ -1,211 +1,183 @@
-{% extends "admin/index.html" %}
-{% block content %}
-<style>
-    .hud-matrix { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
-    .hud-box { 
-        background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); 
-        padding: 20px; border-radius: 15px; text-align: center; border-bottom: 3px solid #FCDC04;
-    }
-    .hud-box h3 { font-size: 24px; font-weight: 900; margin: 5px 0; color: #fff; }
-    .hud-box small { color: #666; font-size: 9px; letter-spacing: 2px; font-weight: bold; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNSCCDC | National Hub Gateway</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     
-    .analysis-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .data-pill { background: #111; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid #D90000; }
-</style>
-
-<!-- 🛡️ THE SECURITY TOKEN (Must be inside the body) -->
-{% csrf_token %}
-
-<div class="container">
-    <!-- 📦 ROOM 1: THE REGISTRY GATE (Visible by default) -->
-    <div id="identity-form">
-        <!-- We use the IDs exactly as the JavaScript expects them -->
-        <div class="input-group">
-            <label>NATIONAL ACCESS CODE</label>
-            <input type="text" id="national_access_code" placeholder="e.g. PS 001">
-        </div>
-
-        <div class="input-group">
-            <label>STUDENT FULL NAME</label>
-            <input type="text" id="student_name" placeholder="Enter student name">
-        </div>
-
-        <div class="input-group">
-            <label>PARENT NAME</label>
-            <input type="text" id="parent_name" placeholder="Enter guardian name">
-        </div>
-
-        <div class="input-group">
-            <label>PHONE NUMBER</label>
-            <input type="text" id="phone_number" placeholder="256...">
-        </div>
+    <style>
+        :root { --gold: #D4AF37; --red: #D90000; --black: #000; --glass: rgba(255, 255, 255, 0.03); }
         
-        <!-- 💎 THE TRIGGER BUTTON -->
-        <button onclick="handleNationalVerification()" class="gold-button">
-            VERIFY IDENTITY
-        </button>
-    </div>
-
-    <!-- ⏳ THE LOADING BAR (Hidden until button is clicked) -->
-    <div id="loading-bar" style="display: none;">
-        Establishing National Link...
-    </div>
-
-    <!-- 🔑 ROOM 2: THE PIN VAULT (Hidden until Identity is Verified) -->
-    <div id="pin-screen" style="display: none;">
-        <h2 style="color: #D4AF37;">IDENTITY CONFIRMED ✅</h2>
-        <p style="color: #666; font-size: 10px;">ENTER YOUR SOVEREIGN PIN TO ACCESS THE HUB</p>
-        
-        <!-- PIN inputs here -->
-        <div class="pin-container">
-             <input type="password" id="pin_code" maxlength="4" style="text-align: center; font-size: 24px; letter-spacing: 10px;">
-        </div>
-
-        <button onclick="handleFinalLogin()" class="gold-button" style="margin-top: 20px;">
-            AUTHORIZE ACCESS
-        </button>
-    </div>
-</div>
-
-<div class="enterprise-command">
-    <h2 style="color: #FCDC04; letter-spacing: 4px; font-weight: 900;">🏛️ NATIONAL CONTROL HUB: LIVE ANALYSIS</h2>
-    
-    <!-- 📊 THE VITALS HUD -->
-    <div class="hud-matrix">
-        <div class="hud-box">
-            <small>TOTAL ENROLLMENT</small>
-            <h3>{{ enterprise_stats.enrollment }}</h3>
-            <span style="color:#00ff00; font-size:10px;">Nationally Registered</span>
-        </div>
-        <div class="hud-box" style="border-color: #D90000;">
-            <small>ATTENDANCE RATE</small>
-            <h3>98.4%</h3>
-            <span style="color:#D90000; font-size:10px;">● System Healthy</span>
-        </div>
-        <div class="hud-box" style="border-color: #000;">
-            <small>GENDER: MALE</small>
-            <h3>{{ enterprise_stats.males }}</h3>
-            <span style="color:#666; font-size:10px;">Boys</span>
-        </div>
-        <div class="hud-box">
-            <small>GENDER: FEMALE</small>
-            <h3>{{ enterprise_stats.females }}</h3>
-            <span style="color:#666; font-size:10px;">Girls</span>
-        </div>
-    </div>
-
-    <div class="analysis-row">
-        <!-- 💰 PAYMENT ANALYSIS -->
-        <div class="hud-box" style="text-align: left; border-color: #3498db;">
-            <small>FEE PAYMENT ANALYSIS</small>
-            <div class="mt-3">
-                <div class="data-pill"><span>Fully Paid</span><span style="color:#00ff00; font-weight:900;">{{ enterprise_stats.paid_count }}</span></div>
-                <div class="data-pill"><span>Outstanding</span><span style="color:#D90000; font-weight:900;">{{ enterprise_stats.unpaid_count }}</span></div>
-            </div>
-        </div>
-
-        <!-- 🚀 SYSTEM ACTIONS -->
-        <div class="hud-box" style="text-align: left; border-color: #FCDC04;">
-            <small>NATIONAL COMMANDS</small>
-            <div class="mt-3">
-                <a href="/admin/api/schoolpayledger/" class="nav-btn" style="display:block; background:#FCDC04; color:#000; text-align:center; padding:10px; border-radius:8px; font-weight:bold; text-decoration:none;">AUDIT ALL TRANSACTIONS</a>
-                <a href="/admin/api/academicresultscenter/" style="display:block; text-align:center; margin-top:10px; color:#aaa; font-size:11px;">VIEW NATIONAL RANKINGS</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // --- 🛡️ 1. INITIAL LOCKDOWN ---
-    // This ensures everything is hidden properly when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-        const loadingBar = document.getElementById('loading-bar');
-        const pinScreen = document.getElementById('pin-screen');
-        const identityForm = document.getElementById('identity-form');
-
-        if (loadingBar) loadingBar.style.display = 'none';
-        if (pinScreen) pinScreen.style.display = 'none';
-        if (identityForm) identityForm.style.display = 'block';
-        
-        console.log("--- 🏛️ NATIONAL REGISTRY GATEWAY ONLINE ---");
-    });
-
-    // --- ⚡ 2. THE IDENTITY HANDSHAKE (Fired only on click) ---
-    async function handleNationalVerification() {
-        // A. Identify UI Components
-        const loadingBar = document.getElementById('loading-bar');
-        const identityForm = document.getElementById('identity-form');
-        const pinScreen = document.getElementById('pin-screen');
-
-        // B. Capture the Values
-        const code = document.getElementById('national_access_code').value.trim();
-        const student = document.getElementById('student_name').value.trim();
-        const parent = document.getElementById('parent_name').value.trim();
-        const phone = document.getElementById('phone_number').value.trim();
-
-        // 🛡️ C. THE VALIDATION SHIELD
-        // This stops the infinite spinning before the network is even touched!
-        if (!code || !student || !parent || !phone) {
-            alert("NATIONAL HUB: Please fill in all your registration details before proceeding.");
-            return; // 🛑 Halt execution
+        body { 
+            background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; 
+            margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center;
         }
 
-        // 🚀 D. WAKE UP THE LINK
-        loadingBar.style.display = 'flex';
-        loadingBar.innerHTML = "Establishing National Link... Please wait 📡";
+        /* 🌌 THE MOVING GALAXY BACKGROUND */
+        #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 
-        try {
-            // E. THE CLOUD UPLINK
-            const response = await fetch('/api/verify-identity/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken() // Security standard
-                },
-                body: JSON.stringify({
-                    code: code,
-                    student: student,
-                    parent: parent,
-                    phone: phone
-                })
-            });
+        /* 🇺🇬 THE NATIONAL RIBBON */
+        .flag-top {
+            position: fixed; top: 0; left: 0; width: 100%; height: 6px;
+            background: linear-gradient(90deg, #000 16%, #FCDC04 16%, #FCDC04 33%, #D90000 33%, #D90000 50%, #000 50%, #000 66%, #FCDC04 66%, #FCDC04 83%, #D90000 83%);
+            background-size: 200% 100%; animation: ribbonFlow 4s linear infinite; z-index: 1000;
+        }
+        @keyframes ribbonFlow { from { background-position: 200% 0; } to { background-position: 0 0; } }
 
-            const result = await response.json();
+        /* 🛡️ THE HUD CONTAINER */
+        .hub-container {
+            width: 90%; max-width: 450px; background: var(--glass); backdrop-filter: blur(20px);
+            padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.8); text-align: center;
+            animation: fadeIn 1s ease-out;
+        }
 
-            if (response.status === 200 && result.status === 'success') {
-                // 💎 --- PHASE 3: THE TRANSITION --- 💎
-                console.log("Registry Sync Success. Opening PIN Screen.");
-                
-                // Hide Stage 1
-                identityForm.style.display = 'none';
-                loadingBar.style.display = 'none';
-                
-                // Show Stage 2 (PIN)
-                pinScreen.style.display = 'block';
-                pinScreen.classList.add('animate-fade-in'); // Standard CSS animation
-                
-                // Success message feedback
-                showToast("Identity Verified. Enter Secure PIN.");
-            } else {
-                // 🛑 ACCESS DENIED
-                loadingBar.style.display = 'none';
-                alert(result.message || "National Registry: Match not found.");
+        .logo { height: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 15px var(--gold)); }
+        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 22px; letter-spacing: 4px; margin: 0; }
+        .sub-text { font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-bottom: 30px; }
+
+        /* 🔑 INPUT STYLING */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { font-size: 9px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; padding-left: 5px; }
+        input {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px; border-radius: 12px; color: #fff; font-size: 14px; margin-top: 5px;
+            transition: 0.3s; box-sizing: border-box; outline: none;
+        }
+        input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); }
+
+        /* ⚡ BUTTON STYLING */
+        .gold-btn {
+            width: 100%; background: var(--gold); color: #000; border: none; padding: 18px;
+            border-radius: 15px; font-weight: 900; font-size: 14px; letter-spacing: 2px;
+            cursor: pointer; margin-top: 20px; transition: 0.4s;
+        }
+        .gold-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.4); }
+
+        /* ⏳ LOADER OVERLAY */
+        #loader {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); border-radius: 30px; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10;
+        }
+        .spinner { border: 4px solid #111; border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+    <div class="flag-top"></div>
+
+    <div class="hub-container">
+        <!-- ⏳ LOADER -->
+        <div id="loader">
+            <div class="spinner"></div>
+            <p style="color: var(--gold); font-size: 10px; margin-top: 20px; letter-spacing: 2px;" id="loader-text">ESTABLISHING LINK...</p>
+        </div>
+
+        <img src="/static/icons/hub_logo.png" class="logo" alt="UNSCCDC Seal">
+        <h1>UNSCCDC GLOBAL</h1>
+        <p class="sub-text">NATIONAL SCHOOLS CENTRAL CONTROL CENTRE</p>
+
+        <!-- 📦 STAGE 1: IDENTITY GATE -->
+        <div id="identity-gate">
+            <div class="input-group">
+                <label>NATIONAL ACCESS CODE</label>
+                <input type="text" id="code" placeholder="e.g. PS 001">
+            </div>
+            <div class="input-group">
+                <label>STUDENT FULL NAME</label>
+                <input type="text" id="student" placeholder="Full Legal Name">
+            </div>
+            <div class="input-group">
+                <label>PARENT/GUARDIAN NAME</label>
+                <input type="text" id="parent" placeholder="Guardian Name">
+            </div>
+            <div class="input-group">
+                <label>REGISTERED PHONE NUMBER</label>
+                <input type="text" id="phone" placeholder="2567...">
+            </div>
+            <button class="gold-btn" onclick="initiateHandshake()">VERIFY IDENTITY</button>
+        </div>
+
+        <!-- 🔑 STAGE 2: PIN VAULT (Hidden) -->
+        <div id="pin-vault" style="display: none;">
+            <h3 style="color: var(--gold); margin-bottom: 5px;">IDENTITY VERIFIED ✅</h3>
+            <p style="color: #666; font-size: 11px; margin-bottom: 30px;">ENTER YOUR 4-DIGIT SOVEREIGN PIN</p>
+            <input type="password" id="pin" maxlength="4" style="text-align: center; font-size: 32px; letter-spacing: 20px;">
+            <button class="gold-btn" onclick="authorizeAccess()" style="background: var(--red); color: #fff;">AUTHORIZE ACCESS</button>
+            <p onclick="location.reload()" style="font-size: 10px; color: #444; margin-top: 20px; cursor: pointer;">← Back to Identity Gate</p>
+        </div>
+    </div>
+
+    <script>
+        const hubIP = "https://unsccdc-system.onrender.com";
+
+        async function initiateHandshake() {
+            const code = document.getElementById('code').value.trim();
+            const student = document.getElementById('student').value.trim();
+            const parent = document.getElementById('parent').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const loader = document.getElementById('loader');
+
+            if (!code || !student || !parent || !phone) {
+                alert("REGISTRY ERROR: All fields are required for National Verification.");
+                return;
             }
 
-        } catch (error) {
-            // ⚠️ NETWORK INTERRUPT
-            loadingBar.style.display = 'none';
-            alert("National Link Interrupted: Check your internet connection.");
-            console.error("Critical Uplink Error:", error);
+            loader.style.display = 'flex';
+            document.getElementById('loader-text').innerText = "QUERYING NATIONAL REGISTRY...";
+
+            try {
+                // 💎 THE IMPERIAL HANDSHAKE
+                const url = `${hubIP}/api/verify-identity/?code=${code}&student=${student}&parent=${parent}&phone=${phone}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST', // Log shows OPTIONS then POST/GET
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (response.status === 200 && data.status === 'authenticated') {
+                    // 🚀 TRANSITION TO STAGE 2
+                    document.getElementById('identity-gate').style.display = 'none';
+                    document.getElementById('pin-vault').style.display = 'block';
+                    loader.style.display = 'none';
+                } else {
+                    loader.style.display = 'none';
+                    alert(data.message || "Identity Rejected: Check your details.");
+                }
+            } catch (err) {
+                loader.style.display = 'none';
+                alert("NATIONAL LINK INTERRUPTED: The Brain is waking up. Try again in 10s.");
+            }
         }
-    }
 
-    // Helper to get CSRF token for Django
-    function getCSRFToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
-    }
+        // --- 🌌 STARFIELD ENGINE ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
 
-    function showToast(msg) {
-        console.log("SYSTEM NOTIFICATION:", msg);
-    }
-</script>
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.onresize = resize; resize();
+
+        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*1.5, speed: Math.random()*0.5});
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            stars.forEach(s => {
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+                s.y += s.speed; if(s.y > canvas.height) s.y = 0;
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>

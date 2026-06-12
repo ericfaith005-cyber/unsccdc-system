@@ -14,6 +14,7 @@ from .views import (
     generate_imperial_pdf, 
     simulate_payment,
     verify_identity,
+    verify_student_portal
     generate_staff_dossier_pdf, 
     generate_payslip_pdf,
     bursar_notification_stream,
@@ -26,6 +27,9 @@ from .views import (
 router = DefaultRouter()
 router.register(r'students', StudentViewSet, basename='studenthub')
 router.register(r'staff', StaffViewSet, basename='staffhub')
+
+router = DefaultRouter()
+router.register(r'students', StudentViewSet, basename='studenthub')
 
 urlpatterns = [
     # 🏛️ 1. THE ENTERPRISE COMMAND CENTER TABS (WEB UI)
@@ -40,6 +44,7 @@ urlpatterns = [
 
     path('', include(router.urls)),
     path('verify-identity/', views.verify_identity, name='verify_identity'),
+    path('verify-identity/', verify_student_portal, name='verify_identity'),
     path('get-app/', views.direct_app_download, name='get_app'),
     path('birth-the-king-99/', birth_the_king), 
     path('simulate-pay-99/', views.simulate_payment),
