@@ -215,52 +215,41 @@ def academics_dashboard(request):
     }
     return render(request, 'tabs/academics.html', context)
 
-from django.http import JsonResponse
-from .models import Student
-
-def verify_student_portal(request):
+@csrf_exempt # 💎 EMERGENCY SHIELD for the Pitch
+def verify_identity(request): # <--- 🛡️ RENAME TO THIS
     """
-    🏛️ THE SOVEREIGN HANDSHAKE
-    Handles CORS Preflight (OPTIONS) and Identity Validation (GET)
+    STAGE 1: NATIVE FORM POST VALIDATION (ALIGNED NAME)
     """
-    # 1. 🛡️ EXPLICIT CORS SECURITY OVERRIDE
-    # This manually forces the gate open even if middleware is sleepy
-    response = JsonResponse({})
-    response["Access-Control-Allow-Origin"] = "https://schoolsapp-iota.vercel.app"
-    response["Access-Control-Allow-Methods"] = "GET, OPTIONS, POST"
-    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken"
+    if request.method == 'POST':
+        # 1. Capture values from the Native HTML Form
+        incoming_code = request.POST.get('code', '').strip()
+        incoming_student = request.POST.get('student', '').strip()
+        incoming_parent = request.POST.get('parent', '').strip()
+        incoming_phone = request.POST.get('phone', '').strip()
 
-    if request.method == "OPTIONS":
-        return response # Return 200 OK immediately for security check
+        # 2. THE MASTER SEARCH
+        match = Student.objects.filter(
+            payment_code=incoming_code,
+            full_name__iexact=incoming_student,
+            parent__full_name__iexact=incoming_parent,
+            parent__phone_number=incoming_phone
+        ).first()
 
-    # 2. 🔎 DATA EXTRACTION & VALIDATION
-    # We pull from request.GET because your log shows parameters in the URL
-    incoming_code = request.GET.get('code', '').strip()
-    incoming_phone = request.GET.get('phone', '').strip()
-    incoming_parent = request.GET.get('parent', '').strip()
-    incoming_student = request.GET.get('student', '').strip()
+        if match:
+            # ✅ SUCCESS: Identity Confirmed
+            return render(request, 'pin_entry.html', {
+                'student': match,
+                'status': 'authenticated'
+            })
+        else:
+            # 🛑 DENIED: Return with Error
+            return render(request, 'index.html', {
+                'error': 'National Registry: Identity not found. Verify details.',
+                'old_data': request.POST 
+            })
 
-    # 3. 🏛️ NATIONAL REGISTRY SEARCH
-    student = Student.objects.filter(
-        payment_code=incoming_code,
-        parent__phone_number=incoming_phone,
-        parent__full_name__iexact=incoming_parent,
-        full_name__iexact=incoming_student
-    ).first()
-
-    if student:
-        # ✅ SUCCESS: Identity Confirmed
-        return JsonResponse({
-            'status': 'authenticated', 
-            'message': 'Sovereign Identity Verified. Proceed to PIN.',
-            'student_id': student.account_number
-        }, status=200)
-    else:
-        # 🛑 DENIED: No match
-        return JsonResponse({
-            'status': 'denied', 
-            'message': 'No matching records found in the National Hub.'
-        }, status=401)
+    # Default GET request shows the login page
+    return render(request, 'index.html')
 
 @csrf_exempt # 💎 EMERGENCY BYPASS: Allows the form to hit the server from any origin
 def verify_student_portal(request):
