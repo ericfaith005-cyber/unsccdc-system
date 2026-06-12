@@ -148,6 +148,7 @@ admin.site.register([
     Parent,
     School,
     Staff,
+    StaffAdmin, 
     Student, 
     AcademicResult,
     AttendanceHub, 
