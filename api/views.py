@@ -8,8 +8,6 @@ from .models import *
 # --- 🏛️ SURGERY: PDF IMPORTS (api/views.py) ---
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from .models import Staff, Student # 💎 Ensure Staff is imported!
@@ -17,6 +15,10 @@ import africastalking
 import random
 import uuid
 import traceback
+from django.shortcuts import render
+from django.db.models import Sum, F
+from django.contrib.auth.decorators import login_required
+from .models import Student, SchoolPayLedger, FeesTracker
 
 # --- 1. SOVEREIGN SMS GATEWAY (LIVE PRODUCTION) ---
 username = "yaweeric" 
@@ -174,6 +176,45 @@ class StudentViewSet(viewsets.ViewSet):
             return Response({"msg": "Registry Link Failure"}, status=401)
 
 # --- 🛰️ THE GOLIATH STAFF LOGIN ENGINE (api/views.py) ---
+
+@login_required
+def finances_dashboard(request):
+    # 🧮 GOLIATH FINANCIAL CALCULATIONS
+    # Get all transactions for the school (assuming request.user.school link)
+    ledger = SchoolPayLedger.objects.filter(school=request.user.school).order_by('-timestamp')
+    
+    # Financial Overview Metrics
+    stats = FeesTracker.objects.filter(student__school=request.user.school).aggregate(
+        total_invoiced=Sum('total_fees_due'),
+        total_paid=Sum('total_fees_paid')
+    )
+    
+    invoiced = stats['total_invoiced'] or 0
+    paid = stats['total_paid'] or 0
+    outstanding = invoiced - paid
+
+    context = {
+        'ledger': ledger,
+        'total_invoiced': invoiced,
+        'total_paid': paid,
+        'outstanding': outstanding,
+        'active_tab': 'finances'
+    }
+    return render(request, 'tabs/finances.html', context)
+
+@login_required
+def academics_dashboard(request):
+    # 👨‍🎓 STUDENT REGISTRY DATA
+    # Select students and prefetch fee status for the "Status Indicator"
+    students = Student.objects.filter(school=request.user.school).order_by('full_name')
+    
+    context = {
+        'students': students,
+        'active_tab': 'academics'
+    }
+    return render(request, 'tabs/academics.html', context)
+
+
 @api_view(['GET'])
 def staff_hub_login(request):
     name = request.query_params.get('name', '').strip()

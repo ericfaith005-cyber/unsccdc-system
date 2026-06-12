@@ -1,48 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="academics-hub" style="background: #0a0a0a; border-radius: 30px; padding: 40px; border: 1px solid #1a1a1a;">
-    <h1 style="color: #D4AF37; font-weight: 900; letter-spacing: 5px;">📊 ACADEMIC COMMAND</h1>
-    <p style="color: #555; letter-spacing: 2px;">CONTINUOUS ASSESSMENT & UNEB REGISTRY</p>
-
-    <div class="row mt-5">
-        <!-- 📑 MODULE 1: ASSESSMENT ENGINE -->
-        <div class="col-md-7">
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 30px; border-radius: 25px; height: 100%;">
-                <h4 style="color: #D4AF37;">Continuous Assessment Engine</h4>
-                <p style="color: #888; font-size: 13px;">Aligned with the <b>New Lower Secondary Curriculum (NLSC)</b> 20-point scale and UNEB D1-F9 conversions.</p>
-                <hr style="border-color: #222;">
-                <div class="mt-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <small style="color: #aaa;">Marking Progress (Term II)</small>
-                        <small style="color: var(--uns-gold);">82% Complete</small>
-                    </div>
-                    <div class="progress" style="height: 8px; background: #111; border-radius: 10px;">
-                        <div class="progress-bar" style="width: 82%; background: var(--uns-gold); box-shadow: 0 0 10px var(--uns-gold);"></div>
-                    </div>
-                </div>
-                <ul class="mt-4 list-unstyled" style="font-size: 12px; color: #ccc;">
-                    <li class="mb-2">✅ Automated AOI 1-4 Aggregation</li>
-                    <li class="mb-2">✅ Real-time Project Work Weighting</li>
-                    <li class="mb-2">✅ Digital Staffroom Timetabler Sync</li>
-                </ul>
-            </div>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">National Student Registry</h2>
+            <p class="text-muted">Continuous Assessment & Institutional Oversight</p>
         </div>
+        <button class="btn btn-dark rounded-pill px-4">+ Register New Student</button>
+    </div>
 
-        <!-- 📈 MODULE 2: STUDENT ANALYTICS -->
-        <div class="col-md-5">
-            <div style="background: rgba(0,35,102,0.1); border: 1px solid rgba(0,35,102,0.3); padding: 30px; border-radius: 25px; height: 100%;">
-                <h4 style="color: #fff;">Progress Analytics</h4>
-                <div class="text-center py-4">
-                    <span style="font-size: 40px; font-weight: 900; color: #00ff00;">↑ 14%</span>
-                    <p style="color: #555; font-size: 10px; letter-spacing: 1px;">NATIONAL PERFORMANCE GROWTH</p>
-                </div>
-                <div style="background: #000; padding: 15px; border-radius: 15px; border: 1px solid #111;">
-                    <small style="color: #00ff00;">REPORT GENERATOR ACTIVE</small><br>
-                    <a href="/admin/api/academicresultscenter/" style="color: #fff; font-size: 11px; text-decoration: none; font-weight: bold;">
-                        GO TO MASTER HUB →
-                    </a>
-                </div>
-            </div>
+    <!-- 👨‍🎓 STUDENT ROSTER -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table uns-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Profile</th>
+                        <th>Full Name</th>
+                        <th>System ID</th>
+                        <th>Class/Stream</th>
+                        <th>Fees A/C Number</th>
+                        <th>Standing</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td>
+                            <img src="{{ student.photo.url|default:'https://via.placeholder.com/40' }}" 
+                                 class="rounded-circle shadow-sm" width="45" height="45" style="object-fit: cover;">
+                        </td>
+                        <td class="fw-bold">{{ student.full_name }}</td>
+                        <td><code class="text-muted">{{ student.account_number }}</code></td>
+                        <td>{{ student.current_class }} {{ student.stream }}</td>
+                        <td><span class="text-primary fw-bold">{{ student.payment_code }}</span></td>
+                        <td>
+                            <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-3">Active</span>
+                        </td>
+                        <td class="text-center">
+                            <a href="/admin/api/academicresultscenter/{{ student.id }}/change/" class="btn btn-manage">
+                                <i class="fas fa-edit me-2"></i>Manage Profile / Input Marks
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

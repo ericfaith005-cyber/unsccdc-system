@@ -18,7 +18,7 @@ SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
 DEBUG = False
 
 ALLOWED_HOSTS = ['unsccdc-system.onrender.com', 'localhost', '127.0.0.1', 'unsccdc-hub.onrender.com', '10.220.66.47',
-    '.onrender.com', 'https://schoolsapp-seven.vercel.app/',]
+    '.onrender.com',]
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
     'corsheaders',
@@ -54,6 +54,8 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://unsccdc-system.onrender.com",
     "https://schoolsapp-seven.vercel.app/",
+    "https://*.vercel.app",
+    "https://schoolsapp-iota.vercel.app/",
     "https://ericfaith005-cyber.github.io",
 ]
 

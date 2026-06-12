@@ -1,45 +1,81 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
-<div class="finance-hub" style="background: #0a0a0a; border-radius: 30px; padding: 40px; border: 1px solid #1a1a1a;">
-    <h1 style="color: #D4AF37; font-weight: 900; letter-spacing: 5px;">💰 FINANCIAL COMMAND</h1>
-    <p style="color: #555; letter-spacing: 2px;">NATIONAL LEAK-PROOF LEDGER & REVENUE CONTROL</p>
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold text-dark">Financial Treasury Command</h2>
+        <p class="text-muted">Real-time SchoolPay Settlement Monitoring</p>
+    </div>
 
-    <!-- 📊 TOP FINANCIAL METRICS -->
-    <div class="row mt-4">
+    <!-- 📊 OVERVIEW CARDS -->
+    <div class="row g-4 mb-5">
         <div class="col-md-4">
-            <div style="background: #111; padding: 25px; border-radius: 20px; border-left: 5px solid #00ff00;">
-                <small style="color: #666; font-weight: bold;">CASH FLOW (MTN/AIRTEL)</small>
-                <h3 style="font-weight: 900; margin-top: 10px;">UGX 42.8M</h3>
+            <div class="card stats-card p-4 border-start border-4 border-primary">
+                <div class="d-flex justify-content-between">
+                    <div><small class="text-muted fw-bold">TOTAL INVOICED</small>
+                    <h3 class="fw-bold mt-1">UGX {{ total_invoiced|floatformat:0 }}</h3></div>
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary">💳</div>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div style="background: #111; padding: 25px; border-radius: 20px; border-left: 5px solid #3498db;">
-                <small style="color: #666; font-weight: bold;">OUTSTANDING BALANCES</small>
-                <h3 style="font-weight: 900; margin-top: 10px;">UGX 18.2M</h3>
+            <div class="card stats-card p-4 border-start border-4 border-success">
+                <div class="d-flex justify-content-between">
+                    <div><small class="text-muted fw-bold">TOTAL PAID</small>
+                    <h3 class="fw-bold mt-1 text-success">UGX {{ total_paid|floatformat:0 }}</h3></div>
+                    <div class="icon-box bg-success bg-opacity-10 text-success">✅</div>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div style="background: #111; padding: 25px; border-radius: 20px; border-left: 5px solid #e74c3c;">
-                <small style="color: #666; font-weight: bold;">SYSTEM BROADCASTS</small>
-                <h3 style="font-weight: 900; margin-top: 10px; font-size: 16px;">142 SMS REMINDERS SENT</h3>
+            <div class="card stats-card p-4 border-start border-4 border-danger">
+                <div class="d-flex justify-content-between">
+                    <div><small class="text-muted fw-bold">OUTSTANDING</small>
+                    <h3 class="fw-bold mt-1 text-danger">UGX {{ outstanding|floatformat:0 }}</h3></div>
+                    <div class="icon-box bg-danger bg-opacity-10 text-danger">⚠️</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="row mt-5">
-        <!-- 💎 MODULE 3: DIGITAL GATEWAY -->
-        <div class="col-md-12">
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 30px; border-radius: 25px;">
-                <h4 style="color: #fff;">Sovereign Gateway Syncing</h4>
-                <div class="d-flex gap-3 mt-4">
-                    <div style="flex:1; background: #f1c40f; color:#000; padding:15px; border-radius:12px; font-weight:900; text-align:center;">MTN MOMO</div>
-                    <div style="flex:1; background: #e74c3c; color:#fff; padding:15px; border-radius:12px; font-weight:900; text-align:center;">AIRTEL MONEY</div>
-                    <div style="flex:1; background: #002366; color:#fff; padding:15px; border-radius:12px; font-weight:900; text-align:center;">BANK AGENTS</div>
-                </div>
-                <p class="mt-4" style="color: #555; font-size: 11px;">
-                    Real-time synchronization with SchoolPay servers. Every dial of <b>*165#</b> is recorded in the National Treasury immediately.
-                </p>
-            </div>
+    <!-- 🧾 SCHOOLPAY LEDGER -->
+    <div class="table-container">
+        <h5 class="fw-bold mb-4">Master SchoolPay Transaction Ledger</h5>
+        <div class="table-responsive">
+            <table class="table uns-table zebra-rows table-hover">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Student Full Name</th>
+                        <th>SchoolPay A/C</th>
+                        <th>Class & Stream</th>
+                        <th>Amount Paid</th>
+                        <th>Timestamp</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in ledger %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ txn.receipt_number }}</td>
+                        <td class="text-dark">{{ txn.student.full_name|upper }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ txn.student.payment_code }}</span></td>
+                        <td>{{ txn.student.current_class }} - {{ txn.student.stream }}</td>
+                        <td class="fw-bold">UGX {{ txn.amount|floatformat:0 }}</td>
+                        <td class="text-muted">{{ txn.timestamp|date:"d M Y, H:i" }}</td>
+                        <td>
+                            {% if txn.amount >= 500000 %}
+                            <span class="badge badge-cleared">Fully Cleared</span>
+                            {% else %}
+                            <span class="badge badge-partial">Partial Payment</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-5 text-muted">No transactions recorded in the National Hub.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

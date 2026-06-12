@@ -33,8 +33,9 @@ urlpatterns = [
     path('profile/', profile_tab, name='profile'),
     path('academics/', academics_tab, name='academics'),
     path('finances/', finances_tab, name='finances'),
-    # Add to your urlpatterns
     path('force-rebuild-registry-99/', views.force_registry_rebuild),
+    path('finances/', views.finances_dashboard, name='finances'),
+    path('academics/', views.academics_dashboard, name='academics'),
 
     path('', include(router.urls)),
     path('get-app/', views.direct_app_download, name='get_app'),
