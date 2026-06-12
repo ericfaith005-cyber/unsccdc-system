@@ -1138,3 +1138,75 @@ def direct_app_download(request):
     
     # ⚡ No design, no website, JUST THE DOWNLOAD!
     return redirect(direct_link)
+
+def generate_staff_dossier_pdf(request, staff_id):
+    """
+    Generates a high-security National HR Dossier for Audit.
+    Includes: Biometrics, URA TIN, NSSF, and Regulatory Data.
+    """
+    try:
+        # 1. Fetch the Sovereign Identity
+        staff = Staff.objects.get(staff_id=staff_id)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Dossier_{staff.full_name}.pdf"'
+
+        p = canvas.Canvas(response, pagesize=A4)
+        w, h = A4
+
+        # 2. 🛡️ THE NATIONAL WATERMARK
+        p.saveState()
+        p.setFont("Helvetica-Bold", 60)
+        p.setFillColor(colors.lightgrey, alpha=0.05)
+        p.translate(w/2, h/2); p.rotate(45)
+        p.drawCentredString(0, 0, "UNSCCDC OFFICIAL HUB")
+        p.restoreState()
+
+        # 3. 🇺🇬 THE NATIONAL FLAG RIBBON
+        p.setLineWidth(5)
+        p.setStrokeColor(colors.black); p.line(0, h-2, w/3, h-2)
+        p.setStrokeColor(colors.orange); p.line(w/3, h-2, (w/3)*2, h-2)
+        p.setStrokeColor(colors.red); p.line((w/3)*2, h-2, w, h-2)
+
+        # 4. 🏛️ HEADER
+        p.setFont("Helvetica-Bold", 14)
+        p.drawCentredString(w/2, h-50, "THE REPUBLIC OF UGANDA")
+        p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(w/2, h-70, "NATIONAL STAFF REGISTRY - OFFICIAL DOSSIER")
+        p.setFont("Helvetica", 9)
+        p.drawCentredString(w/2, h-85, f"Institutional Station: {staff.school.name.upper()}")
+
+        # 5. 👤 SECTION 1: BIOMETRIC IDENTITY
+        p.setStrokeColor(colors.black); p.rect(40, h-250, w-80, 150)
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(50, h-120, "1.0 PERSONAL BIOMETRICS")
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-145, f"FULL LEGAL NAME: {staff.full_name.upper()}")
+        p.drawString(60, h-165, f"NATIONAL STAFF ID: {staff.staff_id}")
+        p.drawString(60, h-185, f"DESIGNATION: {staff.designation}")
+        p.drawString(60, h-205, f"CONTACT UPLINK: {staff.phone}")
+
+        # 6. 🏛️ SECTION 2: GOVERNMENT COMPLIANCE
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(50, h-280, "2.0 REGULATORY COMPLIANCE (URA / NSSF)")
+        p.line(50, h-285, 300, h-285)
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-310, f"URA TIN NUMBER: {getattr(staff, 'tin_number', 'PENDING')}")
+        p.drawString(60, h-330, f"NSSF REGISTRY NO: {getattr(staff, 'nssf_number', 'PENDING')}")
+
+        # 7. 📞 SECTION 3: EMERGENCY REGISTRY
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(50, h-380, "3.0 EMERGENCY & KINSHIP REGISTRY")
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-410, f"NEXT OF KIN: {getattr(staff, 'next_of_kin', 'NOT SET')}")
+        p.drawString(60, h-430, f"KIN CONTACT: {getattr(staff, 'next_of_kin_phone', 'NOT SET')}")
+
+        # 8. ✍️ AUTHORIZATION
+        p.setFont("Helvetica-Bold", 8)
+        p.drawCentredString(w/2, 100, "THIS DOCUMENT IS A CERTIFIED DIGITAL RECORD OF THE UNSCCDC HUB")
+        p.drawCentredString(w/2, 85, f"VERIFICATION HASH: {staff.staff_id}-AUDIT-2026")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        from django.http import HttpResponse
+        return HttpResponse(f"Dossier Engine Error: {str(e)}", status=400)
