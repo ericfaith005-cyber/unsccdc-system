@@ -236,27 +236,44 @@ class AssignmentInline(admin.TabularInline):
     extra = 1
     verbose_name = "Academic Workload"
 
-# --- 👔 2. THE TABBED STAFF COMMAND ---
+# =============================================================
+# 👔 THE IMPERIAL HR COMMAND (STAFF DOSSIER REGISTRY)
+# =============================================================
 @admin.register(Staff)
 class StaffAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'designation', 'school', 'staff_id')
-    inlines = [AssignmentInline] # 💎 This allows assigning subjects inside the profile
-    
+    # 1. THE VIEW: High-level scannable columns
+    list_display = ('full_name', 'designation', 'school', 'staff_id', 'tin_number')
+    search_fields = ('full_name', 'staff_id', 'tin_number')
+    list_filter = ('school', 'designation')
+
+    # 💎 2. THE CATEGORIZED FIELDSETS (The Organize logic)
     fieldsets = (
-        ('👤 BIOMETRIC IDENTITY', {
-            'description': "Official Identity and Document Registry",
-            'fields': ('full_name', 'passport_photo', 'national_id_copy', 'cv_pdf')
+        ('👤 CORE IDENTITY', {
+            'description': "Basic profile and institutional designation",
+            'fields': (('full_name', 'designation'), 'school', 'staff_id')
+        }),
+        ('📂 OFFICIAL DOCUMENTATION', {
+            'description': "Legal bio-metrics and career documents",
+            'fields': ('passport_photo', 'national_id_copy', 'cv_pdf')
         }),
         ('🏛️ GOVERNMENT COMPLIANCE', {
-            'description': "URA and NSSF Regulatory Data",
-            'fields': ('tin_number', 'nssf_number', 'designation')
+            'description': "URA Tax and NSSF Regulatory information",
+            'fields': (('tin_number', 'nssf_number'),)
         }),
-        ('📞 COMMUNICATIONS & FINANCE', {
-            'description': "Security and Payment Uplink Data",
-            'fields': ('secure_pin', 'phone', 'momo_number', 'next_of_kin', 'next_of_kin_phone', 'school')
+        ('📞 COMMUNICATION & KINSHIP', {
+            'description': "Contact registry and emergency protocols",
+            'fields': ('phone', 'next_of_kin', 'next_of_kin_phone')
+        }),
+        ('🔒 SECURITY & PAYMENTS', {
+            'description': "Financial uplink and secure access credentials",
+            'fields': (('momo_number', 'secure_pin'),)
         }),
     )
+
+    # Make the ID and certain fields read-only to prevent accidental tampering
     readonly_fields = ('staff_id',)
+
+    # 🛰️ Layout Trick: Grouping fields on the same line using tuples ( )
 
 @admin.register(StaffPayroll)
 class StaffPayrollAdmin(SchoolIsolatedAdmin):
