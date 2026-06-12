@@ -14,7 +14,7 @@ from .views import (
     generate_imperial_pdf, 
     simulate_payment,
     verify_identity,
-    verify_student_portal
+    verify_student_portal,
     generate_staff_dossier_pdf, 
     generate_payslip_pdf,
     bursar_notification_stream,
