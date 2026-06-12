@@ -1,10 +1,10 @@
 {
   "name": "UG SCHOOLS DIGITAL APP",
-  "short_name": "UNSCCDC",
-  "description": "Uganda National Schools Central Control Digital Centre",
+  "short_name": "UNSCCDC Hub",
+  "description": "Uganda National Schools Central Control Digital Centre Parent Portal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
+  "background_color": "#050505",
   "theme_color": "#D4AF37",
   "orientation": "portrait",
   "icons": [

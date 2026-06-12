@@ -1,11 +1,9 @@
-// 🛡️ THE IMPERIAL SERVICE WORKER
-const CACHE_NAME = 'unsccdc-v1';
+const CACHE_NAME = 'unsccdc-parent-v1';
 const assetsToCache = [
     '/',
     '/static/css/unsccdc_prestige.css',
 ];
 
-// Install Event
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
@@ -15,11 +13,8 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Fetch Event (Allows app to open even with poor signal)
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        fetch(event.request).catch(() => caches.match(event.request))
     );
 });

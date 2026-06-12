@@ -900,7 +900,7 @@ from django.http import HttpResponse
 def home_tab(request):
     html = """
     <div style="background: linear-gradient(90deg, #FCDC04, #D90000); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; animation: pulse 2s infinite;">
-        <h2 style="color: #000; margin: 0; font-weight: 900;">📥 NATIONAL HUB APP READY</h2>
+        <h2 style="color: #000; margin: 0; font-weight: 900;"> NATIONAL HUB APP READY</h2>
         <p style="color: #000; font-size: 12px; font-weight: bold;">Click the button below to install the Official App on your Android phone.</p>
         <a href="/api/get-app/" style="background: #000; color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: 900; display: inline-block; margin-top: 10px;">
            INSTALL APP NOW (56MB)
