@@ -17,9 +17,18 @@ DATABASES = {
 SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
 DEBUG = False
 
-ALLOWED_HOSTS = ['unsccdc-system.onrender.com', 'localhost', '127.0.0.1', 'unsccdc-hub.onrender.com', '10.220.66.47',
-    '.onrender.com',]
-# --- 3. APPLICATION DEFINITION ---
+ALLOWED_HOSTS = [
+    '*', 
+    '.onrender.com', 
+    '.vercel.app', 
+    'localhost', 
+    '127.0.0.1',
+    '10.220.66.47'
+]
+
+CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
+
 INSTALLED_APPS = [
     'corsheaders',
     'jazzmin',
@@ -47,15 +56,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True 
-CORS_ALLOW_CREDENTIALS = True
 
-# 💎 THE TRUSTED ORIGINS (Replace with your exact GitHub link)
 CSRF_TRUSTED_ORIGINS = [
     "https://unsccdc-system.onrender.com",
-    "https://schoolsapp-seven.vercel.app/",
     "https://*.vercel.app",
-    "https://schoolsapp-iota.vercel.app/",
     "https://ericfaith005-cyber.github.io",
 ]
 
@@ -224,10 +228,10 @@ JAZZMIN_UI_TWEAKS = {
         "success": "btn-success"
     }
 }
-# --- 🛡️ THE SOVEREIGN SECURITY SHIELD ---
-SECURE_SSL_REDIRECT = True # Forces all connections to be HTTPS
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
+
+SECURE_SSL_REDIRECT = False
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
