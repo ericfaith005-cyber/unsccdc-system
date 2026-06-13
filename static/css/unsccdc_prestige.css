@@ -1,73 +1,180 @@
-/* 🇺🇬 UNSCCDC: THE EXECUTIVE GRID MASTERPIECE */
+/* 🏛️ THE IMPERIAL ACADEMIC TYPOGRAPHY (LORA FONT) */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-
-/* 1. THE CANVAS */
-body, .content-wrapper, .wrapper {
-    background-color: #b1b9c3 !important; /* The precise light-blue/grey from your image */
-    font-family: 'Inter', sans-serif !important;
+/* 💎 THE NUCLEAR FONT OVERRIDE 💎 */
+/* This forces the font to change on EVERY word in the system */
+* :not(.fa):not(.fas):not(.far):not(.fab):not(.glyphicon) {
+    font-family: 'Lora', 'Times New Roman', serif !important;
 }
 
-/* 2. THE TABLE CONTAINER (The Dark Box) */
-.results, .card, .table-responsive {
-    background: #1a1d23 !important; /* The deep charcoal from your image */
-    border-radius: 0px !important;
-    border: none !important;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3) !important;
-    color: #ffffff !important;
+/* Specific Prestige Adjustments */
+h1, h2, h3, .brand-text, .nav-link p {
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+}
+/* 1. THE LIVING MESH GALAXY BACKGROUND */
+body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
+    background: #000 !important;
+    background-image: 
+        radial-gradient(at 0% 0%, #000000 0, transparent 50%),
+        radial-gradient(at 50% 0%, #FCDC0410 0, transparent 50%),
+        radial-gradient(at 100% 0%, #D9000010 0, transparent 50%),
+        radial-gradient(at 50% 50%, #000000 0, transparent 100%),
+        /* The High-Tech Scanline Effect */
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 2px) !important;
+    background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 4px !important;
+    font-family: 'Rajdhani', sans-serif !important;
+    overflow-x: hidden;
 }
 
-/* 3. THE HEADER (Column Labels) */
-#result_list thead th, table thead th {
-    background: #3c434d !important; /* Lighter header bar */
-    color: #d1d5db !important;
-    text-transform: uppercase !important;
-    font-size: 11px !important;
-    letter-spacing: 2px !important;
-    padding: 20px !important;
-    border: 1px solid #4b5563 !important;
-    font-weight: 600 !important;
+/* 2. THE FLOATING RADAR SCAN */
+body::after {
+    content: "";
+    position: fixed;
+    top: -100%; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent, rgba(252, 220, 4, 0.05), transparent);
+    z-index: 9998;
+    pointer-events: none;
+    animation: radarScan 8s linear infinite;
 }
 
-/* 4. THE ROWS & CELLS */
-#result_list tbody td, table tbody td {
-    padding: 18px 20px !important;
-    border: 0.5px solid #2d333d !important; /* Subtle grid lines */
-    color: #9ca3af !important;
-    font-size: 13px !important;
-    vertical-align: middle !important;
+@keyframes radarScan {
+    0% { top: -100%; }
+    100% { top: 100%; }
 }
 
-#result_list tbody tr {
-    background: #1a1d23 !important;
-    transition: 0.3s;
+/* 3. THE SOVEREIGN TOP STATUS BAR */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 6px;
+    z-index: 9999;
+    background: linear-gradient(90deg, #000 0%, #FCDC04 33%, #D90000 66%, #000 100%);
+    background-size: 200% 100%;
+    animation: flagFlow 3s linear infinite;
+    box-shadow: 0 0 20px #FCDC0466;
 }
 
-/* 5. HOVER EFFECT (Live Interaction) */
-#result_list tbody tr:hover {
-    background: #252a33 !important;
-    cursor: pointer;
+@keyframes flagFlow {
+    0% { background-position: 200% 0%; }
+    100% { background-position: 0% 0%; }
 }
 
-/* 6. THE GOLDEN LINKS */
-#result_list tbody td a, .nav-link {
-    color: #ffffff !important;
-    font-weight: 600 !important;
-    text-decoration: none !important;
+/* 4. BRANDING: THE CENTRAL CONTROL HOLOGRAPH */
+.brand-link {
+    background: rgba(0, 0, 0, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 30px 10px !important;
+    transition: 0.5s;
 }
 
-#result_list tbody td a:hover {
-    color: #D4AF37 !important; /* Gold hover */
-}
-
-/* 7. HIDING DJANGO DEFAULT JUNK */
-.paginator, .actions {
-    background: #111827 !important;
+.brand-text {
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 900 !important;
     color: #fff !important;
-    border: none !important;
-    padding: 15px !important;
+    text-transform: uppercase;
+    letter-spacing: 4px !important;
+    text-shadow: 0 0 10px #FCDC04, 0 0 20px #D90000;
+    background: linear-gradient(to bottom, #fff 0%, #FCDC04 50%, #D90000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: holographic 4s infinite alternate;
 }
 
-/* 8. CUSTOM SCROLLBAR */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-thumb { background: #3c434d; border-radius: 10px; }
+@keyframes holographic {
+    from { filter: hue-rotate(0deg) brightness(1); }
+    to { filter: hue-rotate(15deg) brightness(1.5); }
+}
+
+/* 5. THE DATA CAPSULES (DASHBOARD ROWS) */
+.card-body .model-row {
+    background: rgba(255, 255, 255, 0.02) !important;
+    margin-bottom: 15px !important;
+    border-radius: 4px !important; /* Sharp Tech Look */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 15px 25px !important;
+    position: relative;
+    transition: 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card-body .model-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    transform: scale(1.02) translateX(10px);
+    border: 1px solid #FCDC04 !important;
+    box-shadow: 0 0 30px rgba(252, 220, 4, 0.15);
+}
+
+/* The L-Shaped Brackets for the Rows */
+.card-body .model-row::before {
+    content: "";
+    position: absolute;
+    top: -1px; left: -1px; width: 10px; height: 10px;
+    border-top: 2px solid #D90000; border-left: 2px solid #D90000;
+}
+
+/* 6. HYPER-DRIVE BUTTONS (ADD & CHANGE) */
+.btn-success, .addlink, .btn-info, .changelink {
+    border-radius: 2px !important;
+    text-transform: uppercase;
+    font-weight: 900 !important;
+    letter-spacing: 2px;
+    transition: 0.4s;
+    background: transparent !important;
+    position: relative;
+}
+
+.btn-success, .addlink {
+    border: 1px solid #00ff00 !important;
+    color: #00ff00 !important;
+}
+
+.btn-success:hover {
+    background: #00ff00 !important;
+    color: #000 !important;
+    box-shadow: 0 0 25px #00ff00;
+}
+
+.btn-info, .changelink {
+    border: 1px solid #3498db !important;
+    color: #3498db !important;
+}
+
+.btn-info:hover {
+    background: #3498db !important;
+    color: #fff !important;
+    box-shadow: 0 0 25px #3498db;
+}
+
+/* 7. THE SIDEBAR (COMMAND DECK) */
+.main-sidebar {
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px);
+}
+
+.nav-link {
+    border-radius: 0 !important;
+    margin: 5px 0 !important;
+    border-left: 3px solid transparent;
+}
+
+.nav-link:hover {
+    border-left: 3px solid #FCDC04 !important;
+    background: linear-gradient(90deg, rgba(252, 220, 4, 0.1), transparent) !important;
+}
+
+.nav-link p {
+    font-size: 11px !important;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* 8. TABLE PRESTIGE */
+.card {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-top: 2px solid #FCDC04 !important;
+}
+
+/* Scrollbar Control */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #FCDC04; }
