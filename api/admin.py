@@ -122,21 +122,43 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
     
+# =============================================================
+# 💰 THE NATIONAL LEDGER (FIXING E108 ERROR)
+# =============================================================
 @admin.register(NationalLedger)
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
-    # 💎 We use 'receipt_number' because that is what the model likely uses
-    list_display = ('receipt_number', 'school', 'child_name', 'category', 'amount_paid', 'timestamp')
+    # 💎 THE VIEW: Every name in this list MUST be a method or a model field
+    list_display = (
+        'txn_id_display', 
+        'school', 
+        'child_name', 
+        'category', 
+        'amount_paid', 
+        'timestamp'
+    )
     
-    # 🛡️ LOCK EVERYTHING
-    readonly_fields = [f.name for f in NationalLedger._meta.fields] + ['child_name']
-    
-    def child_name(self, obj):
-        return obj.student.full_name if obj.student else "National Deposit"
-    child_name.short_description = "Student"
-
+    # 🛡️ THE AUDIT LOCK (Makes it uneditable)
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
+    
+    # --- 🧮 LIVE ALIGNMENT METHODS ---
+
+    def txn_id_display(self, obj):
+        # 💎 THE KEY FIX: We check multiple possible names (transaction_id or receipt_number)
+        # to ensure the error never returns!
+        val = getattr(obj, 'transaction_id', None) or getattr(obj, 'receipt_number', None) or str(obj.id)
+        return mark_safe(f'<b style="color:#D4AF37; font-family:monospace;">{val}</b>')
+    txn_id_display.short_description = "Transaction ID"
+
+    def child_name(self, obj):
+        # Pulls the student name from the linked student record
+        return obj.student.full_name.upper() if obj.student else "National Deposit"
+    child_name.short_description = "Student"
+
+    # Ensure this matches your model field (amount_paid)
+    def amount_paid_display(self, obj):
+        return f"UGX {obj.amount_paid:,.0f}"
 
 @admin.register(CommissionAnalytics)
 class CommissionAnalyticsAdmin(SchoolIsolatedAdmin):
