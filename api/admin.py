@@ -438,9 +438,9 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
 admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
 
-class FinancialCommandAdmin(SchoolIsolatedAdmin):
+class FinancialCommandAdmin(admin.ModelAdmin):
     # This path must match your folder structure exactly!
-    change_list_template = "admin/api/financialcommand/change_list.html"
+    change_list_template = "admin/api/financialcommandcenter/change_list.html"
     
     list_display = ('name', 'district', 'current_term_subtotal', 'total_national_revenue')
     
@@ -499,4 +499,4 @@ class FinancialCommandAdmin(SchoolIsolatedAdmin):
         extra_context['pie_data_json'] = json.dumps([mtn, airtel, other])
 
         return super().changelist_view(request, extra_context=extra_context)
-admin.site.register(FinancialCommand, FinancialCommandAdmin)
+admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
