@@ -123,6 +123,19 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
 
+    list_display = ('full_name', 'current_class', 'school', download_button)
+    inlines = [MarksInline]
+    
+    # 💎 THE 500 ERROR KILLER: 
+    # Disable the 'Add' button for this specific tab.
+    # This forces you to add students in the 'Students' tab properly.
+    def has_add_permission(self, request):
+        return False 
+
+    # 🛡️ Also prevent deleting from here to protect national records
+    def has_delete_permission(self, request, obj=None):
+        return False
+        
 admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
