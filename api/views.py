@@ -763,11 +763,9 @@ def generate_payslip_pdf(request, payroll_id):
 
 # --- 📂 THE IMPERIAL STAFF DOSSIER ENGINE ---
 def generate_staff_dossier_pdf(request, staff_id):
-    """Generates a high-security PDF of all staff HR information"""
-
-   try:
+    try:
         staff = Staff.objects.get(staff_id=staff_id)
-        
+    """Generates a high-security PDF of all staff HR information"""
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Dossier_{staff.full_name}.pdf"'
 
