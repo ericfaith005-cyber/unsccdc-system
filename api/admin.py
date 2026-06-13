@@ -177,6 +177,23 @@ class AttendanceHubAdmin(SchoolIsolatedAdmin):
     get_class.short_description = "Class"
     get_stream.short_description = "Stream"
 
+@admin.register(FeesTracker)
+class FeesTrackerAdmin(admin.ModelAdmin):
+    list_display = ('student', 'total_invoiced', 'total_paid', 'remaining_balance', 'payment_percentage')
+    list_filter = ('student__school', 'student__current_class')
+    readonly_fields = ('remaining_balance',)
+
+    def total_invoiced(self, obj): return f"UGX {obj.total_fees_due:,.0f}"
+    
+    def remaining_balance(self, obj):
+        balance = obj.total_fees_due - obj.total_fees_paid
+        color = "red" if balance > 0 else "green"
+        return mark_safe(f'<b style="color:{color};">UGX {balance:,.0f}</b>')
+
+    def payment_percentage(self, obj):
+        percent = (obj.total_fees_paid / obj.total_fees_due) * 100
+        return f"{percent:.1f}%"
+
 # --- 📱 4. HD TIKTOK FEED (RESTORED) ---
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
@@ -230,12 +247,24 @@ class SchoolAdmin(admin.ModelAdmin):
     readonly_fields = ('total_revenue_collected', 'total_commission_earned')
 
 @admin.register(Student)
-class StudentAdmin(SchoolIsolatedAdmin): # 💎 SHIELD ACTIVE
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'account_number', 'school', 'current_class', 'fee_status_badge')
+    search_fields = ('full_name', 'account_number')
     
-    list_display = ('full_name', 'account_number', 'payment_code', 'school', 'current_class')
-    # Add PRN to the 'Edit' page
-    fields = ('full_name', 'gender', 'age', 'current_class', 'school', 'level_category', 'payment_code', 'photo')
-    readonly_fields = ('account_number',)
+    # 💎 THE VAULT: Categorizing information
+    fieldsets = (
+        ('👤 STUDENT IDENTITY', {
+            'fields': ('full_name', 'account_number', 'school', 'current_class', 'stream', 'gender')
+        }),
+        ('🎓 ACADEMIC TRACKING', {
+            'fields': ('enrollment_status', 'academic_standing')
+        }),
+        # 🛡️ API Credentials are GONE from here!
+    )
+
+    def fee_status_badge(self, obj):
+        # Shows a visual dot if they owe money
+        return mark_safe('<span style="color:green;">● Cleared</span>')
 
 def dossier_button(obj):
     # We added 'http://127.0.0.1:8001' to force the computer to find the Brain

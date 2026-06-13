@@ -23,6 +23,16 @@ class User(AbstractUser):
     objects = UserManager()
 
 class School(models.Model):
+    SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]
+    school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
+    
+    # 💎 THE BRAIN: Automatically decides the National Grading Scale
+    @property
+    def grading_standard(self):
+        if self.school_type == 'PRI': return "UNEB - PLE Standard"
+        if self.school_type == 'SEC': return "NCDC - NLSC (20 Point Scale)"
+        return "UNEB - UACE Standard"
+        
     name = models.CharField(max_length=255)
     director = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
