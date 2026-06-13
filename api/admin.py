@@ -66,6 +66,49 @@ class StaffAdmin(admin.ModelAdmin):
     dossier_button_link.short_description = 'HR Archive'
 
 
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    # 💎 THE VIEW: Clean and Scannable
+    list_display = ('name', 'level', 'code', 'is_core')
+    list_filter = ('level', 'is_core')
+    search_fields = ('name', 'code')
+    ordering = ('level', 'name')
+
+    # 🚀 THE MASTER ACTIONS: Populate UNEB/NCDC Curriculum automatically
+    actions = ['generate_ple_defaults', 'generate_uce_defaults', 'generate_uace_defaults']
+
+    @admin.action(description="⚡ GENERATE PLE STANDARD (Primary)")
+    def generate_ple_defaults(self, request, queryset):
+        # The 4 Core Primary Subjects
+        defaults = ['English', 'Mathematics', 'Social Studies', 'Integrated Science']
+        for sub in defaults:
+            Subject.objects.get_or_create(name=sub, level='PLE', is_core=True)
+        self.message_user(request, "Primary Curriculum (PLE) Pre-loaded successfully! 🎓")
+
+    @admin.action(description="⚡ GENERATE UCE STANDARD (O-Level)")
+    def generate_uce_defaults(self, request, queryset):
+        # Core O-Level Curriculum
+        core = ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History']
+        electives = ['Literature in English', 'Commerce', 'Agriculture', 'Fine Art', 'Computer Studies', 'Luganda']
+        for sub in core:
+            Subject.objects.get_or_create(name=sub, level='UCE', is_core=True)
+        for sub in electives:
+            Subject.objects.get_or_create(name=sub, level='UCE', is_core=False)
+        self.message_user(request, "O-Level Registry (UCE) Synced with NCDC Standards! 📜")
+
+    @admin.action(description="⚡ GENERATE UACE STANDARD (A-Level)")
+    def generate_uace_defaults(self, request, queryset):
+        # A-Level Subjects for Combinations
+        subs = [
+            ('Mathematics', 'Sciences'), ('Physics', 'Sciences'), ('Biology', 'Sciences'), 
+            ('Chemistry', 'Sciences'), ('Economics', 'Humanities'), ('Geography', 'Humanities'),
+            ('History', 'Humanities'), ('Literature', 'Languages'), ('Entrepreneurship', 'Humanities'),
+            ('Sub-Math', 'Subsidiary'), ('ICT', 'Subsidiary'), ('GP', 'Subsidiary')
+        ]
+        for name, cat in subs:
+            Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
+        self.message_user(request, "A-Level Combinations Registry Active! 💎")
+
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -362,43 +405,7 @@ class AssignmentInline(admin.TabularInline):
     extra = 1
     verbose_name = "Academic Workload"
 
-@admin.register(Subject)
-class SubjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'level', 'code', 'is_core')
-    list_filter = ('level', 'is_core')
-    search_fields = ('name', 'code')
 
-    # 🚀 THE MASTER BUTTON: Populate National Standard Subjects
-    actions = ['generate_ple_defaults', 'generate_uce_defaults', 'generate_uace_defaults']
-
-    @admin.action(description="⚡ GENERATE PLE STANDARD (Primary)")
-    def generate_ple_defaults(self, request, queryset):
-        defaults = ['English', 'Mathematics', 'Social Studies', 'Integrated Science']
-        for sub in defaults:
-            Subject.objects.get_or_create(name=sub, level='PLE', is_core=True)
-        self.message_user(request, "Primary Curriculum Pre-loaded Successfully! 🎓")
-
-    @admin.action(description="⚡ GENERATE UCE STANDARD (O-Level)")
-    def generate_uce_defaults(self, request, queryset):
-        core = ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History']
-        electives = ['Literature in English', 'Commerce', 'Agriculture', 'Fine Art', 'Computer Studies']
-        for sub in core:
-            Subject.objects.get_or_create(name=sub, level='UCE', is_core=True)
-        for sub in electives:
-            Subject.objects.get_or_create(name=sub, level='UCE', is_core=False)
-        self.message_user(request, "O-Level Registry Synced with NCDC Standards! 📜")
-
-    @admin.action(description="⚡ GENERATE UACE STANDARD (A-Level)")
-    def generate_uace_defaults(self, request, queryset):
-        subs = [
-            ('Mathematics', 'Sciences'), ('Physics', 'Sciences'), ('Biology', 'Sciences'), 
-            ('Chemistry', 'Sciences'), ('Economics', 'Humanities'), ('Geography', 'Humanities'),
-            ('History', 'Humanities'), ('Literature', 'Languages'), ('Entrepreneurship', 'Humanities')
-        ]
-        for name, cat in subs:
-            Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
-        self.message_user(request, "A-Level Combinations Registry Active! 💎")
-admin.site.register(Subject, SubjectAdmin)
 
 @admin.register(StaffPayroll)
 class StaffPayrollAdmin(SchoolIsolatedAdmin):
