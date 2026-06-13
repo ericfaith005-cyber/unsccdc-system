@@ -398,7 +398,7 @@ class SubjectAdmin(admin.ModelAdmin):
         for name, cat in subs:
             Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
         self.message_user(request, "A-Level Combinations Registry Active! 💎")
-
+admin.site.register(Subject, SubjectAdmin)
 
 @admin.register(StaffPayroll)
 class StaffPayrollAdmin(SchoolIsolatedAdmin):
