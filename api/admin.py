@@ -194,10 +194,7 @@ class AttendanceHubAdmin(SchoolIsolatedAdmin):
     get_class.short_description = "Class"
     get_stream.short_description = "Stream"
 
-# =============================================================
-# 💰 THE TRANSPARENT FEES TRACKER (FIXING E108 ERROR)
-# =============================================================
-@admin.register(FeesTracker)
+
 class FeesTrackerAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: Scannable Financial Columns
     # We ensure every name here matches a method defined below
@@ -242,7 +239,9 @@ class FeesTrackerAdmin(admin.ModelAdmin):
             return f"{percent:.1f}%"
         return "0%"
     payment_percentage.short_description = "Progress"
-# --- 📱 4. HD TIKTOK FEED (RESTORED) ---
+admin.site.register(FeesTracker, FeesTrackerAdmin)
+
+
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
     list_display = ('title', 'school', 'likes_count', 'date')
