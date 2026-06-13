@@ -435,7 +435,7 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
         return mark_safe(f'<span style="background:{color}; color:{t_color}; padding:2px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
     channel_badge.short_description = "Method"
 
-    admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
+    admin.site.register(SchoolPayLedgerAdmin, SchoolPayLedgerAdmin)
 
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):
