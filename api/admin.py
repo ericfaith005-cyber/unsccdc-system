@@ -257,7 +257,6 @@ admin.site.register([
     StaffPayroll,
     AcademicResultsCenter,
     SchoolPost, 
-    FeesTracker, 
     User,
     NationalTopPerformer, 
     BioAndCareer, 
