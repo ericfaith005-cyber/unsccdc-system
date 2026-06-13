@@ -7,12 +7,25 @@ from django.utils.safestring import mark_safe
 from datetime import timedelta
 from .models import *
 
-# --- 👔 THE IMPERIAL HR COMMAND (STAFF TAB) ---
 
 def dossier_button(obj):
-    """Sovereign Button for the List View"""
-    from django.utils.safestring import mark_safe
-    return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">📂 OPEN DOSSIER</a>')
+    # 💎 THE MASTER URL: Points to the Brain's PDF generator
+    # We use '/api/' because that is the gateway to the logic
+    url = f"/api/staff-dossier/{obj.staff_id}/"
+    
+    return mark_safe(f'''
+        <a href="{url}" 
+           target="_blank" 
+           style="background-color: #002366; 
+                  color: white; 
+                  padding: 8px 15px; 
+                  border-radius: 8px; 
+                  font-weight: bold; 
+                  text-decoration: none;
+                  border: 1px solid #D4AF37;">
+           📂 OPEN DOSSIER
+        </a>
+    ''')
 dossier_button.short_description = 'HR Archive'
 
 

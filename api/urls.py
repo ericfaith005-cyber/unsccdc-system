@@ -49,9 +49,11 @@ urlpatterns = [
     path('birth-the-king-99/', birth_the_king), 
     path('simulate-pay-99/', views.simulate_payment),
 
-    path('download-report/<str:student_id>/', generate_imperial_pdf, name='download_pdf'),
+    path('staff-dossier/<str:staff_id>/', views.generate_staff_dossier_pdf, name='staff_dossier'),
+
+    path('download-report/<str:student_id>/', views.generate_imperial_pdf, name='download_pdf'),
     path('staff-dossier/<str:staff_id>/', generate_staff_dossier_pdf, name='staff_dossier'),
-    path('download-payslip/<int:payroll_id>/', generate_payslip_pdf, name='download_payslip'),
+    path('download-payslip/<int:payroll_id>/', views.generate_payslip_pdf, name='download_payslip'),
     
     path('pay/', pay_fees, name='pay_fees'),
     path('analytics/', UNSCCDC_Analytics, name='analytics'),
