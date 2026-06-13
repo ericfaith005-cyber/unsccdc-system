@@ -52,14 +52,11 @@ class StaffAdmin(admin.ModelAdmin):
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # 👑 THE FIX: If it's YOU (Superuser), bypass all filters!
-        if request.user.is_superuser:
+        if request.user.is_superuser: # 💎 THE KING SEES ALL
             return qs
-        # 🏢 If it's a regular admin, they MUST have a school
-        if hasattr(request.user, 'school') and request.user.school:
+        if request.user.school:
             return qs.filter(school=request.user.school)
-        # 🛡️ If they are not a superuser and have no school, show nothing
-        return qs.none()
+        return qs.none() # 🛡️ Others see nothing
 
     def save_model(self, request, obj, form, change):
         if not request.user.is_superuser and hasattr(request.user, 'school'):
@@ -125,12 +122,18 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
     
-
 @admin.register(NationalLedger)
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
-    list_display = ('transaction_id', 'school', 'child_name', 'category', 'amount_paid', 'system_tax', 'timestamp')
-    readonly_fields = ('transaction_id', 'school', 'student', 'category', 'amount_paid', 'system_tax', 'timestamp')
-    def child_name(self, obj): return obj.student.full_name if obj.student else "N/A"
+    # 💎 We use 'receipt_number' because that is what the model likely uses
+    list_display = ('receipt_number', 'school', 'child_name', 'category', 'amount_paid', 'timestamp')
+    
+    # 🛡️ LOCK EVERYTHING
+    readonly_fields = [f.name for f in NationalLedger._meta.fields] + ['child_name']
+    
+    def child_name(self, obj):
+        return obj.student.full_name if obj.student else "National Deposit"
+    child_name.short_description = "Student"
+
     def has_add_permission(self, request): return False
     def has_change_permission(self, request, obj=None): return False
     def has_delete_permission(self, request, obj=None): return False
@@ -242,7 +245,6 @@ admin.site.register([
     User,
     NationalTopPerformer, 
     BioAndCareer, 
-    NationalLedger,
     SovereignProfessionalInsights,
     CommissionAnalytics,
     FinancialCommandCenter
