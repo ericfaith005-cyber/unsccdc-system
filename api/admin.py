@@ -6,12 +6,6 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from datetime import timedelta
 from .models import *
-from .models import (
-    Student, School, Parent, FeesTracker, 
-    SchoolPayLedger, AcademicResult, NationalTopPerformer, SchoolPost, BioAndCareer, Staff, StaffPayroll, 
-    FinancialCommandCenter, AcademicResultsCenter, NationalLedger, CommissionAnalytics, 
-    AttendanceHub, 
-)
 
 # --- 👔 THE IMPERIAL HR COMMAND (STAFF TAB) ---
 
@@ -245,7 +239,13 @@ admin.site.register([
     AcademicResultsCenter,
     SchoolPost, 
     FeesTracker, 
-    User
+    User,
+    NationalTopPerformer, 
+    BioAndCareer, 
+    NationalLedger,
+    SovereignProfessionalInsights,
+    CommissionAnalytics,
+    FinancialCommandCenter
     ])
 
 
