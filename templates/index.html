@@ -1,23 +1,27 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNSCCDC | National Hub Gateway</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     
+    <!-- 🏛️ NATIONAL BRANDING & FONTS -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <style>
-        :root { --gold: #D4AF37; --red: #D90000; --black: #000; --glass: rgba(255, 255, 255, 0.03); }
+        :root { --gold: #D4AF37; --red: #D90000; --black: #050505; --glass: rgba(255, 255, 255, 0.03); }
         
         body { 
             background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; 
             margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center;
         }
 
-        /* 🌌 THE MOVING GALAXY BACKGROUND */
+        /* 🌌 GALAXY BACKGROUND */
         #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 
-        /* 🇺🇬 THE NATIONAL RIBBON */
+        /* 🇺🇬 NATIONAL RIBBON */
         .flag-top {
             position: fixed; top: 0; left: 0; width: 100%; height: 6px;
             background: linear-gradient(90deg, #000 16%, #FCDC04 16%, #FCDC04 33%, #D90000 33%, #D90000 50%, #000 50%, #000 66%, #FCDC04 66%, #FCDC04 83%, #D90000 83%);
@@ -27,44 +31,49 @@
 
         /* 🛡️ THE HUD CONTAINER */
         .hub-container {
-            width: 90%; max-width: 450px; background: var(--glass); backdrop-filter: blur(20px);
-            padding: 40px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.8); text-align: center;
-            animation: fadeIn 1s ease-out;
+            width: 95%; max-width: 450px; background: var(--glass); backdrop-filter: blur(25px);
+            padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.9); text-align: center;
+            position: relative; animation: fadeIn 1.2s ease-out;
         }
 
-        .logo { height: 80px; margin-bottom: 20px; filter: drop-shadow(0 0 15px var(--gold)); }
-        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 22px; letter-spacing: 4px; margin: 0; }
-        .sub-text { font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-bottom: 30px; }
+        .logo { height: 85px; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--gold)); }
+        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 24px; letter-spacing: 5px; margin: 0; }
+        .sub-text { font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 3px; margin-bottom: 40px; font-weight: bold; }
 
         /* 🔑 INPUT STYLING */
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { font-size: 9px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; padding-left: 5px; }
+        .input-group { margin-bottom: 18px; text-align: left; }
+        label { font-size: 9px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; margin-left: 5px; text-transform: uppercase; }
         input {
             width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 15px; border-radius: 12px; color: #fff; font-size: 14px; margin-top: 5px;
-            transition: 0.3s; box-sizing: border-box; outline: none;
+            padding: 14px; border-radius: 12px; color: #fff; font-size: 14px; margin-top: 5px;
+            transition: 0.3s; outline: none;
         }
-        input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); }
+        input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(212,175,55,0.1); }
 
         /* ⚡ BUTTON STYLING */
         .gold-btn {
             width: 100%; background: var(--gold); color: #000; border: none; padding: 18px;
-            border-radius: 15px; font-weight: 900; font-size: 14px; letter-spacing: 2px;
-            cursor: pointer; margin-top: 20px; transition: 0.4s;
+            border-radius: 15px; font-weight: 900; font-size: 13px; letter-spacing: 2px;
+            cursor: pointer; margin-top: 25px; transition: 0.4s; text-transform: uppercase;
         }
-        .gold-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.4); }
+        .gold-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.3); }
 
-        /* ⏳ LOADER OVERLAY */
-        #loader {
+        /* ⏳ ISOLATED LOADER OVERLAY */
+        #loader-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); border-radius: 30px; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10;
+            background: rgba(0,0,0,0.92); border-radius: 35px; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 2000;
         }
-        .spinner { border: 4px solid #111; border-top: 4px solid var(--gold); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        .spinner { border: 4px solid #111; border-top: 4px solid var(--gold); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .staff-portal-link {
+            display: block; margin-top: 30px; font-size: 11px; color: rgba(255,255,255,0.3);
+            text-decoration: none; font-weight: bold; letter-spacing: 2px; transition: 0.3s;
+        }
+        .staff-portal-link:hover { color: var(--gold); }
     </style>
 </head>
 <body>
@@ -73,174 +82,151 @@
     <div class="flag-top"></div>
 
     <div class="hub-container">
-        <!-- ⏳ LOADER -->
-        <div id="loader">
+        <!-- ⏳ 1. THE ISOLATED LOADER (HIDDEN BY DEFAULT) -->
+        <div id="loader-overlay">
             <div class="spinner"></div>
-            <p style="color: var(--gold); font-size: 10px; margin-top: 20px; letter-spacing: 2px;" id="loader-text">ESTABLISHING LINK...</p>
+            <p id="loader-text" style="color: var(--gold); font-size: 10px; margin-top: 25px; letter-spacing: 3px; font-weight: 900;">SYNCHRONIZING...</p>
         </div>
 
-        <img src="/static/icons/hub_logo.png" class="logo" alt="UNSCCDC Seal">
+        <img src="{% static 'icons/hub_logo.png' %}" class="logo" alt="UNSCCDC GLOBAL">
         <h1>UNSCCDC GLOBAL</h1>
-        <p class="sub-text">NATIONAL SCHOOLS CENTRAL CONTROL CENTRE</p>
+        <p class="sub-text">NATIONAL EDUCATION CENTRE</p>
 
-        <!-- 🛡️ THE IMPERIAL NATIVE GATEWAY -->
-<!-- Replace YOUR_RENDER_URL with https://unsccdc-system.onrender.com -->
-<form action="https://unsccdc-system.onrender.com/api/verify-identity/" method="POST" id="native-form">
-    {% csrf_token %}
-    
-    <div class="hub-container">
-        <img src="/static/icons/hub_logo.png" class="logo" alt="UNSCCDC Seal">
-        <h1 style="font-family: 'Orbitron'; color: #D4AF37;">UNSCCDC GLOBAL</h1>
-        <p style="font-size: 8px; color: rgba(255,255,255,0.4); letter-spacing: 2px;">NATIONAL Hub GATEWAY</p>
+        <!-- 📦 2. STAGE 1: THE IDENTITY GATE -->
+        <div id="identity-gate">
+            {% csrf_token %}
+            <div class="input-group">
+                <label>NATIONAL ACCESS CODE</label>
+                <input type="text" id="access_code" placeholder="e.g. PS 001">
+            </div>
+            <div class="input-group">
+                <label>STUDENT FULL NAME</label>
+                <input type="text" id="student_full_name" placeholder="Legal Name">
+            </div>
+            <div class="input-group">
+                <label>PARENT/GUARDIAN NAME</label>
+                <input type="text" id="parent_name" placeholder="Registered Name">
+            </div>
+            <div class="input-group">
+                <label>PHONE NUMBER</label>
+                <input type="text" id="phone_number" placeholder="256...">
+            </div>
 
-        <!-- ⚠️ Error Message Display -->
-        {% if error %}
-        <div style="background: rgba(217, 0, 0, 0.2); border: 1px solid #D90000; color: #ff8888; padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 12px;">
-            {{ error }}
-        </div>
-        {% endif %}
+            <!-- ⚡ TRIGGER: ONLY FIRES ON CLICK -->
+            <button type="button" onclick="verifyParentIdentity(event)" class="gold-btn">
+                VERIFY IDENTITY
+            </button>
 
-        <div class="input-group">
-            <label>NATIONAL ACCESS CODE</label>
-            <input type="text" name="code" placeholder="e.g. PS 001" required>
-        </div>
-
-        <div class="input-group">
-            <label>STUDENT FULL NAME</label>
-            <input type="text" name="student" placeholder="Full Legal Name" required>
-        </div>
-
-        <div class="input-group">
-            <label>PARENT/GUARDIAN NAME</label>
-            <input type="text" name="parent" placeholder="Guardian Name" required>
-        </div>
-
-        <div class="input-group">
-            <label>REGISTERED PHONE NUMBER</label>
-            <input type="text" name="phone" placeholder="2567..." required>
+            <!-- 🏛️ UNBLOCKED NAVIGATION -->
+            <a href="/staff-login/" class="staff-portal-link">
+                ENTER STAFF COMMAND PORTAL →
+            </a>
         </div>
 
-       <!-- 📦 1. THE PARENT FORM CONTAINER -->
-<div id="identity-form">
-
-    <button type="button" onclick="verifyParentIdentity(event)" class="gold-btn">
-        VERIFY IDENTITY
-    </button>
-
-    <!-- ============================================================= -->
-    <!-- 🏛️ PASTE THE SECOND PART (STAFF LINK) RIGHT HERE! -->
-    <!-- ============================================================= -->
-    <div style="margin-top: 25px; text-align: center;">
-        <a href="/staff-login/" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 11px; font-weight: bold; letter-spacing: 1px;">
-            Enter Staff Command Portal →
-        </a>
-    </div>
-</div>
-        
-        <p style="color: #444; font-size: 10px; margin-top: 20px;">
-            Native Secure Handshake Active 🛡️
-        </p>
-    </div>
-</form>
-
-<style>
-    /* Ensure the form looks exactly like our previous design */
-    .input-group { margin-bottom: 15px; text-align: left; }
-    label { font-size: 10px; color: #D4AF37; font-weight: bold; }
-    input { 
-        width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        padding: 15px; border-radius: 12px; color: #fff; margin-top: 5px; box-sizing: border-box;
-    }
-    .gold-btn {
-        width: 100%; background: #D4AF37; color: #000; border: none; padding: 18px;
-        border-radius: 15px; font-weight: 900; letter-spacing: 2px; cursor: pointer;
-    }
-</style>
-
-        <!-- 🔑 STAGE 2: PIN VAULT (Hidden) -->
+        <!-- 🔑 3. STAGE 2: THE PIN VAULT (HIDDEN) -->
         <div id="pin-vault" style="display: none;">
-            <h3 style="color: var(--gold); margin-bottom: 5px;">IDENTITY VERIFIED ✅</h3>
-            <p style="color: #666; font-size: 11px; margin-bottom: 30px;">ENTER YOUR 4-DIGIT SOVEREIGN PIN</p>
-            <input type="password" id="pin" maxlength="4" style="text-align: center; font-size: 32px; letter-spacing: 20px;">
-            <button class="gold-btn" onclick="authorizeAccess()" style="background: var(--red); color: #fff;">AUTHORIZE ACCESS</button>
-            <p onclick="location.reload()" style="font-size: 10px; color: #444; margin-top: 20px; cursor: pointer;">← Back to Identity Gate</p>
+            <h3 style="color: var(--gold); font-weight: 900; margin-bottom: 5px;">IDENTITY VERIFIED ✅</h3>
+            <p style="color: #666; font-size: 10px; margin-bottom: 30px; letter-spacing: 1.5px;">ENTER YOUR 4-DIGIT SECURE PIN</p>
+            
+            <input type="password" id="pin_code" maxlength="4" style="text-align: center; font-size: 35px; letter-spacing: 25px; background: rgba(255,255,255,0.05); border: 1px solid #333; margin-bottom: 30px;">
+            
+            <button type="button" onclick="authorizeHubAccess()" class="gold-btn" style="background: var(--red); color: #fff;">
+                AUTHORIZE ACCESS
+            </button>
+            
+            <p onclick="location.reload()" style="font-size: 10px; color: #444; margin-top: 30px; cursor: pointer;">← Reset Handshake</p>
         </div>
     </div>
 
+    <!-- ⚙️ THE IMPERIAL SCRIPT ENGINE -->
     <script>
-
-// 1. --- 🛡️ INITIAL STATE: ISOLATE THE ANIMATION ---
-document.addEventListener('DOMContentLoaded', () => {
-    const loader = document.getElementById('loader-overlay');
-    // Force the loader to be invisible on page load
-    if (loader) {
-        loader.style.display = 'none';
-    }
-    console.log("--- 🏛️ NATIONAL REGISTRY GATEWAY IDLE & READY ---");
-});
-
-// 2. --- ⚡ THE EXPLICIT FORM SUBMISSION METHOD ---
-async function verifyParentIdentity(event) {
-    // Prevent the default form behavior if inside a <form> tag
-    if (event) event.preventDefault();
-
-    const loader = document.getElementById('loader-overlay');
-    const statusText = document.getElementById('loader-text');
-
-    // A. Capture user inputs
-    const code = document.getElementById('national_access_code').value.trim();
-    const student = document.getElementById('student_full_name').value.trim();
-    const parent = document.getElementById('parent_name').value.trim();
-    const phone = document.getElementById('phone_number').value.trim();
-
-    // 🛡️ B. THE VALIDATION SHIELD
-    // Checks if boxes are empty BEFORE showing the animation
-    if (!code || !student || !parent || !phone) {
-        alert("NATIONAL HUB: Please fill in all your registration details before proceeding.");
-        return; // 🛑 Halt execution here
-    }
-
-    // C. 🚀 ACTIVATE ANIMATION ONLY AFTER VALIDATION
-    loader.style.display = 'flex';
-    if (statusText) statusText.innerText = "ESTABLISHING NATIONAL LINK... 📡";
-
-    try {
-        // D. CLEAN STANDARD FETCH REQUEST
-        const response = await fetch('/api/verify-identity/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            },
-            body: JSON.stringify({
-                code: code,
-                student: student,
-                parent: parent,
-                phone: phone
-            })
+        // --- 🛡️ 1. INITIAL SECURITY STATE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('loader-overlay').style.display = 'none';
+            document.getElementById('pin-vault').style.display = 'none';
+            document.getElementById('identity-gate').style.display = 'block';
+            console.log("--- 🏛️ HUB GATEWAY SECURED & READY ---");
         });
 
-        const result = await response.json();
+        // --- ⚡ 2. THE IDENTITY VERIFICATION (STAGE 1) ---
+        async function verifyParentIdentity(event) {
+            if (event) event.preventDefault();
 
-        if (response.status === 200 && result.status === 'success') {
-            console.log("Registry Match Success ✅");
-            // Transition to PIN screen logic here
-            document.getElementById('identity-form').style.display = 'none';
-            document.getElementById('pin-screen').style.display = 'block';
-            loader.style.display = 'none';
-        } else {
-            // 💎 CRITICAL FIX: Turn OFF animation immediately on error
-            loader.style.display = 'none';
-            alert(result.message || "Registry Denied: Please check your details.");
+            const loader = document.getElementById('loader-overlay');
+            const status = document.getElementById('loader-text');
+            const gate = document.getElementById('identity-gate');
+            const vault = document.getElementById('pin-vault');
+
+            // A. Capture Registry Inputs
+            const code = document.getElementById('access_code').value.trim();
+            const student = document.getElementById('student_full_name').value.trim();
+            const parent = document.getElementById('parent_name').value.trim();
+            const phone = document.getElementById('phone_number').value.trim();
+
+            // 🛡️ B. VALIDATION FIREWALL: Kill auto-fire on blank forms
+            if (!code || !student || !parent || !phone) {
+                alert("NATIONAL HUB: Please fill in all 4 registration fields before proceeding.");
+                return;
+            }
+
+            // C. ACTIVATE UPLINK
+            loader.style.display = 'flex';
+            status.innerText = "QUERYING NATIONAL REGISTRY... 📡";
+
+            try {
+                const response = await fetch('/api/verify-identity/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({ code, student, parent, phone })
+                });
+
+                const result = await response.json();
+
+                if (response.status === 200 && result.status === 'success') {
+                    // 💎 TRANSITION TO PIN VAULT
+                    gate.style.display = 'none';
+                    loader.style.display = 'none';
+                    vault.style.display = 'block';
+                    document.getElementById('pin_code').focus();
+                } else {
+                    // 🛑 REGISTRY ERROR: Kill loader immediately
+                    loader.style.display = 'none';
+                    alert(result.message || "Registry Denied: Matching record not found.");
+                }
+            } catch (error) {
+                // ⚠️ NETWORK TIMEOUT
+                loader.style.display = 'none';
+                alert("National Link Interrupted: The Hub is waking up. Try again in 10s.");
+            }
         }
 
-    } catch (error) {
-        // 💎 CRITICAL FIX: Turn OFF animation if server is offline
-        loader.style.display = 'none';
-        console.error("Uplink Error:", error);
-        alert("National Link Interrupted: Check your internet or wait for server wake-up.");
-    }
-}
+        // --- 🔑 3. PIN AUTHORIZATION ---
+        function authorizeHubAccess() {
+            const pin = document.getElementById('pin_code').value;
+            if (pin.length < 4) { alert("Enter complete PIN."); return; }
+            // Final redirection logic here...
+        }
+
+        // --- 🌌 STARFIELD GALAXY ENGINE ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.onresize = resize; resize();
+        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, v: Math.random()*0.5});
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            stars.forEach(s => {
+                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
+                s.y += s.v; if(s.y > canvas.height) s.y = 0;
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
     </script>
 </body>
 </html>
