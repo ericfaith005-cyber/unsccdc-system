@@ -245,13 +245,7 @@ admin.site.register([
     AcademicResultsCenter,
     SchoolPost, 
     FeesTracker, 
-    User,
-    NationalTopPerformer, 
-    BioAndCareer, 
-    NationalLedger,
-    SovereignProfessionalInsights,
-    CommissionAnalytics,
-    FinancialCommandCenter
+    User
     ])
 
 
