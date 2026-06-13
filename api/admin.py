@@ -109,7 +109,7 @@ class MarksInline(admin.TabularInline):
     extra = 0 # Don't show empty rows by default
     classes = ['collapse'] # Only show when clicking 'Show'
 
-@admin.register(AcademicResultsCenter)
+
 class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     # 💎 Add the bulk action tool here
     actions = [export_as_pdf] 
@@ -122,7 +122,8 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
 
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
-    
+
+admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
