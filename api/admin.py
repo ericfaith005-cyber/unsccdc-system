@@ -135,7 +135,7 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     # 🛡️ Also prevent deleting from here to protect national records
     def has_delete_permission(self, request, obj=None):
         return False
-        
+
 admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
@@ -320,23 +320,26 @@ class StudentAdmin(admin.ModelAdmin):
         # Shows a visual dot if they owe money
         return mark_safe('<span style="color:green;">● Cleared</span>')
 
+# --- 🛡️ SURGERY: ALIGNING THE DOSSIER SIGNPOST ---
 def dossier_button(obj):
-    # We added 'http://127.0.0.1:8001' to force the computer to find the Brain
-    url = f"/api/staff-dossier/{obj.staff_id}/"
+    # 💎 THE MASTER URL: Must match urls.py exactly!
+    # We use obj.staff_id to identify the specific teacher
+    url = f"/api/staff-dossier/{obj.staff_id}/" 
+    
     return mark_safe(f'''
         <a href="{url}" 
            target="_blank" 
            style="background-color: #002366; 
                   color: white; 
-                  padding: 8px 15px; 
-                  border-radius: 6px; 
+                  padding: 6px 12px; 
+                  border-radius: 8px; 
                   font-weight: bold; 
-                  text-decoration: none; 
-                  display: inline-block;">
-           📥 Download Dossier
+                  text-decoration: none;
+                  border: 1px solid #D4AF37;">
+           📂 OPEN DOSSIER
         </a>
     ''')
-dossier_button.short_description = 'HR ARCHIVE'
+dossier_button.short_description = 'HR Archive'
 
 def payslip_button(obj):
     url = f"/api/download-payslip/{obj.id}/"

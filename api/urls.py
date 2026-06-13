@@ -52,7 +52,7 @@ urlpatterns = [
     path('download-report/<str:student_id>/', generate_imperial_pdf, name='download_pdf'),
     path('staff-dossier/<str:staff_id>/', generate_staff_dossier_pdf, name='staff_dossier'),
     path('download-payslip/<int:payroll_id>/', generate_payslip_pdf, name='download_payslip'),
-
+    
     path('pay/', pay_fees, name='pay_fees'),
     path('analytics/', UNSCCDC_Analytics, name='analytics'),
     path('bursar-stream/<int:school_id>/', bursar_notification_stream, name='bursar_stream'),
