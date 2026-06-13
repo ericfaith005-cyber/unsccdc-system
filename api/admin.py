@@ -257,7 +257,6 @@ admin.site.register([
     AttendanceHub, 
     Staff,
     StaffPayroll,
-    SchoolPayLedger,
     AcademicResultsCenter,
     SchoolPost, 
     FeesTracker, 
@@ -270,6 +269,7 @@ admin.site.register([
     ])
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
+admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
 # --- 🛡️ SURGERY: RESTORING ALL REGISTRY WINDOWS (api/admin.py) ---
 
@@ -367,10 +367,7 @@ class StaffPayrollAdmin(SchoolIsolatedAdmin):
         # Logic to trigger PDF payslip generation
         pass
 
-# =============================================================
-# 💰 THE IMPERIAL NATIONAL AUDIT LEDGER (LEVEL 10,000)
-# =============================================================
-@admin.register(SchoolPayLedger)
+
 class SchoolPayLedgerAdmin(admin.ModelAdmin):
     # 💎 THE COLUMNS: Every detail you requested
     list_display = (
