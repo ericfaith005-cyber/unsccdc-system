@@ -15,7 +15,7 @@ def dossier_button(obj):
     return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">📂 OPEN DOSSIER</a>')
 dossier_button.short_description = 'HR Archive'
 
-@admin.register(Staff)
+Staff
 class StaffAdmin(admin.ModelAdmin):
     # 💎 1. THE VIEW: Scannable columns in the list
     list_display = ('full_name', 'designation', 'school', 'staff_id', dossier_button)
@@ -48,6 +48,8 @@ class StaffAdmin(admin.ModelAdmin):
     def dossier_button_link(self, obj):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
+
+admin.site.register(Staff, StaffAdmin)
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
@@ -254,7 +256,6 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
-    Staff,
     School,
     StaffPayroll,
     AcademicResultsCenter,
@@ -264,8 +265,7 @@ admin.site.register([
     NationalTopPerformer, 
     BioAndCareer, 
     SovereignProfessionalInsights,
-    CommissionAnalytics,
-    FinancialCommandCenter
+    CommissionAnalytics
     ])
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
@@ -437,7 +437,7 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
 
 admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
-@admin.register(FinancialCommandCenter)
+
 class FinancialCommandAdmin(SchoolIsolatedAdmin):
     # This path must match your folder structure exactly!
     change_list_template = "admin/api/financialcommandcenter/change_list.html"
@@ -499,3 +499,4 @@ class FinancialCommandAdmin(SchoolIsolatedAdmin):
         extra_context['pie_data_json'] = json.dumps([mtn, airtel, other])
 
         return super().changelist_view(request, extra_context=extra_context)
+admin.site.register(FinancialCommandCenter, FinancialCommandCenterAdmin)
