@@ -1,0 +1,88 @@
+{% extends "admin/change_list.html" %}
+{% block content_title %}
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        .hud-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .hud-card { background: #0a0a0a; border: 1px solid #222; border-radius: 20px; padding: 25px; border-bottom: 4px solid #D4AF37; }
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .kpi-box { background: #111; padding: 15px; border-radius: 12px; text-align: center; }
+        .kpi-box h4 { margin: 0; color: #fff; font-size: 20px; font-weight: 900; }
+        .kpi-box label { font-size: 8px; color: #D4AF37; letter-spacing: 2px; }
+        
+        .alert-board { background: #111; border-left: 5px solid #D90000; padding: 20px; border-radius: 15px; margin-top: 20px; }
+        .solution-board { background: #002366; border-left: 5px solid #00ff00; padding: 20px; border-radius: 15px; margin-top: 20px; }
+        .badge-red { background: #D90000; color: #fff; padding: 3px 8px; border-radius: 5px; font-size: 9px; font-weight: bold; }
+    </style>
+
+    <h1 style="color:#D4AF37; font-weight:900; letter-spacing:3px;">🏛️ NATIONAL Hub INTELLIGENCE MATRIX</h1>
+    <p style="color:#666; font-size:11px;">UGANDA NATIONAL SCHOOLS CENTRAL CONTROL CENTRE ● <span style="color:#00ff00;">LIVE ANALYTICS</span></p>
+
+    <!-- 📊 KPI STRIP -->
+    <div class="kpi-row">
+        <div class="kpi-box"><label>ENROLLMENT</label><h4>{{ intel.total }}</h4></div>
+        <div class="kpi-box"><label>AVG PERFORMANCE</label><h4 style="color:#00ff00;">{{ intel.avg }}</h4></div>
+        <div class="kpi-box"><label>NATIONAL TREND</label><h4 style="color:#FCDC04;">{{ intel.trend }}</h4></div>
+        <div class="kpi-box"><label>STAFF FORCE</label><h4>{{ intel.staff_total }}</h4></div>
+    </div>
+
+    <div class="hud-grid">
+        <!-- 📈 CHARTING AREA -->
+        <div class="hud-card">
+            <h5 style="color:#fff; font-size:12px;">NATIONAL GENDER & FINANCIAL COMPARISON</h5>
+            <div style="display: flex; gap: 20px;">
+                <div id="genderChart" style="flex:1;"></div>
+                <div id="payChart" style="flex:1;"></div>
+            </div>
+        </div>
+
+        <!-- 🛡️ ALERTS & SOLUTIONS -->
+        <div class="hud-card" style="border-bottom-color: #D90000;">
+            <label style="color:#D90000; font-weight:bold;">🚨 CRITICAL Hub ALERTS</label>
+            {% for student in intel.missing %}
+            <div class="alert-board">
+                <span class="badge-red">ABSENT 3+ DAYS</span>
+                <p style="margin:5px 0 0 0; font-size:11px;"><b>{{ student.full_name }}</b> (Class: {{ student.current_class }})</p>
+                <small style="color:#555;">Contact Parent: {{ student.parent.phone_number }}</small>
+            </div>
+            {% empty %}
+            <p style="color:#444; font-size:11px; margin-top:15px;">No attendance crises detected.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 🤖 AI SOLUTIONS Hub -->
+    <div class="hud-card" style="border-bottom-color: #00ff00; margin-bottom: 40px;">
+        <label style="color:#00ff00; font-weight:bold;">💡 SOVEREIGN STRATEGIC SOLUTIONS</label>
+        <div class="solution-board">
+            {% for sol in intel.solutions %}
+            <p style="margin-bottom:10px; font-size:12px; color:#fff;">● {{ sol }}</p>
+            {% endfor %}
+            <p style="font-size:10px; color:rgba(255,255,255,0.4); margin-top:15px;">*These insights are generated based on National Registry performance metrics.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 💎 GENDER PIE
+            new ApexCharts(document.querySelector("#genderChart"), {
+                series: JSON.parse('{{ gender_json|safe }}'),
+                chart: { type: 'donut', height: 250 },
+                labels: ['MALES', 'FEMALES'],
+                colors: ['#002366', '#D90000'],
+                legend: { position: 'bottom', labels: {colors: '#fff'} },
+                theme: { mode: 'dark' }
+            }).render();
+
+            // 💎 PAYMENT PIE
+            new ApexCharts(document.querySelector("#payChart"), {
+                series: JSON.parse('{{ pay_json|safe }}'),
+                chart: { type: 'pie', height: 250 },
+                labels: ['ELITE PAYERS', 'DEFAULTERS', 'PENDING'],
+                colors: ['#00ff00', '#D90000', '#FCDC04'],
+                legend: { position: 'bottom', labels: {colors: '#fff'} },
+                theme: { mode: 'dark' }
+            }).render();
+        });
+    </script>
+    {{ block.super }}
+{% endblock %}

@@ -434,76 +434,60 @@ admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
 
 class FinancialCommandAdmin(admin.ModelAdmin):
-    # This path must match your folder structure exactly!
     change_list_template = "admin/api/financialcommandcenter/change_list.html"
     
-    list_display = ('name', 'district', 'current_term_subtotal', 'total_national_revenue')
-    
-    list_filter = ('district', 'school_type', 'is_verified') 
-    search_fields = ('name', 'school_account_id', 'district')
-
-    
-    def current_term_subtotal(self, obj):
-        """Calculates rolling 120-day termly revenue for this specific school row"""
-        term_start = timezone.now() - timedelta(days=120)
-        # We look into the SchoolPayLedger to find payments for THIS school row
-        total = SchoolPayLedger.objects.filter(
-            school=obj, 
-            timestamp__gte=term_start
-        ).aggregate(Sum('amount'))['amount__sum'] or 0
-        return f"UGX {total:,.0f}"
-    
-    # Tells the dashboard what name to show at the top of the column
-    current_term_subtotal.short_description = "Termly Sub-Total"
-
-    def total_national_revenue(self, obj):
-        """Calculates total all-time collection for this specific school row"""
-        total = SchoolPayLedger.objects.filter(
-            school=obj
-        ).aggregate(Sum('amount'))['amount__sum'] or 0
-        return f"UGX {total:,.0f}"
-    
-    total_national_revenue.short_description = "Total Collected"
-
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
+        now = timezone.now()
+        today = now.date()
+        three_days_ago = today - timedelta(days=3)
         
-        # 🛡️ THE SOVEREIGN SAFETY SHIELD
-        try:
-            txs = SchoolPayLedger.objects.all()
-            now = timezone.now()
-            today = now.date()
+        # 1. ENROLLMENT & GENDER MATH
+        total_students = Student.objects.count()
+        males = Student.objects.filter(gender='M').count()
+        females = Student.objects.filter(gender='F').count()
+        
+        # 2. FINANCIAL BEHAVIOR (Banking Logic)
+        fees = FeesTracker.objects.all()
+        # Elite Payers: Paid more than 80%
+        elite_payers = fees.filter(total_fees_paid__gte=F('total_fees_due')*0.8).count()
+        # Defaulters: Paid less than 20%
+        defaulters = fees.filter(total_fees_paid__lt=F('total_fees_due')*0.2).count()
 
-            # 🧮 Safe Math (Always returns a number, never None)
-            extra_context['d_total'] = txs.filter(timestamp__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
-            extra_context['w_total'] = txs.filter(timestamp__date__gte=today - timedelta(days=7)).aggregate(Sum('amount'))['amount__sum'] or 0
-            extra_context['m_total'] = txs.filter(timestamp__month=today.month).aggregate(Sum('amount'))['amount__sum'] or 0
-            
-            # 📊 Enterprise Vitals (Check if fields exist before counting)
-            extra_context['enterprise_stats'] = {
-                'enrollment': Student.objects.count(),
-                'males': Student.objects.filter(gender='M').count() if hasattr(Student, 'gender') else 0,
-                'females': Student.objects.filter(gender='F').count() if hasattr(Student, 'gender') else 0,
-            }
+        # 3. PERFORMANCE TRENDS (Progressing vs Declining)
+        # Average score this term vs target
+        avg_score = AcademicResult.objects.aggregate(Avg('eot_score'))['eot_score__avg'] or 0
+        trend = "PROGRESSING ↑" if avg_score > 65 else "DECLINING ↓"
 
-            # 📈 Chart Data
-            bar_data = []
-            for i in range(6, -1, -1):
-                d = today - timedelta(days=i)
-                amt = txs.filter(timestamp__date=d).aggregate(Sum('amount'))['amount__sum'] or 0
-                bar_data.append({"x": d.strftime('%a'), "y": float(amt)})
-            extra_context['bar_json'] = json.dumps(bar_data)
-            
-            extra_context['pie_data_json'] = json.dumps([50, 30, 20]) # Default weights
+        # 4. STAFF ANALYTICS
+        total_staff = Staff.objects.count()
+        staff_male = Staff.objects.filter(gender='M').count()
+        staff_female = Staff.objects.filter(gender='F').count()
 
-        except Exception as e:
-            # If there is ANY error, we don't crash, we just show zeros
-            print(f"--- ⚠️ Dashboard Math Error: {e} ---")
-            extra_context['d_total'] = 0
-            extra_context['enterprise_stats'] = {'enrollment': 0, 'males': 0, 'females': 0}
-            extra_context['bar_json'] = json.dumps([])
-            extra_context['pie_data_json'] = json.dumps([0,0,0])
+        # 🛡️ 5. EMERGENCY ALERTS (Absent for 3 days)
+        # Find students who have NO 'Present' records in the last 3 days
+        from .models import Attendance
+        present_recently = Attendance.objects.filter(date__gte=three_days_ago, status=True).values_list('student_id', flat=True)
+        missing_students = Student.objects.exclude(id__in=present_recently)[:5] # Show top 5 missing
 
+        # 🤖 6. SOVEREIGN SOLUTIONS (AI INSIGHTS)
+        solutions = []
+        if avg_score < 50: solutions.append("⚠️ ACADEMIC CRISIS: Initiate mandatory remedial hours.")
+        if defaulters > (total_students * 0.3): solutions.append("💸 REVENUE LEAK: Deploy SMS Automated debt reminders.")
+        if total_staff > (total_students / 10): solutions.append("💼 PAYROLL WARNING: High staff-to-student ratio detected.")
+
+        extra_context = extra_context or {}
+        extra_context['intel'] = {
+            'total': total_students, 'm': males, 'f': females,
+            'elite': elite_payers, 'defaulters': defaulters,
+            'avg': f"{avg_score:.1f}%", 'trend': trend,
+            'staff_total': total_staff, 'sm': staff_male, 'sf': staff_female,
+            'missing': missing_students, 'solutions': solutions
+        }
+        
+        # 7. CHART DATA (JSON)
+        extra_context['gender_json'] = json.dumps([males, females])
+        extra_context['pay_json'] = json.dumps([elite_payers, defaulters, (total_students - elite_payers - defaulters)])
+        
         return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
