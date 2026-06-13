@@ -140,6 +140,21 @@
 
     <!-- ⚙️ THE IMPERIAL SCRIPT ENGINE -->
     <script>
+
+        (function() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                    console.log("Old Hub Cache Liquidated 🛡️");
+                }
+            });
+        }
+        // Force the browser to bypass its own memory for this session
+        if (window.location.href.indexOf('?v=') === -1) {
+            // window.location.href += '?v=' + new Date().getTime();
+        }
+    
         // --- 🛡️ 1. INITIAL SECURITY STATE ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('loader-overlay').style.display = 'none';
