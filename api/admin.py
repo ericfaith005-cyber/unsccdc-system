@@ -8,46 +8,46 @@ from datetime import timedelta
 from .models import *
 from .models import (
     Student, School, Parent, FeesTracker, 
-    SchoolPayLedger, AcademicResult, NationalTopPerformer, SchoolPost, BioAndCareer, StaffAdmin, StaffPayroll, 
+    SchoolPayLedger, AcademicResult, NationalTopPerformer, SchoolPost, BioAndCareer, Staff, StaffPayroll, 
     FinancialCommandCenter, AcademicResultsCenter, NationalLedger, CommissionAnalytics, 
-    AttendanceHub,
+    AttendanceHub, 
 )
 
-# =============================================================
-# 👔 THE IMPERIAL HR COMMAND (STAFF DOSSIER REGISTRY)
-# =============================================================
+# --- 👔 THE IMPERIAL HR COMMAND (STAFF TAB) ---
+
+def dossier_button(obj):
+    """Sovereign Button for the List View"""
+    from django.utils.safestring import mark_safe
+    return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">📂 OPEN DOSSIER</a>')
+dossier_button.short_description = 'HR Archive'
 
 @admin.register(Staff)
 class StaffAdmin(admin.ModelAdmin):
-    # 💎 1. THE LIST VIEW (Scannable Columns)
-    list_display = ('full_name', 'designation', 'school', 'staff_id', 'tin_number', 'dossier_button_link')
+    # 💎 1. THE VIEW: Scannable columns in the list
+    list_display = ('full_name', 'designation', 'school', 'staff_id', dossier_button)
     search_fields = ('full_name', 'staff_id', 'tin_number')
     list_filter = ('school', 'designation')
 
-    # 💎 2. THE CATEGORIZED TABS (The 'Fieldsets' logic you requested!)
+    # 💎 2. THE CATEGORIZED TABS (The 'Fieldsets' logic)
+    # This physically separates CVs and IDs from basic names
     fieldsets = (
         ('👤 CORE IDENTITY', {
-            'description': "Basic profile and institutional designation",
-            'fields': (('full_name', 'designation'), 'school', 'staff_id')
+            'fields': ('full_name', 'designation', 'school', 'staff_id')
         }),
         ('📂 OFFICIAL DOCUMENTATION', {
             'description': "Legal bio-metrics and career documents",
-            'classes': ('collapse',), # Makes it collapsible for prestige
+            'classes': ('collapse',), # Collapsible for prestige
             'fields': ('passport_photo', 'national_id_copy', 'cv_pdf')
         }),
-        ('🏛️ GOVERNMENT COMPLIANCE', {
-            'description': "URA Tax and NSSF Regulatory information",
-            'fields': (('tin_number', 'nssf_number'),)
+        ('🏛️ GOVT COMPLIANCE', {
+            'description': "URA Tax and NSSF Regulatory info",
+            'fields': ('tin_number', 'nssf_number')
         }),
-        ('📞 COMMUNICATION & KINSHIP', {
-            'fields': ('phone', 'next_of_kin', 'next_of_kin_phone')
-        }),
-        ('🔒 SECURITY & PAYMENTS', {
-            'fields': (('momo_number', 'secure_pin'),)
+        ('📞 CONTACT & SECURITY', {
+            'fields': ('phone', 'momo_number', 'secure_pin', 'next_of_kin', 'next_of_kin_phone')
         }),
     )
 
-    # 🛡️ PROTECTION
     readonly_fields = ('staff_id',)
 
     # 📥 THE DOSSIER BUTTON (Inside the list)
@@ -191,6 +191,7 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
+    Staff
     StaffPayroll,
     SchoolPayLedger,
     AcademicResultsCenter,
