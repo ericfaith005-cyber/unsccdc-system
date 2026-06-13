@@ -251,7 +251,6 @@ class SchoolPostAdmin(SchoolIsolatedAdmin):
 admin.site.register([
     Subject, 
     Parent,
-    School,
     Student, 
     AcademicResult,
     AttendanceHub, 
@@ -269,11 +268,10 @@ admin.site.register([
     ])
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
-admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
-# --- 🛡️ SURGERY: RESTORING ALL REGISTRY WINDOWS (api/admin.py) ---
+admin.site.register(School, SchoolAdmin)
 
-@admin.register(School)
+
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
     
@@ -436,6 +434,8 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
         t_color = "#000" if "MTN" in channel else "#fff"
         return mark_safe(f'<span style="background:{color}; color:{t_color}; padding:2px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
     channel_badge.short_description = "Method"
+    
+    admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
 @admin.register(FinancialCommandCenter)
 class FinancialCommandAdmin(SchoolIsolatedAdmin):
