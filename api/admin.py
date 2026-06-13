@@ -15,7 +15,7 @@ def dossier_button(obj):
     return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">📂 OPEN DOSSIER</a>')
 dossier_button.short_description = 'HR Archive'
 
-Staff
+
 class StaffAdmin(admin.ModelAdmin):
     # 💎 1. THE VIEW: Scannable columns in the list
     list_display = ('full_name', 'designation', 'school', 'staff_id', dossier_button)
@@ -48,7 +48,7 @@ class StaffAdmin(admin.ModelAdmin):
     def dossier_button_link(self, obj):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
-
+    
 admin.site.register(Staff, StaffAdmin)
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
