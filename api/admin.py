@@ -122,10 +122,7 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
     
-# =============================================================
-# 💰 THE NATIONAL LEDGER (FIXING E108 ERROR)
-# =============================================================
-@admin.register(NationalLedger)
+
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
     list_display = (
@@ -272,6 +269,7 @@ admin.site.register([
     FinancialCommandCenter
     ])
 
+admin.site.register(NationalLedger, NationalLedgerAdmin)
 
 # --- 🛡️ SURGERY: RESTORING ALL REGISTRY WINDOWS (api/admin.py) ---
 
