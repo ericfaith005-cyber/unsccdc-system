@@ -70,12 +70,35 @@ class School(models.Model):
 
     def __str__(self): return self.name
 
+# --- 🏛️ SURGERY: NATIONAL CURRICULUM REGISTRY ---
+
 class Subject(models.Model):
+    LEVEL_CHOICES = [
+        ('PLE', 'Primary Level (PLE)'),
+        ('UCE', 'Ordinary Level (UCE)'),
+        ('UACE', 'Advanced Level (UACE)'),
+        ('OTHER', 'Vocational/Other'),
+    ]
+
     name = models.CharField(max_length=100)
-    category = models.CharField(max_length=50, default='ARTS')
-    description = models.TextField(default="Detailed competencies.")
-    level = models.CharField(max_length=20, default='ALL')
-    def __str__(self): return self.name
+    code = models.CharField(max_length=10, blank=True, null=True) # e.g., 535 for Physics
+    level = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='UCE')
+    is_core = models.BooleanField(default=True, help_text="Is this a compulsory subject?")
+    
+    # 💎 FOR A-LEVEL COMBINATIONS
+    combination_category = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True, 
+        help_text="e.g., Sciences, Humanities, Languages"
+    )
+
+    class Meta:
+        verbose_name = "National Subject Registry"
+        ordering = ['level', 'name']
+
+    def __str__(self):
+        return f"[{self.level}] {self.name}"
 
 class Student(models.Model):
     full_name = models.CharField(max_length=255)

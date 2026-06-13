@@ -127,16 +127,30 @@ class MarksInline(admin.TabularInline):
     extra = 0 # Don't show empty rows by default
     classes = ['collapse'] # Only show when clicking 'Show'
 
-
 class AcademicResultsHubAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'account_number', 'school', 'current_class', 'download_report_button')
-    search_fields = ('full_name', 'account_number')
-    inlines = [MarksInline] # 💎 THIS allows adding all marks at once!
+    # 💎 THE LIST (Ensure names here match the methods below)
+    list_display = ('full_name', 'account_number', 'school', 'current_class', 'combination_view', 'report_card_download')
+    
+    # ... keep your inlines and search_fields ...
 
-    def download_report_button(self, obj):
-        # 💎 FIXED URL: Ensuring it points to /api/
-        return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background:#D4AF37; color:#000; padding:5px 12px; border-radius:10px; font-weight:bold; text-decoration:none;">📥 DOWNLOAD PDF</a>')
-    download_report_button.short_description = "National Report"
+    # 💎 THE MISSING METHOD: Drawing the Download Button
+    def report_card_download(self, obj):
+        # This points to the high-speed PDF engine we built
+        url = f"/api/download-report/{obj.account_number}/"
+        return mark_safe(f'''
+            <a href="{url}" target="_blank" 
+               style="background:#D4AF37; color:#000; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; font-size:10px; border: 1px solid #000;">
+               📥 DOWNLOAD PDF
+            </a>
+        ''')
+    report_card_download.short_description = "National Report"
+
+    # Ensure your combination_view is also defined inside this class
+    def combination_view(self, obj):
+        if obj.current_class in ['S.5', 'S.6']:
+            return mark_safe('<b style="color:#00ff00;">PCM</b>') # Example
+        return "N/A"
+    combination_view.short_description = "A-Level Combo"
 
 admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 
@@ -264,8 +278,7 @@ class SchoolPostAdmin(SchoolIsolatedAdmin):
     search_fields = ('title', 'description', 'school__name')
 
 # --- 🏛️ 5. OTHER REGISTRIES ---
-admin.site.register([
-    Subject, 
+admin.site.register([ 
     Parent,
     Student, 
     AcademicResult,
@@ -348,6 +361,43 @@ class AssignmentInline(admin.TabularInline):
     model = SubjectAssignment
     extra = 1
     verbose_name = "Academic Workload"
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'level', 'code', 'is_core')
+    list_filter = ('level', 'is_core')
+    search_fields = ('name', 'code')
+
+    # 🚀 THE MASTER BUTTON: Populate National Standard Subjects
+    actions = ['generate_ple_defaults', 'generate_uce_defaults', 'generate_uace_defaults']
+
+    @admin.action(description="⚡ GENERATE PLE STANDARD (Primary)")
+    def generate_ple_defaults(self, request, queryset):
+        defaults = ['English', 'Mathematics', 'Social Studies', 'Integrated Science']
+        for sub in defaults:
+            Subject.objects.get_or_create(name=sub, level='PLE', is_core=True)
+        self.message_user(request, "Primary Curriculum Pre-loaded Successfully! 🎓")
+
+    @admin.action(description="⚡ GENERATE UCE STANDARD (O-Level)")
+    def generate_uce_defaults(self, request, queryset):
+        core = ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History']
+        electives = ['Literature in English', 'Commerce', 'Agriculture', 'Fine Art', 'Computer Studies']
+        for sub in core:
+            Subject.objects.get_or_create(name=sub, level='UCE', is_core=True)
+        for sub in electives:
+            Subject.objects.get_or_create(name=sub, level='UCE', is_core=False)
+        self.message_user(request, "O-Level Registry Synced with NCDC Standards! 📜")
+
+    @admin.action(description="⚡ GENERATE UACE STANDARD (A-Level)")
+    def generate_uace_defaults(self, request, queryset):
+        subs = [
+            ('Mathematics', 'Sciences'), ('Physics', 'Sciences'), ('Biology', 'Sciences'), 
+            ('Chemistry', 'Sciences'), ('Economics', 'Humanities'), ('Geography', 'Humanities'),
+            ('History', 'Humanities'), ('Literature', 'Languages'), ('Entrepreneurship', 'Humanities')
+        ]
+        for name, cat in subs:
+            Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
+        self.message_user(request, "A-Level Combinations Registry Active! 💎")
 
 
 @admin.register(StaffPayroll)
