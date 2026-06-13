@@ -767,43 +767,41 @@ def generate_staff_dossier_pdf(request, staff_id):
         staff = Staff.objects.get(staff_id=staff_id)
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="Dossier_{staff.full_name}.pdf"'
-    p = canvas.Canvas(response, pagesize=A4)
-    w, h = A4
+        p = canvas.Canvas(response, pagesize=A4)
+        w, h = A4
 
-    # 🏛️ NATIONAL HEADER & BORDERS
-    p.setStrokeColor(colors.black); p.rect(20, 20, w-40, h-40)
-    p.setFont("Helvetica-Bold", 14)
-    p.drawCentredString(w/2, h-60, "NATIONAL STAFF REGISTRY - DOSSIER")
-    p.setFont("Helvetica", 10)
-    p.drawCentredString(w/2, h-75, f"Station: {staff.school.name.upper()}")
+  
+        p.setStrokeColor(colors.black); p.rect(20, 20, w-40, h-40)
+        p.setFont("Helvetica-Bold", 14)
+        p.drawCentredString(w/2, h-60, "NATIONAL STAFF REGISTRY - DOSSIER")
+        p.setFont("Helvetica", 10)
+        p.drawCentredString(w/2, h-75, f"Station: {staff.school.name.upper()}")
 
-    # 👤 PERSONAL IDENTITY
-    p.setFont("Helvetica-Bold", 11); p.drawString(50, h-120, "1. PERSONAL BIOMETRICS")
-    p.setFont("Helvetica", 10)
-    p.drawString(60, h-140, f"Full Name: {staff.full_name}")
-    p.drawString(60, h-155, f"Staff ID: {staff.staff_id}")
-    p.drawString(60, h-170, f"Designation: {staff.designation}")
+   
+        p.setFont("Helvetica-Bold", 11); p.drawString(50, h-120, "1. PERSONAL BIOMETRICS")
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-140, f"Full Name: {staff.full_name}")
+        p.drawString(60, h-155, f"Staff ID: {staff.staff_id}")
+        p.drawString(60, h-170, f"Designation: {staff.designation}")
     
     # 🏦 STATUTORY & COMPLIANCE
-    p.setFont("Helvetica-Bold", 11); p.drawString(50, h-210, "2. GOVERNMENT COMPLIANCE (URA/NSSF)")
-    p.setFont("Helvetica", 10)
-    p.drawString(60, h-230, f"URA TIN: {staff.tin_number}")
-    p.drawString(60, h-245, f"NSSF No: {staff.nssf_number}")
+        p.setFont("Helvetica-Bold", 11); p.drawString(50, h-210, "2. GOVERNMENT COMPLIANCE (URA/NSSF)")
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-230, f"URA TIN: {staff.tin_number}")
+        p.drawString(60, h-245, f"NSSF No: {staff.nssf_number}")
     
     # 📞 CONTACT & NEXT OF KIN
-    p.setFont("Helvetica-Bold", 11); p.drawString(50, h-280, "3. EMERGENCY CONTACT REGISTRY")
-    p.setFont("Helvetica", 10)
-    p.drawString(60, h-300, f"Primary Phone: {staff.phone}")
-    p.drawString(60, h-315, f"Next of Kin: {staff.next_of_kin}")
-    p.drawString(60, h-330, f"Kin Phone: {staff.next_of_kin_phone}")
+        p.setFont("Helvetica-Bold", 11); p.drawString(50, h-280, "3. EMERGENCY CONTACT REGISTRY")
+        p.setFont("Helvetica", 10)
+        p.drawString(60, h-300, f"Primary Phone: {staff.phone}")
+        p.drawString(60, h-315, f"Next of Kin: {staff.next_of_kin}")
+        p.drawString(60, h-330, f"Kin Phone: {staff.next_of_kin_phone}")
 
     # ✍️ OFFICIAL SEAL
-    p.setFont("Helvetica-Bold", 8)
-    p.drawCentredString(w/2, 100, "CONFIDENTIAL DOCUMENT - PROPERTY OF NATIONAL HUB")
-    p.showPage(); p.save()
-    return response
-
-# --- 🧾 THE IMPERIAL NATIONAL PAYSLIP ENGINE ---
+        p.setFont("Helvetica-Bold", 8)
+        p.drawCentredString(w/2, 100, "CONFIDENTIAL DOCUMENT - PROPERTY OF NATIONAL HUB")
+        p.showPage(); p.save()
+        return response
 from reportlab.platypus import Table, TableStyle
 
 def generate_payslip_pdf(request, payroll_id):
