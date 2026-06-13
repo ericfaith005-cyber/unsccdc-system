@@ -48,8 +48,7 @@ class StaffAdmin(admin.ModelAdmin):
     def dossier_button_link(self, obj):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
-    
-admin.site.register(Staff, StaffAdmin)
+
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
@@ -256,7 +255,6 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
-    School,
     StaffPayroll,
     AcademicResultsCenter,
     SchoolPost, 
@@ -269,9 +267,8 @@ admin.site.register([
     ])
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
+admin.site.register(Staff, StaffAdmin)
 
-
-@admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
     
@@ -290,6 +287,7 @@ class SchoolAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ('total_revenue_collected', 'total_commission_earned')
+admin.site.register(School, SchoolAdmin)
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
