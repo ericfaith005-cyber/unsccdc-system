@@ -191,7 +191,7 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
-    Staff
+    Staff,
     StaffPayroll,
     SchoolPayLedger,
     AcademicResultsCenter,
