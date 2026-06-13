@@ -120,10 +120,22 @@
             <input type="text" name="phone" placeholder="2567..." required>
         </div>
 
-        <!-- 💎 THE POWER SUBMIT -->
-        <button type="submit" class="gold-btn">
-            VERIFY IDENTITY
-        </button>
+       <!-- 📦 1. THE PARENT FORM CONTAINER -->
+<div id="identity-form">
+
+    <button type="button" onclick="verifyParentIdentity(event)" class="gold-btn">
+        VERIFY IDENTITY
+    </button>
+
+    <!-- ============================================================= -->
+    <!-- 🏛️ PASTE THE SECOND PART (STAFF LINK) RIGHT HERE! -->
+    <!-- ============================================================= -->
+    <div style="margin-top: 25px; text-align: center;">
+        <a href="/staff-login/" style="color: rgba(255,255,255,0.3); text-decoration: none; font-size: 11px; font-weight: bold; letter-spacing: 1px;">
+            Enter Staff Command Portal →
+        </a>
+    </div>
+</div>
         
         <p style="color: #444; font-size: 10px; margin-top: 20px;">
             Native Secure Handshake Active 🛡️
@@ -156,69 +168,79 @@
     </div>
 
     <script>
-        const hubIP = "https://unsccdc-system.onrender.com";
 
-        async function initiateHandshake() {
-            const code = document.getElementById('code').value.trim();
-            const student = document.getElementById('student').value.trim();
-            const parent = document.getElementById('parent').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const loader = document.getElementById('loader');
+// 1. --- 🛡️ INITIAL STATE: ISOLATE THE ANIMATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    const loader = document.getElementById('loader-overlay');
+    // Force the loader to be invisible on page load
+    if (loader) {
+        loader.style.display = 'none';
+    }
+    console.log("--- 🏛️ NATIONAL REGISTRY GATEWAY IDLE & READY ---");
+});
 
-            if (!code || !student || !parent || !phone) {
-                alert("REGISTRY ERROR: All fields are required for National Verification.");
-                return;
-            }
+// 2. --- ⚡ THE EXPLICIT FORM SUBMISSION METHOD ---
+async function verifyParentIdentity(event) {
+    // Prevent the default form behavior if inside a <form> tag
+    if (event) event.preventDefault();
 
-            loader.style.display = 'flex';
-            document.getElementById('loader-text').innerText = "QUERYING NATIONAL REGISTRY...";
+    const loader = document.getElementById('loader-overlay');
+    const statusText = document.getElementById('loader-text');
 
-            try {
-                // 💎 THE IMPERIAL HANDSHAKE
-                const url = `${hubIP}/api/verify-identity/?code=${code}&student=${student}&parent=${parent}&phone=${phone}`;
-                
-                const response = await fetch(url, {
-                    method: 'POST', // Log shows OPTIONS then POST/GET
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
-                });
+    // A. Capture user inputs
+    const code = document.getElementById('national_access_code').value.trim();
+    const student = document.getElementById('student_full_name').value.trim();
+    const parent = document.getElementById('parent_name').value.trim();
+    const phone = document.getElementById('phone_number').value.trim();
 
-                const data = await response.json();
+    // 🛡️ B. THE VALIDATION SHIELD
+    // Checks if boxes are empty BEFORE showing the animation
+    if (!code || !student || !parent || !phone) {
+        alert("NATIONAL HUB: Please fill in all your registration details before proceeding.");
+        return; // 🛑 Halt execution here
+    }
 
-                if (response.status === 200 && data.status === 'authenticated') {
-                    // 🚀 TRANSITION TO STAGE 2
-                    document.getElementById('identity-gate').style.display = 'none';
-                    document.getElementById('pin-vault').style.display = 'block';
-                    loader.style.display = 'none';
-                } else {
-                    loader.style.display = 'none';
-                    alert(data.message || "Identity Rejected: Check your details.");
-                }
-            } catch (err) {
-                loader.style.display = 'none';
-                alert("NATIONAL LINK INTERRUPTED: The Brain is waking up. Try again in 10s.");
-            }
+    // C. 🚀 ACTIVATE ANIMATION ONLY AFTER VALIDATION
+    loader.style.display = 'flex';
+    if (statusText) statusText.innerText = "ESTABLISHING NATIONAL LINK... 📡";
+
+    try {
+        // D. CLEAN STANDARD FETCH REQUEST
+        const response = await fetch('/api/verify-identity/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                code: code,
+                student: student,
+                parent: parent,
+                phone: phone
+            })
+        });
+
+        const result = await response.json();
+
+        if (response.status === 200 && result.status === 'success') {
+            console.log("Registry Match Success ✅");
+            // Transition to PIN screen logic here
+            document.getElementById('identity-form').style.display = 'none';
+            document.getElementById('pin-screen').style.display = 'block';
+            loader.style.display = 'none';
+        } else {
+            // 💎 CRITICAL FIX: Turn OFF animation immediately on error
+            loader.style.display = 'none';
+            alert(result.message || "Registry Denied: Please check your details.");
         }
 
-        // --- 🌌 STARFIELD ENGINE ---
-        const canvas = document.getElementById('star-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.onresize = resize; resize();
-
-        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, size: Math.random()*1.5, speed: Math.random()*0.5});
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-            stars.forEach(s => {
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
-                s.y += s.speed; if(s.y > canvas.height) s.y = 0;
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
+    } catch (error) {
+        // 💎 CRITICAL FIX: Turn OFF animation if server is offline
+        loader.style.display = 'none';
+        console.error("Uplink Error:", error);
+        alert("National Link Interrupted: Check your internet or wait for server wake-up.");
+    }
+}
     </script>
 </body>
 </html>
