@@ -123,7 +123,7 @@ class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
     def national_rank(self, obj):
         return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
 
-admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
+admin.site.register(AcademicResultsHub, AcademicResultsHubAdmin)
 
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
@@ -256,7 +256,6 @@ admin.site.register([
     AcademicResult,
     AttendanceHub, 
     StaffPayroll,
-    AcademicResultsCenter,
     SchoolPost, 
     User,
     NationalTopPerformer, 
