@@ -1,3 +1,4 @@
+import determine
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -9,6 +10,7 @@ from .models import *
 # --- 🏛️ SURGERY: PDF IMPORTS (api/views.py) ---
 from django.http import HttpResponse
 from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from .models import Staff, Student # 💎 Ensure Staff is imported!
@@ -518,71 +520,6 @@ def bursar_notification_stream(request, school_id):
             time.sleep(5) # Efficient polling
     return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
 
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
-from django.http import HttpResponse
-
-def generate_imperial_pdf(request, student_id):
-    """The Goliath Python Engine to generate the A4 Report Card"""
-    student = Student.objects.get(account_number=student_id)
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="Report_{student.full_name}.pdf"'
-
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-
-    # 1. 🇺🇬 THE NATIONAL FLAG BORDERS
-    p.setStrokeColor(colors.black); p.rect(10, 10, width-20, height-20, stroke=1, fill=0)
-    p.setStrokeColor(colors.yellow); p.rect(13, 13, width-26, height-26, stroke=1, fill=0)
-    p.setStrokeColor(colors.red); p.rect(16, 16, width-32, height-32, stroke=1, fill=0)
-
-    # 2. 🏛️ THE OFFICIAL HEADER
-    p.setFont("Helvetica-Bold", 12)
-    p.drawCentredString(width/2, height-60, "THE REPUBLIC OF UGANDA")
-    p.setFont("Helvetica-Bold", 10)
-    p.drawCentredString(width/2, height-80, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
-    p.setFont("Helvetica-Bold", 16)
-    p.setFillColor(colors.HexColor("#003366"))
-    p.drawCentredString(width/2, height-105, student.school.name.upper())
-    
-    # 3. 👤 STUDENT REGISTRY
-    p.setFillColor(colors.black)
-    p.setFont("Helvetica-Bold", 9)
-    p.drawString(50, height-150, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(50, height-165, f"ID: {student.account_number}")
-    p.drawString(400, height-150, f"CLASS: {student.current_class}")
-    p.drawString(400, height-165, f"PAY CODE: {student.payment_code}")
-
-    # 4. 📊 THE 12-COLUMN DATA MATRIX
-    data = [['SUBJECT', 'AOI1', 'AOI2', 'MID', 'AOI3', 'AOI4', 'EOT', 'PROJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
-    
-    # Pulling real marks from Brain
-    marks = student.marks.all()
-    for m in marks:
-        data.append([
-            m.subject.name[:10], '√', '√', '√', '√', '√', f"{m.eot_score}%", '√', f"{m.eot_score}%", 'A', 'STF', 'Excellent'
-        ])
-
-    table = Table(data, colWidths=[65, 30, 30, 30, 30, 30, 35, 35, 35, 25, 35, 80])
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.black),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSIZE', (0, 0), (-1, -1), 6),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-    ]))
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 30, height-350)
-
-    # 5. ✍️ FOOTER & GRADING KEY
-    p.setFont("Helvetica-Bold", 8)
-    p.drawString(50, 150, "GRADING: 80-100: A | 70-79: B | 60-69: C | 50-59: D | 0-49: E")
-    p.drawCentredString(width/2, 100, "VERIFIED BY NATIONAL HUB")
-    p.showPage()
-    p.save()
-    return response
 
 def generate_imperial_pdf(request, student_id):
     """

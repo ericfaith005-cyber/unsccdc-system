@@ -85,8 +85,10 @@ class AcademicResultAdmin(admin.ModelAdmin):
 
 class MarksInline(admin.TabularInline):
     model = AcademicResult
-    fields = ('subject', 'aoi_1', 'aoi_2', 'mid_term', 'aoi_3', 'aoi_4', 'eot_score', 'project_work')
-    extra = 1
+    # 💎 THE POWER GRID: All assessment fields in one horizontal row!
+    fields = ('subject', 'aoi_1', 'aoi_2', 'mid_term', 'aoi_3', 'aoi_4', 'project_work', 'eot_score', 'grade')
+    extra = 1 # Shows one empty row for new subjects
+    classes = ['collapse'] # Keeps it neat
 
 # --- ⚡ 1. THE BULK DOWNLOAD TOOL ---
 @admin.action(description='⚡ DOWNLOAD NATIONAL REPORTS (PDF)')
@@ -110,31 +112,15 @@ class MarksInline(admin.TabularInline):
     classes = ['collapse'] # Only show when clicking 'Show'
 
 
-class AcademicResultsHubAdmin(SchoolIsolatedAdmin):
-    # 💎 Add the bulk action tool here
-    actions = [export_as_pdf] 
-    
-    # 💎 Add 'download_button' to the end of this list
-    list_display = ('full_name', 'account_number', 'school', 'current_class', 'stream', 'national_rank', download_button)
-    
+class AcademicResultsHubAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'account_number', 'school', 'current_class', 'download_report_button')
     search_fields = ('full_name', 'account_number')
-    inlines = [MarksInline]
+    inlines = [MarksInline] # 💎 THIS allows adding all marks at once!
 
-    def national_rank(self, obj):
-        return mark_safe('<span style="color: #00ff00; font-weight:bold;">Top 5%</span>')
-
-    list_display = ('full_name', 'current_class', 'school', download_button)
-    inlines = [MarksInline]
-    
-    # 💎 THE 500 ERROR KILLER: 
-    # Disable the 'Add' button for this specific tab.
-    # This forces you to add students in the 'Students' tab properly.
-    def has_add_permission(self, request):
-        return False 
-
-    # 🛡️ Also prevent deleting from here to protect national records
-    def has_delete_permission(self, request, obj=None):
-        return False
+    def download_report_button(self, obj):
+        # 💎 FIXED URL: Ensuring it points to /api/
+        return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background:#D4AF37; color:#000; padding:5px 12px; border-radius:10px; font-weight:bold; text-decoration:none;">📥 DOWNLOAD PDF</a>')
+    download_report_button.short_description = "National Report"
 
 admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 
@@ -320,27 +306,11 @@ class StudentAdmin(admin.ModelAdmin):
         # Shows a visual dot if they owe money
         return mark_safe('<span style="color:green;">● Cleared</span>')
 
-# --- 🛡️ SURGERY: ALIGNING THE DOSSIER SIGNPOST ---
 def dossier_button(obj):
-    # 💎 THE MASTER URL: Must match urls.py exactly!
-    # We use obj.staff_id to identify the specific teacher
-    url = f"/api/staff-dossier/{obj.staff_id}/" 
+    # 💎 FIXED URL: Must start with /api/ to avoid 404
+    url = f"/api/staff-dossier/{obj.staff_id}/"
+    return mark_safe(f'<a href="{url}" target="_blank" style="background:#002366; color:#fff; padding:5px 12px; border-radius:10px; font-weight:bold; text-decoration:none;">📂 OPEN DOSSIER</a>')
     
-    return mark_safe(f'''
-        <a href="{url}" 
-           target="_blank" 
-           style="background-color: #002366; 
-                  color: white; 
-                  padding: 6px 12px; 
-                  border-radius: 8px; 
-                  font-weight: bold; 
-                  text-decoration: none;
-                  border: 1px solid #D4AF37;">
-           📂 OPEN DOSSIER
-        </a>
-    ''')
-dossier_button.short_description = 'HR Archive'
-
 def payslip_button(obj):
     url = f"/api/download-payslip/{obj.id}/"
     return mark_safe(f'''
