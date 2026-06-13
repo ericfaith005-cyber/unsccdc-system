@@ -5,6 +5,8 @@ from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.db.models import Sum, Avg, F 
+from django.db.models import Sum, Avg, Count
+from django.db import connection 
 from datetime import timedelta
 from .models import *
 
@@ -438,57 +440,44 @@ class FinancialCommandAdmin(admin.ModelAdmin):
     change_list_template = "admin/api/financialcommandcenter/change_list.html"
     
     def changelist_view(self, request, extra_context=None):
-        now = timezone.now()
-        today = now.date()
-        three_days_ago = today - timedelta(days=3)
-        
-        # 1. ENROLLMENT & GENDER MATH
-        total_students = Student.objects.count()
-        males = Student.objects.filter(gender='M').count()
-        females = Student.objects.filter(gender='F').count()
-        
-        # 2. FINANCIAL BEHAVIOR (Banking Logic)
-        fees = FeesTracker.objects.all()
-        # Elite Payers: Paid more than 80%
-        elite_payers = fees.filter(total_fees_paid__gte=F('total_fees_due')*0.8).count()
-        # Defaulters: Paid less than 20%
-        defaulters = fees.filter(total_fees_paid__lt=F('total_fees_due')*0.2).count()
-
-        # 3. PERFORMANCE TRENDS (Progressing vs Declining)
-        # Average score this term vs target
-        avg_data = AcademicResult.objects.aggregate(Avg('eot_score'))
-        avg_score = avg_data['eot_score__avg'] if avg_data['eot_score__avg'] is not None else 0
-        trend = "PROGRESSING ↑" if avg_score > 65 else "DECLINING ↓"
-
-        # 4. STAFF ANALYTICS
-        total_staff = Staff.objects.count()
-        staff_male = Staff.objects.filter(gender='M').count()
-        staff_female = Staff.objects.filter(gender='F').count()
-
-        # 🛡️ 5. EMERGENCY ALERTS (Absent for 3 days)
-        # Find students who have NO 'Present' records in the last 3 days
-        from .models import Attendance
-        present_recently = Attendance.objects.filter(date__gte=three_days_ago, status=True).values_list('student_id', flat=True)
-        missing_students = Student.objects.exclude(id__in=present_recently)[:5] # Show top 5 missing
-
-        # 🤖 6. SOVEREIGN SOLUTIONS (AI INSIGHTS)
-        solutions = []
-        if avg_score < 50: solutions.append("⚠️ ACADEMIC CRISIS: Initiate mandatory remedial hours.")
-        if defaulters > (total_students * 0.3): solutions.append("💸 REVENUE LEAK: Deploy SMS Automated debt reminders.")
-        if total_staff > (total_students / 10): solutions.append("💼 PAYROLL WARNING: High staff-to-student ratio detected.")
-
         extra_context = extra_context or {}
-        extra_context['intel'] = {
-            'total': total_students, 'm': males, 'f': females,
-            'elite': elite_payers, 'defaulters': defaulters,
-            'avg': f"{avg_score:.1f}%", 'trend': trend,
-            'staff_total': total_staff, 'sm': staff_male, 'sf': staff_female,
-            'missing': missing_students, 'solutions': solutions
-        }
         
-        # 7. CHART DATA (JSON)
-        extra_context['gender_json'] = json.dumps([males, females])
-        extra_context['pay_json'] = json.dumps([elite_payers, defaulters, (total_students - elite_payers - defaulters)])
+        # 🛡️ SOVEREIGN DEFAULT DATA (What to show if DB is empty)
+        intel_data = {
+            'total': 0, 'm': 0, 'f': 0, 'avg': '0%', 
+            'trend': 'INITIALIZING', 'missing': [], 
+            'solutions': ["Awaiting National Data Registry..."]
+        }
+        gender_stats = [0, 0]
+        pay_stats = [0, 0, 100] # 100% pending
+
+        try:
+            # 💎 1. TABLE CHECK: Only run if Student table physically exists
+            if 'api_student' in connection.introspection.table_names():
+                txs = SchoolPayLedger.objects.all()
+                
+                # Safe Sums (using 'or 0' is the secret!)
+                extra_context['d_total'] = txs.filter(timestamp__date=timezone.now().date()).aggregate(s=Sum('amount'))['s'] or 0
+                
+                # Enrollment & Gender (Attribute safe)
+                intel_data['total'] = Student.objects.count()
+                if hasattr(Student, 'gender'):
+                    intel_data['m'] = Student.objects.filter(gender='M').count()
+                    intel_data['f'] = Student.objects.filter(gender='F').count()
+                    gender_stats = [intel_data['m'], intel_data['f']]
+
+                # Performance (Avoid division by zero)
+                avg_res = AcademicResult.objects.aggregate(a=Avg('eot_score'))['a']
+                if avg_res:
+                    intel_data['avg'] = f"{avg_res:.1f}%"
+
+        except Exception as e:
+            print(f"Build-time shield active: {e}")
+
+        # 🚀 Inject safe data into the dashboard
+        extra_context['intel'] = intel_data
+        extra_context['gender_json'] = json.dumps(gender_stats)
+        extra_context['pay_json'] = json.dumps(pay_stats)
         
         return super().changelist_view(request, extra_context=extra_context)
 
