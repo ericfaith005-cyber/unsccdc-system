@@ -177,23 +177,54 @@ class AttendanceHubAdmin(SchoolIsolatedAdmin):
     get_class.short_description = "Class"
     get_stream.short_description = "Stream"
 
+# =============================================================
+# 💰 THE TRANSPARENT FEES TRACKER (FIXING E108 ERROR)
+# =============================================================
 @admin.register(FeesTracker)
 class FeesTrackerAdmin(admin.ModelAdmin):
-    list_display = ('student', 'total_invoiced', 'total_paid', 'remaining_balance', 'payment_percentage')
-    list_filter = ('student__school', 'student__current_class')
-    readonly_fields = ('remaining_balance',)
-
-    def total_invoiced(self, obj): return f"UGX {obj.total_fees_due:,.0f}"
+    # 💎 THE VIEW: Scannable Financial Columns
+    # We ensure every name here matches a method defined below
+    list_display = (
+        'student', 
+        'total_invoiced', 
+        'total_paid', 
+        'remaining_balance', 
+        'payment_percentage'
+    )
     
+    list_filter = ('student__school', 'student__current_class')
+    search_fields = ('student__full_name', 'student__account_number')
+    
+    # 🛡️ THE AUDIT LOCK
+    readonly_fields = ('remaining_balance', 'payment_percentage')
+
+    # --- 🧮 LIVE FINANCIAL MATH ENGINES ---
+
+    def total_invoiced(self, obj):
+        # Format the Fees Due with UGX and commas
+        return f"UGX {obj.total_fees_due:,.0f}"
+    total_invoiced.short_description = "Invoiced"
+
+    def total_paid(self, obj):
+        # 💎 THE KEY FIX: Physically defining the 'total_paid' column
+        # Using 'total_fees_paid' from your model
+        return f"UGX {obj.total_fees_paid:,.0f}"
+    total_paid.short_description = "Total Paid"
+
     def remaining_balance(self, obj):
+        # Calculates the debt in real-time
         balance = obj.total_fees_due - obj.total_fees_paid
-        color = "red" if balance > 0 else "green"
+        color = "#D90000" if balance > 0 else "#00ff00"
         return mark_safe(f'<b style="color:{color};">UGX {balance:,.0f}</b>')
+    remaining_balance.short_description = "Balance"
 
     def payment_percentage(self, obj):
-        percent = (obj.total_fees_paid / obj.total_fees_due) * 100
-        return f"{percent:.1f}%"
-
+        # Calculates the progress of the parent's payment
+        if obj.total_fees_due > 0:
+            percent = (obj.total_fees_paid / obj.total_fees_due) * 100
+            return f"{percent:.1f}%"
+        return "0%"
+    payment_percentage.short_description = "Progress"
 # --- 📱 4. HD TIKTOK FEED (RESTORED) ---
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
