@@ -4,6 +4,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.db.models import Sum, Avg, F 
 from datetime import timedelta
 from .models import *
 
@@ -455,7 +456,8 @@ class FinancialCommandAdmin(admin.ModelAdmin):
 
         # 3. PERFORMANCE TRENDS (Progressing vs Declining)
         # Average score this term vs target
-        avg_score = AcademicResult.objects.aggregate(Avg('eot_score'))['eot_score__avg'] or 0
+        avg_data = AcademicResult.objects.aggregate(Avg('eot_score'))
+        avg_score = avg_data['eot_score__avg'] if avg_data['eot_score__avg'] is not None else 0
         trend = "PROGRESSING ↑" if avg_score > 65 else "DECLINING ↓"
 
         # 4. STAFF ANALYTICS
