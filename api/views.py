@@ -371,6 +371,45 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
+from django.shortcuts import render, redirect
+from .models import Student
+
+def parent_verify_view(request):
+    """
+    STAGE 1: NATIVE IDENTITY VALIDATION
+    Served directly from Django to kill CORS Preflight errors.
+    """
+    if request.method == 'POST':
+        # 1. Capture data from Native HTML Form
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        # 2. Query the database brain directly
+        # Aligned with your National Registry filter requirements
+        student = Student.objects.filter(
+            payment_code=code, 
+            full_name__iexact=student_name, 
+            parent__full_name__iexact=parent_name, 
+            parent__phone_number=phone
+        ).first()
+
+        if student:
+            # ✅ SUCCESS: Identity Found. Transition to PIN screen.
+            return render(request, 'pin_entry.html', {
+                'student': student,
+                'status': 'authenticated'
+            })
+        else:
+            # 🛑 DENIED: Reload page with error message
+            return render(request, 'parent_login.html', {
+                'error': 'Registry Denied: No matching records found. Verify details.'
+            })
+
+    # Default GET request shows the prestigious login page
+    return render(request, 'parent_login.html')
+
 @api_view(['GET'])
 def staff_hub_login(request):
     name = request.query_params.get('name', '').strip()
