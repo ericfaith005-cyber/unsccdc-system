@@ -16,6 +16,7 @@ from .models import Staff, Student # 💎 Ensure Staff is imported!
 import africastalking
 import random
 import uuid
+import json
 import traceback
 from django.shortcuts import render
 from django.db.models import Sum, F
@@ -87,9 +88,14 @@ def calculate_unsc_tax(amt):
     elif amt <= 1000000: return 6000
     return 7000
 
-# --- 4. MASTER HUB VIEWSET (STUDENT/PARENT PORTAL) ---
+import traceback
+from django.db.models import Sum, Avg, F
+from rest_framework import viewsets
+from rest_framework.response import Response
+from .models import *
+
 class StudentViewSet(viewsets.ViewSet):
-    """Primary Uplink for the Sovereign Mobile Hub"""
+    """Primary Uplink for the Sovereign Mobile Hub (Aligned for v4.0 App)"""
 
     def list(self, request):
         code_in = request.query_params.get('code', '').strip()
@@ -109,12 +115,14 @@ class StudentViewSet(viewsets.ViewSet):
                 s = p_rec.linked_student
                 sch = s.school
 
-                # --- 🛡️ SOVEREIGN SAFEGUARDS (FIXES REGISTRY LINK FAILURE) ---
+                # --- 🛡️ SOVEREIGN SAFEGUARDS ---
                 bio_obj = getattr(s, 'bio', None)
                 bio_data = {
                     "career": getattr(bio_obj, 'future_career', "National Leader"),
                     "challenges": getattr(bio_obj, 'challenges_faced', "None"),
-                    "inspiration": getattr(bio_obj, 'student_inspiration', "Sovereignty")
+                    "inspiration": getattr(bio_obj, 'student_inspiration', "Sovereignty"),
+                    "gender": getattr(s, 'gender', 'M'), # 💎 ADDED: For profile icons
+                    "stream": getattr(s, 'stream', 'North'), # 💎 ADDED: For registry accuracy
                 }
 
                 f_rec = getattr(s, 'fees', None)
@@ -135,34 +143,88 @@ class StudentViewSet(viewsets.ViewSet):
                 # --- 📑 10-COLUMN DATA GATHERING ---
                 national_report = {}
                 p_map = {"AOI1":"aoi_1", "AOI2":"aoi_2", "MidTerm":"mid_term", "AOI3":"aoi_3", "AOI4":"aoi_4", "EOT":"eot_score"}
-                total_pts = 0
+                
                 for p_key, m_field in p_map.items():
                     mlist = []
-                    current_term_total = 0
+                    current_term_total_pts = 0
                     for m in s.marks.all():
                         score = getattr(m, m_field, 0)
+                        # We assume get_national_grading is defined in your utils
                         g, pts, st, rem = get_national_grading(score, s.level_category)
-                        if p_key == "EOT": current_term_total += pts
-                        mlist.append({"sub": m.subject.name, "score": score, "grade": g, "aoi1": m.aoi_1, "aoi2": m.aoi_2, "mid": m.mid_term, "aoi3": m.aoi_3, "aoi4": m.aoi_4, "project": m.project_work})
-                    if mlist: national_report[p_key] = {"marks": mlist, "agg": current_term_total, "div": get_ple_division(current_term_total) if s.level_category == 'PRIMARY' else "VERIFIED"}
-
-                return Response({
-                    "type": "parent", "name": s.full_name, "id": s.account_number, "sch_id": sch.school_account_id, "class": s.current_class, "curriculum": s.level_category,
-                    "photo": request.build_absolute_uri(s.photo.url) if s.photo else "", "parent_name": p_rec.full_name,
-                    "school": {
-                        "name": sch.name, "addr": sch.address, "motto": sch.school_motto, "uneb_no": sch.uneb_center_number, "dir": sch.director,
-                        "mission": getattr(sch, 'mission', "Excellence"), "vision": getattr(sch, 'vision', "Sovereignty"), "rating": getattr(sch, 'rating', "⭐⭐⭐⭐⭐"), "type": getattr(sch, 'school_type', "Standard")
-                    },
-                    "finance": finance, "national_report": national_report, "bio_info": bio_data,
-                    "top_performers": [{"name": t.name, "school": t.school_name, "score": t.score, "photo": request.build_absolute_uri(t.photo.url)} for t in NationalTopPerformer.objects.all().order_by('?')[:12]],
-                    "feed": [{"school": f.school.name, "title": f.title, "media": request.build_absolute_uri(f.media_file.url), "likes": f.likes_count} for f in SchoolPost.objects.all().order_by('-date')],
-                    "ranks": {"nat": 1},
-                    "name": s.full_name,
-                    "id": s.account_number,
-                    "payment_code": s.payment_code, # 💎 SENDING THE PRN HERE
-                "ussd_steps": sch.ussd_instructions, # Pulls the custom school steps
+                        if p_key == "EOT": current_term_total_pts += pts
+                        
+                        mlist.append({
+                            "sub": m.subject.name, 
+                            "score": score, 
+                            "grade": g, 
+                            "aoi1": m.aoi_1, 
+                            "aoi2": m.aoi_2, 
+                            "mid": m.mid_term, 
+                            "aoi3": m.aoi_3, 
+                            "aoi4": m.aoi_4, 
+                            "project": m.project_work,
+                            "teacher": "STAFF" # 💎 ADDED: For the 'TCH' column in App
+                        })
                     
-                    # 💎 THE RECEIPT ENGINE DATA: Fetches all verified USSD payments
+                    if mlist: 
+                        national_report[p_key] = {
+                            "marks": mlist, 
+                            "agg": current_term_total_pts, 
+                            "div": "DIV 1" if current_term_total_pts <= 12 else "VERIFIED"
+                        }
+
+                # --- 🎞️ TOP PERFORMERS ALIGNMENT ---
+                performers = []
+                for t in NationalTopPerformer.objects.all().order_by('?')[:12]:
+                    performers.append({
+                        "name": t.name, 
+                        "school_name": t.school_name, # 💎 MATCHES APP KEY
+                        "score": t.score, 
+                        "photo": request.build_absolute_uri(t.photo.url) if t.photo else ""
+                    })
+
+                # --- 📱 TIKTOK FEED ALIGNMENT (CRITICAL FOR LOADING FIX) ---
+                feed_data = []
+                for f in SchoolPost.objects.all().order_by('-date'):
+                    feed_data.append({
+                        "id": f.id, # 💎 ADDED: For interaction tracking
+                        "school_name": f.school.name, # 💎 MATCHES APP KEY
+                        "content": f.title, # 💎 MATCHES APP KEY (CONTENT)
+                        "media": request.build_absolute_uri(f.media_file.url) if f.media_file else "",
+                        "likes": f.likes_count,
+                        "comment_count": getattr(f, 'comments_total', 0) # 💎 ADDED: For UI badges
+                    })
+
+                # 📦 THE FINAL IMPERIAL PACKAGE
+                return Response({
+                    "status": "authenticated", # 💎 ADDED: For the App's new Verify logic
+                    "type": "parent", 
+                    "name": s.full_name, 
+                    "id": s.account_number, 
+                    "payment_code": s.payment_code, 
+                    "sch_id": sch.school_account_id, 
+                    "class": s.current_class, 
+                    "curriculum": s.level_category,
+                    "photo": request.build_absolute_uri(s.photo.url) if s.photo else "", 
+                    "parent_name": p_rec.full_name,
+                    "school": {
+                        "name": sch.name, 
+                        "addr": sch.address, 
+                        "motto": sch.school_motto, 
+                        "uneb_no": sch.uneb_center_number, 
+                        "school_code": sch.school_code, # 💎 ADDED
+                        "dir": sch.director,
+                        "mission": getattr(sch, 'mission', "Excellence"), 
+                        "vision": getattr(sch, 'vision', "Sovereignty"), 
+                        "rating": getattr(sch, 'rating', "⭐⭐⭐⭐⭐"), 
+                        "type": getattr(sch, 'school_type', "Standard")
+                    },
+                    "finance": finance, 
+                    "national_report": national_report, 
+                    "bio_info": bio_data,
+                    "top_performers": performers,
+                    "feed": feed_data,
+                    "ussd_steps": sch.ussd_instructions,
                     "payment_history": [
                         {
                             "receipt": t.receipt_number,
@@ -174,11 +236,12 @@ class StudentViewSet(viewsets.ViewSet):
                 })
                 
             return Response({"msg": "PIN_REQUIRED", "motto": p_rec.security_motto})
+            
+        except Parent.DoesNotExist:
+            return Response({"msg": "Rejected: Code or Phone invalid"}, status=401)
         except Exception as e:
             print(traceback.format_exc())
-            return Response({"msg": "Registry Link Failure"}, status=401)
-
-# --- 🛰️ THE GOLIATH STAFF LOGIN ENGINE (api/views.py) ---
+            return Response({"msg": "National Registry Error"}, status=500)
 
 @login_required
 def finances_dashboard(request):
