@@ -280,49 +280,59 @@ def academics_dashboard(request):
     }
     return render(request, 'tabs/academics.html', context)
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 @csrf_exempt
 def verify_identity(request):
     """
-    ULTRA-STABLE IDENTITY GATEWAY
-    Handles GET (URL params) and POST (Form data)
+    THE IMPERIAL GATEWAY (Stage 1)
+    Manually handling the CORS Handshake to stop the Loading Forever bug.
     """
-    # 🛡️ 1. MANUAL CORS HEADERS (The 'OPTIONS' Killer)
-    response = JsonResponse({}) # Placeholder for OPTIONS
-    response["Access-Control-Allow-Origin"] = "https://schoolapp-lac.vercel.app"
-    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken"
     
+    # 💎 1. THE SOVEREIGN HANDSHAKE (CORS FORCE)
+    # We create the response manually to ensure the 'Stamp' is there
+    response = JsonResponse({})
+    response["Access-Control-Allow-Origin"] = "https://schoolapp-lac.vercel.app"
+    response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken, Authorization"
+    response["Access-Control-Allow-Credentials"] = "true"
+
+    # If the browser is just asking for permission (OPTIONS), give it and STOP.
     if request.method == "OPTIONS":
         return response
 
-    # 🛡️ 2. DATA EXTRACTION (Checks both POST and GET)
-    code = (request.POST.get('code') or request.GET.get('code', '')).strip()
-    student = (request.POST.get('student') or request.GET.get('student', '')).strip()
-    parent = (request.POST.get('parent') or request.GET.get('parent', '')).strip()
-    phone = (request.POST.get('phone') or request.GET.get('phone', '')).strip()
+    # 💎 2. THE DATA LOOKUP (STAGE 1)
+    # Extract details from the URL (since your log shows they are coming via GET)
+    code = request.GET.get('code', '').strip()
+    student_name = request.GET.get('student', '').strip()
+    parent_name = request.GET.get('parent', '').strip()
+    phone = request.GET.get('phone', '').strip()
 
-    # 🛡️ 3. Hub REGISTRY SEARCH
+    # Query the Registry
     match = Student.objects.filter(
         payment_code=code,
-        full_name__iexact=student,
-        parent__full_name__iexact=parent,
+        full_name__iexact=student_name,
+        parent__full_name__iexact=parent_name,
         parent__phone_number=phone
     ).first()
 
     if match:
         # ✅ SUCCESS: Identity Confirmed
-        return JsonResponse({
+        response.content = json.dumps({
             'status': 'success', 
-            'message': 'Identity Verified.',
+            'message': 'Credentials verified. Opening PIN vault.',
             'student_id': match.account_number
-        }, status=200)
+        }).encode('utf-8')
+        return response
     else:
         # 🛑 DENIED
-        return JsonResponse({
+        response.status_code = 401
+        response.content = json.dumps({
             'status': 'error', 
-            'message': 'No matching records found in the National Hub.'
-        }, status=401)
-
+            'message': 'No matching records found in the National Registry.'
+        }).encode('utf-8')
+        return response
 @csrf_exempt # 💎 EMERGENCY BYPASS: Allows the form to hit the server from any origin
 def verify_student_portal(request):
     """
