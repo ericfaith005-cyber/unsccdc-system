@@ -1,33 +1,64 @@
-import dj_database_url  # 💎 THE MISSING PASSPORT
 import os
 from pathlib import Path
-import dj_database_url
+import dj_database_url  # 💎 THE SATELLITE PASSPORT
 
+# 🏛️ 1. BASE DIRECTORY
+# This tells the Brain exactly where its heart is located
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 🛰️ 2. ENVIRONMENT DETECTION
+# We detect if we are in the clouds (Render) or at home (Laptop)
+IS_RENDER = 'RENDER' in os.environ
+
+# 🛡️ 3. SECURITY GATE SWITCH
+if IS_RENDER:
+    # --- 🏰 CLOUD FORTRESS SETTINGS (RENDER) ---
+    DEBUG = False
+    ALLOWED_HOSTS = ['unsccdc-system.onrender.com', 'unsccdc-hub.onrender.com', '.onrender.com']
+    SECURE_SSL_REDIRECT = False # 💎 CRITICAL: Let Render's proxy handle the tie
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    # --- 🏠 LOCAL LAB SETTINGS (LAPTOP) ---
+    DEBUG = True
+    ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+# 🐘 4. THE TREASURY CONNECTION (SUPABASE)
+# This uses the 'dj_database_url' tool you just imported
 DATABASES = {
     'default': dj_database_url.config(
-        # 💎 THE MASTER FALLBACK:
-        # If DATABASE_URL is missing (on your laptop), it uses local SQLite
-        default=f'sqlite:///{os.path.join(BASE_DIR, "db.sqlite3")}',
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600
     )
 }
 
-SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
-DEBUG = False
 
-ALLOWED_HOSTS = [
-    '*', 
-    '.onrender.com', 
-    '.vercel.app', 
-    'localhost', 
-    '127.0.0.1',
-    '10.220.66.47'
-]
+SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
+
 
 CORS_ALLOW_ALL_ORIGINS = True 
 CORS_ALLOW_CREDENTIALS = True
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://unsccdc-system.onrender.com",
+    "https://unsccdc-hub.onrender.com",
+    "https://schoolapp-lac.vercel.app", # 💎 TRUST YOUR SPECIFIC APP
+]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 INSTALLED_APPS = [
     'corsheaders',
@@ -41,15 +72,25 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',          # THE SOVEREIGN CORE APP
 ]
+# =============================================================
+# 🏛️ 3. THE IMPERIAL MIDDLEWARE (ORDER OF COMMAND)
+# =============================================================
 
-# --- 🏛️ 1. MIDDLEWARE: THE ABSOLUTE ORDER OF POWER ---
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # 💎 MUST BE LINE 1
+    # 💎 LINE 1: The 'CORS' Guard MUST be at the absolute top!
+    # This ensures the Brain answers Vercel before it does anything else.
+    'corsheaders.middleware.CorsMiddleware', 
+    
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.middleware.gzip.GZipMiddleware',
+    
+    # 📦 THE STATIC SHIELD (For Render Performance)
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    
+    # 💎 LINE 5: The Common Guard MUST be below CorsMiddleware
+    'django.middleware.common.CommonMiddleware', 
+    
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -57,26 +98,12 @@ MIDDLEWARE = [
 ]
 
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://unsccdc-system.onrender.com",
-    "https://*.vercel.app",
-    "https://ericfaith005-cyber.github.io",
-]
-
-CORS_ALLOW_HEADERS = [
-    "accept", "accept-encoding", "authorization", "content-type",
-    "dnt", "origin", "user-agent", "x-csrftoken", "x-requested-with",
-]
-
-ROOT_URLCONF = 'UNSCCDC.urls'
-
-# --- 5. TEMPLATES (LINKING THE FUTURE VIEW) ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            os.path.join(BASE_DIR, 'frontend'), # 💎 #1 PRIORITY (THE APP)
-            os.path.join(BASE_DIR, 'templates'), # 💎 #2 PRIORITY (THE SOFTWARE)
+            os.path.join(BASE_DIR, 'frontend'),  # 💎 #1 PRIORITY: THE MOBILE Hub
+            os.path.join(BASE_DIR, 'templates'), # 💎 #2 PRIORITY: THE OFFICE
         ],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -90,34 +117,36 @@ TEMPLATES = [
     },
 ]
 
-
+# 🔑 Hub IDENTITY KEYS
 WSGI_APPLICATION = 'UNSCCDC.wsgi.application'
-
+ROOT_URLCONF = 'UNSCCDC.urls' # 💎 Consolidated here
 AUTH_USER_MODEL = 'api.User'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- 7. INTERNATIONALIZATION (UGANDA STANDARD) ---
+# --- 7. INTERNATIONALIZATION (UGANDA NATIONAL STANDARD) ---
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Africa/Kampala' # THE PEARL OF AFRICA
+TIME_ZONE = 'Africa/Kampala' # 🇺🇬 THE PEARL OF AFRICA
 USE_I18N = True
 USE_TZ = True
 
-# --- 8. STATIC & MEDIA (NATIONAL ASSETS HUB) ---
+
 STATIC_URL = '/static/'
+
+# Render collects all files from these rooms into the staticfiles folder
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
-    os.path.join(BASE_DIR, 'frontend'),]
+    os.path.join(BASE_DIR, 'frontend'), # 🛰️ Includes your Flutter assets
+]
+
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# 🛡️ THE PRODUCTION SHIELD (WhiteNoise)
+# This makes your system the FASTEST in the world by compressing files
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-ROOT_URLCONF = 'UNSCCDC.urls'
+WHITENOISE_MANIFEST_STRICT = False # 💎 Prevents crashes if an icon is missing
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-WHITENOISE_MANIFEST_STRICT = False
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# =============================================================
-# 🏛️ THE IMPERIAL COMMAND CENTER BRANDING (settings.py)
-# =============================================================
 
 JAZZMIN_SETTINGS = {
     "site_title": "UNSCCDC GLOBAL",
@@ -229,9 +258,33 @@ JAZZMIN_UI_TWEAKS = {
     }
 }
 
-SECURE_SSL_REDIRECT = False
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+if IS_RENDER:
+    # --- 🏰 CLOUD Hub SETTINGS (RENDER) ---
+    DEBUG = False
+    SECURE_SSL_REDIRECT = True # 💎 Keep True on Render for National Trust
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # Tell Django that Render's Proxy is handling the encryption
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+else:
+    # --- 🏠 LOCAL Hub SETTINGS (LAPTOP) ---
+    DEBUG = True
+    SECURE_SSL_REDIRECT = False # 💎 Keep False for your IP testing
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+# 🌐 UNIVERSAL Hub PERMISSIONS (Sovereign Open Gates)
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# 🛰️ TRUSTED SATELLITES (Replace with your exact Vercel/GitHub links)
+CSRF_TRUSTED_ORIGINS = [
+    "https://unsccdc-system.onrender.com",
+    "https://schoolapp-lac.vercel.app", 
+    "https://ericfaith005-cyber.github.io",
+]
+
+# 📦 Hub PERFORMANCE
+WHITENOISE_MANIFEST_STRICT = False
