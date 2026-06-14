@@ -1,234 +1,259 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>UNSCCDC | National Registry</title>
+    <title>UNSCCDC | National Hub Gateway</title>
 
     <style>
-        /* 🏛️ IMPERIAL INLINE CSS - INDESTRUCTIBLE FOUNDATION */
-        :root { --gold: #D4AF37; --red: #D90000; --dark: #000000; --card: #0a0a0a; --input-bg: #111111; }
+        /* 🏛️ IMPERIAL INLINE CSS - ZERO EXTERNAL DEPENDENCIES */
+        :root { 
+            --gold: #D4AF37; 
+            --red: #D90000; 
+            --dark-bg: #000000; 
+            --card-bg: #0a0a0a; 
+            --input-field: #111111;
+            --text-main: #ffffff;
+        }
 
+        /* 🛡️ FORCE BLACKOUT SHIELD */
         html, body {
-            background-color: var(--dark) !important;
-            color: #ffffff;
+            background-color: var(--dark-bg) !important;
+            color: var(--text-main) !important;
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
         }
 
-        /* 🇺🇬 NATIONAL Hub AURA */
-        body::before {
-            content: "";
+        /* 🇺🇬 NATIONAL Hub AURA (Top Ribbon) */
+        .national-ribbon {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 6px;
             background: linear-gradient(90deg, #000 16%, #FCDC04 16%, #FCDC04 33%, #D90000 33%, #D90000 50%, #000 50%, #000 66%, #FCDC04 66%, #FCDC04 83%, #D90000 83%);
-            z-index: 1000;
+            z-index: 9999;
         }
 
         .login-card {
-            width: 85%;
+            width: 90%;
             max-width: 400px;
-            background: var(--card);
+            background: var(--card-bg);
             padding: 40px 30px;
-            border-radius: 35px;
-            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
             text-align: center;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.9);
             position: relative;
+            z-index: 10;
         }
 
-        .logo-text {
+        .brand-h1 {
             color: var(--gold);
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 900;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             margin: 0;
             text-transform: uppercase;
         }
 
-        .sub-brand {
-            color: rgba(255,255,255,0.4);
+        .brand-sub {
+            color: rgba(255,255,255,0.3);
             font-size: 9px;
-            letter-spacing: 3px;
-            margin-top: 5px;
+            letter-spacing: 2px;
+            margin-top: 8px;
             margin-bottom: 35px;
+            font-weight: bold;
         }
 
-        .input-group { margin-bottom: 20px; text-align: left; }
-        label { font-size: 9px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; margin-left: 5px; }
+        .form-group { margin-bottom: 20px; text-align: left; }
+        
+        label { 
+            display: block;
+            font-size: 10px; 
+            color: var(--gold); 
+            font-weight: 800; 
+            letter-spacing: 1px; 
+            margin-bottom: 8px;
+            margin-left: 5px;
+        }
 
         input {
             width: 100%;
-            background: var(--input-bg);
-            border: 1px solid #222;
+            background: var(--input-field);
+            border: 1px solid rgba(255,255,255,0.1);
             padding: 16px;
-            border-radius: 12px;
-            color: #fff;
+            border-radius: 14px;
+            color: #ffffff;
             font-size: 15px;
-            margin-top: 6px;
             box-sizing: border-box;
             outline: none;
-            transition: 0.3s;
+            transition: all 0.3s ease;
         }
 
-        input:focus { border-color: var(--gold); background: #151515; }
+        input:focus {
+            border-color: var(--gold);
+            background: #161616;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+        }
 
-        .gold-btn {
+        .gold-submit-btn {
             width: 100%;
             background: var(--gold);
-            color: #000;
+            color: #000000;
             border: none;
             padding: 20px;
-            border-radius: 15px;
+            border-radius: 16px;
             font-weight: 900;
             font-size: 14px;
             letter-spacing: 2px;
             cursor: pointer;
             margin-top: 25px;
             text-transform: uppercase;
-            transition: 0.3s;
+            transition: transform 0.2s ease;
         }
 
-        .gold-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .gold-submit-btn:active { transform: scale(0.97); }
 
         /* ⏳ Hub STATUS OVERLAY */
         #loading-overlay {
-            display: none;
+            display: none; /* 🛡️ Hidden by default */
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            border-radius: 35px;
+            background: rgba(0,0,0,0.96);
+            border-radius: 30px;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 100;
         }
 
-        .spinner {
+        .imperial-spinner {
             border: 4px solid #111;
             border-top: 4px solid var(--gold);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .error-msg {
+        .error-alert {
             background: rgba(217, 0, 0, 0.15);
-            color: #ff8888;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 11px;
+            color: #ffbaba;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 12px;
             border: 1px solid var(--red);
             margin-bottom: 25px;
+            font-weight: 500;
         }
 
-        .staff-door {
+        .staff-portal-link {
             display: block;
-            margin-top: 30px;
+            margin-top: 35px;
             color: rgba(255,255,255,0.2);
             text-decoration: none;
-            font-size: 10px;
-            font-weight: bold;
+            font-size: 11px;
+            font-weight: 700;
             letter-spacing: 1px;
         }
+        .staff-portal-link:hover { color: var(--gold); }
     </style>
 </head>
 <body>
 
+    <div class="national-ribbon"></div>
+
     <div class="login-card">
-        <!-- ⏳ Hub SATELLITE LOADER -->
+        <!-- ⏳ Hub STATUS OVERLAY -->
         <div id="loading-overlay">
-            <div class="spinner"></div>
-            <p style="color: var(--gold); font-size: 10px; margin-top: 20px; letter-spacing: 2px;">ESTABLISHING NATIONAL LINK...</p>
+            <div class="imperial-spinner"></div>
+            <p style="color: var(--gold); font-size: 10px; margin-top: 20px; letter-spacing: 3px; font-weight: 900;">ESTABLISHING NATIONAL LINK...</p>
         </div>
 
-        <p class="logo-text">UNSCCDC GLOBAL</p>
-        <p class="sub-brand">NATIONAL EDUCATION CENTRE</p>
+        <div class="brand-h1">UNSCCDC GLOBAL</div>
+        <div class="brand-sub">NATIONAL EDUCATION CENTRE</div>
 
-        <!-- 🛡️ ERROR FEEDBACK -->
+        <!-- 🛡️ NATIVE ERROR DISPLAY -->
         {% if error %}
-            <div class="error-msg">{{ error }}</div>
+            <div class="error-alert">
+                {{ error }}
+            </div>
         {% endif %}
 
-        <!-- 🚀 THE Hub GATEWAY FORM -->
-        <form id="authForm" action="{% url 'parent_login' %}" method="POST" onsubmit="return handleSovereignSubmit()">
+        <!-- 🚀 NATIVE Hub GATEWAY FORM -->
+        <form id="nationalAuthForm" action="{% url 'parent_login' %}" method="POST" onsubmit="return triggerImperialHandshake()">
             {% csrf_token %}
             
-            <div class="input-group">
+            <div class="form-group">
                 <label>NATIONAL ACCESS CODE</label>
-                <input type="text" name="code" id="code" placeholder="e.g. PS 001" autocomplete="off">
+                <input type="text" name="code" id="in_code" placeholder="e.g. PS 001" autocomplete="off">
             </div>
 
-            <div class="input-group">
+            <div class="form-group">
                 <label>STUDENT FULL NAME</label>
-                <input type="text" name="student" id="student" placeholder="Legal Name" autocomplete="off">
+                <input type="text" name="student" id="in_student" placeholder="Legal Full Name" autocomplete="off">
             </div>
 
-            <div class="input-group">
-                <label>PARENT NAME</label>
-                <input type="text" name="parent" id="parent" placeholder="Guardian Name" autocomplete="off">
+            <div class="form-group">
+                <label>PARENT/GUARDIAN NAME</label>
+                <input type="text" name="parent" id="in_parent" placeholder="Registered Name" autocomplete="off">
             </div>
 
-            <div class="input-group">
+            <div class="form-group">
                 <label>PHONE NUMBER</label>
-                <input type="text" name="phone" id="phone" placeholder="2567..." autocomplete="off">
+                <input type="text" name="phone" id="in_phone" placeholder="256..." autocomplete="off">
             </div>
 
-            <button type="submit" class="gold-btn">VERIFY IDENTITY</button>
+            <button type="submit" class="gold-submit-btn">VERIFY IDENTITY</button>
         </form>
 
-        <a href="/staff-login/" class="staff-door">ENTER STAFF COMMAND PORTAL →</a>
+        <a href="/staff-login/" class="staff-portal-link">ENTER STAFF COMMAND PORTAL →</a>
     </div>
 
-    <!-- ⚙️ CRASH-PROOF Hub SCRIPT -->
+    <!-- ⚙️ CRASH-PROOF Hub SCRIPT ENGINE -->
     <script>
-        function handleSovereignSubmit() {
+        function triggerImperialHandshake() {
             try {
                 const overlay = document.getElementById('loading-overlay');
-                const fields = ['code', 'student', 'parent', 'phone'];
-                let allFilled = true;
+                const valCode = document.getElementById('in_code').value.trim();
+                const valStudent = document.getElementById('in_student').value.trim();
+                const valParent = document.getElementById('in_parent').value.trim();
+                const valPhone = document.getElementById('in_phone').value.trim();
 
-                // 🛡️ 1. Immediate Validation Shield
-                fields.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (!el || el.value.trim() === "") {
-                        allFilled = false;
-                    }
-                });
-
-                if (!allFilled) {
-                    alert("NATIONAL Hub: Please fill in all registration details before proceeding.");
+                // 🛡️ 1. Validation Shield
+                if (!valCode || !valStudent || !valParent || !valPhone) {
+                    alert("UNSCCDC REGISTRY: All fields are required for National Verification.");
                     return false;
                 }
 
-                // ⚡ 2. Activate Animation ONLY on valid submit
+                // ⚡ 2. Visual Ignition
                 if (overlay) {
                     overlay.style.display = 'flex';
                 }
                 
-                return true; // Proceed to Native Django POST
+                return true; // Send to Django logic
 
             } catch (e) {
-                // 🕵️ 3. Safety Fallback: Log error but don't freeze the UI
-                console.error("Hub Handshake Interrupted:", e);
-                return true; 
+                // 🕵️ 3. Absolute Crash Fallback
+                console.error("Registry Logic Fault:", e);
+                return true; // Still allow submit if script fails
             }
         }
 
-        // --- 🛡️ EMERGENCY WIPE: Kill any stubborn loaders on page show ---
-        window.onpageshow = function() {
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay) overlay.style.display = 'none';
+        // --- 🛡️ GHOST WIPE: Ensure spinner resets if user clicks 'Back' ---
+        window.onpageshow = function(event) {
+            try {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) overlay.style.display = 'none';
+            } catch(e) {}
         };
     </script>
 </body>
