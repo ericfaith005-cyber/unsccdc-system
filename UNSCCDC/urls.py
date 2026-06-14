@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from api.views import home_tab # 💎 Import the Enterprise Tab
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns # ADD THIS
@@ -13,6 +13,7 @@ def root_redirect(request):
     return redirect('/admin/')
 
 urlpatterns = [
+    path('', TemplateView.as_view(template_name="index.html"), name='app'),
     path('', views.parent_verify_view, name='parent_login'),
     path('', home_tab, name='software_home'),
     path('', root_redirect),
@@ -25,6 +26,12 @@ urlpatterns = [
         template_name='manifest.json', 
         content_type='application/json'
     ), name='manifest.json'),
+    path('manifest.json', RedirectView.as_view(url='/static/manifest.json')),
+    path('flutter_service_worker.js', RedirectView.as_view(url='/static/flutter_service_worker.js')),
+    path('icons/Icon-192.png', RedirectView.as_view(url='/static/icons/Icon-192.png')),
+    path('icons/Icon-512.png', RedirectView.as_view(url='/static/icons/Icon-512.png')),
+    path('favicon.png', RedirectView.as_view(url='/static/favicon.png')),
+    path('staff-login/', include('api.urls')), # Link to staff views
     
     path('serviceworker.js', TemplateView.as_view(
         template_name='serviceworker.js', 
