@@ -371,44 +371,55 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.shortcuts import render, redirect
-from .models import Student
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .models import Student, Parent # 💎 Ensure these are imported!
+import traceback
 
+@csrf_exempt
 def parent_verify_view(request):
     """
     STAGE 1: NATIVE IDENTITY VALIDATION
-    Served directly from Django to kill CORS Preflight errors.
+    Corrected to match the Parent -> Student relationship.
     """
     if request.method == 'POST':
-        # 1. Capture data from Native HTML Form
-        code = request.POST.get('code', '').strip()
-        student_name = request.POST.get('student', '').strip()
-        parent_name = request.POST.get('parent', '').strip()
-        phone = request.POST.get('phone', '').strip()
+        try:
+            # 1. Capture data from Native HTML Form
+            code = request.POST.get('code', '').strip()
+            student_name = request.POST.get('student', '').strip()
+            parent_name = request.POST.get('parent', '').strip()
+            phone = request.POST.get('phone', '').strip()
 
-        # 2. Query the database brain directly
-        # Aligned with your National Registry filter requirements
-        student = Student.objects.filter(
-            payment_code=code, 
-            full_name__iexact=student_name, 
-            parent__full_name__iexact=parent_name, 
-            parent__phone_number=phone
-        ).first()
+            # 2. 🛡️ SEARCH THE VAULT (Parent First Logic)
+            # We look for the Parent by Code and Phone first
+            parent_rec = Parent.objects.filter(
+                unique_code=code, 
+                phone_number=phone,
+                full_name__iexact=parent_name
+            ).first()
 
-        if student:
-            # ✅ SUCCESS: Identity Found. Transition to PIN screen.
-            return render(request, 'pin_entry.html', {
-                'student': student,
-                'status': 'authenticated'
-            })
-        else:
-            # 🛑 DENIED: Reload page with error message
-            return render(request, 'parent_login.html', {
-                'error': 'Registry Denied: No matching records found. Verify details.'
-            })
+            if parent_rec:
+                # 3. Check if the Parent's linked student matches the typed name
+                # Note: Adjust 'linked_student' to whatever your field name is in models.py
+                student = parent_rec.linked_student 
+                
+                if student and student.full_name.lower() == student_name.lower():
+                    # ✅ SUCCESS: Identity Confirmed
+                    return render(request, 'pin_entry.html', {'student': student})
+                else:
+                    return render(request, 'index.html', {'error': 'Student name does not match our registry.'})
+            else:
+                # 🛑 DENIED
+                return render(request, 'index.html', {'error': 'Parent credentials not found in National Registry.'})
 
-    # Default GET request shows the prestigious login page
-    return render(request, 'parent_login.html')
+        except Exception as e:
+            # 🕵️ CRITICAL THINKING: Print the error to the Render terminal
+            print(traceback.format_exc())
+            return render(request, 'index.html', {'error': f'System Error: {str(e)}'})
+
+    # Default GET request shows the login page
+    # 💎 FIX: Ensure this points to 'index.html' if that is your file name!
+    return render(request, 'index.html')
 
 @api_view(['GET'])
 def staff_hub_login(request):
