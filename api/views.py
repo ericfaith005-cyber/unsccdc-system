@@ -280,41 +280,48 @@ def academics_dashboard(request):
     }
     return render(request, 'tabs/academics.html', context)
 
-@csrf_exempt # 💎 EMERGENCY SHIELD for the Pitch
-def verify_identity(request): # <--- 🛡️ RENAME TO THIS
+@csrf_exempt
+def verify_identity(request):
     """
-    STAGE 1: NATIVE FORM POST VALIDATION (ALIGNED NAME)
+    ULTRA-STABLE IDENTITY GATEWAY
+    Handles GET (URL params) and POST (Form data)
     """
-    if request.method == 'POST':
-        # 1. Capture values from the Native HTML Form
-        incoming_code = request.POST.get('code', '').strip()
-        incoming_student = request.POST.get('student', '').strip()
-        incoming_parent = request.POST.get('parent', '').strip()
-        incoming_phone = request.POST.get('phone', '').strip()
+    # 🛡️ 1. MANUAL CORS HEADERS (The 'OPTIONS' Killer)
+    response = JsonResponse({}) # Placeholder for OPTIONS
+    response["Access-Control-Allow-Origin"] = "https://schoolapp-lac.vercel.app"
+    response["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-CSRFToken"
+    
+    if request.method == "OPTIONS":
+        return response
 
-        # 2. THE MASTER SEARCH
-        match = Student.objects.filter(
-            payment_code=incoming_code,
-            full_name__iexact=incoming_student,
-            parent__full_name__iexact=incoming_parent,
-            parent__phone_number=incoming_phone
-        ).first()
+    # 🛡️ 2. DATA EXTRACTION (Checks both POST and GET)
+    code = (request.POST.get('code') or request.GET.get('code', '')).strip()
+    student = (request.POST.get('student') or request.GET.get('student', '')).strip()
+    parent = (request.POST.get('parent') or request.GET.get('parent', '')).strip()
+    phone = (request.POST.get('phone') or request.GET.get('phone', '')).strip()
 
-        if match:
-            # ✅ SUCCESS: Identity Confirmed
-            return render(request, 'pin_entry.html', {
-                'student': match,
-                'status': 'authenticated'
-            })
-        else:
-            # 🛑 DENIED: Return with Error
-            return render(request, 'index.html', {
-                'error': 'National Registry: Identity not found. Verify details.',
-                'old_data': request.POST 
-            })
+    # 🛡️ 3. Hub REGISTRY SEARCH
+    match = Student.objects.filter(
+        payment_code=code,
+        full_name__iexact=student,
+        parent__full_name__iexact=parent,
+        parent__phone_number=phone
+    ).first()
 
-    # Default GET request shows the login page
-    return render(request, 'index.html')
+    if match:
+        # ✅ SUCCESS: Identity Confirmed
+        return JsonResponse({
+            'status': 'success', 
+            'message': 'Identity Verified.',
+            'student_id': match.account_number
+        }, status=200)
+    else:
+        # 🛑 DENIED
+        return JsonResponse({
+            'status': 'error', 
+            'message': 'No matching records found in the National Hub.'
+        }, status=401)
 
 @csrf_exempt # 💎 EMERGENCY BYPASS: Allows the form to hit the server from any origin
 def verify_student_portal(request):
