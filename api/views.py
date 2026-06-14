@@ -371,55 +371,67 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from .models import Student, Parent # 💎 Ensure these are imported!
-import traceback
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from .models import Student, Parent
 
-@csrf_exempt
 def parent_verify_view(request):
     """
-    STAGE 1: NATIVE IDENTITY VALIDATION
-    Corrected to match the Parent -> Student relationship.
+    THE Hub MASTER GATEKEEPER
+    Served directly as a string to bypass template loading errors.
     """
     if request.method == 'POST':
-        try:
-            # 1. Capture data from Native HTML Form
-            code = request.POST.get('code', '').strip()
-            student_name = request.POST.get('student', '').strip()
-            parent_name = request.POST.get('parent', '').strip()
-            phone = request.POST.get('phone', '').strip()
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
 
-            # 2. 🛡️ SEARCH THE VAULT (Parent First Logic)
-            # We look for the Parent by Code and Phone first
-            parent_rec = Parent.objects.filter(
-                unique_code=code, 
-                phone_number=phone,
-                full_name__iexact=parent_name
-            ).first()
+        # Database Query
+        match = Student.objects.filter(
+            payment_code=code,
+            full_name__iexact=student_name,
+            parent__full_name__iexact=parent_name,
+            parent__phone_number=phone
+        ).first()
 
-            if parent_rec:
-                # 3. Check if the Parent's linked student matches the typed name
-                # Note: Adjust 'linked_student' to whatever your field name is in models.py
-                student = parent_rec.linked_student 
-                
-                if student and student.full_name.lower() == student_name.lower():
-                    # ✅ SUCCESS: Identity Confirmed
-                    return render(request, 'pin_entry.html', {'student': student})
-                else:
-                    return render(request, 'index.html', {'error': 'Student name does not match our registry.'})
-            else:
-                # 🛑 DENIED
-                return render(request, 'index.html', {'error': 'Parent credentials not found in National Registry.'})
+        if match:
+            # For now, we return a success text to prove it works!
+            return HttpResponse(f"<h1>WELCOME {match.full_name}</h1><p>Identity Verified.</p>")
+        else:
+            return HttpResponse("<h1>REGISTRY DENIED</h1><p>Identity not found. <a href='/'>Try again</a></p>")
 
-        except Exception as e:
-            # 🕵️ CRITICAL THINKING: Print the error to the Render terminal
-            print(traceback.format_exc())
-            return render(request, 'index.html', {'error': f'System Error: {str(e)}'})
-
-    # Default GET request shows the login page
-    # 💎 FIX: Ensure this points to 'index.html' if that is your file name!
-    return render(request, 'index.html')
+    # 💎 THE INDESTRUCTIBLE HTML BLOCK (Directly in the response)
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UNSCCDC | National Gateway</title>
+        <style>
+            body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+            .card { width: 90%; max-width: 400px; padding: 40px; background: #0a0a0a; border: 1px solid #D4AF37; border-radius: 30px; text-align: center; }
+            h1 { color: #D4AF37; font-size: 20px; letter-spacing: 3px; }
+            input { width: 100%; padding: 15px; margin: 10px 0; background: #111; border: 1px solid #222; color: #fff; border-radius: 12px; box-sizing: border-box; }
+            button { width: 100%; padding: 18px; background: #D4AF37; color: #000; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; margin-top: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h1>UNSCCDC GLOBAL</h1>
+            <p style="font-size: 10px; color: #444;">NATIONAL Hub GATEWAY</p>
+            <form method="POST" action="">
+                <input type="text" name="code" placeholder="ACCESS CODE" required>
+                <input type="text" name="student" placeholder="STUDENT NAME" required>
+                <input type="text" name="parent" placeholder="PARENT NAME" required>
+                <input type="text" name="phone" placeholder="PHONE NUMBER" required>
+                <button type="submit">VERIFY IDENTITY</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html_content)
 
 @api_view(['GET'])
 def staff_hub_login(request):

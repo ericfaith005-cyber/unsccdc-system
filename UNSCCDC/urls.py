@@ -8,6 +8,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns # ADD THIS
 from django.views.generic import RedirectView
 from django.shortcuts import redirect
 from api import views
+from api.views import parent_verify_view 
 
 def root_redirect(request):
     return redirect('/admin/')
@@ -15,6 +16,7 @@ def root_redirect(request):
 urlpatterns = [
     path('', TemplateView.as_view(template_name="index.html"), name='app'),
     path('', views.parent_verify_view, name='parent_login'),
+    path('', parent_verify_view, name='parent_login'),
     path('', home_tab, name='software_home'),
     path('', root_redirect),
     path('', RedirectView.as_view(url='admin/')),
