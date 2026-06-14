@@ -25,6 +25,7 @@ else:
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
+    
 
 # 🐘 4. THE TREASURY CONNECTION (SUPABASE)
 # This uses the 'dj_database_url' tool you just imported
@@ -263,9 +264,9 @@ JAZZMIN_UI_TWEAKS = {
 if IS_RENDER:
     # --- 🏰 CLOUD Hub SETTINGS (RENDER) ---
     DEBUG = False
-    SECURE_SSL_REDIRECT = True # 💎 Keep True on Render for National Trust
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = False # 💎 Keep True on Render for National Trust
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
     # Tell Django that Render's Proxy is handling the encryption
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
@@ -285,6 +286,3 @@ CSRF_TRUSTED_ORIGINS = [
     "https://schoolapp-lac.vercel.app", 
     "https://ericfaith005-cyber.github.io",
 ]
-
-# 📦 Hub PERFORMANCE
-WHITENOISE_MANIFEST_STRICT = False
