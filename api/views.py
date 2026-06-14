@@ -372,62 +372,49 @@ def verify_student_portal(request):
     return render(request, 'index.html')
 
 from django.http import HttpResponse
-from django.shortcuts import redirect
-from .models import Student, Parent
 
 def parent_verify_view(request):
     """
-    THE Hub MASTER GATEKEEPER
-    Served directly as a string to bypass template loading errors.
+    THE Hub MASTER RESET 
+    This version includes a 'Cache Nuke' to kill the white screen.
     """
-    if request.method == 'POST':
-        code = request.POST.get('code', '').strip()
-        student_name = request.POST.get('student', '').strip()
-        parent_name = request.POST.get('parent', '').strip()
-        phone = request.POST.get('phone', '').strip()
-
-        # Database Query
-        match = Student.objects.filter(
-            payment_code=code,
-            full_name__iexact=student_name,
-            parent__full_name__iexact=parent_name,
-            parent__phone_number=phone
-        ).first()
-
-        if match:
-            # For now, we return a success text to prove it works!
-            return HttpResponse(f"<h1>WELCOME {match.full_name}</h1><p>Identity Verified.</p>")
-        else:
-            return HttpResponse("<h1>REGISTRY DENIED</h1><p>Identity not found. <a href='/'>Try again</a></p>")
-
-    # 💎 THE INDESTRUCTIBLE HTML BLOCK (Directly in the response)
     html_content = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>UNSCCDC | National Gateway</title>
+        <title>UNSCCDC | Resetting...</title>
+        <script>
+            // 🛡️ THE IMPERIAL CACHE NUKE
+            // This physically kills the 'Ghost' Service Worker causing the white page
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                        console.log("Ghost Liquidated");
+                    }
+                });
+            }
+            // Clear the browser cache and reload the real system
+            setTimeout(() => {
+                if (window.location.href.indexOf('?v=') === -1) {
+                    window.location.href = window.location.pathname + '?v=' + new Date().getTime();
+                }
+            }, 1000);
+        </script>
         <style>
-            body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-            .card { width: 90%; max-width: 400px; padding: 40px; background: #0a0a0a; border: 1px solid #D4AF37; border-radius: 30px; text-align: center; }
-            h1 { color: #D4AF37; font-size: 20px; letter-spacing: 3px; }
-            input { width: 100%; padding: 15px; margin: 10px 0; background: #111; border: 1px solid #222; color: #fff; border-radius: 12px; box-sizing: border-box; }
-            button { width: 100%; padding: 18px; background: #D4AF37; color: #000; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; margin-top: 20px; }
+            body { background: #000; color: #D4AF37; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+            .card { padding: 40px; border: 1px solid #D4AF37; border-radius: 20px; }
         </style>
     </head>
     <body>
         <div class="card">
-            <h1>UNSCCDC GLOBAL</h1>
-            <p style="font-size: 10px; color: #444;">NATIONAL Hub GATEWAY</p>
-            <form method="POST" action="">
-                <input type="text" name="code" placeholder="ACCESS CODE" required>
-                <input type="text" name="student" placeholder="STUDENT NAME" required>
-                <input type="text" name="parent" placeholder="PARENT NAME" required>
-                <input type="text" name="phone" placeholder="PHONE NUMBER" required>
-                <button type="submit">VERIFY IDENTITY</button>
-            </form>
+            <h1>UNSCCDC NATIONAL Hub</h1>
+            <p>Cleaning Imperial Registry... Please wait 5 seconds.</p>
+            <div style="border: 3px solid #111; border-top: 3px solid #D4AF37; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
         </div>
+        <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
     </body>
     </html>
     """
