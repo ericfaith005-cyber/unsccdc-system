@@ -415,7 +415,7 @@ def parent_verify_view(request):
 
     # 🏛️ DEFAULT: Show the login page
     return render(request, 'parent_login.html')
-    
+
 @api_view(['GET'])
 def staff_hub_login(request):
     name = request.query_params.get('name', '').strip()
