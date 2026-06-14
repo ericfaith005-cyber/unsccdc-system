@@ -371,54 +371,44 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.http import HttpResponse
+from django.shortcuts import render, redirect
+from .models import Student
 
 def parent_verify_view(request):
     """
-    THE Hub MASTER RESET 
-    This version includes a 'Cache Nuke' to kill the white screen.
+    STAGE 1: NATIVE IDENTITY VALIDATION
+    Served directly from Django to kill CORS Preflight errors.
     """
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>UNSCCDC | Resetting...</title>
-        <script>
-            // 🛡️ THE IMPERIAL CACHE NUKE
-            // This physically kills the 'Ghost' Service Worker causing the white page
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for(let registration of registrations) {
-                        registration.unregister();
-                        console.log("Ghost Liquidated");
-                    }
-                });
-            }
-            // Clear the browser cache and reload the real system
-            setTimeout(() => {
-                if (window.location.href.indexOf('?v=') === -1) {
-                    window.location.href = window.location.pathname + '?v=' + new Date().getTime();
-                }
-            }, 1000);
-        </script>
-        <style>
-            body { background: #000; color: #D4AF37; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
-            .card { padding: 40px; border: 1px solid #D4AF37; border-radius: 20px; }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>UNSCCDC NATIONAL Hub</h1>
-            <p>Cleaning Imperial Registry... Please wait 5 seconds.</p>
-            <div style="border: 3px solid #111; border-top: 3px solid #D4AF37; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-        </div>
-        <style> @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } </style>
-    </body>
-    </html>
-    """
-    return HttpResponse(html_content)
+    if request.method == 'POST':
+        # 1. Capture data from Native HTML Form
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        # 2. Query the database brain directly
+        # Aligned with your National Registry filter requirements
+        student = Student.objects.filter(
+            payment_code=code, 
+            full_name__iexact=student_name, 
+            parent__full_name__iexact=parent_name, 
+            parent__phone_number=phone
+        ).first()
+
+        if student:
+            # ✅ SUCCESS: Identity Found. Transition to PIN screen.
+            return render(request, 'pin_entry.html', {
+                'student': student,
+                'status': 'authenticated'
+            })
+        else:
+            # 🛑 DENIED: Reload page with error message
+            return render(request, 'parent_login.html', {
+                'error': 'Registry Denied: No matching records found. Verify details.'
+            })
+
+    # Default GET request shows the prestigious login page
+    return render(request, 'parent_login.html')
 
 @api_view(['GET'])
 def staff_hub_login(request):
