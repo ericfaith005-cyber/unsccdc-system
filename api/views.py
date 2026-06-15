@@ -385,35 +385,44 @@ from django.views.decorators.csrf import csrf_exempt
 def parent_verify_view(request):
     context = {}
     if request.method == 'POST':
-        # 1. 💎 CLEAN THE INPUTS
-        code = request.POST.get('code', '').strip()
-        student_name = request.POST.get('student', '').strip()
-        parent_name = request.POST.get('parent', '').strip()
-        phone = request.POST.get('phone', '').strip()
+        try:
+            # 1. 🧼 CLEAN INPUTS
+            code = request.POST.get('code', '').strip()
+            student_name = request.POST.get('student', '').strip()
+            parent_name = request.POST.get('parent', '').strip()
+            phone = request.POST.get('phone', '').strip()
 
-        # 2. 🕵️ CRITICAL THINKING: The 'Uganda Phone' Fix
-        # If phone is '077...', we also look for '25677...'
-        search_phone = phone[-9:] # Takes the last 9 digits (the true identity)
+            # 🕵️ CRITICAL LOGGING: This will show in your Render Terminal!
+            print(f"--- 📡 LOGIN ATTEMPT: Code={code}, Student={student_name}, Phone={phone} ---")
 
-        # 3. 🔎 THE MASTER Hub SEARCH
-        # We look for the parent first, then verify the linked student
-        student = Student.objects.filter(
-            payment_code__iexact=code,
-            full_name__iexact=student_name,
-            parent_link__full_name__iexact=parent_name,
-            parent_link__phone_number__icontains=search_phone # 💎 Flexible match
-        ).first()
+            # 2. ⚡ THE SOVEREIGN SEARCH (Level 2 Flexibility)
+            # First, find the student by the Code (which is unique)
+            student = Student.objects.filter(payment_code__iexact=code).first()
 
-        if student:
-            # ✅ SUCCESS: Identity Confirmed
-            print(f"--- 🏛️ SUCCESS: {student.full_name} AUTHORIZED ---")
-            return render(request, 'pin_entry.html', {'student': student})
-        else:
-            # 🛑 DENIED: Stay on page and show the Gold/Red error
-            context['error'] = "Registry Denied: No matching records found. Please check spelling/phone."
-            context['old_data'] = request.POST # 💎 Keep their typing safe
+            if student:
+                # 3. 🛡️ VERIFY THE UPLINK
+                # Now we check if the Parent's phone or Name matches the registry
+                parent = student.parent_link
+                
+                # We check the last 9 digits of the phone to ignore 0 vs 256
+                input_phone_tail = phone[-9:]
+                db_phone_tail = parent.phone_number[-9:] if parent else ""
 
-    # 4. 🏰 THE GLOBAL FALLBACK (Zero JSON allowed!)
+                if parent and input_phone_tail == db_phone_tail:
+                    # ✅ SUCCESS: The Code and Phone match!
+                    print(f"--- 🏛️ IDENTITY CONFIRMED: Opening Vault for {student.full_name} ---")
+                    return render(request, 'pin_entry.html', {'student': student})
+                else:
+                    context['error'] = "Registry Alert: Phone number does not match this Access Code."
+            else:
+                context['error'] = "Registry Denied: Access Code not recognized."
+            
+            context['old_data'] = request.POST
+
+        except Exception as e:
+            print(f"--- 🛑 Registry Error: {str(e)} ---")
+            context['error'] = "National Link Error. Please contact Hub Support."
+
     return render(request, 'index.html', context)
 
 @api_view(['GET'])
