@@ -311,11 +311,11 @@ def verify_identity(request):
 
     # Query the Registry
     match = Student.objects.filter(
-        payment_code=code,
-        full_name__iexact=student_name,
-        parent__full_name__iexact=parent_name,
-        parent__phone_number=phone
-    ).first()
+            payment_code=code,
+            full_name__iexact=student_name,
+            parent_link__full_name__iexact=parent_name, # 💎 CHANGED THIS
+            parent_link__phone_number=phone             # 💎 CHANGED THIS
+        ).first()
 
     if match:
         # ✅ SUCCESS: Identity Confirmed
