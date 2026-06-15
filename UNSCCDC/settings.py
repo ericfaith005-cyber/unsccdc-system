@@ -73,31 +73,17 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',          # THE SOVEREIGN CORE APP
 ]
-# =============================================================
-# 🏛️ 3. THE IMPERIAL MIDDLEWARE (ORDER OF COMMAND)
-# =============================================================
 
 MIDDLEWARE = [
-    # 💎 LINE 1: The 'CORS' Guard MUST be at the absolute top!
-    # This ensures the Brain answers Vercel before it does anything else.
-    'corsheaders.middleware.CorsMiddleware', 
-    
     'django.middleware.security.SecurityMiddleware',
-    
-    # 📦 THE STATIC SHIELD (For Render Performance)
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
-    
+    'whitenoise.middleware.WhiteNoiseMiddleware', # 💎 Keep this for CSS
     'django.contrib.sessions.middleware.SessionMiddleware',
-    
-    # 💎 LINE 5: The Common Guard MUST be below CorsMiddleware
-    'django.middleware.common.CommonMiddleware', 
-    
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 TEMPLATES = [
     {
