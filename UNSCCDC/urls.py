@@ -14,8 +14,8 @@ def root_redirect(request):
     return redirect('/admin/')
 
 urlpatterns = [
+    path('', views.parent_verify_view, name='parent_login'), 
     path('', TemplateView.as_view(template_name="index.html"), name='app'),
-    path('', views.parent_verify_view, name='parent_login'),
     path('', parent_verify_view, name='parent_login'),
     path('', home_tab, name='software_home'),
     path('', root_redirect),

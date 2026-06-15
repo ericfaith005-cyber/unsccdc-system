@@ -44,7 +44,8 @@ urlpatterns = [
 
     path('', include(router.urls)),
     path('test-hub/', views.parent_verify_view),
-    path('verify-identity/', views.verify_identity, name='verify_identity'),
+  
+    path('verify-identity/', views.parent_verify_view, name='verify_identity'),
     path('verify-identity/', verify_student_portal, name='verify_identity'),
     path('get-app/', views.direct_app_download, name='get_app'),
     path('birth-the-king-99/', birth_the_king), 

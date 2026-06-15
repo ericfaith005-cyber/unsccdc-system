@@ -377,57 +377,43 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Student, Parent
 import traceback
 
-@csrf_exempt # 🛡️ Shield for the Pitch
+from django.shortcuts import render
+from .models import Student, Parent
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 def parent_verify_view(request):
-    """
-    STAGE 1: ROBUST NATIONAL IDENTITY VALIDATION
-    Handles: Trailing Spaces, Case-Insensitivity, and Template Transitions.
-    """
     context = {}
-
     if request.method == 'POST':
-        try:
-            # 1. 💎 THE Hub CLEANER: Truncate and Strip Trailing Spaces
-            # This ensures ' 256... ' becomes '256...'
-            code_input = request.POST.get('code', '').strip()
-            student_input = request.POST.get('student', '').strip()
-            parent_input = request.POST.get('parent', '').strip()
-            phone_input = request.POST.get('phone', '').strip()
+        # 1. 💎 CLEAN THE INPUTS
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
 
-            # 🛡️ SOVEREIGN SHIELD: Block empty attempts before touching the Vault
-            if not all([code_input, student_input, parent_input, phone_input]):
-                context['error'] = "National Hub Alert: All registry fields are mandatory."
-                return render(request, 'index.html', context)
+        # 2. 🕵️ CRITICAL THINKING: The 'Uganda Phone' Fix
+        # If phone is '077...', we also look for '25677...'
+        search_phone = phone[-9:] # Takes the last 9 digits (the true identity)
 
-            # 2. ⚡ THE Hub LOOKUP: Case-Insensitive Matching (__iexact)
-            # This makes 'yawe eric' match 'YAWE ERIC' perfectly.
-            # We use 'parent_link' based on our successful Registry Alignment.
-            student = Student.objects.filter(
-                payment_code__iexact=code_input,
-                full_name__iexact=student_input,
-                parent_link__full_name__iexact=parent_input,
-                parent_link__phone_number__iexact=phone_input
-            ).first()
+        # 3. 🔎 THE MASTER Hub SEARCH
+        # We look for the parent first, then verify the linked student
+        student = Student.objects.filter(
+            payment_code__iexact=code,
+            full_name__iexact=student_name,
+            parent_link__full_name__iexact=parent_name,
+            parent_link__phone_number__icontains=search_phone # 💎 Flexible match
+        ).first()
 
-            # 3. 🚀 THE Hub TRANSITION: Redirect to Page Two (PIN Screen)
-            if student:
-                # ✅ SUCCESS: Reaching the PIN Vault
-                print(f"--- 🏛️ IDENTITY CONFIRMED: {student_input.upper()} ---")
-                return render(request, 'pin_entry.html', {'student': student})
-            
-            else:
-                # 🛑 DENIED: Pass error back to the prestige gold layout
-                context['error'] = "No matching records found. Please check your spelling and spacing."
-                # We return the old data so they don't have to type everything again
-                context['old_data'] = request.POST 
+        if student:
+            # ✅ SUCCESS: Identity Confirmed
+            print(f"--- 🏛️ SUCCESS: {student.full_name} AUTHORIZED ---")
+            return render(request, 'pin_entry.html', {'student': student})
+        else:
+            # 🛑 DENIED: Stay on page and show the Gold/Red error
+            context['error'] = "Registry Denied: No matching records found. Please check spelling/phone."
+            context['old_data'] = request.POST # 💎 Keep their typing safe
 
-        except Exception as e:
-            # 🕵️ CRITICAL THINKING: Log the trace if the vault crashes
-            print(traceback.format_exc())
-            context['error'] = f"National Link Error: {str(e)}"
-
-    # 4. 🏛️ THE GLOBAL FALLBACK (THE WHITE SCREEN KILLER)
-    # This renders the login gate for all GET requests and FAILED POSTS
+    # 4. 🏰 THE GLOBAL FALLBACK (Zero JSON allowed!)
     return render(request, 'index.html', context)
 
 @api_view(['GET'])
