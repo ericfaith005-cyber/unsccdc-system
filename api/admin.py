@@ -66,9 +66,7 @@ class StaffAdmin(admin.ModelAdmin):
     dossier_button_link.short_description = 'HR Archive'
 
 
-# =============================================================
-# 📚 THE NATIONAL CURRICULUM ENGINE (SUBJECT REGISTRY)
-# =============================================================
+admin.site.register(Subject, SubjectAdmin)
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ('name', 'level', 'code', 'is_core')
     list_filter = ('level', 'is_core')
@@ -308,7 +306,7 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub,
-    SubjectAdmin, 
+    Subject, 
     StaffPayroll,
     SchoolPost, 
     User,

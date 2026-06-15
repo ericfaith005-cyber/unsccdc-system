@@ -1093,7 +1093,10 @@ def home_tab(request):
     html = """
     <div style="background: linear-gradient(90deg, #FCDC04, #D90000); padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; animation: pulse 2s infinite;">
         <h2 style="color: #000; margin: 0; font-weight: 900;"> NATIONAL HUB APP READY</h2>
+        
         <p style="color: #000; font-size: 12px; font-weight: bold;">Click the button below to install the Official App on your Android phone.</p>
+        
+        
         <a href="/api/get-app/" style="background: #000; color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: 900; display: inline-block; margin-top: 10px;">
            INSTALL APP NOW (56MB)
         </a>
@@ -1101,6 +1104,9 @@ def home_tab(request):
     
     <div class="module-card">
         <h1 style="font-family:'Orbitron'; color:#FCDC04; letter-spacing:8px; margin:0;">UNSCCDC GLOBAL</h1>
+        <p><span style="color:#00ff00;">System Overview & Value Proposition
+
+ The Connected School Ecosystem: A unified, triple-interface web application connecting the School Administration, the Teaching Staff, and the Parent/Guardian body into a single, synchronized database</span></p>
     <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
         <h1 style="color:#D4AF37; letter-spacing:3px;">🏛️ ENTERPRISE COMMAND CENTER</h1>
         <p style="color:#888;">UNSCCDC GLOBAL Hub Status: <span style="color:#00ff00;">● LIVE</span></p>
