@@ -65,8 +65,6 @@ class StaffAdmin(admin.ModelAdmin):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
 
-
-@admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: Clean and Scannable
     list_display = ('name', 'level', 'code', 'is_core')
@@ -108,6 +106,7 @@ class SubjectAdmin(admin.ModelAdmin):
         for name, cat in subs:
             Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
         self.message_user(request, "A-Level Combinations Registry Active! 💎")
+    admin.site.register(Subject, SubjectAdmin)
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
