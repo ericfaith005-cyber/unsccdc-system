@@ -151,7 +151,7 @@ class MarksInline(admin.TabularInline):
     extra = 0 # Don't show empty rows by default
     classes = ['collapse'] # Only show when clicking 'Show'
 
-@admin.register(AcademicResultsCenter)
+
 class AcademicResultsHubAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: 'combination_view' will only show data for A-Level
     list_display = ('full_name', 'account_number', 'school', 'current_class', 'national_standing', 'download_pdf')
@@ -312,6 +312,11 @@ class SchoolPostAdmin(SchoolIsolatedAdmin):
     search_fields = ('title', 'description', 'school__name')
 
 # --- 🏛️ 5. OTHER REGISTRIES ---
+admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
+admin.site.register(NationalLedger, NationalLedgerAdmin)
+admin.site.register(Staff, StaffAdmin)
+admin.site.register(Subject, SubjectAdmin) 
+
 admin.site.register([ 
     Parent,
     Student, 
@@ -326,8 +331,7 @@ admin.site.register([
     CommissionAnalytics
     ])
 
-admin.site.register(NationalLedger, NationalLedgerAdmin)
-admin.site.register(Staff, StaffAdmin)
+
 
 
 class SchoolAdmin(admin.ModelAdmin):
@@ -531,4 +535,3 @@ class FinancialCommandAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
-admin.site.register(Subject, SubjectAdmin) 
