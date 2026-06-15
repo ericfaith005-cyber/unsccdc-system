@@ -372,45 +372,21 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from .models import Student # 💎 Ensure this matches your model location
+from django.http import HttpResponse
 
-@csrf_exempt
 def parent_verify_view(request):
-    """
-    UNSCCDC NATIONAL Hub GATEWAY
-    Structure: Strict Handshake with Global Fallback
-    """
-    # 1. Initialize an empty context to store errors or data
-    context = {}
-
-    if request.method == 'POST':
-        # Grab the native POST data securely from the browser submission
-        code = request.POST.get('code', '').strip()
-        student_name = request.POST.get('student', '').strip()
-        parent_name = request.POST.get('parent', '').strip()
-        phone = request.POST.get('phone', '').strip()
-
-        # 🛡️ SOVEREIGN REGISTRY SEARCH
-        # Querying the database directly based on the 4 provided parameters
-        # Note: Ensure these field names match your Student model exactly
-        student = Student.objects.filter(
-            payment_code=code,            # Aligned with your PRN logic
-            full_name__iexact=student_name,
-            parent__full_name__iexact=parent_name,
-            parent__phone_number=phone
-        ).first()
-
-        if student:
-            # ✅ SUCCESS: Instantly return the PIN Vault template
-            # Because this is a RETURN, the function ends here for successful logins
-            return render(request, 'pin_entry.html', {'student': student})
-        else:
-            # 🛑 FAIL: Provide error message and proceed to fallback
-            context['error'] = "Invalid registration details. Record not found in National Registry."
-
-    return render(request, 'parent_login.html', context)
+    # 💎 THE DIRECT PROOF SHIELD
+    # This physically forces text onto the screen, bypassing ALL templates.
+    return HttpResponse("""
+        <body style="background:black; color:gold; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
+            <div style="text-align:center; border:2px solid gold; padding:50px; border-radius:20px;">
+                <h1>UNSCCDC HUB IS ALIVE 👑</h1>
+                <p style="color:white;">If you see this, the Brain is connected perfectly.</p>
+                <p style="font-size:10px;">Render Node: Active | Path: Root /</p>
+                <button onclick="location.reload()" style="background:gold; padding:10px; border:none; border-radius:5px;">REFRESH SYSTEM</button>
+            </div>
+        </body>
+    """)
 
 @api_view(['GET'])
 def staff_hub_login(request):
