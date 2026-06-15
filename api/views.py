@@ -372,20 +372,89 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.http import HttpResponse
-
 def parent_verify_view(request):
-    # 🏁 THE ULTIMATE Hub TEST
-    # This sends raw text. If the screen is still white, the server is not calling this function.
-    print("--- 🛰️ Hub VIEW CALLED SUCCESSFULLY ---") # Look for this in Render Logs!
-    return HttpResponse(
-        "<html><body style='background:black;color:gold;padding:50px;text-align:center;font-family:sans-serif;'>"
-        "<h1>UNSCCDC Hub V2.0</h1>"
-        "<p>National Link Established.</p>"
-        "<div style='border:1px solid gold;padding:20px;margin-top:20px;'>LOG-IN GATE ACTIVE</div>"
-        "</body></html>",
-        content_type="text/html" # 💎 Explicitly tell the browser this IS a website
-    )
+    error_msg = ""
+    
+    if request.method == 'POST':
+        # 🛡️ 1. CAPTURE NATIVE FORM DATA
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        # 🛡️ 2. SEARCH THE NATIONAL VAULT
+        from .models import Student
+        match = Student.objects.filter(
+            payment_code=code,
+            full_name__iexact=student_name,
+            parent__full_name__iexact=parent_name,
+            parent__phone_number=phone
+        ).first()
+
+        if match:
+            # ✅ SUCCESS: Identity Confirmed! Redir to PIN
+            # For the demo, we show a success message or the next template
+            return HttpResponse(f"""
+                <body style='background:#000;color:gold;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;'>
+                    <div style='border:2px solid gold;padding:50px;border-radius:30px;'>
+                        <h1>IDENTITY VERIFIED ✅</h1>
+                        <p style='color:white;'>Welcome, {match.full_name.upper()}</p>
+                        <p>ENTER YOUR 4-DIGIT PIN ON THE KEYPAD</p>
+                        <input type='password' maxlength='4' style='font-size:32px;width:150px;text-align:center;background:#111;color:gold;border:1px solid #333;border-radius:10px;'>
+                        <br><br>
+                        <button onclick="window.location.href='/api/home/'" style='background:gold;padding:15px 30px;border:none;border-radius:10px;font-weight:bold;'>AUTHORIZE ACCESS</button>
+                    </div>
+                </body>
+            """)
+        else:
+            error_msg = "Registry Denied: No matching records found."
+
+    # 💎 THE Hub HTML (DIRECT VERSION)
+    # We use a placeholder logo from the web or your static URL
+    logo_url = "https://unsccdc-system.onrender.com/static/icons/hub_logo.png"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UNSCCDC | National Hub</title>
+        <style>
+            body {{ background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
+            .card {{ width: 90%; max-width: 400px; padding: 40px; background: #0a0a0a; border: 1px solid #D4AF3733; border-radius: 35px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }}
+            h1 {{ color: #D4AF37; font-size: 22px; letter-spacing: 4px; margin-bottom: 5px; font-weight: 900; }}
+            label {{ display:block; text-align:left; font-size:9px; color:#D4AF37; font-weight:bold; margin-top:15px; letter-spacing:1px; }}
+            input {{ width: 100%; padding: 15px; margin-top: 5px; background: #111; border: 1px solid #222; color: #fff; border-radius: 12px; box-sizing: border-box; outline:none; }}
+            button {{ width: 100%; padding: 20px; background: #D4AF37; color: #000; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; margin-top: 30px; letter-spacing:2px; }}
+            .error {{ color: #ff8888; background: rgba(217,0,0,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 12px; }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <img src="{logo_url}" style="height:80px; margin-bottom:15px; filter: drop-shadow(0 0 10px #D4AF37);">
+            <h1>UNSCCDC GLOBAL</h1>
+            <p style="font-size: 9px; color: #444; letter-spacing: 2px;">NATIONAL EDUCATION CENTRE</p>
+            
+            {"<div class='error'>" + error_msg + "</div>" if error_msg else ""}
+
+            <form method="POST" action="">
+                <label>NATIONAL ACCESS CODE</label>
+                <input type="text" name="code" placeholder="e.g. PS 001" required>
+                <label>STUDENT FULL NAME</label>
+                <input type="text" name="student" placeholder="Legal Name" required>
+                <label>PARENT/GUARDIAN NAME</label>
+                <input type="text" name="parent" placeholder="Registered Name" required>
+                <label>PHONE NUMBER</label>
+                <input type="text" name="phone" placeholder="256..." required>
+                <button type="submit">VERIFY IDENTITY</button>
+            </form>
+            <p style="margin-top:25px; font-size:10px; color:#333;">ENTER STAFF COMMAND PORTAL →</p>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html_content)
 
 @api_view(['GET'])
 def staff_hub_login(request):
