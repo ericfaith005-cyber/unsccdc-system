@@ -375,18 +375,17 @@ def verify_student_portal(request):
 from django.http import HttpResponse
 
 def parent_verify_view(request):
-    # 💎 THE DIRECT PROOF SHIELD
-    # This physically forces text onto the screen, bypassing ALL templates.
-    return HttpResponse("""
-        <body style="background:black; color:gold; display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif;">
-            <div style="text-align:center; border:2px solid gold; padding:50px; border-radius:20px;">
-                <h1>UNSCCDC HUB IS ALIVE 👑</h1>
-                <p style="color:white;">If you see this, the Brain is connected perfectly.</p>
-                <p style="font-size:10px;">Render Node: Active | Path: Root /</p>
-                <button onclick="location.reload()" style="background:gold; padding:10px; border:none; border-radius:5px;">REFRESH SYSTEM</button>
-            </div>
-        </body>
-    """)
+    # 🏁 THE ULTIMATE Hub TEST
+    # This sends raw text. If the screen is still white, the server is not calling this function.
+    print("--- 🛰️ Hub VIEW CALLED SUCCESSFULLY ---") # Look for this in Render Logs!
+    return HttpResponse(
+        "<html><body style='background:black;color:gold;padding:50px;text-align:center;font-family:sans-serif;'>"
+        "<h1>UNSCCDC Hub V2.0</h1>"
+        "<p>National Link Established.</p>"
+        "<div style='border:1px solid gold;padding:20px;margin-top:20px;'>LOG-IN GATE ACTIVE</div>"
+        "</body></html>",
+        content_type="text/html" # 💎 Explicitly tell the browser this IS a website
+    )
 
 @api_view(['GET'])
 def staff_hub_login(request):

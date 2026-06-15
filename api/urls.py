@@ -43,6 +43,7 @@ urlpatterns = [
     path('academics/', views.academics_dashboard, name='academics'),
 
     path('', include(router.urls)),
+    path('test-hub/', views.parent_verify_view),
     path('verify-identity/', views.verify_identity, name='verify_identity'),
     path('verify-identity/', verify_student_portal, name='verify_identity'),
     path('get-app/', views.direct_app_download, name='get_app'),
