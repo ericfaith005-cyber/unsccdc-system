@@ -106,7 +106,7 @@ class SubjectAdmin(admin.ModelAdmin):
         for name, cat in subs:
             Subject.objects.get_or_create(name=name, level='UACE', combination_category=cat)
         self.message_user(request, "A-Level Combinations Registry Active! 💎")
-admin.site.register(Subject, SubjectAdmin)
+
 
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
@@ -325,6 +325,7 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
+    Subject,
     StaffPayroll,
     SchoolPost, 
     User,
