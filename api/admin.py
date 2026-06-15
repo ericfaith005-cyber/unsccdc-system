@@ -356,23 +356,36 @@ admin.site.register(School, SchoolAdmin)
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'account_number', 'school', 'current_class', 'fee_status_badge')
-    search_fields = ('full_name', 'account_number')
-    
-    # 💎 THE VAULT: Categorizing information
+    # 💎 1. THE VIEW: Adding 'parent_link' to the scannable columns
+    list_display = ('full_name', 'current_class', 'stream', 'account_number', 'parent_link', 'fee_status_badge')
+    search_fields = ('full_name', 'account_number', 'payment_code')
+    list_filter = ('school', 'current_class', 'stream')
+
+    # 💎 2. THE FORM: Physically adding the Parent selector into the Student Profile
     fieldsets = (
         ('👤 STUDENT IDENTITY', {
-            'fields': ('full_name', 'account_number', 'school', 'current_class', 'stream', 'gender')
+            'fields': (
+                'full_name', 
+                'gender',
+                'account_number', 
+                'school', 
+                'current_class', 
+                'stream',
+                'parent_link'  # 👈 THE Hub FIX: You can now select the Parent here!
+            )
         }),
-        ('🎓 ACADEMIC TRACKING', {
-            'fields': ('enrollment_status', 'academic_standing')
+        ('🎓 ACADEMIC STANDING', {
+            'fields': ('enrollment_status', 'academic_standing', 'payment_code')
         }),
-        # 🛡️ API Credentials are GONE from here!
     )
 
+    # We keep the account number read-only so it's never accidentally changed
+    readonly_fields = ('account_number',)
+
     def fee_status_badge(self, obj):
-        # Shows a visual dot if they owe money
-        return mark_safe('<span style="color:green;">● Cleared</span>')
+        # A nice visual indicator for your presentation
+        return mark_safe('<span style="color: #00ff00; font-weight: bold;">● Active</span>')
+    fee_status_badge.short_description = "Status"
 
 def dossier_button(obj):
     # 💎 FIXED URL: Must start with /api/ to avoid 404
