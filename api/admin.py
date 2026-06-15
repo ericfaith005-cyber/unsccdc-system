@@ -325,7 +325,6 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub, 
-    Subject,
     StaffPayroll,
     SchoolPost, 
     User,
@@ -337,6 +336,7 @@ admin.site.register([
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
+admin.site.register(Subject, SubjectAdmin)
 
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
