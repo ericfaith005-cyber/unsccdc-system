@@ -66,11 +66,12 @@ class StaffAdmin(admin.ModelAdmin):
     dossier_button_link.short_description = 'HR Archive'
 
 
-admin.site.register(Subject, SubjectAdmin)
 class SubjectAdmin(admin.ModelAdmin):
+    # 💎 THE VIEW: Clean and Scannable
     list_display = ('name', 'level', 'code', 'is_core')
     list_filter = ('level', 'is_core')
     search_fields = ('name', 'code')
+    ordering = ('level', 'name')
 
     # 🚀 THE MASTER ACTIONS: Populate UNEB/NCDC Curriculum automatically
     actions = ['generate_uce_defaults', 'generate_ple_defaults']
@@ -150,32 +151,42 @@ class MarksInline(admin.TabularInline):
     extra = 0 # Don't show empty rows by default
     classes = ['collapse'] # Only show when clicking 'Show'
 
+@admin.register(AcademicResultsCenter)
 class AcademicResultsHubAdmin(admin.ModelAdmin):
-    # 💎 THE LIST (Ensure names here match the methods below)
-    list_display = ('full_name', 'account_number', 'school', 'current_class', 'combination_view', 'report_card_download')
+    # 💎 THE VIEW: 'combination_view' will only show data for A-Level
+    list_display = ('full_name', 'account_number', 'school', 'current_class', 'national_standing', 'download_pdf')
     
-    # ... keep your inlines and search_fields ...
+    # ... existing search and inlines ...
 
-    # 💎 THE MISSING METHOD: Drawing the Download Button
-    def report_card_download(self, obj):
-        # This points to the high-speed PDF engine we built
-        url = f"/api/download-report/{obj.account_number}/"
-        return mark_safe(f'''
-            <a href="{url}" target="_blank" 
-               style="background:#D4AF37; color:#000; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; font-size:10px; border: 1px solid #000;">
-               📥 DOWNLOAD PDF
-            </a>
-        ''')
-    report_card_download.short_description = "National Report"
+    def national_standing(self, obj):
+        """
+        💎 THE Hub INTELLIGENCE:
+        1. If Primary: Shows 'PLE Candidate'
+        2. If O-Level: Shows 'UCE Registry'
+        3. If A-Level: Shows the physical Combo (e.g. PCM/M)
+        """
+        level = obj.national_category # Uses the logic from Step 1
+        
+        if level == 'A-LEVEL':
+            # Dynamically build the combo name from assigned subjects
+            subjects = obj.marks.all()[:3] # Get top 3 subjects
+            if subjects.count() >= 3:
+                combo = "".join([s.subject.name[0] for s in subjects])
+                return mark_safe(f'<b style="color:#00ff00;">{combo.upper()}</b>')
+            return mark_safe('<span style="color:#666;">Pending Combo</span>')
+            
+        elif level == 'O-LEVEL':
+            return mark_safe('<span style="color:#3498db;">UCE</span>')
+            
+        elif level == 'PRIMARY':
+            return mark_safe('<span style="color:#FCDC04;">PLE</span>')
+            
+        return "---"
+    
+    national_standing.short_description = "Curriculum Status"
 
-    # Ensure your combination_view is also defined inside this class
-    def combination_view(self, obj):
-        if obj.current_class in ['S.5', 'S.6']:
-            return mark_safe('<b style="color:#00ff00;">PCM</b>') # Example
-        return "N/A"
-    combination_view.short_description = "A-Level Combo"
-
-admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
+    def download_pdf(self, obj):
+        return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background:#D4AF37; color:#000; padding:4px 8px; border-radius:5px; font-weight:bold; text-decoration:none; font-size:10px;">PDF</a>')
 
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
@@ -306,7 +317,6 @@ admin.site.register([
     Student, 
     AcademicResult,
     AttendanceHub,
-    Subject, 
     StaffPayroll,
     SchoolPost, 
     User,
@@ -521,3 +531,4 @@ class FinancialCommandAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
+admin.site.register(Subject, SubjectAdmin) 

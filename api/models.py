@@ -125,6 +125,14 @@ class Student(models.Model):
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
         super().save(*args, **kwargs)
     def __str__(self): return self.full_name
+    @property
+    def national_category(self):
+        """🕵️ THE BRAIN: Determines if child is PRI, UCE, or UACE"""
+        c = str(self.current_class).upper()
+        if c.startswith('P'): return 'PRIMARY'
+        if c in ['S.1', 'S.2', 'S.3', 'S.4']: return 'O-LEVEL'
+        if c in ['S.5', 'S.6']: return 'A-LEVEL'
+        return 'OTHER'
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---
 class SubjectAssignment(models.Model):
