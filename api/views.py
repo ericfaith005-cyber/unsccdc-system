@@ -372,89 +372,63 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .models import Student, Parent
+import traceback
+
+@csrf_exempt # 🛡️ Shield for the Pitch
 def parent_verify_view(request):
-    error_msg = ""
-    
-    if request.method == 'POST':
-        # 🛡️ 1. CAPTURE NATIVE FORM DATA
-        code = request.POST.get('code', '').strip()
-        student_name = request.POST.get('student', '').strip()
-        parent_name = request.POST.get('parent', '').strip()
-        phone = request.POST.get('phone', '').strip()
-
-        # 🛡️ 2. SEARCH THE NATIONAL VAULT
-        from .models import Student
-        match = Student.objects.filter(
-            payment_code=code,
-            full_name__iexact=student_name,
-            parent__full_name__iexact=parent_name,
-            parent__phone_number=phone
-        ).first()
-
-        if match:
-            # ✅ SUCCESS: Identity Confirmed! Redir to PIN
-            # For the demo, we show a success message or the next template
-            return HttpResponse(f"""
-                <body style='background:#000;color:gold;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;'>
-                    <div style='border:2px solid gold;padding:50px;border-radius:30px;'>
-                        <h1>IDENTITY VERIFIED ✅</h1>
-                        <p style='color:white;'>Welcome, {match.full_name.upper()}</p>
-                        <p>ENTER YOUR 4-DIGIT PIN ON THE KEYPAD</p>
-                        <input type='password' maxlength='4' style='font-size:32px;width:150px;text-align:center;background:#111;color:gold;border:1px solid #333;border-radius:10px;'>
-                        <br><br>
-                        <button onclick="window.location.href='/api/home/'" style='background:gold;padding:15px 30px;border:none;border-radius:10px;font-weight:bold;'>AUTHORIZE ACCESS</button>
-                    </div>
-                </body>
-            """)
-        else:
-            error_msg = "Registry Denied: No matching records found."
-
-    # 💎 THE Hub HTML (DIRECT VERSION)
-    # We use a placeholder logo from the web or your static URL
-    logo_url = "https://unsccdc-system.onrender.com/static/icons/hub_logo.png"
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>UNSCCDC | National Hub</title>
-        <style>
-            body {{ background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
-            .card {{ width: 90%; max-width: 400px; padding: 40px; background: #0a0a0a; border: 1px solid #D4AF3733; border-radius: 35px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }}
-            h1 {{ color: #D4AF37; font-size: 22px; letter-spacing: 4px; margin-bottom: 5px; font-weight: 900; }}
-            label {{ display:block; text-align:left; font-size:9px; color:#D4AF37; font-weight:bold; margin-top:15px; letter-spacing:1px; }}
-            input {{ width: 100%; padding: 15px; margin-top: 5px; background: #111; border: 1px solid #222; color: #fff; border-radius: 12px; box-sizing: border-box; outline:none; }}
-            button {{ width: 100%; padding: 20px; background: #D4AF37; color: #000; border: none; border-radius: 15px; font-weight: 900; cursor: pointer; margin-top: 30px; letter-spacing:2px; }}
-            .error {{ color: #ff8888; background: rgba(217,0,0,0.1); padding: 10px; border-radius: 10px; margin-bottom: 20px; font-size: 12px; }}
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <img src="{logo_url}" style="height:80px; margin-bottom:15px; filter: drop-shadow(0 0 10px #D4AF37);">
-            <h1>UNSCCDC GLOBAL</h1>
-            <p style="font-size: 9px; color: #444; letter-spacing: 2px;">NATIONAL EDUCATION CENTRE</p>
-            
-            {"<div class='error'>" + error_msg + "</div>" if error_msg else ""}
-
-            <form method="POST" action="">
-                <label>NATIONAL ACCESS CODE</label>
-                <input type="text" name="code" placeholder="e.g. PS 001" required>
-                <label>STUDENT FULL NAME</label>
-                <input type="text" name="student" placeholder="Legal Name" required>
-                <label>PARENT/GUARDIAN NAME</label>
-                <input type="text" name="parent" placeholder="Registered Name" required>
-                <label>PHONE NUMBER</label>
-                <input type="text" name="phone" placeholder="256..." required>
-                <button type="submit">VERIFY IDENTITY</button>
-            </form>
-            <p style="margin-top:25px; font-size:10px; color:#333;">ENTER STAFF COMMAND PORTAL →</p>
-        </div>
-    </body>
-    </html>
     """
-    return HttpResponse(html_content)
+    STAGE 1: ROBUST NATIONAL IDENTITY VALIDATION
+    Handles: Trailing Spaces, Case-Insensitivity, and Template Transitions.
+    """
+    context = {}
+
+    if request.method == 'POST':
+        try:
+            # 1. 💎 THE Hub CLEANER: Truncate and Strip Trailing Spaces
+            # This ensures ' 256... ' becomes '256...'
+            code_input = request.POST.get('code', '').strip()
+            student_input = request.POST.get('student', '').strip()
+            parent_input = request.POST.get('parent', '').strip()
+            phone_input = request.POST.get('phone', '').strip()
+
+            # 🛡️ SOVEREIGN SHIELD: Block empty attempts before touching the Vault
+            if not all([code_input, student_input, parent_input, phone_input]):
+                context['error'] = "National Hub Alert: All registry fields are mandatory."
+                return render(request, 'index.html', context)
+
+            # 2. ⚡ THE Hub LOOKUP: Case-Insensitive Matching (__iexact)
+            # This makes 'yawe eric' match 'YAWE ERIC' perfectly.
+            # We use 'parent_link' based on our successful Registry Alignment.
+            student = Student.objects.filter(
+                payment_code__iexact=code_input,
+                full_name__iexact=student_input,
+                parent_link__full_name__iexact=parent_input,
+                parent_link__phone_number__iexact=phone_input
+            ).first()
+
+            # 3. 🚀 THE Hub TRANSITION: Redirect to Page Two (PIN Screen)
+            if student:
+                # ✅ SUCCESS: Reaching the PIN Vault
+                print(f"--- 🏛️ IDENTITY CONFIRMED: {student_input.upper()} ---")
+                return render(request, 'pin_entry.html', {'student': student})
+            
+            else:
+                # 🛑 DENIED: Pass error back to the prestige gold layout
+                context['error'] = "No matching records found. Please check your spelling and spacing."
+                # We return the old data so they don't have to type everything again
+                context['old_data'] = request.POST 
+
+        except Exception as e:
+            # 🕵️ CRITICAL THINKING: Log the trace if the vault crashes
+            print(traceback.format_exc())
+            context['error'] = f"National Link Error: {str(e)}"
+
+    # 4. 🏛️ THE GLOBAL FALLBACK (THE WHITE SCREEN KILLER)
+    # This renders the login gate for all GET requests and FAILED POSTS
+    return render(request, 'index.html', context)
 
 @api_view(['GET'])
 def staff_hub_login(request):
