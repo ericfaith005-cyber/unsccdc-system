@@ -21,7 +21,7 @@ import traceback
 from django.shortcuts import render
 from django.db.models import Sum, F
 from django.contrib.auth.decorators import login_required
-from .models import Student, SchoolPayLedger, FeesTracker
+from .models import Student, SchoolPayLedger, FeesTracker, Subject
 
 # --- 1. SOVEREIGN SMS GATEWAY (LIVE PRODUCTION) ---
 username = "yaweeric" 
