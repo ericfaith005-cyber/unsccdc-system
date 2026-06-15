@@ -76,6 +76,45 @@
         .staff-portal-link:hover { color: var(--gold); }
     </style>
 </head>
+<!-- 🛡️ THE Hub ENGINE START -->
+<form action="/api/verify-identity/" method="POST" id="parent-verification-form">
+    {% csrf_token %} <!-- 💎 THIS IS THE SECURITY KEY -->
+
+    <div class="hub-container">
+        <!-- ... your logo and titles are already here ... -->
+
+        <div class="input-group">
+            <label>NATIONAL ACCESS CODE</label>
+            <!-- 🕵️ CRITICAL: 'name' must be exactly 'code' -->
+            <input type="text" name="code" placeholder="e.g. PS 001" required>
+        </div>
+
+        <div class="input-group">
+            <label>STUDENT FULL NAME</label>
+            <!-- 🕵️ CRITICAL: 'name' must be exactly 'student' -->
+            <input type="text" name="student" placeholder="Full Legal Name" required>
+        </div>
+
+        <div class="input-group">
+            <label>PARENT NAME</label>
+            <!-- 🕵️ CRITICAL: 'name' must be exactly 'parent' -->
+            <input type="text" name="parent" placeholder="Guardian Name" required>
+        </div>
+
+        <div class="input-group">
+            <label>PHONE NUMBER</label>
+            <!-- 🕵️ CRITICAL: 'name' must be exactly 'phone' -->
+            <input type="text" name="phone" placeholder="2567..." required>
+        </div>
+
+        <!-- 🚀 THE Hub TRIGGER -->
+        <!-- Ensure type is 'submit' and it is INSIDE the </form> -->
+        <button type="submit" id="submit-btn" class="gold-btn">
+            VERIFY IDENTITY
+        </button>
+    </div>
+</form> 
+<!-- 🛡️ THE Hub ENGINE END -->
 <body>
 
     <canvas id="star-canvas"></canvas>
@@ -243,5 +282,15 @@
         }
         animate();
     </script>
+    <script>
+    // This script ensures the form fires even if a framework is 'hesitating'
+    document.getElementById('parent-verification-form').addEventListener('submit', function() {
+        const btn = document.getElementById('submit-btn');
+        btn.innerHTML = "VERIFYING NATIONAL REGISTRY... 📡";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+        // We DO NOT use preventDefault here. We want the browser to PUSH.
+    });
+</script>
 </body>
 </html>
