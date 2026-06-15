@@ -263,7 +263,7 @@ JAZZMIN_UI_TWEAKS = {
 
 if IS_RENDER:
     # --- 🏰 CLOUD Hub SETTINGS (RENDER) ---
-    DEBUG = False
+    DEBUG = True
     SECURE_SSL_REDIRECT = False # 💎 Keep True on Render for National Trust
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
