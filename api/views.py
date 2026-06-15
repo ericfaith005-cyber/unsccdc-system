@@ -372,63 +372,45 @@ def verify_student_portal(request):
     # If it's a GET request, just show the login page
     return render(request, 'index.html')
 
-from django.http import HttpResponse
-import json
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .models import Student # 💎 Ensure this matches your model location
 
+@csrf_exempt
 def parent_verify_view(request):
     """
-    THE Hub Hub - ZERO STATIC VERSION
-    This page carries its own 'Ink' (CSS) to bypass the 0-byte Render error.
+    UNSCCDC NATIONAL Hub GATEWAY
+    Structure: Strict Handshake with Global Fallback
     """
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>UNSCCDC | National Hub</title>
-        <style>
-            /* 💎 INLINE CSS: Indestructible */
-            body { 
-                background-color: #000 !important; color: #fff; 
-                font-family: sans-serif; display: flex; align-items: center; 
-                justify-content: center; height: 100vh; margin: 0; 
-            }
-            .card { 
-                width: 90%; max-width: 380px; padding: 30px; 
-                background: #0a0a0a; border: 2px solid #D4AF37; 
-                border-radius: 25px; text-align: center;
-                box-shadow: 0 0 30px rgba(212,175,55,0.2);
-            }
-            h1 { color: #D4AF37; font-size: 22px; letter-spacing: 3px; margin-bottom: 5px; }
-            .inp { 
-                width: 100%; padding: 15px; margin: 10px 0; background: #111; 
-                border: 1px solid #222; color: #fff; border-radius: 12px; box-sizing: border-box; 
-            }
-            .btn { 
-                width: 100%; padding: 18px; background: #D4AF37; color: #000; 
-                border: none; border-radius: 15px; font-weight: 900; 
-                cursor: pointer; margin-top: 15px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <h1>UNSCCDC GLOBAL</h1>
-            <p style="font-size: 9px; color: #444; letter-spacing: 2px;">NATIONAL EDUCATION CENTRE</p>
-            <form method="POST" action="">
-                <input type="text" name="code" class="inp" placeholder="ACCESS CODE" required>
-                <input type="text" name="student" class="inp" placeholder="STUDENT NAME" required>
-                <input type="text" name="parent" class="inp" placeholder="PARENT NAME" required>
-                <input type="text" name="phone" class="inp" placeholder="PHONE NUMBER" required>
-                <button type="submit" class="btn">VERIFY IDENTITY</button>
-            </form>
-            <a href="/admin/" style="color:#222; font-size:10px; display:block; margin-top:20px; text-decoration:none;">Registry Office</a>
-        </div>
-    </body>
-    </html>
-    """
-    return HttpResponse(html_content)
+    # 1. Initialize an empty context to store errors or data
+    context = {}
+
+    if request.method == 'POST':
+        # Grab the native POST data securely from the browser submission
+        code = request.POST.get('code', '').strip()
+        student_name = request.POST.get('student', '').strip()
+        parent_name = request.POST.get('parent', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        # 🛡️ SOVEREIGN REGISTRY SEARCH
+        # Querying the database directly based on the 4 provided parameters
+        # Note: Ensure these field names match your Student model exactly
+        student = Student.objects.filter(
+            payment_code=code,            # Aligned with your PRN logic
+            full_name__iexact=student_name,
+            parent__full_name__iexact=parent_name,
+            parent__phone_number=phone
+        ).first()
+
+        if student:
+            # ✅ SUCCESS: Instantly return the PIN Vault template
+            # Because this is a RETURN, the function ends here for successful logins
+            return render(request, 'pin_entry.html', {'student': student})
+        else:
+            # 🛑 FAIL: Provide error message and proceed to fallback
+            context['error'] = "Invalid registration details. Record not found in National Registry."
+
+    return render(request, 'parent_login.html', context)
 
 @api_view(['GET'])
 def staff_hub_login(request):
