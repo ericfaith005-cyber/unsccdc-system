@@ -64,7 +64,7 @@ class StaffAdmin(admin.ModelAdmin):
     def dossier_button_link(self, obj):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
-
+@admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: Clean and Scannable
     list_display = ('name', 'level', 'code', 'is_core')
@@ -324,7 +324,8 @@ admin.site.register([
     Parent,
     Student, 
     AcademicResult,
-    AttendanceHub, 
+    AttendanceHub,
+    Subject, 
     StaffPayroll,
     SchoolPost, 
     User,
@@ -336,7 +337,7 @@ admin.site.register([
 
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
-admin.site.register(Subject, SubjectAdmin)
+
 
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
