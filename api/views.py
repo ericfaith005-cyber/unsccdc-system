@@ -373,63 +373,61 @@ def verify_student_portal(request):
     return render(request, 'index.html')
 
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from .models import Student, Parent
-import traceback
-
-from django.shortcuts import render
 from .models import Student, Parent
 from django.views.decorators.csrf import csrf_exempt
-
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from .models import Student, Parent # 🛡️ Ensure imports are aligned
+from django.db.models import Q # 💎 For powerful matching
 
 @csrf_exempt
 def parent_verify_view(request):
-    """
-    STAGE 1: ROBUST NATIONAL IDENTITY VALIDATION
-    Solves: 401 Errors, Trailing Spaces, and Case-Sensitivity issues.
-    """
     context = {}
-
     if request.method == 'POST':
-        # 1. 🧼 TRUNCATE AND STRIP: Clean all incoming strings of accidental spaces
-        code_input = request.POST.get('code', '').strip()
-        student_input = request.POST.get('student', '').strip()
-        parent_input = request.POST.get('parent', '').strip()
-        phone_input = request.POST.get('phone', '').strip()
+        # 1. 🧼 CLEAN INPUTS
+        code_in = request.POST.get('code', '').strip()
+        student_in = request.POST.get('student', '').strip()
+        parent_in = request.POST.get('parent', '').strip()
+        phone_in = request.POST.get('phone', '').strip()
 
-        # 🛡️ SOVEREIGN VALIDATION: Stop empty requests before they hit the vault
-        if not all([code_input, student_input, parent_input, phone_input]):
-            context['error'] = "All registry fields are mandatory for verification."
-            return render(request, 'parent_login.html', context)
+        # 🕵️ CEO DIAGNOSTIC: This shows in your Render Logs!
+        print(f"--- 📡 Hub ATTEMPT ---")
+        print(f"INPUTS: Code: '{code_in}', Student: '{student_in}', Parent: '{parent_in}', Phone: '{phone_in}'")
 
-        # 2. ⚡ IMPLEMENT CASE-INSENSITIVE LOOKUPS (Using __iexact)
-        # Based on your National Registry model discovered in previous logs:
-        # 'payment_code' maps to 'code', 'full_name' maps to 'student'
-        # 'parent_link' is the gateway to parent details.
+        # 2. ⚡ THE SOVEREIGN SEARCH (High-Flexibility Logic)
+        # We take the last 9 digits of the phone to ignore the '0' or '256' prefix
+        phone_tail = phone_in[-9:] if len(phone_in) >= 9 else phone_in
+
+        # 🔎 STAGE 1: Find the student by Access Code & Name
         student = Student.objects.filter(
-            payment_code__iexact=code_input,
-            full_name__iexact=student_input,
-            parent_link__full_name__iexact=parent_input,
-            parent_link__phone_number__iexact=phone_input
+            payment_code__iexact=code_in,
+            full_name__iexact=student_in
         ).first()
 
-        # 3. 🚀 THE Hub TRANSITION (Direct Template Navigation)
         if student:
-            # ✅ SUCCESS: Move to Stage 2 (PIN VAULT)
-            print(f"--- 🏛️ IDENTITY CONFIRMED: Opening Vault for {student_input.upper()} ---")
-            return render(request, 'pin_entry.html', {'student': student})
-        else:
-            # 🛑 FAIL: Registry Mismatch. Pass error back to the prestige layout.
-            context['error'] = "No matching records found. Please check your spelling and spacing."
-            # We return old_data so the parent doesn't have to re-type everything!
-            context['old_data'] = request.POST 
+            # 🔎 STAGE 2: Verify the Parent Link
+            p_rec = student.parent_link # 💎 As aligned in your Registry
+            
+            if p_rec:
+                db_phone_tail = p_rec.phone_number[-9:]
+                name_match = p_rec.full_name.lower() == parent_in.lower()
+                phone_match = phone_tail == db_phone_tail
 
-    # 4. 🏰 THE GLOBAL FALLBACK (THE WHITE SCREEN KILLER)
-    # This line ensures a template is ALWAYS returned for GET or FAILED POSTs.
-    return render(request, 'parent_login.html', context)
+                if name_match and phone_match:
+                    # ✅ TOTAL SUCCESS
+                    print(f"--- 🏛️ SUCCESS: {student_in} AUTHORIZED ---")
+                    return render(request, 'pin_entry.html', {'student': student})
+                else:
+                    # 🕵️ Tell us exactly why it failed in the logs
+                    print(f"MATCH FAILURE: Name Match: {name_match}, Phone Match: {phone_match}")
+                    context['error'] = "Registry Denied: Parent name or phone does not match this student's file."
+            else:
+                print("MATCH FAILURE: Student exists but has NO parent linked in Admin!")
+                context['error'] = "Registry Error: This student is not yet linked to a guardian in the Admin."
+        else:
+            print("MATCH FAILURE: Access Code and Student Name do not exist together.")
+            context['error'] = "Registry Denied: Access code or Student name is incorrect."
+        
+        context['old_data'] = request.POST
+
+    return render(request, 'index.html', context)
 
 @api_view(['GET'])
 def staff_hub_login(request):
