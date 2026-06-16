@@ -4,293 +4,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNSCCDC | National Hub Gateway</title>
-    
-    <!-- 🏛️ NATIONAL BRANDING & FONTS -->
+    <title>UNSCCDC | National Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <style>
-        :root { --gold: #D4AF37; --red: #D90000; --black: #050505; --glass: rgba(255, 255, 255, 0.03); }
-        
+        :root { --gold: #D4AF37; --bg: #000000; --card: #0d0d0d; }
         body { 
-            background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; 
-            margin: 0; overflow: hidden; height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; 
+            margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.05) 0%, transparent 80%);
         }
 
-        /* 🌌 GALAXY BACKGROUND */
+        /* 🌌 STARFIELD GALAXY */
         #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
 
-        /* 🇺🇬 NATIONAL RIBBON */
-        .flag-top {
-            position: fixed; top: 0; left: 0; width: 100%; height: 6px;
-            background: linear-gradient(90deg, #000 16%, #FCDC04 16%, #FCDC04 33%, #D90000 33%, #D90000 50%, #000 50%, #000 66%, #FCDC04 66%, #FCDC04 83%, #D90000 83%);
-            background-size: 200% 100%; animation: ribbonFlow 4s linear infinite; z-index: 1000;
-        }
-        @keyframes ribbonFlow { from { background-position: 200% 0; } to { background-position: 0 0; } }
-
-        /* 🛡️ THE HUD CONTAINER */
-        .hub-container {
-            width: 95%; max-width: 450px; background: var(--glass); backdrop-filter: blur(25px);
-            padding: 40px; border-radius: 35px; border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.9); text-align: center;
-            position: relative; animation: fadeIn 1.2s ease-out;
+        .login-card {
+            width: 90%; max-width: 420px; background: var(--card); padding: 40px 30px;
+            border-radius: 45px; border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 40px 100px rgba(0,0,0,1); text-align: center;
         }
 
-        .logo { height: 85px; margin-bottom: 15px; filter: drop-shadow(0 0 15px var(--gold)); }
-        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 24px; letter-spacing: 5px; margin: 0; }
-        .sub-text { font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 3px; margin-bottom: 40px; font-weight: bold; }
+        .logo { height: 90px; margin-bottom: 10px; filter: drop-shadow(0 0 15px var(--gold)); }
+        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 26px; letter-spacing: 4px; margin: 0; }
+        .sub-brand { color: rgba(255,255,255,0.3); font-size: 9px; letter-spacing: 2px; margin-bottom: 40px; }
 
-        /* 🔑 INPUT STYLING */
-        .input-group { margin-bottom: 18px; text-align: left; }
-        label { font-size: 9px; color: var(--gold); font-weight: bold; letter-spacing: 1.5px; margin-left: 5px; text-transform: uppercase; }
-        input {
-            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 14px; border-radius: 12px; color: #fff; font-size: 14px; margin-top: 5px;
-            transition: 0.3s; outline: none;
+        /* 💎 CAPSULE INPUTS (MATCHING YOUR SCREENSHOT) */
+        .input-box {
+            background: #050505; border: 1px solid #1a1a1a; border-radius: 20px;
+            padding: 18px 25px; margin-bottom: 15px; display: flex; align-items: center;
+            transition: 0.3s;
         }
-        input:focus { border-color: var(--gold); background: rgba(255,255,255,0.08); box-shadow: 0 0 15px rgba(212,175,55,0.1); }
+        .input-box:focus-within { border-color: var(--gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); }
+        .input-box input {
+            background: transparent; border: none; color: #fff; width: 100%;
+            font-size: 15px; font-weight: bold; outline: none; margin-left: 15px;
+            text-transform: uppercase;
+        }
+        .input-box i { color: #333; font-size: 18px; }
 
-        /* ⚡ BUTTON STYLING */
-        .gold-btn {
-            width: 100%; background: var(--gold); color: #000; border: none; padding: 18px;
-            border-radius: 15px; font-weight: 900; font-size: 13px; letter-spacing: 2px;
-            cursor: pointer; margin-top: 25px; transition: 0.4s; text-transform: uppercase;
+        /* 🚀 THE Hub GOLD PILL BUTTON */
+        .access-btn {
+            width: 100%; background: var(--gold); color: #000; border: none; padding: 22px;
+            border-radius: 40px; font-weight: 900; font-size: 15px; letter-spacing: 2px;
+            cursor: pointer; margin-top: 20px; box-shadow: 0 15px 30px rgba(212,175,55,0.2);
         }
-        .gold-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.3); }
 
-        /* ⏳ ISOLATED LOADER OVERLAY */
-        #loader-overlay {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92); border-radius: 35px; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 2000;
-        }
-        .spinner { border: 4px solid #111; border-top: 4px solid var(--gold); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .error-msg { color: #ff5555; font-size: 11px; margin-bottom: 15px; font-weight: bold; }
         
-        .staff-portal-link {
-            display: block; margin-top: 30px; font-size: 11px; color: rgba(255,255,255,0.3);
-            text-decoration: none; font-weight: bold; letter-spacing: 2px; transition: 0.3s;
-        }
-        .staff-portal-link:hover { color: var(--gold); }
+        /* 🎨 THE Hub PIN PAD */
+        .pin-dot { font-size: 40px; letter-spacing: 20px; color: var(--gold); text-align: center; }
     </style>
 </head>
-<!-- 🛡️ THE Hub ENGINE START -->
-<form action="/api/verify-identity/" method="POST" id="parent-verification-form">
-    {% csrf_token %} <!-- 💎 THIS IS THE SECURITY KEY -->
-
-    <div class="hub-container">
-        <!-- ... your logo and titles are already here ... -->
-
-        <div class="input-group">
-            <label>NATIONAL ACCESS CODE</label>
-            <!-- 🕵️ CRITICAL: 'name' must be exactly 'code' -->
-            <input type="text" name="code" placeholder="e.g. PS 001" required>
-        </div>
-
-        <div class="input-group">
-            <label>STUDENT FULL NAME</label>
-            <!-- 🕵️ CRITICAL: 'name' must be exactly 'student' -->
-            <input type="text" name="student" placeholder="Full Legal Name" required>
-        </div>
-
-        <div class="input-group">
-            <label>PARENT NAME</label>
-            <!-- 🕵️ CRITICAL: 'name' must be exactly 'parent' -->
-            <input type="text" name="parent" placeholder="Guardian Name" required>
-        </div>
-
-        <div class="input-group">
-            <label>PHONE NUMBER</label>
-            <!-- 🕵️ CRITICAL: 'name' must be exactly 'phone' -->
-            <input type="text" name="phone" placeholder="2567..." required>
-        </div>
-
-        <!-- 🚀 THE Hub TRIGGER -->
-        <!-- Ensure type is 'submit' and it is INSIDE the </form> -->
-        <button type="submit" id="submit-btn" class="gold-btn">
-            VERIFY IDENTITY
-        </button>
-    </div>
-</form> 
-<!-- 🛡️ THE Hub ENGINE END -->
 <body>
-
     <canvas id="star-canvas"></canvas>
-    <div class="flag-top"></div>
 
-    <div class="hub-container">
-        <!-- ⏳ 1. THE ISOLATED LOADER (HIDDEN BY DEFAULT) -->
-        <div id="loader-overlay">
-            <div class="spinner"></div>
-            <p id="loader-text" style="color: var(--gold); font-size: 10px; margin-top: 25px; letter-spacing: 3px; font-weight: 900;">SYNCHRONIZING...</p>
-        </div>
-
-        <img src="{% static 'icons/hub_logo.png' %}" class="logo" alt="UNSCCDC GLOBAL">
+    <div class="login-card">
+        <img src="{% static 'icons/hub_logo.png' %}" class="logo">
         <h1>UNSCCDC GLOBAL</h1>
-        <p class="sub-text">NATIONAL EDUCATION CENTRE</p>
+        <p class="sub-brand">NATIONAL EDUCATION CENTRE</p>
 
-        <!-- 📦 2. STAGE 1: THE IDENTITY GATE -->
-        <div id="identity-gate">
+        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+
+        {% if stage == 'gate' %}
+        <!-- 📦 STAGE 1: IDENTITY GATE (AS SEEN IN SCREENSHOT) -->
+        <form method="POST" action="">
             {% csrf_token %}
-            <div class="input-group">
-                <label>NATIONAL ACCESS CODE</label>
-                <input type="text" id="access_code" placeholder="e.g. PS 001">
-            </div>
-            <div class="input-group">
-                <label>STUDENT FULL NAME</label>
-                <input type="text" id="student_full_name" placeholder="Legal Name">
-            </div>
-            <div class="input-group">
-                <label>PARENT/GUARDIAN NAME</label>
-                <input type="text" id="parent_name" placeholder="Registered Name">
-            </div>
-            <div class="input-group">
-                <label>PHONE NUMBER</label>
-                <input type="text" id="phone_number" placeholder="256...">
-            </div>
-
-            <!-- ⚡ TRIGGER: ONLY FIRES ON CLICK -->
-            <button type="button" onclick="verifyParentIdentity(event)" class="gold-btn">
-                VERIFY IDENTITY
-            </button>
-
-            <!-- 🏛️ UNBLOCKED NAVIGATION -->
-            <a href="/staff-login/" class="staff-portal-link">
-                ENTER STAFF COMMAND PORTAL →
-            </a>
-        </div>
-
-        <!-- 🔑 3. STAGE 2: THE PIN VAULT (HIDDEN) -->
-        <div id="pin-vault" style="display: none;">
-            <h3 style="color: var(--gold); font-weight: 900; margin-bottom: 5px;">IDENTITY VERIFIED ✅</h3>
-            <p style="color: #666; font-size: 10px; margin-bottom: 30px; letter-spacing: 1.5px;">ENTER YOUR 4-DIGIT SECURE PIN</p>
+            <div class="input-box"><i>👤</i><input type="text" name="parent" placeholder="PARENT FULL NAME" required></div>
+            <div class="input-box"><i>👶</i><input type="text" name="student" placeholder="STUDENT FULL NAME" required></div>
+            <div class="input-box"><i>📞</i><input type="text" name="phone" placeholder="PHONE (+256...)" required></div>
+            <div class="input-box"><i>🔑</i><input type="text" name="code" placeholder="ACCESS CODE" required></div>
             
-            <input type="password" id="pin_code" maxlength="4" style="text-align: center; font-size: 35px; letter-spacing: 25px; background: rgba(255,255,255,0.05); border: 1px solid #333; margin-bottom: 30px;">
-            
-            <button type="button" onclick="authorizeHubAccess()" class="gold-btn" style="background: var(--red); color: #fff;">
-                AUTHORIZE ACCESS
-            </button>
-            
-            <p onclick="location.reload()" style="font-size: 10px; color: #444; margin-top: 30px; cursor: pointer;">← Reset Handshake</p>
-        </div>
+            <button type="submit" name="verify_identity" class="access-btn">ACCESS HUB</button>
+        </form>
+        {% else %}
+        <!-- 🔑 STAGE 2: PIN VAULT -->
+        <form method="POST" action="">
+            {% csrf_token %}
+            <h2 style="color: var(--gold);">IDENTITY VERIFIED ✅</h2>
+            <p style="color:#444; font-size:10px;">ENTER YOUR 4-DIGIT SOVEREIGN PIN</p>
+            <input type="hidden" name="student_id" value="{{ student.account_number }}">
+            <div class="input-box" style="justify-content: center;">
+                <input type="password" name="pin" maxlength="4" class="pin-dot" autofocus required>
+            </div>
+            <button type="submit" name="authorize_access" class="access-btn" style="background:#D90000; color:#fff;">AUTHORIZE ACCESS</button>
+        </form>
+        {% endif %}
     </div>
 
-    <!-- ⚙️ THE IMPERIAL SCRIPT ENGINE -->
+    <!-- 🌌 STARFIELD SCRIPT -->
     <script>
-
-        (function() {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                    console.log("Old Hub Cache Liquidated 🛡️");
-                }
-            });
-        }
-        // Force the browser to bypass its own memory for this session
-        if (window.location.href.indexOf('?v=') === -1) {
-            // window.location.href += '?v=' + new Date().getTime();
-        }
-    
-        // --- 🛡️ 1. INITIAL SECURITY STATE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('loader-overlay').style.display = 'none';
-            document.getElementById('pin-vault').style.display = 'none';
-            document.getElementById('identity-gate').style.display = 'block';
-            console.log("--- 🏛️ HUB GATEWAY SECURED & READY ---");
-        });
-
-        // --- ⚡ 2. THE IDENTITY VERIFICATION (STAGE 1) ---
-        async function verifyParentIdentity(event) {
-            if (event) event.preventDefault();
-
-            const loader = document.getElementById('loader-overlay');
-            const status = document.getElementById('loader-text');
-            const gate = document.getElementById('identity-gate');
-            const vault = document.getElementById('pin-vault');
-
-            // A. Capture Registry Inputs
-            const code = document.getElementById('access_code').value.trim();
-            const student = document.getElementById('student_full_name').value.trim();
-            const parent = document.getElementById('parent_name').value.trim();
-            const phone = document.getElementById('phone_number').value.trim();
-
-            // 🛡️ B. VALIDATION FIREWALL: Kill auto-fire on blank forms
-            if (!code || !student || !parent || !phone) {
-                alert("NATIONAL HUB: Please fill in all 4 registration fields before proceeding.");
-                return;
-            }
-
-            // C. ACTIVATE UPLINK
-            loader.style.display = 'flex';
-            status.innerText = "QUERYING NATIONAL REGISTRY... 📡";
-
-            try {
-                const response = await fetch('/api/verify-identity/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    },
-                    body: JSON.stringify({ code, student, parent, phone })
-                });
-
-                const result = await response.json();
-
-                if (response.status === 200 && result.status === 'success') {
-                    // 💎 TRANSITION TO PIN VAULT
-                    gate.style.display = 'none';
-                    loader.style.display = 'none';
-                    vault.style.display = 'block';
-                    document.getElementById('pin_code').focus();
-                } else {
-                    // 🛑 REGISTRY ERROR: Kill loader immediately
-                    loader.style.display = 'none';
-                    alert(result.message || "Registry Denied: Matching record not found.");
-                }
-            } catch (error) {
-                // ⚠️ NETWORK TIMEOUT
-                loader.style.display = 'none';
-                alert("National Link Interrupted: The Hub is waking up. Try again in 10s.");
-            }
-        }
-
-        // --- 🔑 3. PIN AUTHORIZATION ---
-        function authorizeHubAccess() {
-            const pin = document.getElementById('pin_code').value;
-            if (pin.length < 4) { alert("Enter complete PIN."); return; }
-            // Final redirection logic here...
-        }
-
-        // --- 🌌 STARFIELD GALAXY ENGINE ---
         const canvas = document.getElementById('star-canvas');
         const ctx = canvas.getContext('2d');
         let stars = [];
         function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
         window.onresize = resize; resize();
-        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5, v: Math.random()*0.5});
+        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5});
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
             stars.forEach(s => {
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
-                s.y += s.v; if(s.y > canvas.height) s.y = 0;
+                s.y += 0.3; if(s.y > canvas.height) s.y = 0;
             });
             requestAnimationFrame(animate);
         }
         animate();
     </script>
-    <script>
-    // This script ensures the form fires even if a framework is 'hesitating'
-    document.getElementById('parent-verification-form').addEventListener('submit', function() {
-        const btn = document.getElementById('submit-btn');
-        btn.innerHTML = "VERIFYING NATIONAL REGISTRY... 📡";
-        btn.style.opacity = "0.6";
-        btn.style.cursor = "not-allowed";
-        // We DO NOT use preventDefault here. We want the browser to PUSH.
-    });
-</script>
 </body>
 </html>

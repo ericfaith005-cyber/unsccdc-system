@@ -381,49 +381,55 @@ from django.shortcuts import render
 from .models import Student, Parent
 from django.views.decorators.csrf import csrf_exempt
 
+from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
+from .models import Student, Parent # 🛡️ Ensure imports are aligned
+
 @csrf_exempt
 def parent_verify_view(request):
+    """
+    STAGE 1: ROBUST NATIONAL IDENTITY VALIDATION
+    Solves: 401 Errors, Trailing Spaces, and Case-Sensitivity issues.
+    """
     context = {}
+
     if request.method == 'POST':
-        try:
-            # 1. 🧼 CLEAN INPUTS
-            code = request.POST.get('code', '').strip()
-            student_name = request.POST.get('student', '').strip()
-            parent_name = request.POST.get('parent', '').strip()
-            phone = request.POST.get('phone', '').strip()
+        # 1. 🧼 TRUNCATE AND STRIP: Clean all incoming strings of accidental spaces
+        code_input = request.POST.get('code', '').strip()
+        student_input = request.POST.get('student', '').strip()
+        parent_input = request.POST.get('parent', '').strip()
+        phone_input = request.POST.get('phone', '').strip()
 
-            # 🕵️ CRITICAL LOGGING: This will show in your Render Terminal!
-            print(f"--- 📡 LOGIN ATTEMPT: Code={code}, Student={student_name}, Phone={phone} ---")
+        # 🛡️ SOVEREIGN VALIDATION: Stop empty requests before they hit the vault
+        if not all([code_input, student_input, parent_input, phone_input]):
+            context['error'] = "All registry fields are mandatory for verification."
+            return render(request, 'parent_login.html', context)
 
-            # 2. ⚡ THE SOVEREIGN SEARCH (Level 2 Flexibility)
-            # First, find the student by the Code (which is unique)
-            student = Student.objects.filter(payment_code__iexact=code).first()
+        # 2. ⚡ IMPLEMENT CASE-INSENSITIVE LOOKUPS (Using __iexact)
+        # Based on your National Registry model discovered in previous logs:
+        # 'payment_code' maps to 'code', 'full_name' maps to 'student'
+        # 'parent_link' is the gateway to parent details.
+        student = Student.objects.filter(
+            payment_code__iexact=code_input,
+            full_name__iexact=student_input,
+            parent_link__full_name__iexact=parent_input,
+            parent_link__phone_number__iexact=phone_input
+        ).first()
 
-            if student:
-                # 3. 🛡️ VERIFY THE UPLINK
-                # Now we check if the Parent's phone or Name matches the registry
-                parent = student.parent_link
-                
-                # We check the last 9 digits of the phone to ignore 0 vs 256
-                input_phone_tail = phone[-9:]
-                db_phone_tail = parent.phone_number[-9:] if parent else ""
+        # 3. 🚀 THE Hub TRANSITION (Direct Template Navigation)
+        if student:
+            # ✅ SUCCESS: Move to Stage 2 (PIN VAULT)
+            print(f"--- 🏛️ IDENTITY CONFIRMED: Opening Vault for {student_input.upper()} ---")
+            return render(request, 'pin_entry.html', {'student': student})
+        else:
+            # 🛑 FAIL: Registry Mismatch. Pass error back to the prestige layout.
+            context['error'] = "No matching records found. Please check your spelling and spacing."
+            # We return old_data so the parent doesn't have to re-type everything!
+            context['old_data'] = request.POST 
 
-                if parent and input_phone_tail == db_phone_tail:
-                    # ✅ SUCCESS: The Code and Phone match!
-                    print(f"--- 🏛️ IDENTITY CONFIRMED: Opening Vault for {student.full_name} ---")
-                    return render(request, 'pin_entry.html', {'student': student})
-                else:
-                    context['error'] = "Registry Alert: Phone number does not match this Access Code."
-            else:
-                context['error'] = "Registry Denied: Access Code not recognized."
-            
-            context['old_data'] = request.POST
-
-        except Exception as e:
-            print(f"--- 🛑 Registry Error: {str(e)} ---")
-            context['error'] = "National Link Error. Please contact Hub Support."
-
-    return render(request, 'index.html', context)
+    # 4. 🏰 THE GLOBAL FALLBACK (THE WHITE SCREEN KILLER)
+    # This line ensures a template is ALWAYS returned for GET or FAILED POSTs.
+    return render(request, 'parent_login.html', context)
 
 @api_view(['GET'])
 def staff_hub_login(request):
