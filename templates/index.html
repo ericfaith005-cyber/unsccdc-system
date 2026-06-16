@@ -1,113 +1,51 @@
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UNSCCDC | National Hub</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --gold: #D4AF37; --bg: #000000; --card: #0d0d0d; }
-        body { 
-            background: var(--bg); color: #fff; font-family: 'Rajdhani', sans-serif; 
-            margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
-            background-image: radial-gradient(circle at 50% 50%, rgba(212,175,55,0.05) 0%, transparent 80%);
-        }
+<!DOCTYPE html><html><head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNSCCDC | National Hub</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@700&display=swap');
+    body { background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+    .card { width: 90%; max-width: 400px; padding: 40px; background: #0d0d0d; border: 1px solid rgba(212,175,55,0.1); border-radius: 45px; text-align: center; box-shadow: 0 40px 100px #000; position: relative; }
+    .logo { height: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 10px #D4AF37); }
+    h1 { font-family: 'Orbitron', sans-serif; color: #D4AF37; font-size: 22px; letter-spacing: 4px; margin: 0; }
+    .input-box { background: #050505; border: 1px solid #1a1a1a; border-radius: 20px; padding: 15px 20px; margin-bottom: 12px; display: flex; align-items: center; }
+    .input-box input { background: transparent; border: none; color: #fff; width: 100%; font-size: 15px; outline: none; text-transform: uppercase; }
+    .access-btn { width: 100%; background: #D4AF37; color: #000; border: none; padding: 20px; border-radius: 40px; font-weight: 900; font-size: 15px; letter-spacing: 2px; cursor: pointer; margin-top: 20px; }
+    .error { color: #ff4444; font-size: 11px; margin-bottom: 15px; font-weight: bold; }
+</style>
+</head><body>
+<div class="card">
+    <img src="{% static 'icons/hub_logo.png' %}" class="logo">
+    <h1>UNSCCDC GLOBAL</h1>
+    <p style="color:rgba(255,255,255,0.2); font-size:9px; letter-spacing:2px; margin-bottom:30px;">NATIONAL EDUCATION CENTRE</p>
 
-        /* 🌌 STARFIELD GALAXY */
-        #star-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
 
-        .login-card {
-            width: 90%; max-width: 420px; background: var(--card); padding: 40px 30px;
-            border-radius: 45px; border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 40px 100px rgba(0,0,0,1); text-align: center;
-        }
-
-        .logo { height: 90px; margin-bottom: 10px; filter: drop-shadow(0 0 15px var(--gold)); }
-        h1 { font-family: 'Orbitron', sans-serif; color: var(--gold); font-size: 26px; letter-spacing: 4px; margin: 0; }
-        .sub-brand { color: rgba(255,255,255,0.3); font-size: 9px; letter-spacing: 2px; margin-bottom: 40px; }
-
-        /* 💎 CAPSULE INPUTS (MATCHING YOUR SCREENSHOT) */
-        .input-box {
-            background: #050505; border: 1px solid #1a1a1a; border-radius: 20px;
-            padding: 18px 25px; margin-bottom: 15px; display: flex; align-items: center;
-            transition: 0.3s;
-        }
-        .input-box:focus-within { border-color: var(--gold); box-shadow: 0 0 15px rgba(212,175,55,0.1); }
-        .input-box input {
-            background: transparent; border: none; color: #fff; width: 100%;
-            font-size: 15px; font-weight: bold; outline: none; margin-left: 15px;
-            text-transform: uppercase;
-        }
-        .input-box i { color: #333; font-size: 18px; }
-
-        /* 🚀 THE Hub GOLD PILL BUTTON */
-        .access-btn {
-            width: 100%; background: var(--gold); color: #000; border: none; padding: 22px;
-            border-radius: 40px; font-weight: 900; font-size: 15px; letter-spacing: 2px;
-            cursor: pointer; margin-top: 20px; box-shadow: 0 15px 30px rgba(212,175,55,0.2);
-        }
-
-        .error-msg { color: #ff5555; font-size: 11px; margin-bottom: 15px; font-weight: bold; }
-        
-        /* 🎨 THE Hub PIN PAD */
-        .pin-dot { font-size: 40px; letter-spacing: 20px; color: var(--gold); text-align: center; }
-    </style>
-</head>
-<body>
-    <canvas id="star-canvas"></canvas>
-
-    <div class="login-card">
-        <img src="{% static 'icons/hub_logo.png' %}" class="logo">
-        <h1>UNSCCDC GLOBAL</h1>
-        <p class="sub-brand">NATIONAL EDUCATION CENTRE</p>
-
-        {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
-
-        {% if stage == 'gate' %}
-        <!-- 📦 STAGE 1: IDENTITY GATE (AS SEEN IN SCREENSHOT) -->
-        <form method="POST" action="">
-            {% csrf_token %}
-            <div class="input-box"><i>👤</i><input type="text" name="parent" placeholder="PARENT FULL NAME" required></div>
-            <div class="input-box"><i>👶</i><input type="text" name="student" placeholder="STUDENT FULL NAME" required></div>
-            <div class="input-box"><i>📞</i><input type="text" name="phone" placeholder="PHONE (+256...)" required></div>
-            <div class="input-box"><i>🔑</i><input type="text" name="code" placeholder="ACCESS CODE" required></div>
-            
-            <button type="submit" name="verify_identity" class="access-btn">ACCESS HUB</button>
-        </form>
-        {% else %}
-        <!-- 🔑 STAGE 2: PIN VAULT -->
-        <form method="POST" action="">
-            {% csrf_token %}
-            <h2 style="color: var(--gold);">IDENTITY VERIFIED ✅</h2>
-            <p style="color:#444; font-size:10px;">ENTER YOUR 4-DIGIT SOVEREIGN PIN</p>
-            <input type="hidden" name="student_id" value="{{ student.account_number }}">
-            <div class="input-box" style="justify-content: center;">
-                <input type="password" name="pin" maxlength="4" class="pin-dot" autofocus required>
-            </div>
-            <button type="submit" name="authorize_access" class="access-btn" style="background:#D90000; color:#fff;">AUTHORIZE ACCESS</button>
-        </form>
-        {% endif %}
-    </div>
-
-    <!-- 🌌 STARFIELD SCRIPT -->
-    <script>
-        const canvas = document.getElementById('star-canvas');
-        const ctx = canvas.getContext('2d');
-        let stars = [];
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.onresize = resize; resize();
-        for(let i=0; i<150; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5});
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-            stars.forEach(s => {
-                ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill();
-                s.y += 0.3; if(s.y > canvas.height) s.y = 0;
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
-</body>
-</html>
+    {% if stage == 'gate' %}
+    <!-- 📦 STAGE 1: FULL IDENTITY REGISTRY -->
+    <form method="POST" action="{% url 'parent_login' %}">
+        {% csrf_token %}
+        <div class="input-box"><input type="text" name="parent" placeholder="PARENT FULL NAME" required></div>
+        <div class="input-box"><input type="text" name="student" placeholder="STUDENT FULL NAME" required></div>
+        <div class="input-box"><input type="text" name="phone" placeholder="PHONE (+256...)" required></div>
+        <div class="input-box"><input type="text" name="code" placeholder="ACCESS CODE" required></div>
+        <button type="submit" name="verify_identity" class="access-btn">VERIFY IDENTITY</button>
+    </form>
+    <a href="/staff-login/" style="display:block; margin-top:25px; color:rgba(255,255,255,0.2); text-decoration:none; font-size:10px; font-weight:bold;">ENTER STAFF COMMAND PORTAL →</a>
+    
+    {% else %}
+    <!-- 🔑 STAGE 2: 6-DIGIT PIN VAULT -->
+    <form method="POST" action="{% url 'parent_login' %}">
+        {% csrf_token %}
+        <h2 style="color: #D4AF37;">IDENTITY CONFIRMED ✅</h2>
+        <p style="color:#444; font-size:10px; margin-bottom:20px;">ENTER YOUR 6-DIGIT SECURE PIN</p>
+        <input type="hidden" name="student_id" value="{{ student.account_number }}">
+        <div class="input-box">
+            <input type="password" name="pin" maxlength="6" style="text-align:center; font-size:28px; letter-spacing:15px;" autofocus required>
+        </div>
+        <button type="submit" name="authorize_access" class="access-btn" style="background:#D90000; color:#fff;">AUTHORIZE HUB ACCESS</button>
+        <p onclick="location.reload()" style="font-size:10px; color:#333; margin-top:20px; cursor:pointer;">← Return to Gate</p>
+    </form>
+    {% endif %}
+</div>
+</body></html>

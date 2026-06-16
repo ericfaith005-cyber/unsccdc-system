@@ -373,139 +373,60 @@ def verify_student_portal(request):
     return render(request, 'index.html')
 
 from django.shortcuts import render
-from .models import Student, Parent
+from .models import Student, Parent, Staff
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q # 💎 For powerful matching
 
 @csrf_exempt
 def parent_verify_view(request):
-    context = {}
+    # Default state is 'gate' (The 4-box form)
+    context = {'stage': 'gate'} 
+
     if request.method == 'POST':
-        # 1. 🧼 CLEAN INPUTS
-        code_in = request.POST.get('code', '').strip()
-        student_in = request.POST.get('student', '').strip()
-        parent_in = request.POST.get('parent', '').strip()
-        phone_in = request.POST.get('phone', '').strip()
+        # --- STAGE 1: IDENTITY HANDSHAKE ---
+        if 'verify_identity' in request.POST:
+            code = request.POST.get('code', '').strip()
+            student_name = request.POST.get('student', '').strip()
+            parent_name = request.POST.get('parent', '').strip()
+            phone = request.POST.get('phone', '').strip()
 
-        # 🕵️ CEO DIAGNOSTIC: This shows in your Render Logs!
-        print(f"--- 📡 Hub ATTEMPT ---")
-        print(f"INPUTS: Code: '{code_in}', Student: '{student_in}', Parent: '{parent_in}', Phone: '{phone_in}'")
+            student = Student.objects.filter(
+                payment_code__iexact=code,
+                full_name__iexact=student_name,
+                parent_link__full_name__iexact=parent_name,
+                parent_link__phone_number__icontains=phone[-9:]
+            ).first()
 
-        # 2. ⚡ THE SOVEREIGN SEARCH (High-Flexibility Logic)
-        # We take the last 9 digits of the phone to ignore the '0' or '256' prefix
-        phone_tail = phone_in[-9:] if len(phone_in) >= 9 else phone_in
-
-        # 🔎 STAGE 1: Find the student by Access Code & Name
-        student = Student.objects.filter(
-            payment_code__iexact=code_in,
-            full_name__iexact=student_in
-        ).first()
-
-        if student:
-            # 🔎 STAGE 2: Verify the Parent Link
-            p_rec = student.parent_link # 💎 As aligned in your Registry
-            
-            if p_rec:
-                db_phone_tail = p_rec.phone_number[-9:]
-                name_match = p_rec.full_name.lower() == parent_in.lower()
-                phone_match = phone_tail == db_phone_tail
-
-                if name_match and phone_match:
-                    # ✅ TOTAL SUCCESS
-                    print(f"--- 🏛️ SUCCESS: {student_in} AUTHORIZED ---")
-                    return render(request, 'pin_entry.html', {'student': student})
-                else:
-                    # 🕵️ Tell us exactly why it failed in the logs
-                    print(f"MATCH FAILURE: Name Match: {name_match}, Phone Match: {phone_match}")
-                    context['error'] = "Registry Denied: Parent name or phone does not match this student's file."
+            if student:
+                context = {'stage': 'vault', 'student': student}
             else:
-                print("MATCH FAILURE: Student exists but has NO parent linked in Admin!")
-                context['error'] = "Registry Error: This student is not yet linked to a guardian in the Admin."
-        else:
-            print("MATCH FAILURE: Access Code and Student Name do not exist together.")
-            context['error'] = "Registry Denied: Access code or Student name is incorrect."
-        
-        context['old_data'] = request.POST
+                context = {'stage': 'gate', 'error': 'Identity Mismatch. Check spelling/details.'}
+
+        # --- STAGE 2: FINAL Hub AUTHORIZATION (6-DIGIT PIN) ---
+        elif 'authorize_access' in request.POST:
+            input_pin = request.POST.get('pin', '').strip()
+            student_id = request.POST.get('student_id')
+            student = Student.objects.get(account_number=student_id)
+            
+            if student.parent_link and student.parent_link.secure_pin == input_pin:
+                return render(request, 'tabs/home.html', {'data': student})
+            else:
+                context = {'stage': 'vault', 'student': student, 'error': 'SECURITY ALERT: Invalid 6-Digit PIN.'}
 
     return render(request, 'index.html', context)
 
-@api_view(['GET'])
+@csrf_exempt
 def staff_hub_login(request):
-    name = request.query_params.get('name', '').strip()
-    pin = request.query_params.get('pin', '').strip()
-    
-    # 1. Search for staff records (Handles multi-school)
-    staff_records = Staff.objects.filter(full_name__iexact=name, secure_pin=pin)
-
-    if not staff_records.exists():
-        return Response({"msg": "Identity not found. Check Name and PIN."}, status=401)
-
-    schools_data = []
-    total_national_wallet = 0
-
-    for record in staff_records:
-        # A. Fetch Payroll
-        payrolls = StaffPayroll.objects.filter(staff=record).order_by('-payment_date')
-        pending_money = payrolls.filter(status='PENDING').aggregate(Sum('net_pay'))['net_pay__sum'] or 0
-        total_national_wallet += float(pending_money)
-        
-        # B. Fetch Students for THIS specific school
-        all_students = Student.objects.filter(school=record.school)
-        
-        # C. Build the Data Package (Ensures NO NULLS reach the App)
-        schools_data.append({
-            "school_name": str(record.school.name),
-            "school_id": str(record.school.school_account_id), # 💎 FORCED TO STRING
-            "designation": str(record.designation),
-            "salary": float(payrolls.first().net_pay) if payrolls.exists() else 0.0,
-            
-        # --- 🛡️ SURGERY: PUMPING MARK COMPLETION DATA (api/views.py) ---
-            "students": [
-                {
-                    "id": str(s.account_number), 
-                    "name": str(s.full_name), 
-                    "class": str(s.current_class),
-                    # 💎 THE NEW INTELLIGENCE: Check completion for current teacher's subjects
-                    "completed": [
-                        res.subject.name for res in s.marks.all() 
-                        if res.aoi_1 > 0 or res.mid_term > 0 or res.eot_score > 0
-                    ],
-                    # Send full scores for the History Tab
-                    "full_history": [
-                        {
-                            "sub": m.subject.name, "aoi1": m.aoi_1, "aoi2": m.aoi_2, 
-                            "mid": m.mid_term, "aoi3": m.aoi_3, "aoi4": m.aoi_4, 
-                            "eot": m.eot_score, "proj": m.project_work
-                        } for m in s.marks.all()
-                    ]
-                } for s in all_students
-            ] if all_students.exists() else [],
-            
-            "classes": list(all_students.values_list('current_class', flat=True).distinct()) if all_students.exists() else [],
-            
-            "subjects": [
-                {"id": str(sub.id), "name": str(sub.name).upper()} 
-                for sub in record.subjects.all()
-            ] if record.subjects.exists() else [],
-            
-            "payroll_history": [
-                {"month": p.month, "amount": float(p.net_pay), "status": p.status} 
-                for p in payrolls[:5]
-            ] if payrolls.exists() else []
-        })
-
-    # D. HD Content for Sliders and TikTok
-    tops = NationalTopPerformer.objects.all().order_by('?')[:12]
-    posts = SchoolPost.objects.all().order_by('-date')
-
-    return Response({
-        "type": "staff",
-        "name": name.upper(),
-        "wallet": total_national_wallet,
-        "schools": schools_data,
-        "top_performers": [{"name": t.name, "school": t.school_name, "score": t.score, "photo": request.build_absolute_uri(t.photo.url)} for t in tops],
-        "feed": [{"school": f.school.name, "title": f.title, "media": request.build_absolute_uri(f.media_file.url), "likes": f.likes_count, "verified": True} for f in posts],
-    })
+    context = {}
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        pin = request.POST.get('pin', '').strip()
+        staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
+        if staff:
+            # 4-DIGIT PIN verified for staff
+            return render(request, 'tabs/home.html', {'data': staff, 'is_staff': True})
+        else:
+            context['error'] = "Invalid Command Credentials."
+    return render(request, 'staff_login.html', context)
 
 # --- 🛰️ THE IMPERIAL NATIONAL MARKS ENGINE (REAL-TIME SYNC) ---
 @api_view(['POST'])
