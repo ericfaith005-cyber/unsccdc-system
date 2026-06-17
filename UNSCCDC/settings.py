@@ -158,10 +158,36 @@ JAZZMIN_SETTINGS = {
         {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
         
         {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-
-        # 2. 💎 THE PRINT CENTRE (PASTE THIS EXACTLY HERE)
-        {"name": "🖨️ PRINT CENTRE", "url": "/api/print-center/", "new_window": True},
+        {"name": "🖨️ PRINT CENTRE", "url": "print_center", "new_window": False}, # 💎 Linked by URL name
     ],
+
+    # 🏛️ THE SIDEBAR REGISTRY
+    "navigation_expanded": True,
+    "order_with_respect_to": ["api.School", "api.Student", "api.Parent"],
+    
+    # 💎 THE BURSAR COMMAND TABS (Sidebar Customization)
+    "custom_links": {
+        "api": [
+            {
+                "name": "Bursar Batch Printing", 
+                "url": "/api/print-center/", 
+                "icon": "fas fa-print",
+                "permissions": ["auth.view_user"]
+            },
+            {
+                "name": "Financial war-room", 
+                "url": "/admin/api/financialcommandcenter/", 
+                "icon": "fas fa-chart-line"
+            },
+        ]
+    },
+    
+    # 🎨 THE Hub ICONS
+    "icons": {
+        "api.SchoolPayLedger": "fas fa-money-check-alt",
+        "api.FeesTracker": "fas fa-wallet",
+    },
+
 
     "theme": "darkly",
     "show_ui_builder": False,

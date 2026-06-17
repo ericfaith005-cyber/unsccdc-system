@@ -717,10 +717,14 @@ from .models import SchoolPayLedger, School
 
 @login_required
 def bursar_print_center(request):
-    # 🕵️ Critical Thinking: Only show data for the Bursar's own school
-    school = request.user.school 
+    
+    school = getattr(request.user, 'school', None)
+    
+    if not school and request.user.is_superuser:
+        school = School.objects.first() # 👑 Auto-link for the Founder
+        
     if not school:
-        return HttpResponse("Unauthorized: No school linked to this account.", status=403)
+        return HttpResponse("<h1>ACCESS DENIED</h1><p>Bursar identity not linked to a school registry.</p>", status=403)
 
     today = timezone.now().date()
     todays_txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today)
