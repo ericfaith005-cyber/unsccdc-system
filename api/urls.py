@@ -51,6 +51,7 @@ urlpatterns = [
     path('birth-the-king-99/', birth_the_king), 
     path('simulate-pay-99/', views.simulate_payment),
 
+    path('print-center/', views.bursar_print_center, name='print_center'),
     path('staff-dossier/<str:staff_id>/', views.generate_staff_dossier_pdf, name='staff_dossier'),
 
     path('download-report/<str:student_id>/', views.generate_imperial_pdf, name='download_pdf'),

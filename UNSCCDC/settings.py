@@ -27,11 +27,11 @@ else:
     CSRF_COOKIE_SECURE = False
     
 
-# 🐘 4. THE TREASURY CONNECTION (SUPABASE)
-# This uses the 'dj_database_url' tool you just imported
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
+        # 💎 THE MASTER FALLBACK:
+        # If DATABASE_URL is missing (on your laptop), it creates a local db.sqlite3
+        default=f'sqlite:///{os.path.join(BASE_DIR, "db.sqlite3")}',
         conn_max_age=600
     )
 }
@@ -136,6 +136,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 JAZZMIN_SETTINGS = {
+   
     "site_title": "UNSCCDC GLOBAL",
     "site_header": "UNSCCDC",
     "site_brand": "UNSCCDC",
@@ -155,6 +156,11 @@ JAZZMIN_SETTINGS = {
         {"name": "4. FINANCES", "url": "/api/finances/", "new_window": False},
         {"name": "5. PROFILE", "url": "/api/profile/", "new_window": False},
         {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
+        
+        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
+
+        # 2. 💎 THE PRINT CENTRE (PASTE THIS EXACTLY HERE)
+        {"name": "🖨️ PRINT CENTRE", "url": "/api/print-center/", "new_window": True},
     ],
 
     "theme": "darkly",

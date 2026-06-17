@@ -711,7 +711,35 @@ def generate_imperial_pdf(request, student_id):
         print(traceback.format_exc())
         return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
     
-    # --- 🧾 THE IMPERIAL PAYSLIP ENGINE ---
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from .models import SchoolPayLedger, School
+
+@login_required
+def bursar_print_center(request):
+    # 🕵️ Critical Thinking: Only show data for the Bursar's own school
+    school = request.user.school 
+    if not school:
+        return HttpResponse("Unauthorized: No school linked to this account.", status=403)
+
+    today = timezone.now().date()
+    todays_txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today)
+
+    if school.school_type == 'SECONDARY':
+        class_list = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
+    else:
+        class_list = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
+
+    pending_counts = {cls: todays_txs.filter(student__current_class=cls, is_printed=False).count() for cls in class_list}
+
+    return render(request, 'bursar_print_center.html', {
+        'school': school,
+        'transactions': todays_txs,
+        'class_list': class_list,
+        'pending_counts': pending_counts,
+        'today': today
+    })
+
 def generate_payslip_pdf(request, payroll_id):
     p = StaffPayroll.objects.get(id=payroll_id)
     response = HttpResponse(content_type='application/pdf')

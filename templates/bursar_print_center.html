@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* 🏛️ BURSAR COMMAND STYLING */
+    :root { --gold: #D4AF37; --bg: #050505; --card: #0d0d0d; }
+    
+    .bursar-hud { background: var(--bg); color: #fff; padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+    
+    /* 📱 CLASS FILTER TABS */
+    .class-tabs { 
+        display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; 
+        scrollbar-width: none; border-bottom: 1px solid #222; margin-bottom: 30px;
+    }
+    .class-tab {
+        background: #111; border: 1px solid #333; padding: 12px 20px; border-radius: 12px;
+        cursor: pointer; transition: 0.3s; white-space: nowrap; display: flex; align-items: center; gap: 10px;
+    }
+    .class-tab:hover { border-color: var(--gold); }
+    .class-tab.active { background: var(--gold); color: #000; border: none; font-weight: 900; }
+    .pending-badge { background: #D90000; color: #fff; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
+
+    /* 📜 THE IMPERIAL CLEARANCE SLIP */
+    .slip-container {
+        width: 100%; max-width: 500px; background: #fff; color: #000;
+        margin: 20px auto; padding: 15px; position: relative;
+        border: 6px solid transparent;
+        border-image: linear-gradient(to right, #000 33%, #FCDC04 33% 66%, #D90000 66%) 1;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    
+    .watermark {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 40px; color: rgba(0,0,0,0.03); font-weight: 900; pointer-events: none; white-space: nowrap;
+    }
+
+    .gateway-badge { 
+        font-size: 10px; padding: 4px 10px; border-radius: 5px; font-weight: 900;
+        display: inline-block; margin-bottom: 10px;
+    }
+
+    /* 🛡️ DIGITAL STAMP CONFIG */
+    .stamp {
+        width: 80px; height: 80px; border-radius: 50%; border: 3px double;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        font-size: 8px; font-weight: 900; text-align: center; opacity: 0.8;
+    }
+    .stamp-institutional-teal { color: #008080; border-color: #008080; }
+
+    /* 🖨️ PRINT MEDIA OPTIMIZATION */
+    @media print {
+        body * { visibility: hidden; }
+        .print-area, .print-area * { visibility: visible; }
+        .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        .no-print { display: none !important; }
+        .slip-container { page-break-inside: avoid; margin-bottom: 20px; border: 2px solid #000; }
+    }
+</style>
+
+<div class="bursar-hud no-print">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 style="color: var(--gold); font-family: 'Orbitron'; font-size: 24px; margin:0;">BURSAR COMMAND CENTRE</h1>
+            <p style="color: #666; font-size: 10px; letter-spacing: 2px;">DAILY SETTLEMENT & BATCH PRINTING ENGINE</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-warning fw-bold px-4 rounded-pill">
+            ⚡ EXECUTE BATCH PRINT
+        </button>
+    </div>
+
+    <!-- 🏗️ CLASS SELECTOR -->
+    <div class="class-tabs">
+        {% for cls in class_list %}
+        <div class="class-tab {% if forloop.first %}active{% endif %}" onclick="filterClass('{{ cls }}')">
+            {{ cls }}
+            {% with count=pending_counts|get_item:cls %}
+                {% if count > 0 %}<span class="pending-badge">{{ count }}</span>{% endif %}
+            {% endwith %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 🏛️ THE PRINTING STACK -->
+<div class="print-area">
+    <div class="row" id="slips-stack">
+        {% for tx in transactions %}
+        <div class="col-md-6 slip-wrapper" data-class="{{ tx.student.current_class }}">
+            <div class="slip-container">
+                <div class="watermark">UNSCCDC Hub Hub</div>
+                
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <!-- GATEWAY BADGE -->
+                        {% if "MTN" in tx.raw_data.sourceChannel %}
+                            <span class="gateway-badge" style="background:#FCDC04; color:#000;">MTN MOBILE MONEY 🟡</span>
+                        {% elif "AIRTEL" in tx.raw_data.sourceChannel %}
+                            <span class="gateway-badge" style="background:#D90000; color:#fff;">AIRTEL MONEY 🔴</span>
+                        {% else %}
+                            <span class="gateway-badge" style="background:#002366; color:#fff;">UNSCCDC GLOBAL 🏛️</span>
+                        {% endif %}
+                        
+                        <h4 style="margin:0; font-weight:900;">{{ school.name|upper }}</h4>
+                        <p style="font-size:9px; color:#555;">{{ school.school_motto }}</p>
+                    </div>
+                    <img src="{% static 'icons/hub_logo.png' %}" height="50">
+                </div>
+
+                <hr style="margin:10px 0; opacity:0.1;">
+
+                <table style="width:100%; font-size:11px;">
+                    <tr><td style="color:#888;">Student:</td><td class="fw-bold">{{ tx.student.full_name|upper }}</td></tr>
+                    <tr><td style="color:#888;">Registry ID:</td><td>{{ tx.student.account_number }}</td></tr>
+                    <tr>
+                        <td style="color:#888;">{% if school.school_type == 'SEC' %}Class/Level:{% else %}Primary Grade:{% endif %}</td>
+                        <td class="fw-bold">{{ tx.student.current_class }} {{ tx.student.stream }}</td>
+                    </tr>
+                    <tr><td style="color:#888;">Payment Category:</td><td>Tuition & Maintenance</td></tr>
+                </table>
+
+                <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-top:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <small style="font-size:8px; color:#888; display:block;">AMOUNT SETTLED</small>
+                        <span style="font-size:18px; font-weight:900;">UGX {{ tx.amount|floatformat:0 }}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <small style="font-size:8px; color:#D90000; display:block;">OUTSTANDING</small>
+                        <span style="font-size:14px; font-weight:bold; color:#D90000;">{{ tx.student.fees_balance }}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-end mt-3">
+                    <div style="font-size:8px; color:#aaa; max-width:60%;">
+                        <b>SYSTEM COMMENT:</b> Verified Digital Record. Valid with National ID. 
+                        Download <b>UG SCHOOLS APP</b> to track payments instantly.
+                    </div>
+                    <!-- 🛡️ DYNAMIC DIGITAL STAMP -->
+                    <div class="stamp stamp-institutional-teal">
+                        <span>OFFICIAL</span>
+                        <span style="font-size:10px; margin:2px 0;">{{ today|date:"d M Y" }}</span>
+                        <span>CERTIFIED</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function filterClass(cls) {
+        // 💎 Update active UI
+        document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+
+        // 🛡️ Filter the stack
+        document.querySelectorAll('.slip-wrapper').forEach(wrapper => {
+            if (wrapper.getAttribute('data-class') === cls) {
+                wrapper.style.display = 'block';
+            } else {
+                wrapper.style.display = 'none';
+            }
+        });
+    }
+
+    // Initialize with first class
+    document.addEventListener('DOMContentLoaded', () => {
+        const firstClass = "{{ class_list.0 }}";
+        filterClass(firstClass);
+    });
+</script>
+
+{% endblock %}

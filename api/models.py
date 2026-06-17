@@ -133,6 +133,16 @@ class Student(models.Model):
         if c in ['S.1', 'S.2', 'S.3', 'S.4']: return 'O-LEVEL'
         if c in ['S.5', 'S.6']: return 'A-LEVEL'
         return 'OTHER'
+    
+    @property
+    def fees_balance(self):
+        # 🧮 Helper to show balance on the slip
+        from .models import FeesTracker
+        tracker = FeesTracker.objects.filter(student=self).first()
+        if tracker:
+            bal = tracker.total_fees_due - tracker.total_fees_paid
+            return f"UGX {bal:,.0f}"
+        return "UGX 0"
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---
 class SubjectAssignment(models.Model):
@@ -205,6 +215,9 @@ class NationalTopPerformer(models.Model):
     name = models.CharField(max_length=255); school_name = models.CharField(max_length=255); score = models.CharField(max_length=50); photo = models.ImageField(upload_to='performers/')
 
 class SchoolPost(models.Model):
+    TYPES = [('PRIMARY', 'Primary School'), ('SECONDARY', 'Secondary School')]
+    name = models.CharField(max_length=255)
+    school_type = models.CharField(max_length=10, choices=TYPES, default='SECONDARY') 
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True) # FOR CLEAR TIKTOK HD
@@ -282,6 +295,9 @@ class SovereignProfessionalInsights(School):
     class Meta: proxy = True; verbose_name_plural = "⭐ SOVEREIGN ANALYTICS (PRO)"
 
 class SchoolPayLedger(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_printed = models.BooleanField(default=False) 
     receipt_number = models.CharField(max_length=100, unique=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
