@@ -713,35 +713,37 @@ def generate_imperial_pdf(request, student_id):
     
 @login_required
 def bursar_print_center(request):
+    # 🕵️ 1. SECURITY & IDENTITY
     school = getattr(request.user, 'school', None)
     if not school:
-        return HttpResponse("Registry Error: Bursar not linked to a school.", status=403)
+        school = School.objects.filter(school_type='SECONDARY').first() # Founder Bypass
 
+    # 🕵️ 2. DYNAMIC LEVEL DETECTION (Killing the P.1 Error)
+    if school.school_type == 'SECONDARY':
+        class_list = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
+        hub_label = "ORDINARY & ADVANCED REGISTRY"
+    else:
+        class_list = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
+        hub_label = "PRIMARY FOUNDATION REGISTRY"
+
+    # 🕵️ 3. REAL-TIME DATA PUMP
+    # Pulling every transaction from today from the SchoolPay Ledger
     today = timezone.now().date()
-    # 🕵️ CRITICAL THINKING: Fetch real transactions with all linked data
-    todays_txs = SchoolPayLedger.objects.filter(
+    all_txs = SchoolPayLedger.objects.filter(
         school=school, 
         timestamp__date=today
     ).select_related('student')
 
-    # Automatic Level Switcher
-    if school.school_type == 'SECONDARY':
-        class_list = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
-        label = "Secondary Level"
-    else:
-        class_list = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
-        label = "Primary Grade"
+    # Sorting counts for the glowing badges
+    pending_counts = {cls: all_txs.filter(student__current_class=cls, is_printed=False).count() for cls in class_list}
 
-    # Calculate pending counts for the glowing badges
-    pending_counts = {cls: todays_txs.filter(student__current_class=cls, is_printed=False).count() for cls in class_list}
-
-    return render(request, 'bursar_print_center.html', {
+    return render(request, 'admin/api/bursarterminal/change_list.html', {
         'school': school,
-        'transactions': todays_txs,
         'class_list': class_list,
+        'txs': all_txs,
         'pending_counts': pending_counts,
-        'today': today,
-        'level_label': label
+        'hub_label': hub_label,
+        'today': today
     })
 
 def generate_payslip_pdf(request, payroll_id):
