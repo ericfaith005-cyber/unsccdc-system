@@ -549,15 +549,35 @@ class FinancialCommandAdmin(admin.ModelAdmin):
 
 admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
 
-# =============================================================
-# 🖨️ THE Hub Hub Hub COMMAND (SIDEBAR BUTTON)
-# =============================================================
-from django.contrib import admin # 💎 Ensure this is at the top of admin.py
+from django.db.models import Count
 
 class BursarTerminalAdmin(admin.ModelAdmin):
+    # 💎 THE Hub FIX: It now lives INSIDE the real dashboard
+    change_list_template = "admin/api/bursarterminal/change_list.html"
+
     def changelist_view(self, request, extra_context=None):
-        # 🚀 THE MASTER REDIRECT: Sends the user to the print center
-        from django.shortcuts import redirect
-        return redirect('/api/print-center/')
+        school = request.user.school 
+        if not school: return super().changelist_view(request, extra_context)
+
+        today = timezone.now().date()
+        txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today).select_related('student')
+
+        # 🕵️ CRITICAL THINKING: AUTOMATIC CLASS LIST
+        if school.school_type == 'SECONDARY':
+            classes = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
+        else:
+            classes = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
+
+        # Count unprinted slips per class
+        counts = {cls: txs.filter(student__current_class=cls, is_printed=False).count() for cls in classes}
+
+        extra_context = extra_context or {}
+        extra_context['title'] = f"BURSAR COMMAND: {school.name}"
+        extra_context['classes'] = classes
+        extra_context['counts'] = counts
+        extra_context['transactions'] = txs
+        extra_context['school'] = school
+        
+        return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(BursarTerminal, BursarTerminalAdmin)

@@ -341,6 +341,6 @@ def notify_king_of_payment(sender, instance, created, **kwargs):
 # --- 🏛️ THE Hub Hub GHOST REGISTRY ---
 class BursarTerminal(models.Model):
     class Meta:
-        verbose_name = "1. NATIONAL BURSAR TERMINAL"
-        verbose_name_plural = "1. NATIONAL BURSAR TERMINAL"
+        verbose_name = "NATIONAL BURSAR TERMINAL"
+        verbose_name_plural = "NATIONAL BURSAR TERMINAL"
         managed = False # 💎 Tells Django: "Don't create a real table, just a button!"
