@@ -550,55 +550,43 @@ class FinancialCommandAdmin(admin.ModelAdmin):
 admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
 
 # =============================================================
-# 🖨️ THE NATIONAL BURSAR TERMINAL (RESTORED & STABLE)
+# 🖨️ THE NATIONAL BURSAR Hub TERMINAL (LONDON BANK STANDARD)
 # =============================================================
 class BursarTerminalAdmin(admin.ModelAdmin):
     change_list_template = "admin/api/bursarterminal/change_list.html"
-    
-    # 🛡️ THE Hub SHIELD: Stop the Admin from trying to count records
-    def get_queryset(self, request):
-        return super().get_queryset(request).none() # Returns empty list safely
 
     def changelist_view(self, request, extra_context=None):
-        # 1. Identity Check
-        school = getattr(request.user, 'school', None)
-        if not school and request.user.is_superuser:
-            school = School.objects.first() # 👑 God-mode for Founder
+        school = request.user.school 
+        if not school: school = School.objects.first() # God-mode fallback
 
-        if not school:
-            return HttpResponse("<h1>🏛️ ACCESS RESTRICTED</h1><p>Bursar not linked to a school registry.</p>", status=403)
-
-        # 2. 🧮 GOLIATH DATA ENGINE
         today = timezone.now().date()
-        # Fetch real transactions for today
-        txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today).select_related('student')
-
-        # 🕵️ DYNAMIC CLASS ADAPTATION
+        # 🕵️ CRITICAL: Get only TODAY'S transactions that are NOT YET PRINTED
+        txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today).order_by('-timestamp')
+        
+        # 🧮 Hub Hub BANK MATH
+        total_today = txs.aggregate(Sum('amount'))['amount__sum'] or 0
+        pending_count = txs.filter(is_printed=False).count()
+        
+        # 🎓 Level-Aware Class List
         if school.school_type == 'SECONDARY':
             classes = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
-        elif school.school_type == 'PRIMARY':
-            classes = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
         else:
-            classes = ['Baby', 'Middle', 'Top', 'Year 1', 'Year 2']
+            classes = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
 
-        # 📊 LIVE COUNTING FOR BADGES
-        # We use a try/except so it never crashes if data is missing
-        counts = {}
-        for cls in classes:
-            try:
-                counts[cls] = txs.filter(student__current_class=cls).count()
-            except:
-                counts[cls] = 0
+        # Count per class
+        class_stats = {cls: txs.filter(student__current_class=cls).count() for cls in classes}
 
-        # 📦 PUSH TO THE Hub Hub Hub Hub Hub VISUALS
         extra_context = extra_context or {}
-        extra_context['title'] = "NATIONAL BURSAR TERMINAL"
-        extra_context['classes'] = classes
-        extra_context['counts'] = counts
-        extra_context['transactions'] = txs
-        extra_context['school'] = school
-        extra_context['today'] = today
-        
+        extra_context.update({
+            'title': "NATIONAL Hub TERMINAL",
+            'school': school,
+            'txs': txs,
+            'classes': classes,
+            'stats': class_stats,
+            'total_today': f"{total_today:,.0f}",
+            'pending_count': pending_count,
+            'today_date': today.strftime("%d %B %Y"),
+        })
         return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(BursarTerminal, BursarTerminalAdmin)
