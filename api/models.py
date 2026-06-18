@@ -337,3 +337,10 @@ def notify_king_of_payment(sender, instance, created, **kwargs):
         # 💎 This prints to your cloud log immediately
         print(f"💰 NATIONAL HUB ALERT: {instance.student.full_name} paid {instance.amount} to {instance.school.name}")
         # Logic to send you an SMS via Africa's Talking can be added here!
+
+# --- 🏛️ THE Hub Hub GHOST REGISTRY ---
+class BursarTerminal(models.Model):
+    class Meta:
+        verbose_name = "1. NATIONAL BURSAR TERMINAL"
+        verbose_name_plural = "1. NATIONAL BURSAR TERMINAL"
+        managed = False # 💎 Tells Django: "Don't create a real table, just a button!"

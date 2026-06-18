@@ -1234,3 +1234,4 @@ def generate_staff_dossier_pdf(request, staff_id):
     except Exception as e:
         from django.http import HttpResponse
         return HttpResponse(f"Dossier Engine Error: {str(e)}", status=400)
+    

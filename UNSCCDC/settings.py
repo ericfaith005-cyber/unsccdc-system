@@ -186,6 +186,7 @@ JAZZMIN_SETTINGS = {
     "icons": {
         "api.SchoolPayLedger": "fas fa-money-check-alt",
         "api.FeesTracker": "fas fa-wallet",
+        "api.BursarTerminal": "fas fa-print",
     },
 
 
