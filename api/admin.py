@@ -554,9 +554,10 @@ admin.site.register(FinancialCommandCenter, FinancialCommandAdmin)
 # =============================================================
 from django.contrib import admin # 💎 Ensure this is at the top of admin.py
 
-@admin.register(BursarTerminal)
 class BursarTerminalAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         # 🚀 THE MASTER REDIRECT: Sends the user to the print center
         from django.shortcuts import redirect
         return redirect('/api/print-center/')
+
+admin.site.register(BursarTerminal, BursarTerminalAdmin)
