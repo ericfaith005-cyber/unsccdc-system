@@ -711,29 +711,28 @@ def generate_imperial_pdf(request, student_id):
         print(traceback.format_exc())
         return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
     
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from .models import SchoolPayLedger, School
-
 @login_required
 def bursar_print_center(request):
-
     school = getattr(request.user, 'school', None)
-    
-    if not school and request.user.is_superuser:
-        school = School.objects.first() # 👑 Auto-link for the Founder
-        
     if not school:
-        return HttpResponse("<h1>ACCESS DENIED</h1><p>Bursar identity not linked to a school registry.</p>", status=403)
+        return HttpResponse("Registry Error: Bursar not linked to a school.", status=403)
 
     today = timezone.now().date()
-    todays_txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today)
+    # 🕵️ CRITICAL THINKING: Fetch real transactions with all linked data
+    todays_txs = SchoolPayLedger.objects.filter(
+        school=school, 
+        timestamp__date=today
+    ).select_related('student')
 
+    # Automatic Level Switcher
     if school.school_type == 'SECONDARY':
         class_list = ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6']
+        label = "Secondary Level"
     else:
         class_list = ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7']
+        label = "Primary Grade"
 
+    # Calculate pending counts for the glowing badges
     pending_counts = {cls: todays_txs.filter(student__current_class=cls, is_printed=False).count() for cls in class_list}
 
     return render(request, 'bursar_print_center.html', {
@@ -741,7 +740,8 @@ def bursar_print_center(request):
         'transactions': todays_txs,
         'class_list': class_list,
         'pending_counts': pending_counts,
-        'today': today
+        'today': today,
+        'level_label': label
     })
 
 def generate_payslip_pdf(request, payroll_id):

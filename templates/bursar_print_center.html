@@ -1,175 +1,166 @@
 {% extends "base.html" %}
-{% load static %}
-{% load hub_extras %}
-
+{% load static %}{% load hub_extras %}
 {% block content %}
 <style>
-    /* 🏛️ BURSAR COMMAND STYLING */
-    :root { --gold: #D4AF37; --bg: #050505; --card: #0d0d0d; }
+    /* 🏛️ NATIONAL Hub TERMINAL STYLING */
+    body { background-color: #020202 !important; font-family: 'Montserrat', sans-serif; }
+    .terminal-container { background: rgba(10,10,10,0.8); border: 1px solid #222; border-radius: 25px; padding: 30px; box-shadow: 0 50px 100px #000; }
     
-    .bursar-hud { background: var(--bg); color: #fff; padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+    /* 📱 DYNAMIC CLASS BUTTONS */
+    .class-nav { display: flex; gap: 12px; overflow-x: auto; padding: 20px 0; border-bottom: 1px solid #1a1a1a; margin-bottom: 30px; }
+    .cls-btn { 
+        background: #111; border: 1px solid #333; padding: 15px 25px; border-radius: 15px; color: #fff;
+        cursor: pointer; transition: 0.4s; position: relative; min-width: 100px; text-align: center;
+    }
+    .cls-btn.active { background: #D4AF37; color: #000; font-weight: 900; border: none; box-shadow: 0 0 30px rgba(212,175,55,0.3); }
+    .cls-badge { position: absolute; top: -10px; right: -5px; background: #D90000; color: #fff; font-size: 9px; padding: 3px 8px; border-radius: 50px; font-weight: 900; }
+
+    /* 📊 THE Hub DATA MATRIX (TABLE) */
+    .data-matrix { width: 100%; border-collapse: separate; border-spacing: 0 10px; margin-top: 20px; }
+    .data-matrix th { color: #D4AF37; text-transform: uppercase; font-size: 10px; letter-spacing: 2px; padding: 15px; border-bottom: 2px solid #222; }
+    .data-matrix tr { background: rgba(255,255,255,0.02); transition: 0.3s; }
+    .data-matrix tr:hover { background: rgba(255,255,255,0.05); transform: scale(1.01); }
+    .data-matrix td { padding: 20px 15px; color: #fff; font-size: 13px; border-top: 1px solid rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+    /* 📜 THE SOVEREIGN CLEARANCE SLIP */
+    .imperial-slip {
+        width: 10.5cm; height: 14.8cm; background: #fff; color: #000; padding: 20px; margin: 10px;
+        border: 8px solid transparent; border-image: linear-gradient(to right, #000 33%, #FCDC04 33% 66%, #D90000 66%) 1;
+        position: relative; display: inline-block; vertical-align: top; overflow: hidden;
+    }
+    .watermark { position: absolute; top: 40%; left: 5%; transform: rotate(-45deg); font-size: 45px; color: rgba(0,0,0,0.03); font-weight: 900; pointer-events: none; }
+    .gateway-flag { padding: 4px 10px; border-radius: 5px; font-size: 9px; font-weight: 900; color: #fff; margin-bottom: 15px; display: inline-block; }
     
-    /* 📱 CLASS FILTER TABS */
-    .class-tabs { 
-        display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; 
-        scrollbar-width: none; border-bottom: 1px solid #222; margin-bottom: 30px;
-    }
-    .class-tab {
-        background: #111; border: 1px solid #333; padding: 12px 20px; border-radius: 12px;
-        cursor: pointer; transition: 0.3s; white-space: nowrap; display: flex; align-items: center; gap: 10px;
-    }
-    .class-tab:hover { border-color: var(--gold); }
-    .class-tab.active { background: var(--gold); color: #000; border: none; font-weight: 900; }
-    .pending-badge { background: #D90000; color: #fff; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
-
-    /* 📜 THE IMPERIAL CLEARANCE SLIP */
-    .slip-container {
-        width: 100%; max-width: 500px; background: #fff; color: #000;
-        margin: 20px auto; padding: 15px; position: relative;
-        border: 6px solid transparent;
-        border-image: linear-gradient(to right, #000 33%, #FCDC04 33% 66%, #D90000 66%) 1;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-    
-    .watermark {
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 40px; color: rgba(0,0,0,0.03); font-weight: 900; pointer-events: none; white-space: nowrap;
+    .digital-stamp {
+        width: 100px; height: 100px; border: 5px double {{ school.stamp_color|default:"#002366" }}; border-radius: 50%;
+        color: {{ school.stamp_color|default:"#002366" }}; display: flex; align-items: center; justify-content: center;
+        flex-direction: column; font-size: 9px; font-weight: 900; position: absolute; bottom: 30px; right: 30px; transform: rotate(-15deg); opacity: 0.7;
     }
 
-    .gateway-badge { 
-        font-size: 10px; padding: 4px 10px; border-radius: 5px; font-weight: 900;
-        display: inline-block; margin-bottom: 10px;
-    }
-
-    /* 🛡️ DIGITAL STAMP CONFIG */
-    .stamp {
-        width: 80px; height: 80px; border-radius: 50%; border: 3px double;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        font-size: 8px; font-weight: 900; text-align: center; opacity: 0.8;
-    }
-    .stamp-institutional-teal { color: #008080; border-color: #008080; }
-
-    /* 🖨️ PRINT MEDIA OPTIMIZATION */
-    @media print {
-        body * { visibility: hidden; }
-        .print-area, .print-area * { visibility: visible; }
-        .print-area { position: absolute; left: 0; top: 0; width: 100%; }
-        .no-print { display: none !important; }
-        .slip-container { page-break-inside: avoid; margin-bottom: 20px; border: 2px solid #000; }
-    }
+    @media print { .no-print { display: none !important; } .print-only { display: block !important; } }
 </style>
 
-<div class="bursar-hud no-print">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="terminal-container no-print">
+    <div class="d-flex justify-content-between align-items-center">
         <div>
-            <h1 style="color: var(--gold); font-family: 'Orbitron'; font-size: 24px; margin:0;">BURSAR COMMAND CENTRE</h1>
-            <p style="color: #666; font-size: 10px; letter-spacing: 2px;">DAILY SETTLEMENT & BATCH PRINTING ENGINE</p>
+            <h1 style="color: #D4AF37; font-family: 'Orbitron'; letter-spacing: 4px; margin:0;">NATIONAL BURSAR TERMINAL</h1>
+            <p style="color: #444; font-size: 10px; letter-spacing: 3px;">{{ school.name|upper }} ● {{ level_label|upper }} Hub</p>
         </div>
-        <button onclick="window.print()" class="btn btn-warning fw-bold px-4 rounded-pill">
-            ⚡ EXECUTE BATCH PRINT
-        </button>
+        <button onclick="window.print()" class="btn btn-warning px-5 py-3 rounded-pill fw-bold">⚡ BATCH PRINT CLASS SLIPS</button>
     </div>
 
-    <!-- 🏗️ CLASS SELECTOR -->
-    <div class="class-tabs">
+    <!-- 🏗️ CLASS SELECTOR HUD -->
+    <div class="class-nav">
         {% for cls in class_list %}
-        <div class="class-tab {% if forloop.first %}active{% endif %}" onclick="filterClass('{{ cls }}')">
+        <div class="cls-btn {% if forloop.first %}active{% endif %}" onclick="switchView('{{ cls }}', this)">
             {{ cls }}
             {% with count=pending_counts|get_item:cls %}
-                {% if count > 0 %}<span class="pending-badge">{{ count }}</span>{% endif %}
+                {% if count > 0 %}<span class="cls-badge">{{ count }}</span>{% endif %}
             {% endwith %}
         </div>
         {% endfor %}
     </div>
-</div>
 
-<!-- 🏛️ THE PRINTING STACK -->
-<div class="print-area">
-    <div class="row" id="slips-stack">
-        {% for tx in transactions %}
-        <div class="col-md-6 slip-wrapper" data-class="{{ tx.student.current_class }}">
-            <div class="slip-container">
-                <div class="watermark">UNSCCDC Hub Hub</div>
-                
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <!-- GATEWAY BADGE -->
-                        {% if "MTN" in tx.raw_data.sourceChannel %}
-                            <span class="gateway-badge" style="background:#FCDC04; color:#000;">MTN MOBILE MONEY 🟡</span>
-                        {% elif "AIRTEL" in tx.raw_data.sourceChannel %}
-                            <span class="gateway-badge" style="background:#D90000; color:#fff;">AIRTEL MONEY 🔴</span>
-                        {% else %}
-                            <span class="gateway-badge" style="background:#002366; color:#fff;">UNSCCDC GLOBAL 🏛️</span>
-                        {% endif %}
-                        
-                        <h4 style="margin:0; font-weight:900;">{{ school.name|upper }}</h4>
-                        <p style="font-size:9px; color:#555;">{{ school.school_motto }}</p>
-                    </div>
-                    <img src="{% static 'icons/hub_logo.png' %}" height="50">
-                </div>
-
-                <hr style="margin:10px 0; opacity:0.1;">
-
-                <table style="width:100%; font-size:11px;">
-                    <tr><td style="color:#888;">Student:</td><td class="fw-bold">{{ tx.student.full_name|upper }}</td></tr>
-                    <tr><td style="color:#888;">Registry ID:</td><td>{{ tx.student.account_number }}</td></tr>
-                    <tr>
-                        <td style="color:#888;">{% if school.school_type == 'SEC' %}Class/Level:{% else %}Primary Grade:{% endif %}</td>
-                        <td class="fw-bold">{{ tx.student.current_class }} {{ tx.student.stream }}</td>
-                    </tr>
-                    <tr><td style="color:#888;">Payment Category:</td><td>Tuition & Maintenance</td></tr>
-                </table>
-
-                <div style="background:#f8f9fa; padding:10px; border-radius:10px; margin-top:15px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <small style="font-size:8px; color:#888; display:block;">AMOUNT SETTLED</small>
-                        <span style="font-size:18px; font-weight:900;">UGX {{ tx.amount|floatformat:0 }}</span>
-                    </div>
-                    <div style="text-align:right;">
-                        <small style="font-size:8px; color:#D90000; display:block;">OUTSTANDING</small>
-                        <span style="font-size:14px; font-weight:bold; color:#D90000;">{{ tx.student.fees_balance }}</span>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-end mt-3">
-                    <div style="font-size:8px; color:#aaa; max-width:60%;">
-                        <b>SYSTEM COMMENT:</b> Verified Digital Record. Valid with National ID. 
-                        Download <b>UG SCHOOLS APP</b> to track payments instantly.
-                    </div>
-                    <!-- 🛡️ DYNAMIC DIGITAL STAMP -->
-                    <div class="stamp stamp-institutional-teal">
-                        <span>OFFICIAL</span>
-                        <span style="font-size:10px; margin:2px 0;">{{ today|date:"d M Y" }}</span>
-                        <span>CERTIFIED</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+    <!-- 🧾 LIVE TRANSACTION MATRIX -->
+    <div class="table-responsive">
+        <table class="data-matrix" id="main-ledger">
+            <thead>
+                <tr>
+                    <th>TXN REF</th>
+                    <th>STUDENT IDENTITY</th>
+                    <th>PRN CODE</th>
+                    <th>GATEWAY</th>
+                    <th>AMOUNT (UGX)</th>
+                    <th>BALANCE</th>
+                    <th>STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tx in transactions %}
+                <tr class="row-{{ tx.student.current_class }} data-row">
+                    <td class="fw-bold" style="color:#D4AF37;">{{ tx.receipt_number }}</td>
+                    <td>{{ tx.student.full_name|upper }}</td>
+                    <td><code>{{ tx.student.payment_code }}</code></td>
+                    <td>
+                        {% if "MTN" in tx.raw_data.sourceChannel %}<span class="badge bg-warning text-dark">MTN MoMo</span>
+                        {% elif "AIRTEL" in tx.raw_data.sourceChannel %}<span class="badge bg-danger">AIRTEL MONEY</span>
+                        {% else %}<span class="badge bg-primary">UNSCCDC Hub</span>{% endif %}
+                    </td>
+                    <td class="fw-bold">{{ tx.amount|floatformat:0 }}</td>
+                    <td style="color:#D90000; font-weight:bold;">{{ tx.student.fees_balance }}</td>
+                    <td><span class="badge bg-success">VERIFIED</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
-<script>
-    function filterClass(cls) {
-        // 💎 Update active UI
-        document.querySelectorAll('.class-tab').forEach(t => t.classList.remove('active'));
-        event.currentTarget.classList.add('active');
+<!-- 🏛️ THE IMPERIAL PRINT STACK (HIDDEN ON SCREEN) -->
+<div class="print-area">
+    {% for tx in transactions %}
+    <div class="imperial-slip slip-{{ tx.student.current_class }}" style="display:none;">
+        <div class="watermark">UNSCCDC GLOBAL Hub</div>
+        
+        <div class="d-flex justify-content-between align-items-start">
+            <div style="max-width: 70%;">
+                {% if "MTN" in tx.raw_data.sourceChannel %}<div class="gateway-flag" style="background:#FCDC04; color:#000;">MTN MOBILE MONEY 🟡</div>
+                {% elif "AIRTEL" in tx.raw_data.sourceChannel %}<div class="gateway-flag" style="background:#D90000;">AIRTEL MONEY 🔴</div>
+                {% else %}<div class="gateway-flag" style="background:#002366;">UNSCCDC GLOBAL Hub 🏛️</div>{% endif %}
+                
+                <h4 style="margin: 0; font-weight: 900; font-size: 16px;">{{ school.name|upper }}</h4>
+                <p style="font-size: 9px; margin: 0; color:#666;">{{ school.school_motto }}</p>
+            </div>
+            <img src="{% static 'icons/hub_logo.png' %}" height="50">
+        </div>
 
-        // 🛡️ Filter the stack
-        document.querySelectorAll('.slip-wrapper').forEach(wrapper => {
-            if (wrapper.getAttribute('data-class') === cls) {
-                wrapper.style.display = 'block';
-            } else {
-                wrapper.style.display = 'none';
-            }
+        <table style="width: 100%; margin-top: 20px; font-size: 11px;">
+            <tr><td style="color:#888;">STUDENT:</td><td class="fw-bold">{{ tx.student.full_name|upper }}</td></tr>
+            <tr><td style="color:#888;">ID / PRN:</td><td>{{ tx.student.payment_code }}</td></tr>
+            <tr><td style="color:#888;">CLASS / STREAM:</td><td>{{ tx.student.current_class }} {{ tx.student.stream }}</td></tr>
+            <tr><td style="color:#888;">CATEGORY:</td><td>{{ tx.category|default:"Tuition & Functional Fees" }}</td></tr>
+        </table>
+
+        <div style="background: #f4f4f4; padding: 15px; border-radius: 10px; margin-top: 20px; display: flex; justify-content: space-between;">
+            <div><small style="font-size:8px; color:#888;">AMOUNT PAID</small><div style="font-weight:900; font-size:18px;">UGX {{ tx.amount|floatformat:0 }}</div></div>
+            <div style="text-align:right;"><small style="font-size:8px; color:#D90000;">OUTSTANDING</small><div style="font-weight:900; font-size:14px; color:#D90000;">{{ tx.student.fees_balance }}</div></div>
+        </div>
+
+        <div class="digital-stamp">
+            <span>OFFICIAL Hub</span>
+            <span style="font-size:12px; margin:3px 0;">{{ today|date:"d M Y" }}</span>
+            <span>CERTIFIED</span>
+        </div>
+
+        <div style="position: absolute; bottom: 20px; left: 20px; width: 80%; display: flex; align-items: center; gap: 10px;">
+            <img src="{% static 'icons/hub_logo.png' %}" height="30">
+            <p style="font-size: 7px; color: #888; margin:0;">
+                PARENTS: DOWNLOAD <b>UG SCHOOLS DIGITAL APP</b><br>TO TRACK FINANCES ON A SINGLE CLICK.
+            </p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function switchView(cls, btn) {
+        document.querySelectorAll('.cls-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Filter Table Rows
+        document.querySelectorAll('.data-row').forEach(row => {
+            row.style.display = row.classList.contains('row-' + cls) ? 'table-row' : 'none';
+        });
+
+        // Filter Print Slips
+        document.querySelectorAll('.imperial-slip').forEach(slip => {
+            slip.style.display = slip.classList.contains('slip-' + cls) ? 'inline-block' : 'none';
         });
     }
-
-    // Initialize with first class
+    // Auto-select first class on load
     document.addEventListener('DOMContentLoaded', () => {
-        const firstClass = "{{ class_list.0 }}";
-        filterClass(firstClass);
+        const first = document.querySelector('.cls-btn');
+        if(first) first.click();
     });
 </script>
-
 {% endblock %}
