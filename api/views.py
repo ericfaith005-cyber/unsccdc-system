@@ -717,7 +717,7 @@ from .models import SchoolPayLedger, School
 
 @login_required
 def bursar_print_center(request):
-    
+
     school = getattr(request.user, 'school', None)
     
     if not school and request.user.is_superuser:
@@ -787,6 +787,36 @@ def generate_payslip_pdf(request, payroll_id):
     c.showPage()
     c.save()
     return response
+
+@login_required
+def bursar_batch_terminal(request):
+    school = request.user.school
+    today = timezone.now().date()
+    
+    # 🕵️ Logic: Identify the correct class list based on National Level
+    level_map = {
+        'KIND': ['Baby', 'Middle', 'Top'],
+        'PRIM': ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+        'SEC':  ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+        'INTL': [f'Year {i}' for i in range(1, 14)],
+        'UNI':  [f'Year {i}' for i in range(1, 6)],
+    }
+    active_classes = level_map.get(school.school_type, ['Standard'])
+
+    # 📊 Live Transaction Counter per class
+    todays_txs = SchoolPayLedger.objects.filter(school=school, timestamp__date=today)
+    
+    class_stats = []
+    for cls in active_classes:
+        count = todays_txs.filter(student__current_class=cls).count()
+        class_stats.append({'name': cls, 'count': count})
+
+    return render(request, 'bursar_terminal.html', {
+        'school': school,
+        'class_stats': class_stats,
+        'transactions': todays_txs,
+        'today': today
+    })
 
 def generate_staff_dossier_pdf(request, staff_id):
     """Generates a high-security National HR Dossier"""

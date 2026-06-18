@@ -23,6 +23,16 @@ class User(AbstractUser):
     objects = UserManager()
 
 class School(models.Model):
+    LEVEL_CHOICES = [
+        ('KIND', 'Kindergarten (Baby, Middle, Top)'),
+        ('PRIM', 'Primary (P.1 - P.7)'),
+        ('SEC', 'Secondary (S.1 - S.6)'),
+        ('INTL', 'International (Year 1 - Year 13)'),
+        ('UNI', 'University (Year 1 - Year 5)'),
+        ('VOC', 'Vocational/Technical'),
+    ]
+    school_type = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='SEC')
+    stamp_color = models.CharField(max_length=20, default="#002366", help_text="Hex color for digital stamp")
     SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]
     school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
     
