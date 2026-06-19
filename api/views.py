@@ -1451,8 +1451,6 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 8)
         p.drawString(50, height - 290, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         
-        g_table.wrapOn(p, width, height)
-        g_table.drawOn(p, 50, height - 420)
         grade_data = [
             ['GRADE', 'COMPETENCY', 'DESCRIPTION / SCORE BRACKET'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery of knowledge and skills.'],
@@ -1461,7 +1459,7 @@ def generate_national_report_pdf(request, student_id):
             ['D', 'Basic', '50% - 59%. Minimum level of competency in problem-solving.'],
             ['E', 'Elementary', '0% - 49%. Below the basic level of competency.']
         ]
-        g_table
+        
         g_table = Table(grade_data, colWidths=[50, 100, 350])
         g_table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue),      # Navy Header
