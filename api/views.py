@@ -1308,7 +1308,19 @@ def generate_national_report_pdf(request, student_id):
     Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
     """
     try:
-        # 1. 🔍 PULL REGISTRY DATA
+        # --- 🧮 Hub RANKING ENGINE ---
+        all_class_students = Student.objects.filter(current_class=student.current_class, school=school)
+        student_scores = []
+        for s_obj in all_class_students:
+            avg = s_obj.marks.aggregate(a=Avg('eot_score'))['a'] or 0
+            student_scores.append({'id': s_obj.id, 'avg': avg})
+        
+            student_scores.sort(key=lambda x: x['avg'], reverse=True)
+            position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), "N/A")
+            total_in_class = len(student_scores)
+            overall_avg = next((item['avg'] for item in student_scores if item['id'] == student.id), 0)
+       
+
         student = Student.objects.get(account_number=student_id)
         marks = student.marks.all() # Uses the related_name='marks'
         school = student.school
@@ -1333,6 +1345,15 @@ def generate_national_report_pdf(request, student_id):
         p.setStrokeColor(colors.black); p.rect(10, 10, width-20, height-20)
         p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(13, 13, width-26, height-26)
         p.setStrokeColor(colors.HexColor("#D90000")); p.rect(16, 16, width-32, height-32)
+
+        # --- 🛡️ Hub Hub WATERMARK SHIELD ---
+        p.saveState()
+        p.setFont("Helvetica-Bold", 50)
+        p.setStrokeColor(colors.lightgrey, alpha=0.03) # 💎 Transparent Ink
+        p.translate(width/2, height/2)
+        p.rotate(45)
+        p.drawCentredString(0, 0, "UNSCCDC")
+        p.restoreState()
 
         # 5. 🏛️ OFFICIAL NATIONAL HEADER
         p.setFont("Helvetica-Bold", 10)
@@ -1386,6 +1407,15 @@ def generate_national_report_pdf(request, student_id):
         ]))
         table.wrapOn(p, width, height)
         table.drawOn(p, 30, height-450)
+
+        # --- 🛡️ Hub Hub WATERMARK SHIELD ---
+        p.saveState()
+        p.setFont("Helvetica-Bold", 50)
+        p.setStrokeColor(colors.lightgrey, alpha=0.03) # 💎 Transparent Ink
+        p.translate(width/2, height/2)
+        p.rotate(45)
+        p.drawCentredString(0, 0, "UNSCCDC Hub Hub Hub Hub Hub Hub Hub Hub")
+        p.restoreState()
 
         # 8. 📚 NATIONAL GRADING EXPLANATORY KEY (The Footer logic)
         p.setFont("Helvetica-Bold", 8)
