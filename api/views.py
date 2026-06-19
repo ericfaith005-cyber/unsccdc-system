@@ -1295,65 +1295,67 @@ def generate_staff_dossier_pdf(request, staff_id):
         from django.http import HttpResponse
         return HttpResponse(f"Dossier Engine Error: {str(e)}", status=400)
 
+import datetime
+from django.db.models import Avg
+from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
-from django.http import HttpResponse
 from .models import Student, AcademicResult
 
 def generate_national_report_pdf(request, student_id):
     """
-    THE GOLIATH PDF ENGINE v1.0
-    Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
+    THE GOLIATH Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub
+    UNSCCDC NATIONAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub
     """
+    # 🏛️ 1. DEFINE Hub Hub Hub Hub Hub Hub Hub COLORS
     gov_blue = colors.HexColor("#002366")   # Royal Navy (Authority)
     rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold (Prestige)
     off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
     ug_yellow = colors.HexColor("#FCDC04")  # National Gold
-    ug_red = colors.HexColor("#D90000")
+    ug_red = colors.HexColor("#D90000")     # National Red
+
     try:
+        # 🔑 2. Hub Hub Hub Hub Hub Hub IDENTITY GATE
         student = Student.objects.get(account_number=student_id)
-        marks = student.marks.all() # Uses the related_name='marks'
+        marks = student.marks.all() 
         school = student.school
 
+        # 🧮 3. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub RANKING ENGINE
         all_class_students = Student.objects.filter(current_class=student.current_class, school=school)
         student_scores = []
         for s_obj in all_class_students:
             avg = s_obj.marks.aggregate(a=Avg('eot_score'))['a'] or 0
             student_scores.append({'id': s_obj.id, 'avg': avg})
         
-            student_scores.sort(key=lambda x: x['avg'], reverse=True)
-            total_in_class = len(student_scores)
-            position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), 1)
-            
-            overall_avg = next((item['avg'] for item in student_scores if item['id'] == student.id), 0)
-        
-        # 2. 📄 INITIALIZE THE CANVAS
+        student_scores.sort(key=lambda x: x['avg'], reverse=True)
+        total_in_class = len(student_scores)
+        position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), 1)
+        overall_avg = next((item['avg'] for item in student_scores if item['id'] == student.id), 0)
+
+        # 📄 4. Hub Hub Hub Hub Hub INITIALIZE CANVAS
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="Report_{student.full_name}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="National_Report_{student.full_name}.pdf"'
         p = canvas.Canvas(response, pagesize=A4)
-       # 1. 📏 DEFINE THE MEASUREMENTS FIRST (The Key Fix)
         width, height = A4 
 
-        # 2. 🎨 PAINT THE FLOOR (Parchment Background)
-        parchment_color = colors.HexColor("#FDFDF5") 
-        p.setFillColor(parchment_color)
-        p.rect(0, 0, width, height, fill=1, stroke=0) # ✅ 'width' is now defined!
+        # 🎨 5. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub PAINT THE Hub Hub Hub Hub Hub Hub Hub FLOOR
+        p.setFillColor(off_white)
+        p.rect(0, 0, width, height, fill=1, stroke=0)
 
-        # 3. 🛡️ THE Hub Hub Hub Hub Hub TRIPLE-GUARD FRAME
-        p.setLineWidth(4)
-        p.setStrokeColor(colors.HexColor("#002366")) # Royal Blue Outer
-        p.rect(15, 15, width-30, height-30)
+        # 🛡️ 6. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub TRIPLE-GUARD Hub Hub Hub Hub Hub Hub Hub Hub BORDERS
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(ug_yellow); p.rect(22, 22, width-44, height-44)
+        p.setStrokeColor(ug_red); p.rect(23, 23, width-46, height-46)
 
-        p.setLineWidth(1)
-        p.setStrokeColor(colors.HexColor("#FCDC04")) # National Yellow
-        p.rect(22, 22, width-44, height-44)
+        # 🌌 7. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SOVEREIGN Hub Hub Hub Hub Hub Hub Hub Hub WATERMARK
+        p.saveState()
+        p.setFont("Helvetica-Bold", 45); p.setFillColor(colors.lightgrey, alpha=0.03)
+        p.translate(width/2, height/2); p.rotate(45); p.drawCentredString(0, 0, "UNSCCDC OFFICIAL RECORD")
+        p.restoreState()
 
-        # ... (rest of your text and table logic follows) ...
-
-        # 3. 🎨 AUTOMATED REMARK LOGIC (AI)
-        # 💎 THE Hub Hub Hub AUTOMATIC GRADER (NLSC STANDARDS)
+        # 🎨 8. Hub Hub Hub Hub Hub Hub Hub Hub Hub INTERNAL Hub Hub Hub Hub Hub Hub Hub Hub AI LOGIC
         def calculate_uce_grade(score):
             if score >= 80: return "A"
             if score >= 70: return "B"
@@ -1369,140 +1371,91 @@ def generate_national_report_pdf(request, student_id):
             if score >= 50: return "Basic competency."
             return "Requires support."
 
-        p.setStrokeColor(gov_blue)
-        p.setLineWidth(5)
-        p.rect(15, 15, width-30, height-30)
+        def get_teacher_comment(avg):
+            if avg >= 80: return "Disciplined and hardworking. High leadership potential."
+            if avg >= 60: return "Good performance. Should focus more on technicals."
+            return "Needs more effort and attend all remedial sessions."
 
-        # 🛡️ THE Hub Hub Hub Hub Hub Hub Hub Hub TRIPLE-GUARD FRAME
-        p.setLineWidth(4)
-        p.setStrokeColor(colors.HexColor("#002366")) # Royal Blue Outer
-        p.rect(15, 15, width-30, height-30)
-
-        p.setLineWidth(1)
-        p.setStrokeColor(colors.HexColor("#FCDC04")) # National Yellow
-        p.rect(22, 22, width-44, height-44)
-
-        # 5. 🏛️ OFFICIAL NATIONAL HEADER
-        p.setFont("Helvetica-Bold", 10)
-        p.drawCentredString(width/2, height-50, "THE REPUBLIC OF UGANDA")
-        p.drawCentredString(width/2, height-65, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
+        # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
+        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-58, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
         
-        # Seal Box
-        p.rect(width/2-25, height-120, 50, 50)
-        p.setFont("Helvetica-Bold", 7)
-        p.drawCentredString(width/2, height-95, "OFFICIAL")
-        p.drawCentredString(width/2, height-105, "SEAL")
+        p.setStrokeColor(colors.black); p.rect(width/2-25, height-110, 50, 45)
+        p.setFont("Helvetica-Bold", 7); p.drawCentredString(width/2, height-82, "OFFICIAL"); p.drawCentredString(width/2, height-95, "SEAL")
 
-        p.setFont("Helvetica-Bold", 16)
-        p.setFillColor(colors.HexColor("#002366"))
-        p.drawCentredString(width/2, height-145, school.name.upper())
-        p.setFont("Helvetica-Bold", 7)
-        p.setFillColor(colors.grey)
-        p.drawCentredString(width/2, height-155, "UNSCCDC NATIONAL MASTER HUB SYSTEM")
+        p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-135, school.name.upper())
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(width/2, height-160, "NATIONAL Hub SCHOLASTIC PERFORMANCE RECORD")
 
-        # 6. 👤 STUDENT REGISTRY DETAILS
-        p.setFillColor(colors.black)
-        p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-185, "OFFICIAL SCHOLASTIC PERFORMANCE RECORD")
-        
+        # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, height-200, f"STUDENT NAME: {student.full_name.upper()}")
-        p.drawString(50, height-200, f"NATIONAL ID: {student.account_number}")
-        p.drawString(350, height-215, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(350, height-230, f"TERM: EOT | YEAR: 2026")
+        p.drawString(50, height-195, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(50, height-210, f"NATIONAL ID: {student.account_number}")
+        p.drawString(380, height-195, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
+        p.drawString(380, height-210, f"TERM: EOT | YEAR: 2026")
 
-        # --- 📊 Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA MATRIX ---
+        # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
-        
         for m in marks:
-            # 🕵️ Calculate the grade automatically from the EOT score
             auto_grade = calculate_uce_grade(m.eot_score) 
-            
-            data.append([
-                m.subject.name[:4].upper(), 
-                m.aoi_1, m.aoi_2, m.mid_term, 
-                m.aoi_3, m.aoi_4, 
-                m.eot_score, 
-                m.project_work, 
-                f"{m.eot_score}%", 
-                auto_grade, # 💎 THE Hub FIX: No more attribute error!
-                'STF', 
-                get_sub_remark(m.eot_score)
-            ])
+            data.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", auto_grade, 'STF', get_sub_remark(m.eot_score)])
 
         table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), gov_blue),      # Navy Header
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),   # White Labels
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 7),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            # 💎 THE Hub Hub Hub ZEBRA STRIPE (London Standard)
-            ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]), 
-            ('GRID', (0,0), (-1,-1), 0.1, colors.grey),
-            ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),   # Gold underline for header
+            ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTSIZE', (0,0), (-1,-1), 7), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),
         ]))
-        table.wrapOn(p, width, height)
-        table.drawOn(p, 30, height - 260)
+        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
-        # 📚 --- 💎 Hub Hub Hub Hub Hub Hub Hub Hub PULLING THE Hub Hub Hub Hub KEY UP ---
-        p.setFillColor(colors.black)
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(50, height - 290, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
-        
+        # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 375, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         grade_data = [
-            ['GRADE', 'COMPETENCY', 'DESCRIPTION / SCORE BRACKET'],
-            ['A', 'Exceptional', '80% - 100%. Extraordinary mastery of knowledge and skills.'],
-            ['B', 'Outstanding', '70% - 79%. High competency in practical concepts.'],
+            ['Grade', 'Level', 'Description / Score Bracket'],
+            ['A', 'Exceptional', '80% - 100%. Extraordinary mastery innovatively applied.'],
+            ['B', 'Outstanding', '70% - 79%. High competency in practical applications.'],
             ['C', 'Satisfactory', '60% - 69%. Adequate competency in application.'],
-            ['D', 'Basic', '50% - 59%. Minimum level of competency in problem-solving.'],
+            ['D', 'Basic', '50% - 59%. Minimum level of competency in problem solving.'],
             ['E', 'Elementary', '0% - 49%. Below the basic level of competency.']
         ]
-        
-        g_table = Table(grade_data, colWidths=[50, 100, 350])
-        g_table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), gov_blue),      # Navy Header
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),   # White Labels
-            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0,0), (-1,-1), 7),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            # 💎 THE Hub Hub Hub ZEBRA STRIPE (London Standard)
-            ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]), 
-            ('GRID', (0,0), (-1,-1), 0.1, colors.grey),
-            ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),   # Gold underline for header
-        ]))
-        p.setFillColor(colors.black)
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(50, height - 290, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
-        
-        # This will now work perfectly because 'g_table' exists!
-        g_table.wrapOn(p, width, height)
-        g_table.drawOn(p, 50, height - 420)
+        g_table = Table(grade_data, colWidths=[40, 80, 360])
+        g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 470)
 
-        # 9. 📜 CERTIFICATION & RANKING STATUS
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, 160, "CERTIFICATION STATUS:")
+        # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
+        uace_data = [
+            ['A (6pts)', 'B (5pts)', 'C (4pts)', 'D (3pts)', 'E (2pts)', 'O (1pt)', 'F (0pts)'],
+            ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']
+        ]
+        u_table = Table(uace_data, colWidths=[68, 68, 68, 68, 68, 68, 68])
+        u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+        u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 530)
+
+        # 📜 14. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub CERTIFICATION Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub & Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub RANKING
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 565, "CERTIFICATION STATUS:")
         p.setFont("Helvetica", 7)
-        p.drawString(60, 150, "Result 1: Qualifies for UCE (Score at least D in one subject).")
-        p.drawString(60, 140, "Result 2: Did not qualify (Missing projects or compulsory subjects).")
-        p.drawString(60, 130, "Result 3: Does not qualify (Scored only E in all subjects).")
+        p.drawString(60, height - 577, "• Result 1: Qualifies for UCE certificate (At least D in one subject).")
+        p.drawString(60, height - 587, "• Result 2: Did not qualify (Missing projects or compulsory subjects).")
+        
+        p.setFont("Helvetica-Bold", 9); p.setFillColor(gov_blue)
+        p.drawString(50, height - 615, f"NATIONAL STANDING: Position {position} out of {total_in_class}")
+        p.drawString(380, height - 615, f"SCHOOLPAY PRN: {student.payment_code or '---'}")
+        p.setFont("Helvetica-Oblique", 6.5); p.setFillColor(colors.black)
+        p.drawString(50, height - 625, "Note: UNEB explicitly does not rank candidates via aggregates to avoid unethical competition.")
 
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, 115, f"NATIONAL STANDING: Position {position} out of {total_in_class}")
-        p.setFont("Helvetica-Oblique", 6.5); p.drawString(50, 105, "Note: UNEB explicitly does not rank candidates via aggregates to avoid unethical competition.")
+        # ✍️ 15. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SIGNATURES
+        p.setStrokeColor(colors.black)
+        p.line(50, height - 700, 200, height - 700); p.drawString(70, height - 712, "Head Teacher Signature")
+        p.line(350, height - 700, 500, height - 700); p.drawString(370, height - 712, "National Hub Registrar")
         
-        # ✍️ AUTHORIZATION
-        p.line(50, 80, 200, 80)
-        p.drawString(70, 70, "Head Teacher Signature")
-        p.line(350, 80, 500, 80)
-        p.drawString(370, 70, "National Hub Registrar")
-        
-        # Stamp Box
         p.setStrokeColor(colors.HexColor("#008080"))
-        p.circle(width/2, 70, 30, stroke=1, fill=0)
-        p.drawCentredString(width/2, 70, "VERIFIED")
+        p.circle(width/2, height - 700, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 705, "VERIFIED")
 
         p.showPage(); p.save()
         return response
     except Exception as e:
-        return HttpResponse(f"Hub Printing Error: {str(e)}", status=400) 
+        return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
