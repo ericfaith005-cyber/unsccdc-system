@@ -1319,7 +1319,9 @@ def generate_national_report_pdf(request, student_id):
             student_scores.append({'id': s_obj.id, 'avg': avg})
         
             student_scores.sort(key=lambda x: x['avg'], reverse=True)
-            position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), "N/A")
+            total_in_class = len(student_scores)
+            position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), 1)
+            
             overall_avg = next((item['avg'] for item in student_scores if item['id'] == student.id), 0)
         
         # 2. 📄 INITIALIZE THE CANVAS
