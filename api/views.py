@@ -666,7 +666,7 @@ def generate_imperial_pdf(request, student_id):
         
         table_height = len(matrix_data) * 15
         table.wrapOn(p, width, height)
-        table.drawOn(p, 40, height-250 - table_height)
+        table.drawOn(p, 40, height-280 - table_height)
 
         # 7. 🤖 AUTOMATED ADMINISTRATIVE COMMENTS
         footer_y = height-280 - table_height
