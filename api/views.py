@@ -1474,11 +1474,11 @@ def generate_national_report_pdf(request, student_id):
 
         # ✍️ 15. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SIGNATURES
         p.setStrokeColor(colors.black)
-        p.line(50, height - 760, 200, height - 760); p.drawString(70, height - 712, "Head Teacher Signature")
-        p.line(350, height - 760, 500, height - 760); p.drawString(370, height - 712, "National Hub Registrar")
+        p.line(50, height - 700, 200, height - 700); p.drawString(70, height - 712, "Head Teacher Signature")
+        p.line(350, height - 700, 500, height - 700); p.drawString(370, height - 712, "National Hub Registrar")
         
         p.setStrokeColor(colors.HexColor("#008080"))
-        p.circle(width/2, height - 760, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 765, "VERIFIED")
+        p.circle(width/2, height - 700, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 705, "VERIFIED")
 
         p.showPage(); p.save()
         return response
