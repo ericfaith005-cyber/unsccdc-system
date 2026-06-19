@@ -87,6 +87,10 @@
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">UNSCCDC GLOBAL</a>
+            <!-- 🛰️ THE Hub Hub Hub Hub Hub Hub CONNECTION SENSOR -->
+            <div id="connection-status" style="display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 9px; font-weight: 900; letter-spacing: 1px; margin-left: 15px; border: 1px solid rgba(255,255,255,0.1); vertical-align: middle; transition: 0.5s;">
+                SYNCING...
+            </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#imperialNav">
                 <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
             </button>
@@ -147,5 +151,47 @@
             }
         }
     </script>
+    <!-- ⚙️ THE Hub Hub Hub Hub Hub SOVEREIGN OFFLINE ENGINE -->
+<script>
+    function updateNationalLinkStatus() {
+        const status = document.getElementById('connection-status');
+        if (!status) return;
+
+        if (navigator.onLine) {
+            // 🟢 Hub Hub Hub Hub Hub Hub ONLINE STATE
+            status.innerHTML = "● Hub ONLINE";
+            status.style.background = "rgba(0, 255, 0, 0.1)";
+            status.style.color = "#00ff00";
+            status.style.borderColor = "rgba(0, 255, 0, 0.2)";
+            console.log("--- 🏛️ NATIONAL UPLINK SECURE ---");
+        } else {
+            // 🔴 Hub Hub Hub Hub Hub Hub OFFLINE STATE
+            status.innerHTML = "● SOVEREIGN OFFLINE MODE";
+            status.style.background = "rgba(217, 0, 0, 0.1)";
+            status.style.color = "#ff4444";
+            status.style.borderColor = "rgba(217, 0, 0, 0.3)";
+            console.log("--- 🛡️ Hub Hub Hub Hub OFFLINE VAULT ACTIVE ---");
+        }
+    }
+
+    // 📡 Monitor the Network Pulse
+    window.addEventListener('online', updateNationalLinkStatus);
+    window.addEventListener('offline', updateNationalLinkStatus);
+    
+    // Initial Check
+    document.addEventListener('DOMContentLoaded', updateNationalLinkStatus);
+
+    // 🛡️ Hub Hub Hub Hub Hub REGISTER THE NATIONAL GUARD (PWA)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            // This physically connects to the 'serviceworker.js' in your static folder
+            navigator.serviceWorker.register('/serviceworker.js').then(function(reg) {
+                console.log('National Guard Registered:', reg.scope);
+            }).catch(function(err) {
+                console.log('Guard Link Failed:', err);
+            });
+        });
+    }
+</script>
 </body>
 </html>

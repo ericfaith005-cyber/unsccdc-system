@@ -996,11 +996,25 @@ def about_tab(request):
             
             <hr style="border-color:#222; margin: 30px 0;">
             
-            <p style="font-size:18px;">Founder & CEO: <b>Yawe Eric</b></p>
-            <p style="color:#aaa; font-style:italic;">"In 2025, at the age of 20, Uganda Software developer and Tech Entrepeneur Yawe Eric recognized a critical gap in the nation's educational infrastructure: 
+            <p style="font-size:18px;">Founder & Chief Innovation Officer: <b>Yawe Eric</b></p>
+            <p style="color:#aaa; font-style:italic;">"In 2025, at the age of 20, Ugandan Software developer and Tech Entrepeneur Yawe Eric recognized a critical gap in the nation's educational infrastructure: 
             schools were overwhelmed by disorganized manual paperwork, fee tracking was prone to leakages, and parents remained in the dark about thier children's daily performance."</p>
             <p style="color:#aaa;">"With a bold vision to completely transform Uganda's Education sector, Eric engineered UNSCCDC. His mission is to brig world-class, cloud-based digital infrastructure to every school in Uganda-starting with better Institutions-ensuring accountability, 
             moving Uganda Education into a paperless, digitally transparent future."</p>
+
+            <p style="font-size:18px;"><b>Technical Architecture and Reliability Specs</b></p>
+            <ul style="color:#ccc; line-height:2;">
+             <li>✅ Cloud Infrastructure</li>
+                <p style="color:#aaa;">Hosted on highly reliable cloud servers with an automated deployment ppeline linked directly to secure version control, ensuring 99.9% platform uptime.</p>
+
+                <li>✅ Database Integrity</li>
+                <p style="color:#aaa;">Built on a robust relational database management system using Django's Object-Relational Mapping (ORM) to handle complex queries for thousands of student profiles without lag.</p>
+
+                <li>✅ Local Compliance</li>
+                <p style="color:#aaa;">Designed to align fully with the assessment grading guidelines stipulated by the Ministry of Educaton and Sports (MoES) and the Uganda National Curriculum Development Centre (NCDC).</p>
+            
+            </ul>
+           
 
             <p style="font-size:18px;"><b>Technical Architecture and Reliability Specs</b></p>
 
@@ -1022,12 +1036,25 @@ def about_tab(request):
 def academics_tab(request):
     content = f"""{FLAG_STYLE.replace('{{acad_act}}', 'active-btn')}
     <div class="glass-tab">
-        <h1 style="color:#FCDC04;">📊 ACADEMIC ASSESSMENT ENGINE</h1>
-        <p>Fully aligned with the <b>New Lower Secondary Curriculum (NLSC)</b>.</p>
-        <ul style="color:#ccc; line-height:2;">
-            <li>✅ UNEB Standard D1-F9 Conversions</li>
-            <li>✅ Automated AOI 1-4 Performance Tracking</li>
-            <li>✅ Real-Time National Rank Calculation</li>
+        <h1 style="color:#FCDC04;">ACADEMIC ASSESSMENT ENGINE</h1>
+        <p>This is the operational core of the school, built to handle <b>the complex realities of the Uganda grading matrix</b>.</p>
+
+         <p style="font-size:18px;"><b>The Assessment Engine Specifications</b></p>
+            <ul style="color:#ccc; line-height:2;">
+            <li>✅ New Lower Secondary Curriculum (NLSC)</li>
+            <p style="color:#aaa;"><b>Tracker:</b>Built-in grading architecture designed for the 20-point continuos assessment scale. It allows teachers to input Activities of Intergration (AoIs), automatically calculates scores out of 3, and generates the mandatory NCDC-compliant descriptors. </p>
+
+             <li>✅ Traditional Curriculum Grading</li>
+            <p style="color:#aaa;">An automated system for all levels that instantly converts raw percentages into UNEB-standard aggregtes and automatically determines student divisions and subjcet combinations. </p>
+
+             <li>✅ Automated Report Card Generation</li>
+            <p style="color:#aaa;">A one-clickgeneration system that compiles continuos assessment mrks, final exams, teacher remarks, housmaster comments, and school fees balance into a secure, downloadable PDF report card carrying the digital signature of the Headteacher.</p>
+
+             <li>✅ Digital Staffroom Timetabler</li>
+            <p style="color:#aaa;">An algorithmic scheduling tool that prevents room clashes and teacher double-booking across different classes and streams of all levels.</p>
+
+             <li>✅ Student Progress Analytics</li>
+            <p style="color:#aaa;">Interactive graphical trends showing a student's performance trajectory across multiple terms, allowing directors to identify struggling students early. </p>
         </ul>
     </div>"""
     return HttpResponse(content)
@@ -1035,8 +1062,27 @@ def academics_tab(request):
 def finances_tab(request):
     content = f"""{FLAG_STYLE.replace('{{fin_act}}', 'active-btn')}
     <div class="glass-tab">
-        <h1 style="color:#FCDC04;">💰 FINANCIAL LEAK-PROOF LEDGER</h1>
-        <p>Real-time synchronization with National Payment Gateways.</p>
+        <h1 style="color:#FCDC04;">THE FINANCIAL LEAK-PROOF LEDGER</h1>
+        
+       
+        <ul style="color:#ccc; line-height:2;"> <p><b>Revenue and Ledger Management</b></p>
+        <li>✅ Student Progress Analytics</li>
+            <p style="color:#aaa;">At the start of every term, the system automatically applies unique billing structures to every student based on thier class, stream, or boarder/day scholar status, eliminating manual invoicing errors.</p>
+        <li>✅ Real-Time Cash Flow Analytics</li>
+            <p style="color:#aaa;">Provides the School Director with a secure, instant breakdown of total expected revenue, total fees collected so far, and total outstanding school debts. </p>
+        
+        <p><b>Advanced Anti-Leakage Intergration</b></p>
+
+        <li>✅ Digital Gateway Snycing</li>
+            <p style="color:#aaa;">Designed to hook into mobile money API networks (MTN MoMo and Airtel Money) and local banking agents. When a parent pays fees at a bank or via phone, the system instantly logs the payment, deducts the balance from the student's profile, and updates the bursar's dashboard.</p>
+        
+        <li>✅ Automated SMS Reminders</li>
+            <p style="color:#aaa;">An intelligent notification agent that identifies accounts with outstanding balances at specified intervals (e.g. Week 4, Week 8) and sends a personalized, polite text reminder directly to the parent's phone.</p>
+        
+        <li>✅ Clearance Slip Verification</li>
+            <p style="color:#aaa;">Genertes a secure, digital verification token (or barcode) once a student hits a set payment threshold, allowing gate staff to verify financil clearance instantly during school return days.</p>
+        </ul>
+       
         <div style="display:flex; gap:20px; margin-top:20px;">
             <div style="flex:1; background:#f1c40f; color:#000; padding:15px; border-radius:10px; font-weight:900; text-align:center;">MTN MoMo</div>
             <div style="flex:1; background:#D90000; color:#fff; padding:15px; border-radius:10px; font-weight:900; text-align:center;">AIRTEL MONEY</div>
@@ -1044,7 +1090,6 @@ def finances_tab(request):
     </div>"""
     return HttpResponse(content)
 
-# --- 🏛️ THE ENTERPRISE COMMAND CENTER (DIRECT BRAIN HTML) ---
 from django.http import HttpResponse
 
 def home_tab(request):
@@ -1060,7 +1105,7 @@ def home_tab(request):
     <div class="module-card">
         <h1 style="font-family:'Orbitron'; color:#FCDC04; letter-spacing:8px; margin:0;">UNSCCDC GLOBAL</h1>
     <body style="background:#000; color:#fff; font-family:sans-serif; padding:50px;">
-        <h1 style="color:#D4AF37; letter-spacing:3px;">🏛️ ENTERPRISE COMMAND CENTER</h1>
+        <h1 style="color:#D4AF37; letter-spacing:3px;">ENTERPRISE COMMAND CENTER</h1>
         <p style="color:#888;">UNSCCDC GLOBAL Hub Status: <span style="color:#00ff00;">● LIVE</span></p>
         <hr style="border-color:#222;">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
@@ -1081,11 +1126,30 @@ def home_tab(request):
 def profile_tab(request):
     content = f"""{FLAG_STYLE.replace('{{prof_act}}', 'active-btn')}
     <div class="glass-tab">
-        <h1 style="color:#FCDC04;">👤 USER PROFILE: NATIONAL IDENTITY</h1>
+        <h1 style="color:#FCDC04;"><b>Security and Audit Logs</b></h1>
         <div style="background:#111; padding:30px; border-radius:20px;">
-            <h3>Role: Master Administrator</h3>
-            <p style="color:#00ff00; font-weight:bold;">ACCESS LEVEL: NATIONAL CONTROL</p>
-            <button style="background:#D90000; color:#fff; border:none; padding:10px 20px; border-radius:5px;">2FA ACTIVE</button>
+            <h3>Role-Based Access Control (RBAC): Users are strictly restricted based on permission groups:</h3>
+            <li>✅ Super Administrators</li>
+            <p style="color:#aaa;">Full database access, system configuration, and deployment controls.</p>
+
+            <li>✅ School Administrators (Bursars/ Headteachers)</li>
+            <p style="color:#aaa;">Access to financial reports, staff payroll, and final grade approvals.</p>
+
+            <li>✅ Educators</li>
+            <p style="color:#aaa;">Access only to the specific classes and subjects assigned to them for mark entry</p>
+
+            <li>✅ Parents</li>
+            <p style="color:#aaa;">Read-only access restricted strictly to their biological children's financial and academic records.</p>
+        
+            <p style="color:#00ff00; font-weight:bold;">Security Audit Trail</p>
+            <p style="color:#aaa;">Tracks user activity for accountability. it displays the login timestamp, the device IP address, and a log of recent actions (e.g., "Teacher Namubiru Shifat updated Senior 3 Math marks on June 8, 2026").</p>
+
+            <p style="color:#00ff00; font-weight:bold;">User Settings and Customization</p>
+            <li>✅ Biometric and Two-Factor Authentication (2FA)</li>
+            <p style="color:#aaa;">Optional security layer requiring an SMS token code before administrative or financial changes can be saved.</p>
+
+            <li>✅ Language and Accessibility</li>
+            <p style="color:#aaa;">Toggle features for high-contrast viewing and future intergration for localized support alerts.</p>  
         </div>
     </div>"""
     return HttpResponse(content)
@@ -1155,14 +1219,10 @@ def simulate_payment(request):
 
 from django.shortcuts import redirect
 
-# --- 🚀 THE NATIONAL FAST-TRACK DOWNLOAD ---
 def direct_app_download(request):
-    # 💎 THIS IS YOUR GOOGLE DRIVE DIRECT LINK (UC MODE)
-    # This ID is from your Google Drive file 'UNSCCDC_National_Hub.apk'
     google_drive_id = "YOUR_LONG_GOOGLE_DRIVE_ID_HERE"
     direct_link = f"https://drive.google.com/uc?export=download&id={google_drive_id}"
     
-    # ⚡ No design, no website, JUST THE DOWNLOAD!
     return redirect(direct_link)
 
 def generate_staff_dossier_pdf(request, staff_id):
@@ -1171,7 +1231,6 @@ def generate_staff_dossier_pdf(request, staff_id):
     Includes: Biometrics, URA TIN, NSSF, and Regulatory Data.
     """
     try:
-        # 1. Fetch the Sovereign Identity
         staff = Staff.objects.get(staff_id=staff_id)
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="Dossier_{staff.full_name}.pdf"'
@@ -1179,7 +1238,6 @@ def generate_staff_dossier_pdf(request, staff_id):
         p = canvas.Canvas(response, pagesize=A4)
         w, h = A4
 
-        # 2. 🛡️ THE NATIONAL WATERMARK
         p.saveState()
         p.setFont("Helvetica-Bold", 60)
         p.setFillColor(colors.lightgrey, alpha=0.05)
@@ -1187,13 +1245,13 @@ def generate_staff_dossier_pdf(request, staff_id):
         p.drawCentredString(0, 0, "UNSCCDC OFFICIAL HUB")
         p.restoreState()
 
-        # 3. 🇺🇬 THE NATIONAL FLAG RIBBON
+        
         p.setLineWidth(5)
         p.setStrokeColor(colors.black); p.line(0, h-2, w/3, h-2)
         p.setStrokeColor(colors.orange); p.line(w/3, h-2, (w/3)*2, h-2)
         p.setStrokeColor(colors.red); p.line((w/3)*2, h-2, w, h-2)
 
-        # 4. 🏛️ HEADER
+        
         p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(w/2, h-50, "THE REPUBLIC OF UGANDA")
         p.setFont("Helvetica-Bold", 11)
@@ -1201,7 +1259,7 @@ def generate_staff_dossier_pdf(request, staff_id):
         p.setFont("Helvetica", 9)
         p.drawCentredString(w/2, h-85, f"Institutional Station: {staff.school.name.upper()}")
 
-        # 5. 👤 SECTION 1: BIOMETRIC IDENTITY
+        
         p.setStrokeColor(colors.black); p.rect(40, h-250, w-80, 150)
         p.setFont("Helvetica-Bold", 10)
         p.drawString(50, h-120, "1.0 PERSONAL BIOMETRICS")
@@ -1211,7 +1269,7 @@ def generate_staff_dossier_pdf(request, staff_id):
         p.drawString(60, h-185, f"DESIGNATION: {staff.designation}")
         p.drawString(60, h-205, f"CONTACT UPLINK: {staff.phone}")
 
-        # 6. 🏛️ SECTION 2: GOVERNMENT COMPLIANCE
+        
         p.setFont("Helvetica-Bold", 10)
         p.drawString(50, h-280, "2.0 REGULATORY COMPLIANCE (URA / NSSF)")
         p.line(50, h-285, 300, h-285)
@@ -1219,14 +1277,14 @@ def generate_staff_dossier_pdf(request, staff_id):
         p.drawString(60, h-310, f"URA TIN NUMBER: {getattr(staff, 'tin_number', 'PENDING')}")
         p.drawString(60, h-330, f"NSSF REGISTRY NO: {getattr(staff, 'nssf_number', 'PENDING')}")
 
-        # 7. 📞 SECTION 3: EMERGENCY REGISTRY
+        
         p.setFont("Helvetica-Bold", 10)
         p.drawString(50, h-380, "3.0 EMERGENCY & KINSHIP REGISTRY")
         p.setFont("Helvetica", 10)
         p.drawString(60, h-410, f"NEXT OF KIN: {getattr(staff, 'next_of_kin', 'NOT SET')}")
         p.drawString(60, h-430, f"KIN CONTACT: {getattr(staff, 'next_of_kin_phone', 'NOT SET')}")
 
-        # 8. ✍️ AUTHORIZATION
+        
         p.setFont("Helvetica-Bold", 8)
         p.drawCentredString(w/2, 100, "THIS DOCUMENT IS A CERTIFIED DIGITAL RECORD OF THE UNSCCDC HUB")
         p.drawCentredString(w/2, 85, f"VERIFICATION HASH: {staff.staff_id}-AUDIT-2026")
