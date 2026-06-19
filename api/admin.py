@@ -152,50 +152,43 @@ class MarksInline(admin.TabularInline):
     classes = ['collapse'] # Only show when clicking 'Show'
 
 
+
 class AcademicResultsHubAdmin(admin.ModelAdmin):
-    # 💎 THE VIEW: 'combination_view' will only show data for A-Level
-    list_display = ('full_name', 'account_number', 'school', 'current_class', 'national_standing', 'download_pdf')
+    # 💎 1. THE VIEW: Match these names EXACTLY with the methods below
+    list_display = (
+        'full_name', 
+        'account_number', 
+        'school', 
+        'current_class', 
+        'national_standing', 
+        'download_pdf'  # 👈 This name must match the function below!
+    )
     
-    
-    # ... existing search and inlines ...
+    inlines = [MarksInline]
+    search_fields = ('full_name', 'account_number')
+    list_filter = ('school', 'current_class')
 
+    # 💎 2. THE MISSING METHOD: Physically drawing the button
+    def download_pdf(self, obj):
+        # This points to the National PDF Engine we built in views.py
+        url = f"/api/download-report/{obj.account_number}/"
+        return mark_safe(f'''
+            <a href="{url}" target="_blank" 
+               style="background:#D4AF37; color:#000; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; font-size:10px; border: 1px solid #000; display: inline-block;">
+               📥 DOWNLOAD REPORT
+            </a>
+        ''')
+    
+    download_pdf.short_description = "National Record"
+
+    # Ensure your national_standing method is also inside this class
     def national_standing(self, obj):
-        """
-        💎 THE Hub INTELLIGENCE:
-        1. If Primary: Shows 'PLE Candidate'
-        2. If O-Level: Shows 'UCE Registry'
-        3. If A-Level: Shows the physical Combo (e.g. PCM/M)
-        """
-        level = obj.national_category # Uses the logic from Step 1
-        
-        if level == 'A-LEVEL':
-            # Dynamically build the combo name from assigned subjects
-            subjects = obj.marks.all()[:3] # Get top 3 subjects
-            if subjects.count() >= 3:
-                combo = "".join([s.subject.name[0] for s in subjects])
-                return mark_safe(f'<b style="color:#00ff00;">{combo.upper()}</b>')
-            return mark_safe('<span style="color:#666;">Pending Combo</span>')
-            
-        elif level == 'O-LEVEL':
-            return mark_safe('<span style="color:#3498db;">UCE</span>')
-            
-        elif level == 'PRIMARY':
-            return mark_safe('<span style="color:#FCDC04;">PLE</span>')
-            
-        return "---"
+        c = str(obj.current_class).upper()
+        if 'S.5' in c or 'S.6' in c:
+            return mark_safe('<b style="color:#00ff00;">A-LEVEL COMBO</b>')
+        return mark_safe(f'<span style="color:#aaa;">{c} Registry</span>')
     
-    national_standing.short_description = "Curriculum Status"
-
-def download_pdf(self, obj):
-    # 💎 This creates the physical button in the Admin Registry
-    url = f"/api/download-report/{obj.account_number}/"
-    return mark_safe(f'''
-        <a href="{url}" target="_blank" 
-           style="background:#D4AF37; color:#000; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; border: 1px solid #000;">
-           📥 DOWNLOAD NATIONAL REPORT
-        </a>
-    ''')
-download_pdf.short_description = "Report Card"
+    national_standing.short_description = "Status"
 
 
     
