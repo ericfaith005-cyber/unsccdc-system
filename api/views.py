@@ -1561,8 +1561,8 @@ def sovereign_shilling_simulator(request):
         })
     except Exception as e:
         return JsonResponse({"status": "Simulation Failed", "error": str(e)})
-    
-    @api_view(['GET'])
+
+@api_view(['GET'])
 def live_warroom_stats(request):
     """
     🛰️ THE SATELLITE SIGNAL
