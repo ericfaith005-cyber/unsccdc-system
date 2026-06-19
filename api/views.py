@@ -1435,6 +1435,31 @@ def generate_national_report_pdf(request, student_id):
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
         u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 530)
 
+        # 💎 --- Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub REMARKS Hub Hub Hub ---
+        p.setFont("Helvetica-Bold", 8); p.setFillColor(gov_blue)
+        p.drawString(50, height - 570, "OFFICIAL ADMINISTRATIVE REMARKS:")
+
+        # 🛡️ Draw a prestigious thin grey box for the remarks
+        p.setStrokeColor(colors.grey); p.setLineWidth(0.5)
+        p.rect(50, height - 635, width - 100, 55)
+
+        # A. Class Teacher Remarks
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 7.5)
+        p.drawString(60, height - 595, "CLASS TEACHER:")
+        p.setFont("Helvetica-Oblique", 7.5)
+        # 🤖 Calls the AI Logic based on the student's average
+        class_remark = get_teacher_comment(overall_avg)
+        p.drawString(135, height - 595, f'"{class_remark}"')
+
+        # B. Headteacher Remarks
+        p.setFont("Helvetica-Bold", 7.5)
+        p.drawString(60, height - 620, "HEAD TEACHER:")
+        p.setFont("Helvetica-Oblique", 7.5)
+        # Sovereign Headteacher logic
+        ht_remark = "Exceptional discipline. Highly recommended for National progressive placement." if overall_avg >= 75 else "Steady progress observed. Needs consistent focus in project-based assessments."
+        p.drawString(135, height - 620, f'"{ht_remark}"')
+
+
         # 📜 14. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub CERTIFICATION Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub & Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub RANKING
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 565, "CERTIFICATION STATUS:")
         p.setFont("Helvetica", 7)
@@ -1449,11 +1474,11 @@ def generate_national_report_pdf(request, student_id):
 
         # ✍️ 15. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SIGNATURES
         p.setStrokeColor(colors.black)
-        p.line(50, height - 700, 200, height - 700); p.drawString(70, height - 712, "Head Teacher Signature")
-        p.line(350, height - 700, 500, height - 700); p.drawString(370, height - 712, "National Hub Registrar")
+        p.line(50, height - 760, 200, height - 760); p.drawString(70, height - 712, "Head Teacher Signature")
+        p.line(350, height - 760, 500, height - 760); p.drawString(370, height - 712, "National Hub Registrar")
         
         p.setStrokeColor(colors.HexColor("#008080"))
-        p.circle(width/2, height - 700, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 705, "VERIFIED")
+        p.circle(width/2, height - 760, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 765, "VERIFIED")
 
         p.showPage(); p.save()
         return response
