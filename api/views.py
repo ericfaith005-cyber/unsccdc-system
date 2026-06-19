@@ -1294,4 +1294,119 @@ def generate_staff_dossier_pdf(request, staff_id):
     except Exception as e:
         from django.http import HttpResponse
         return HttpResponse(f"Dossier Engine Error: {str(e)}", status=400)
-    
+
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from django.http import HttpResponse
+from .models import Student, AcademicResult
+
+def generate_national_report_pdf(request, student_id):
+    """
+    THE GOLIATH PDF ENGINE v1.0
+    Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
+    """
+    try:
+        # 1. 🔍 PULL REGISTRY DATA
+        student = Student.objects.get(account_number=student_id)
+        marks = student.marks.all() # Uses the related_name='marks'
+        school = student.school
+        
+        # 2. 📄 INITIALIZE THE CANVAS
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Report_{student.full_name}.pdf"'
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+
+        # 3. 🎨 AUTOMATED REMARK LOGIC (AI)
+        def get_sub_remark(score):
+            if score >= 90: return "Exceptional mastery."
+            if score >= 80: return "Excellent. Maintain focus."
+            if score >= 70: return "Very good effort."
+            if score >= 60: return "Good progress."
+            if score >= 50: return "Basic competency."
+            return "Requires support."
+
+        # 4. 🇺🇬 THE NATIONAL FLAG BORDER (Black, Yellow, Red)
+        p.setLineWidth(2)
+        p.setStrokeColor(colors.black); p.rect(10, 10, width-20, height-20)
+        p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(13, 13, width-26, height-26)
+        p.setStrokeColor(colors.HexColor("#D90000")); p.rect(16, 16, width-32, height-32)
+
+        # 5. 🏛️ OFFICIAL NATIONAL HEADER
+        p.setFont("Helvetica-Bold", 10)
+        p.drawCentredString(width/2, height-50, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-65, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
+        
+        # Seal Box
+        p.rect(width/2-25, height-120, 50, 50)
+        p.setFont("Helvetica-Bold", 7)
+        p.drawCentredString(width/2, height-95, "OFFICIAL")
+        p.drawCentredString(width/2, height-105, "SEAL")
+
+        p.setFont("Helvetica-Bold", 16)
+        p.setFillColor(colors.HexColor("#002366"))
+        p.drawCentredString(width/2, height-145, school.name.upper())
+        p.setFont("Helvetica-Bold", 7)
+        p.setFillColor(colors.grey)
+        p.drawCentredString(width/2, height-155, "UNSCCDC NATIONAL MASTER HUB SYSTEM")
+
+        # 6. 👤 STUDENT REGISTRY DETAILS
+        p.setFillColor(colors.black)
+        p.setFont("Helvetica-Bold", 11)
+        p.drawCentredString(width/2, height-185, "OFFICIAL SCHOLASTIC PERFORMANCE RECORD")
+        
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(50, height-215, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(50, height-230, f"NATIONAL ID: {student.account_number}")
+        p.drawString(350, height-215, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
+        p.drawString(350, height-230, f"TERM: EOT | YEAR: 2026")
+
+        # 7. 📊 THE 12-COLUMN DATA MATRIX
+        # Headers: SUBJECT, AOI1, AOI2, MID, AOI3, AOI4, EOT, PROJ, AVG, GRADE, TCH, REMARKS
+        data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
+        
+        for m in marks:
+            data.append([
+                m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
+                m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
+                m.eot_score, m.grade or 'P', 'STF', get_sub_remark(m.eot_score)
+            ])
+
+        table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.black),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 30, height-450)
+
+        # 8. 📚 NATIONAL GRADING EXPLANATORY KEY (The Footer logic)
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(50, 180, "NATIONAL GRADING SYSTEMS & STANDARDS:")
+        p.setFont("Helvetica", 6.5)
+        p.drawString(50, 165, "1. PRIMARY (PLE): DIV 1 (4-12 Agg) | DIV 2 (13-23 Agg) | DIV 3 (24-28 Agg)")
+        p.drawString(50, 155, "2. SECONDARY (CBC): 90-100: A+ (Exceptional) | 80-89: A (Superior) | 70-79: B (Outstanding)")
+        p.drawString(50, 145, "3. UACE: A (6pts) | B (5pts) | C (4pts) | D (3pts) | E (2pts) | O (1pt) | F (0pts)")
+        
+        # ✍️ AUTHORIZATION
+        p.line(50, 80, 200, 80)
+        p.drawString(70, 70, "Head Teacher Signature")
+        p.line(350, 80, 500, 80)
+        p.drawString(370, 70, "National Hub Registrar")
+        
+        # Stamp Box
+        p.setStrokeColor(colors.HexColor("#008080"))
+        p.circle(width/2, 85, 35, stroke=1, fill=0)
+        p.drawCentredString(width/2, 85, "VERIFIED Hub")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"Hub Printing Error: {str(e)}", status=400) 

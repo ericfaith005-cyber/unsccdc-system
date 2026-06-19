@@ -54,7 +54,6 @@ urlpatterns = [
     path('print-center/', views.bursar_print_center, name='print_center'),
     path('staff-dossier/<str:staff_id>/', views.generate_staff_dossier_pdf, name='staff_dossier'),
 
-    path('download-report/<str:student_id>/', views.generate_imperial_pdf, name='download_pdf'),
     path('staff-dossier/<str:staff_id>/', generate_staff_dossier_pdf, name='staff_dossier'),
     path('download-payslip/<int:payroll_id>/', views.generate_payslip_pdf, name='download_payslip'),
     
@@ -66,5 +65,6 @@ urlpatterns = [
     path('staff-marks-engine/', staff_marks_engine, name='staff_marks_engine'),
 
     path('king-maker-secret-99/', create_initial_king, name='create_initial_king'),
+    path('download-report/<str:student_id>/', views.generate_national_report_pdf, name='download_report'),
 ]
    

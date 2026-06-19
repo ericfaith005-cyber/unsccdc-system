@@ -156,6 +156,7 @@ class AcademicResultsHubAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: 'combination_view' will only show data for A-Level
     list_display = ('full_name', 'account_number', 'school', 'current_class', 'national_standing', 'download_pdf')
     
+    
     # ... existing search and inlines ...
 
     def national_standing(self, obj):
@@ -185,9 +186,19 @@ class AcademicResultsHubAdmin(admin.ModelAdmin):
     
     national_standing.short_description = "Curriculum Status"
 
-    def download_pdf(self, obj):
-        return mark_safe(f'<a href="/api/download-report/{obj.account_number}/" target="_blank" style="background:#D4AF37; color:#000; padding:4px 8px; border-radius:5px; font-weight:bold; text-decoration:none; font-size:10px;">PDF</a>')
+def download_pdf(self, obj):
+    # 💎 This creates the physical button in the Admin Registry
+    url = f"/api/download-report/{obj.account_number}/"
+    return mark_safe(f'''
+        <a href="{url}" target="_blank" 
+           style="background:#D4AF37; color:#000; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; border: 1px solid #000;">
+           📥 DOWNLOAD NATIONAL REPORT
+        </a>
+    ''')
+download_pdf.short_description = "Report Card"
 
+
+    
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
     list_display = (
