@@ -1307,6 +1307,11 @@ def generate_national_report_pdf(request, student_id):
     THE GOLIATH PDF ENGINE v1.0
     Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
     """
+    gov_blue = colors.HexColor("#002366")   # Royal Navy (Authority)
+    rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold (Prestige)
+    off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
+    ug_yellow = colors.HexColor("#FCDC04")  # National Gold
+    ug_red = colors.HexColor("#D90000")
     try:
         student = Student.objects.get(account_number=student_id)
         marks = student.marks.all() # Uses the related_name='marks'
@@ -1338,7 +1343,6 @@ def generate_national_report_pdf(request, student_id):
             if score >= 60: return "C"
             if score >= 50: return "D"
             return "E"
-        
         def get_sub_remark(score):
             if score >= 90: return "Exceptional mastery."
             if score >= 80: return "Excellent. Maintain focus."
@@ -1413,6 +1417,7 @@ def generate_national_report_pdf(request, student_id):
         table.wrapOn(p, width, height)
         table.drawOn(p, 30, height-450)
 
+        # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
         p.setFont("Helvetica-Bold", 9)
         p.drawString(50, 260, "NATIONAL GRADING & COMPETENCY (UCE STANDARDS):")
         
