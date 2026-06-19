@@ -1387,7 +1387,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-135, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-160, "NATIONAL Hub SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-160, "NATIONAL HUB SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFont("Helvetica-Bold", 9)
@@ -1512,3 +1512,8 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height - 785, "VERIFIED")
         p.setFont("Helvetica-Bold", 7)
         p.drawCentredString(width/2, height - 795, datetime.date.today().strftime("%d-%b-%Y"))
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
