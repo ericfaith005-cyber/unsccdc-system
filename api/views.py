@@ -1412,7 +1412,7 @@ def generate_national_report_pdf(request, student_id):
 
         # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
         p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, 260, "NATIONAL Hub Hub Hub Hub GRADING & COMPETENCY (UCE STANDARDS):")
+        p.drawString(50, 260, "NATIONAL GRADING & COMPETENCY (UCE STANDARDS):")
         
         grade_data = [
             ['GRADE', 'COMPETENCY', 'DESCRIPTION / SCORE BRACKET'],
@@ -1423,7 +1423,18 @@ def generate_national_report_pdf(request, student_id):
             ['E', 'Elementary', '0% - 49%. Below the basic level of competency.']
         ]
         g_table = Table(grade_data, colWidths=[50, 100, 350])
-        g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.5,colors.black),('FONTNAME',(0,0),(-1,0),'Helvetica-Bold')]))
+        g_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), gov_blue),      # Navy Header
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),   # White Labels
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            # 💎 THE Hub Hub Hub ZEBRA STRIPE (London Standard)
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]), 
+            ('GRID', (0,0), (-1,-1), 0.1, colors.grey),
+            ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),   # Gold underline for header
+        ]))
         g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, 175)
 
         # 9. 📜 CERTIFICATION & RANKING STATUS
@@ -1444,8 +1455,8 @@ def generate_national_report_pdf(request, student_id):
         
         # Stamp Box
         p.setStrokeColor(colors.HexColor("#008080"))
-        p.circle(width/2, 85, 35, stroke=1, fill=0)
-        p.drawCentredString(width/2, 85, "VERIFIED")
+        p.circle(width/2, 70, 30, stroke=1, fill=0)
+        p.drawCentredString(width/2, 70, "VERIFIED")
 
         p.showPage(); p.save()
         return response
