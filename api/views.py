@@ -1307,6 +1307,11 @@ def generate_national_report_pdf(request, student_id):
     THE GOLIATH PDF ENGINE v1.0
     Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
     """
+    gov_blue = colors.HexColor("#002366")   # Royal Navy (Authority)
+    rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold (Prestige)
+    off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
+    ug_yellow = colors.HexColor("#FCDC04")  # National Gold
+    ug_red = colors.HexColor("#D90000")
     try:
         student = Student.objects.get(account_number=student_id)
         marks = student.marks.all() # Uses the related_name='marks'
@@ -1339,21 +1344,16 @@ def generate_national_report_pdf(request, student_id):
             if score >= 50: return "Basic competency."
             return "Requires support."
 
-        # 4. 🇺🇬 THE NATIONAL FLAG BORDER (Black, Yellow, Red)
-        p.setLineWidth(2)
-        p.setStrokeColor(colors.black); p.rect(10, 10, width-20, height-20)
-        p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(13, 13, width-26, height-26)
-        p.setStrokeColor(colors.HexColor("#D90000")); p.rect(16, 16, width-32, height-32)
+        p.setStrokeColor(gov_blue)
+        p.setLineWidth(5)
+        p.rect(15, 15, width-30, height-30)
 
-        # --- 🛡️ Hub Hub WATERMARK SHIELD ---
-        p.saveState()
-        p.setFont("Helvetica-Bold", 50)
-        p.setStrokeColor(colors.lightgrey, alpha=0.03) # 💎 Transparent Ink
-        p.translate(width/2, height/2)
-        p.rotate(45)
-        p.drawCentredString(0, 0, "UNSCCDC")
-        p.restoreState()
-
+        # 2. The National Tricolor Ribbon (Sophisticated & Thin)
+        p.setLineWidth(1)
+        p.setStrokeColor(colors.black); p.rect(22, 22, width-44, height-44)
+        p.setStrokeColor(ug_yellow); p.rect(23, 23, width-46, height-46)
+        p.setStrokeColor(ug_red); p.rect(24, 24, width-48, height-48)
+        
         # 5. 🏛️ OFFICIAL NATIONAL HEADER
         p.setFont("Helvetica-Bold", 10)
         p.drawCentredString(width/2, height-50, "THE REPUBLIC OF UGANDA")
@@ -1396,25 +1396,19 @@ def generate_national_report_pdf(request, student_id):
 
         table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
         table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.black),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('BACKGROUND', (0,0), (-1,0), gov_blue),      # Navy Header
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),   # White Labels
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
             ('FONTSIZE', (0,0), (-1,-1), 7),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            # 💎 THE Hub Hub Hub ZEBRA STRIPE (London Standard)
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]), 
+            ('GRID', (0,0), (-1,-1), 0.1, colors.grey),
+            ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),   # Gold underline for header
         ]))
         table.wrapOn(p, width, height)
         table.drawOn(p, 30, height-450)
-
-        # --- 🛡️ Hub Hub WATERMARK SHIELD ---
-        p.saveState()
-        p.setFont("Helvetica-Bold", 50)
-        p.setStrokeColor(colors.lightgrey, alpha=0.03) # 💎 Transparent Ink
-        p.translate(width/2, height/2)
-        p.rotate(45)
-        p.drawCentredString(0, 0, "UNSCCDC Hub Hub Hub Hub Hub Hub Hub Hub")
-        p.restoreState()
 
         # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
         p.setFont("Helvetica-Bold", 9)
