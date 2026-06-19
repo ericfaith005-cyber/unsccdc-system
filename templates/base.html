@@ -120,50 +120,53 @@
     <!-- ⚙️ 3. IMPERIAL SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
-        // --- 🛡️ SERVICE WORKER REGISTRY ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/serviceworker.js').then(function(reg) {
-                    console.log('Hub Satellite Online:', reg.scope);
-                }, function(err) {
-                    console.log('Satellite Link Failed:', err);
-                });
-            });
-        }
-
-        // --- 📲 PWA INSTALL LOGIC ---
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.getElementById('pwa-prompt').style.display = 'block';
-        });
-
-        function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('pwa-prompt').style.display = 'none';
-                    }
-                });
-            }
-        }
-    </script>
-
-    <script>
+ <!-- 🏛️ THE Hub Hub Hub UNIFIED Hub Hub Hub SOVEREIGN Hub Hub Hub Hub Hub Hub Hub Hub ENGINE -->
+<script>
+    // 🛡️ 1. THE NATIONAL GUARD REGISTRY
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            // 🛡️ We register the root path /serviceworker.js
-            navigator.serviceWorker.register('/serviceworker.js')
-            .then(function(registration) {
-                console.log('National Guard Online: ', registration.scope);
-            }, function(err) {
-                console.log('Guard Registration Failed: ', err);
+            // Registering the guard for the WHOLE system (scope: /)
+            navigator.serviceWorker.register('/serviceworker.js', { scope: '/' })
+            .then(function(reg) {
+                console.log('--- 💂‍♂️ NATIONAL GUARD SEIZED CONTROL ---');
+                
+                // 💎 THE REFRESH Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub TRICK
+                // If a new version is found, it forces the phone to update instantly
+                reg.onupdatefound = () => {
+                    const installingWorker = reg.installing;
+                    installingWorker.onstatechange = () => {
+                        if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            window.location.reload();
+                        }
+                    };
+                };
+            }).catch(function(err) {
+                console.log('Guard Handshake Failed:', err);
             });
         });
     }
+
+    // 📡 2. THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub CONNECTION SENSOR
+    function updateNationalLinkStatus() {
+        const status = document.getElementById('connection-status');
+        if (!status) return;
+
+        if (navigator.onLine) {
+            status.innerHTML = "● Hub ONLINE";
+            status.style.background = "rgba(0, 255, 0, 0.1)";
+            status.style.color = "#00ff00";
+            status.style.borderColor = "rgba(0, 255, 0, 0.2)";
+        } else {
+            status.innerHTML = "● SOVEREIGN OFFLINE MODE";
+            status.style.background = "rgba(217, 0, 0, 0.1)";
+            status.style.color = "#ff4444";
+            status.style.borderColor = "rgba(217, 0, 0, 0.3)";
+        }
+    }
+
+    window.addEventListener('online', updateNationalLinkStatus);
+    window.addEventListener('offline', updateNationalLinkStatus);
+    document.addEventListener('DOMContentLoaded', updateNationalLinkStatus);
 </script>
 </body>
 </html>
