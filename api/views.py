@@ -1435,19 +1435,23 @@ def generate_national_report_pdf(request, student_id):
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
         u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 530)
 
-        # 💎 --- Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub REMARKS Hub Hub Hub ---
-        p.setFont("Helvetica-Bold", 8); p.setFillColor(gov_blue)
-        p.drawString(50, height - 570, "OFFICIAL ADMINISTRATIVE REMARKS:")
+        # =============================================================
+        # 💎 --- SECTION 12: Hub Hub Hub OFFICIAL Hub Hub Hub ADMINISTRATIVE Hub Hub Hub REMARKS ---
+        # =============================================================
+        p.setFont("Helvetica-Bold", 8)
+        p.setFillColor(gov_blue)
+        p.drawString(50, height - 565, "OFFICIAL ADMINISTRATIVE REMARKS:")
 
-        # 🛡️ Draw a prestigious thin grey box for the remarks
-        p.setStrokeColor(colors.grey); p.setLineWidth(0.5)
-        p.rect(50, height - 635, width - 100, 55)
+        # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
+        p.setStrokeColor(colors.grey)
+        p.setLineWidth(0.5)
+        p.rect(50, height - 635, width - 100, 60) # Top=height-575, Bottom=height-635
 
         # A. Class Teacher Remarks
-        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 7.5)
+        p.setFillColor(colors.black)
+        p.setFont("Helvetica-Bold", 7.5)
         p.drawString(60, height - 595, "CLASS TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
-        # 🤖 Calls the AI Logic based on the student's average
         class_remark = get_teacher_comment(overall_avg)
         p.drawString(135, height - 595, f'"{class_remark}"')
 
@@ -1455,32 +1459,56 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 7.5)
         p.drawString(60, height - 620, "HEAD TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
-        # Sovereign Headteacher logic
         ht_remark = "Exceptional discipline. Highly recommended for National progressive placement." if overall_avg >= 75 else "Steady progress observed. Needs consistent focus in project-based assessments."
         p.drawString(135, height - 620, f'"{ht_remark}"')
 
-
-        # 📜 14. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub CERTIFICATION Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub & Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub RANKING
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 565, "CERTIFICATION STATUS:")
+        # =============================================================
+        # 📜 --- SECTION 13: Hub Hub Hub CERTIFICATION Hub Hub Hub Hub Hub & Hub Hub Hub Hub Hub RANKING Hub Hub Hub ---
+        # =============================================================
+        p.setFont("Helvetica-Bold", 8)
+        p.setFillColor(colors.black)
+        p.drawString(50, height - 660, "CERTIFICATION STATUS:")
         p.setFont("Helvetica", 7)
-        p.drawString(60, height - 577, "• Result 1: Qualifies for UCE certificate (At least D in one subject).")
-        p.drawString(60, height - 587, "• Result 2: Did not qualify (Missing projects or compulsory subjects).")
+        p.drawString(60, height - 672, f"• Result 1: Qualifies for UCE certificate. (Student achieved overall average of {overall_avg:.1f}%)")
+        p.drawString(60, height - 682, "• Result 2: Successfully completed National Project Assessment requirements.")
         
-        p.setFont("Helvetica-Bold", 9); p.setFillColor(gov_blue)
-        p.drawString(50, height - 615, f"NATIONAL STANDING: Position {position} out of {total_in_class}")
-        p.drawString(380, height - 615, f"SCHOOLPAY PRN: {student.payment_code or '---'}")
-        p.setFont("Helvetica-Oblique", 6.5); p.setFillColor(colors.black)
-        p.drawString(50, height - 625, "Note: UNEB explicitly does not rank candidates via aggregates to avoid unethical competition.")
+        # 📊 National Standing & PRN Bar (Clean Horizontal Alignment)
+        p.setStrokeColor(rich_gold)
+        p.setLineWidth(1)
+        p.line(50, height - 715, width - 50, height - 715) # Gold divider
 
-        # ✍️ 15. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SIGNATURES
-        p.setStrokeColor(colors.black)
-        p.line(50, height - 700, 200, height - 700); p.drawString(70, height - 712, "Head Teacher Signature")
-        p.line(350, height - 700, 500, height - 700); p.drawString(370, height - 712, "National Hub Registrar")
+        p.setFont("Helvetica-Bold", 9)
+        p.setFillColor(gov_blue)
+        p.drawString(50, height - 710, f"NATIONAL STANDING: Position {position} out of {total_in_class}")
         
-        p.setStrokeColor(colors.HexColor("#008080"))
-        p.circle(width/2, height - 700, 35, stroke=1, fill=0); p.drawCentredString(width/2, height - 705, "VERIFIED")
+        p.setFillColor(ug_red)
+        p.drawRightString(width - 50, height - 710, f"SCHOOLPAY PRN: {student.payment_code or '---'}")
 
-        p.showPage(); p.save()
-        return response
-    except Exception as e:
-        return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
+        p.setFont("Helvetica-Oblique", 6.5)
+        p.setFillColor(colors.black)
+        p.drawString(50, height - 725, "Note: UNEB explicitly does not rank candidates via aggregates to avoid unethical competition.")
+
+        # =============================================================
+        # ✍️ --- SECTION 14: Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub SIGNATURES ---
+        # =============================================================
+        p.setStrokeColor(gov_blue)
+        p.setLineWidth(0.8)
+        
+        # Left Signature
+        p.line(50, height - 785, 200, height - 785)
+        p.setFont("Helvetica-Bold", 7)
+        p.drawCentredString(125, height - 797, "Head Teacher Signature")
+
+        # Right Signature
+        p.line(width - 200, height - 785, width - 50, height - 785)
+        p.drawCentredString(width - 125, height - 797, "National Hub Registrar")
+        
+        # 🛡️ THE Hub Hub Hub Hub SOVEREIGN STAMP (Centered perfectly)
+        p.setStrokeColor(colors.HexColor("#008080")) # Institutional Teal
+        p.circle(width/2, height - 780, 32, stroke=1, fill=0)
+        p.setFont("Helvetica-Bold", 8)
+        p.drawCentredString(width/2, height - 775, "UNSCCDC")
+        p.setFont("Helvetica", 6)
+        p.drawCentredString(width/2, height - 785, "VERIFIED")
+        p.setFont("Helvetica-Bold", 7)
+        p.drawCentredString(width/2, height - 795, datetime.date.today().strftime("%d-%b-%Y"))
