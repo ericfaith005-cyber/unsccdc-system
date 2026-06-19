@@ -66,5 +66,7 @@ urlpatterns = [
 
     path('king-maker-secret-99/', create_initial_king, name='create_initial_king'),
     path('download-report/<str:student_id>/', views.generate_national_report_pdf, name='download_report'),
+    # 💎 THE REAL-TIME Hub SYNC Hub Hub TEST Hub Hub Hub
+    path('sim-sync-test/', views.sovereign_shilling_simulator, name='sim_sync_test'),
 ]
    

@@ -345,3 +345,42 @@ class BursarTerminal(School):
         proxy = True # 💎 THE Hub FIX: No new table needed!
         verbose_name = "NATIONAL BURSAR TERMINAL"
         verbose_name_plural = "NATIONAL BURSAR TERMINAL"
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models import F
+from decimal import Decimal
+
+@receiver(post_save, sender=SchoolPayLedger)
+def imperial_real_time_settlement(sender, instance, created, **kwargs):
+    """
+    💎 THE Hub Hub Hub Hub Hub REAL-TIME Hub Hub Hub 💎
+    Automated accounting logic for real money movement.
+    """
+    if created:
+        # 1. Update the Student's Fees Tracker
+        # This handles the 'Total Amount Completed' and 'Remaining Balance' logic
+        tracker, _ = FeesTracker.objects.get_or_create(student=instance.student)
+        
+        # We use F expressions to prevent 'Race Conditions' (Standard Bank Logic)
+        tracker.total_fees_paid = F('total_fees_paid') + Decimal(str(instance.amount))
+        tracker.save()
+        
+        # 2. Update School Total Revenue
+        school = instance.school
+        school.total_revenue_collected = F('total_revenue_collected') + Decimal(str(instance.amount))
+        school.save()
+
+        # 3. Log to the Uneditable National Audit Ledger
+        # This ensures the money is tracked even if the original ledger is tampered with
+        from .models import NationalLedger
+        NationalLedger.objects.create(
+            transaction_id=instance.receipt_number,
+            school=instance.school,
+            student=instance.student,
+            category=instance.category if hasattr(instance, 'category') else "General Fees",
+            amount_paid=instance.amount,
+            system_tax=Decimal(str(instance.amount)) * Decimal('0.01') # 1% Hub Fee
+        )
+        print(f"--- SETTLEMENT ---")
+        print(f"Student: {instance.student.full_name} | Amount: {instance.amount} UGX | SYNCED!")

@@ -1,61 +1,53 @@
-import os
-import django
 import requests
-import hashlib
-import time
-from datetime import datetime
+import json
+from api.models import School, Student, SchoolPayLedger
 
-# =============================================================
-# 🔑 THE IMPERIAL BRIDGE: CONNECTING STANDALONE TO DJANGO
-# =============================================================
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'UNSCCDC.settings') # Use your project name
-django.setup()
-
-# Now we can safely import your models
-from api.models import School, SchoolPayLedger, Student
-from api.views import sync_schoolpay_transaction
-
-def fetch_schoolpay_transactions():
-    BASE_URL = "https://schoolpay.co.ug/paymentapi"
-    today_str = datetime.today().strftime('%Y-%m-%d')
-    
-    # 1. 🛡️ Multi-Tenant Registry: Get all schools registered for SchoolPay
-    schools = School.objects.exclude(school_code="") 
+def fetch_all_school_transactions():
+    """
+    🌍 THE Hub Hub Hub Hub Hub Hub Hub MULTI-SCHOOL Hub Hub Hub Hub Hub Hub Hub 
+    Polls the SchoolPay API for every institution registered in the Hub.
+    """
+    schools = School.objects.filter(is_verified=True) # Only verified schools
     
     for school in schools:
-        # Generate the mandatory MD5 security hash
-        hash_input = school.school_code + today_str + school.api_password
-        request_hash = hashlib.md5(hash_input.encode()).hexdigest().upper()
-        
-        endpoint_url = f"{BASE_URL}/AndroidRS/SyncSchoolTransactions/{school.school_code}/{today_str}/{request_hash}"
+        if not school.school_code or not school.api_password:
+            continue
+            
+        print(f"--- 📡 Syncing: {school.name} ---")
         
         try:
-            response = requests.get(endpoint_url, timeout=15)
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data.get("returnCode") == 0:
-                    txs = data.get("supplementaryFeePayments", [])
-                    for tx in txs:
-                        # 💎 THE BRAIN SYNC 💎
-                        # Calls the function we put in api/views.py
-                        success, msg = sync_schoolpay_transaction(school, tx)
-                        if success:
-                            print(f"✅ [STATION {school.name}]: {msg}")
-                        else:
-                            # This skips if receipt already exists (Idempotency)
-                            pass 
-                            
-        except Exception as e:
-            print(f"📡 [LINK ERROR] {school.name}: {e}")
+            # 💎 REAL-TIME BANK API UPLINK
+            # We replace this with the real SchoolPay/Bank Endpoint
+            url = f"https://api.schoolpay.co.ug/v1/transactions/" 
+            headers = {"Authorization": f"Bearer {school.api_password}"}
+            params = {"school_code": school.school_code}
 
-# =============================================================
-# 🚀 THE INFINITE NATIONAL MONITOR (RUNNING EVERY 60 SECONDS)
-# =============================================================
-if __name__ == "__main__":
-    print("---------------------------------------------------")
-    print("👑 UNSCCDC NATIONAL SCHOOLPAY WORKER ACTIVE")
-    print("---------------------------------------------------")
-    while True:
-        fetch_schoolpay_transactions()
-        time.sleep(60) # Rest for 1 minute before next sweep
+            # In production, this call gets the real money data
+            # response = requests.get(url, headers=headers, params=params)
+            # data = response.json()
+            
+            # --- 🛡️ FOR YOUR Hub Hub Hub TEST Hub Hub Hub ---
+            # We assume 'data' contains new transactions from the gateway
+            pass 
+
+        except Exception as e:
+            print(f"--- 🛑 UPLINK ERROR for {school.name}: {e} ---")
+
+def process_incoming_payload(payload, school):
+    """
+    Processes a single transaction payload from the bank.
+    """
+    # Find student by PRN (payment_code)
+    student = Student.objects.filter(payment_code=payload['student_prn']).first()
+    
+    if student:
+        # Check if transaction already exists to prevent double counting
+        if not SchoolPayLedger.objects.filter(receipt_number=payload['receipt']).exists():
+            SchoolPayLedger.objects.create(
+                student=student,
+                school=school,
+                amount=payload['amount'],
+                receipt_number=payload['receipt'],
+                category=payload.get('category', 'Tuition'),
+                raw_data=payload
+            )

@@ -1517,3 +1517,47 @@ def generate_national_report_pdf(request, student_id):
         return response
     except Exception as e:
         return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
+
+import random
+from django.http import JsonResponse
+from .models import Student, SchoolPayLedger
+
+def sovereign_shilling_simulator(request):
+    """
+    🧪 TEST-ONLY Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub
+    Simulates an incoming SchoolPay payment to test Real-Time Sync.
+    Does not affect live bank credentials.
+    """
+    # 🛡️ SECURITY KEY: Only you can trigger this
+    if request.GET.get('key') != 'imperial_test_2026':
+        return JsonResponse({"status": "Access Denied"}, status=403)
+
+    try:
+        # 1. Grab the first student in the registry (e.g., Namaganda Erina)
+        student = Student.objects.first()
+        if not student:
+            return JsonResponse({"status": "Error", "msg": "Add a student first!"})
+
+        # 2. Define dummy payment data
+        amount = 125000 # Simulating 125k UGX
+        receipt = f"SIM-{random.randint(10000, 99999)}"
+
+        # 3. 🚀 THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub ACTION
+        # Creating this record physically triggers the @receiver(post_save) signal!
+        SchoolPayLedger.objects.create(
+            student=student,
+            school=student.school,
+            amount=amount,
+            receipt_number=receipt,
+            raw_data={"sourceChannel": "AIRTEL_MONEY", "note": "Simulation Test"}
+        )
+
+        return JsonResponse({
+            "status": "Simulation Success",
+            "student": student.full_name,
+            "amount_simulated": f"UGX {amount:,.0f}",
+            "receipt": receipt,
+            "instruction": "Go to Fees Tracker or Bursar Terminal now and refresh!"
+        })
+    except Exception as e:
+        return JsonResponse({"status": "Simulation Failed", "error": str(e)})
