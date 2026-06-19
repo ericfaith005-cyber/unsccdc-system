@@ -24,10 +24,7 @@ urlpatterns = [
     path('api/', include('api.urls')),
     path('staff-login/', views.staff_hub_login, name='staff_login'),
     path('', TemplateView.as_view(template_name="index.html"), name='app_front_door'),
-    path('manifest.json', TemplateView.as_view(
-        template_name='manifest.json', 
-        content_type='application/json'
-    ), name='manifest.json'),
+    
     path('manifest.json', RedirectView.as_view(url='/static/manifest.json')),
     path('flutter_service_worker.js', RedirectView.as_view(url='/static/flutter_service_worker.js')),
     path('icons/Icon-192.png', RedirectView.as_view(url='/static/icons/Icon-192.png')),
@@ -35,10 +32,15 @@ urlpatterns = [
     path('favicon.png', RedirectView.as_view(url='/static/favicon.png')),
     path('staff-login/', include('api.urls')), # Link to staff views
     
-    path('serviceworker.js', TemplateView.as_view(
-        template_name='serviceworker.js', 
+   path('serviceworker.js', TemplateView.as_view(
+        template_name="serviceworker.js", 
         content_type='application/javascript'
     ), name='serviceworker.js'),
+
+    path('manifest.json', TemplateView.as_view(
+        template_name="manifest.json", 
+        content_type='application/json'
+    ), name='manifest.json'),
 ]
 
 # FORCING MEDIA AND STATIC FILES TO APPEAR

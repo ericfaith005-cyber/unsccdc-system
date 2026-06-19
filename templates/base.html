@@ -153,50 +153,17 @@
     </script>
 
     <script>
-    // --- 🛡️ 1. REGISTER THE GUARD ---
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/serviceworker.js', { scope: '/' })
-        .then(() => console.log("National Guard Active 💂‍♂️"));
+        window.addEventListener('load', function() {
+            // 🛡️ We register the root path /serviceworker.js
+            navigator.serviceWorker.register('/serviceworker.js')
+            .then(function(registration) {
+                console.log('National Guard Online: ', registration.scope);
+            }, function(err) {
+                console.log('Guard Registration Failed: ', err);
+            });
+        });
     }
-
-    // --- 🗿 2. THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA VAULT ---
-    // This saves the last thing the Bursar saw so it stays there when offline
-    function secureLocalData() {
-        if (navigator.onLine) {
-            const currentData = document.body.innerHTML;
-            localStorage.setItem('unsccdc_last_view', currentData);
-            console.log("Registry State Saved to Vault ✅");
-        }
-    }
-
-    function loadFromVault() {
-        if (!navigator.onLine) {
-            const vaultData = localStorage.getItem('unsccdc_last_view');
-            if (vaultData) {
-                // document.body.innerHTML = vaultData; // Optional: Force restore
-                console.log("Restoring State from Sovereign Vault 📴");
-            }
-        }
-    }
-
-    function updateStatus() {
-        const status = document.getElementById('connection-status');
-        if (navigator.onLine) {
-            status.innerHTML = "● Hub ONLINE";
-            status.style.background = "rgba(0, 255, 0, 0.1)";
-            status.style.color = "#00ff00";
-            secureLocalData();
-        } else {
-            status.innerHTML = "● SOVEREIGN OFFLINE MODE";
-            status.style.background = "rgba(217, 0, 0, 0.1)";
-            status.style.color = "#ff4444";
-            loadFromVault();
-        }
-    }
-
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
 </script>
 </body>
 </html>
