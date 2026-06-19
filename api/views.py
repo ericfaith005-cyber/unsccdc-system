@@ -1333,6 +1333,9 @@ def generate_national_report_pdf(request, student_id):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="Report_{student.full_name}.pdf"'
         p = canvas.Canvas(response, pagesize=A4)
+        parchment_color = colors.HexColor("#FDFDF5") 
+        p.setFillColor(parchment_color)
+        p.rect(0, 0, width, height, fill=1, stroke=0) 
         width, height = A4
 
         # 3. 🎨 AUTOMATED REMARK LOGIC (AI)
@@ -1356,12 +1359,15 @@ def generate_national_report_pdf(request, student_id):
         p.setLineWidth(5)
         p.rect(15, 15, width-30, height-30)
 
-        # 2. The National Tricolor Ribbon (Sophisticated & Thin)
+        # 🛡️ THE Hub Hub Hub Hub Hub Hub Hub Hub TRIPLE-GUARD FRAME
+        p.setLineWidth(4)
+        p.setStrokeColor(colors.HexColor("#002366")) # Royal Blue Outer
+        p.rect(15, 15, width-30, height-30)
+
         p.setLineWidth(1)
-        p.setStrokeColor(colors.black); p.rect(22, 22, width-44, height-44)
-        p.setStrokeColor(ug_yellow); p.rect(23, 23, width-46, height-46)
-        p.setStrokeColor(ug_red); p.rect(24, 24, width-48, height-48)
-        
+        p.setStrokeColor(colors.HexColor("#FCDC04")) # National Yellow
+        p.rect(22, 22, width-44, height-44)
+
         # 5. 🏛️ OFFICIAL NATIONAL HEADER
         p.setFont("Helvetica-Bold", 10)
         p.drawCentredString(width/2, height-50, "THE REPUBLIC OF UGANDA")
@@ -1424,12 +1430,15 @@ def generate_national_report_pdf(request, student_id):
             ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),   # Gold underline for header
         ]))
         table.wrapOn(p, width, height)
-        table.drawOn(p, 30, height-450)
+        table.drawOn(p, 30, height - 260)
 
-        # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, 260, "NATIONAL GRADING & COMPETENCY (UCE STANDARDS):")
+        # 📚 --- 💎 Hub Hub Hub Hub Hub Hub Hub Hub PULLING THE Hub Hub Hub Hub KEY UP ---
+        p.setFillColor(colors.black)
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(50, height - 290, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         
+        g_table.wrapOn(p, width, height)
+        g_table.drawOn(p, 50, height - 420)
         grade_data = [
             ['GRADE', 'COMPETENCY', 'DESCRIPTION / SCORE BRACKET'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery of knowledge and skills.'],
