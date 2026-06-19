@@ -594,3 +594,69 @@ class BursarTerminalAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=extra_context)
 
 admin.site.register(BursarTerminal, BursarTerminalAdmin)
+
+import json
+from django.contrib import admin
+from django.db.models import Sum, Avg, Count, F
+from django.utils import timezone
+from datetime import timedelta
+from .models import FinancialCommandCenter, Student, Staff, SchoolPayLedger, AcademicResult
+
+# =============================================================
+# 📊 THE Hub NATIONAL WAR-ROOM (COMMAND INTELLIGENCE)
+# =============================================================
+
+@admin.register(FinancialCommandCenter)
+class FinancialWarRoomAdmin(admin.ModelAdmin):
+    # 💎 THE MASTER Hub LINK
+    # This tells Django: "Don't show a boring table, show my High-End Dashboard!"
+    change_list_template = "admin/api/financialcommandcenter/change_list.html"
+
+    def changelist_view(self, request, extra_context=None):
+        # 🛡️ 1. IDENTITY Hub
+        school = getattr(request.user, 'school', None)
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        extra_context = extra_context or {}
+
+        # 💰 2. FINANCE Hub Hub (REAL-TIME CALCULATIONS)
+        # Today's Cash Intake
+        rev_today = SchoolPayLedger.objects.filter(timestamp__date=today).aggregate(s=Sum('amount'))['s'] or 0
+        rev_yesterday = SchoolPayLedger.objects.filter(timestamp__date=yesterday).aggregate(s=Sum('amount'))['s'] or 0
+        
+        # Growth Logic for the Arrows ▲▼
+        growth = 0
+        if rev_yesterday > 0:
+            growth = ((rev_today - rev_yesterday) / rev_yesterday) * 100
+
+        # 👨‍🎓 3. ENROLLMENT Hub Hub (GENDER & CLASS)
+        males = Student.objects.filter(gender='M').count()
+        females = Student.objects.filter(gender='F').count()
+        
+        # Class Breakdown for the Bar Chart
+        class_data = Student.objects.values('current_class').annotate(total=Count('id')).order_by('current_class')
+        class_labels = [item['current_class'] for item in class_data]
+        class_values = [item['total'] for item in class_data]
+
+        # 🎓 4. ACADEMIC Hub Hub Hub (PERFORMANCE INDEX)
+        avg_perf = AcademicResult.objects.aggregate(a=Avg('eot_score'))['a'] or 0
+
+        # 📦 5. THE JSON DATA Hub (FOR APEXCHARTS)
+        # We package this for the template to read instantly
+        extra_context.update({
+            'title': "NATIONAL WAR-ROOM",
+            'revenue_today': f"UGX {rev_today:,.0f}",
+            'revenue_growth': round(growth, 1),
+            'total_students': Student.objects.count(),
+            'total_staff': Staff.objects.count(),
+            'avg_performance': f"{avg_perf:.1f}%",
+            
+            # Chart Data (Converted to JSON for JS)
+            'gender_json': json.dumps([males, females]),
+            'class_labels_json': json.dumps(class_labels),
+            'class_values_json': json.dumps(class_values),
+            'performance_trend_json': json.dumps([65, 72, 68, 74, 80, avg_perf]), # Simulating trend
+        })
+
+        return super().changelist_view(request, extra_context=extra_context)

@@ -150,12 +150,13 @@ JAZZMIN_SETTINGS = {
     
     # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
     "topmenu_links": [
-        {"name": "1. HOME", "url": "/api/home/", "new_window": False},
-        {"name": "2. ABOUT", "url": "/api/about/", "new_window": False},
-        {"name": "3. ACADEMICS", "url": "/api/academics/", "new_window": False},
-        {"name": "4. FINANCES", "url": "/api/finances/", "new_window": False},
-        {"name": "5. PROFILE", "url": "/api/profile/", "new_window": False},
+        {"name": "HOME", "url": "/api/home/", "new_window": False},
+        {"name": "ABOUT", "url": "/api/about/", "new_window": False},
+        {"name": "ACADEMICS", "url": "/api/academics/", "new_window": False},
+        {"name": "FINANCES", "url": "/api/finances/", "new_window": False},
+        {"name": "PROFILE", "url": "/api/profile/", "new_window": False},
         {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
+        {"name": "NATIONAL WAR-ROOM", "url": "/admin/api/financialcommandcenter/", "new_window": False},
         
     ],
 

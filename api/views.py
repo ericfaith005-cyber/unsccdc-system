@@ -1561,3 +1561,22 @@ def sovereign_shilling_simulator(request):
         })
     except Exception as e:
         return JsonResponse({"status": "Simulation Failed", "error": str(e)})
+    
+    @api_view(['GET'])
+def live_warroom_stats(request):
+    """
+    🛰️ THE SATELLITE SIGNAL
+    Returns raw JSON data for the ApexCharts to update live.
+    """
+    today = timezone.now().date()
+    # 🧮 Calculate live totals
+    total_revenue = SchoolPayLedger.objects.filter(timestamp__date=today).aggregate(Sum('amount'))['amount__sum'] or 0
+    active_logins = 12 # Simulating live parents currently on the app
+    
+    return Response({
+        "revenue_today": f"{total_revenue:,.0f}",
+        "active_users": active_logins,
+        "performance_index": "94.2%",
+        # 📈 Send fresh coordinates for the line chart
+        "chart_series": [random.randint(40, 100) for _ in range(7)] 
+    })

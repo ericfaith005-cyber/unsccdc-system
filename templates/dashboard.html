@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --bg-deep: #0F172A; /* Deep Space Blue/Black */
+        --card-bg: #1E293B;
+        --accent-gold: #D4AF37;
+        --text-dim: #94A3B8;
+        --neon-green: #10B981;
+        --neon-red: #EF4444;
+    }
+
+    body { background-color: var(--bg-deep) !important; color: white; }
+    .card-kpi { 
+        background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05); 
+        border-radius: 16px; padding: 20px; transition: 0.3s;
+    }
+    .card-kpi:hover { transform: translateY(-5px); border-color: var(--accent-gold); }
+    .nav-tabs .nav-link { color: var(--text-dim); border: none; font-weight: 700; letter-spacing: 1px; }
+    .nav-tabs .nav-link.active { background: transparent; color: var(--accent-gold); border-bottom: 3px solid var(--accent-gold); }
+    .growth-up { color: var(--neon-green); font-size: 12px; }
+    .growth-down { color: var(--neon-red); font-size: 12px; }
+</style>
+
+<div class="container-fluid p-4">
+    <!-- 🧭 Hub NAVIGATION -->
+    <ul class="nav nav-tabs mb-4" id="dashTabs" role="tablist">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#overview">OVERVIEW</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#finance">FINANCE</a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#academics">ACADEMICS</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- 🏠 TAB 1: OVERVIEW -->
+        <div class="tab-pane fade show active" id="overview">
+            <!-- KPI ROW -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card-kpi">
+                        <label class="text-dim small uppercase">Total Students</label>
+                        <div class="d-flex justify-content-between align-items-end">
+                            <h2 class="m-0 fw-bold">{{ stats.total_students }}</h2>
+                            <span class="growth-up">▲ 12%</span>
+                        </div>
+                        <div id="studentSparkline"></div> <!-- 📈 Mini Chart -->
+                    </div>
+                </div>
+                <!-- ... Repeat for Staff, Revenue, etc. ... -->
+            </div>
+
+            <!-- MAIN CHARTS -->
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="card-kpi" style="height: 400px;">
+                        <h5 class="fw-bold mb-4">Daily Collections (Last 30 Days)</h5>
+                        <div id="revenueMainChart"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-kpi" style="height: 400px;">
+                        <h5 class="fw-bold mb-4">Class Breakdown</h5>
+                        <div id="classPieChart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 📊 APEX CHARTS SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    const darkThemeOptions = {
+        chart: { background: 'transparent', foreColor: '#94A3B8', toolbar: {show: false} },
+        theme: { mode: 'dark' },
+        grid: { borderColor: '#334155' },
+        stroke: { curve: 'smooth', width: 3 },
+    };
+
+    // 💰 REVENUE LINE CHART
+    new ApexCharts(document.querySelector("#revenueMainChart"), {
+        ...darkThemeOptions,
+        series: [{ name: 'Collections', data: {{ revenue_data|safe }} }],
+        chart: { type: 'area', height: 300 },
+        colors: ['#D4AF37'],
+        fill: {
+            type: 'gradient',
+            gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0, stops: [0, 90, 100] }
+        },
+        xaxis: { categories: {{ revenue_dates|safe }} }
+    }).render();
+
+    // 👨‍🎓 CLASS PIE CHART
+    new ApexCharts(document.querySelector("#classPieChart"), {
+        ...darkThemeOptions,
+        series: {{ class_counts|safe }},
+        labels: {{ class_names|safe }},
+        chart: { type: 'donut', height: 300 },
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#D4AF37']
+    }).render();
+
+    // 🔄 LIVE REFRESH LOGIC (Simple AJAX)
+    setInterval(function() {
+        // Here you would fetch from /api/stats/ and update series
+        console.log("Refreshing National War-Room Data...");
+    }, 30000);
+</script>
+{% endblock %}
