@@ -1333,10 +1333,24 @@ def generate_national_report_pdf(request, student_id):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="Report_{student.full_name}.pdf"'
         p = canvas.Canvas(response, pagesize=A4)
+       # 1. 📏 DEFINE THE MEASUREMENTS FIRST (The Key Fix)
+        width, height = A4 
+
+        # 2. 🎨 PAINT THE FLOOR (Parchment Background)
         parchment_color = colors.HexColor("#FDFDF5") 
         p.setFillColor(parchment_color)
-        p.rect(0, 0, width, height, fill=1, stroke=0) 
-        width, height = A4
+        p.rect(0, 0, width, height, fill=1, stroke=0) # ✅ 'width' is now defined!
+
+        # 3. 🛡️ THE Hub Hub Hub Hub Hub TRIPLE-GUARD FRAME
+        p.setLineWidth(4)
+        p.setStrokeColor(colors.HexColor("#002366")) # Royal Blue Outer
+        p.rect(15, 15, width-30, height-30)
+
+        p.setLineWidth(1)
+        p.setStrokeColor(colors.HexColor("#FCDC04")) # National Yellow
+        p.rect(22, 22, width-44, height-44)
+
+        # ... (rest of your text and table logic follows) ...
 
         # 3. 🎨 AUTOMATED REMARK LOGIC (AI)
         # 💎 THE Hub Hub Hub AUTOMATIC GRADER (NLSC STANDARDS)
