@@ -157,8 +157,6 @@ JAZZMIN_SETTINGS = {
         {"name": "5. PROFILE", "url": "/api/profile/", "new_window": False},
         {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
         
-        {"name": "Home",  "url": "admin:index", "permissions": ["auth.view_user"]},
-        {"name": "🖨️ PRINT CENTRE", "url": "print_center", "new_window": False}, # 💎 Linked by URL name
     ],
 
     # 🏛️ THE SIDEBAR REGISTRY
@@ -169,8 +167,6 @@ JAZZMIN_SETTINGS = {
     "custom_links": {
         "api": [
             {
-                "name": "Bursar Batch Printing", 
-                "url": "/api/print-center/", 
                 "icon": "fas fa-print",
                 "permissions": ["auth.view_user"]
             },

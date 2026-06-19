@@ -666,7 +666,7 @@ def generate_imperial_pdf(request, student_id):
         
         table_height = len(matrix_data) * 15
         table.wrapOn(p, width, height)
-        table.drawOn(p, 40, height-280 - table_height)
+        table.drawOn(p, 40, height-250 - table_height)
 
         # 7. 🤖 AUTOMATED ADMINISTRATIVE COMMENTS
         footer_y = height-280 - table_height
@@ -1307,15 +1307,7 @@ def generate_national_report_pdf(request, student_id):
     THE GOLIATH PDF ENGINE v1.0
     Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
     """
-    
     try:
-
-        gov_blue = colors.HexColor("#002366")   # Royal Navy (Authority)
-        rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold (Prestige)
-        off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
-        ug_yellow = colors.HexColor("#FCDC04")  # National Gold
-        ug_red = colors.HexColor("#D90000")
-        
         student = Student.objects.get(account_number=student_id)
         marks = student.marks.all() # Uses the related_name='marks'
         school = student.school
@@ -1394,23 +1386,15 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(350, height-215, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
         p.drawString(350, height-230, f"TERM: EOT | YEAR: 2026")
 
-        # --- 📊 Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA MATRIX ---
+        # 7. 📊 THE 12-COLUMN DATA MATRIX
+        # Headers: SUBJECT, AOI1, AOI2, MID, AOI3, AOI4, EOT, PROJ, AVG, GRADE, TCH, REMARKS
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         
         for m in marks:
-            # 🕵️ Calculate the grade automatically from the EOT score
-            auto_grade = calculate_uce_grade(m.eot_score) 
-            
             data.append([
-                m.subject.name[:4].upper(), 
-                m.aoi_1, m.aoi_2, m.mid_term, 
-                m.aoi_3, m.aoi_4, 
-                m.eot_score, 
-                m.project_work, 
-                f"{m.eot_score}%", 
-                auto_grade, # 💎 THE Hub FIX: No more attribute error!
-                'STF', 
-                get_sub_remark(m.eot_score)
+                m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
+                m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
+                m.eot_score, m.grade or 'P', 'STF', get_sub_remark(m.eot_score)
             ])
 
         table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
@@ -1429,7 +1413,6 @@ def generate_national_report_pdf(request, student_id):
         table.wrapOn(p, width, height)
         table.drawOn(p, 30, height-450)
 
-        # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
         p.setFont("Helvetica-Bold", 9)
         p.drawString(50, 260, "NATIONAL GRADING & COMPETENCY (UCE STANDARDS):")
         
