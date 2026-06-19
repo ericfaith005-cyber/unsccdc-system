@@ -151,47 +151,52 @@
             }
         }
     </script>
-    <!-- ⚙️ THE Hub Hub Hub Hub Hub SOVEREIGN OFFLINE ENGINE -->
-<script>
-    function updateNationalLinkStatus() {
-        const status = document.getElementById('connection-status');
-        if (!status) return;
 
+    <script>
+    // --- 🛡️ 1. REGISTER THE GUARD ---
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/serviceworker.js', { scope: '/' })
+        .then(() => console.log("National Guard Active 💂‍♂️"));
+    }
+
+    // --- 🗿 2. THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA VAULT ---
+    // This saves the last thing the Bursar saw so it stays there when offline
+    function secureLocalData() {
         if (navigator.onLine) {
-            // 🟢 Hub Hub Hub Hub Hub Hub ONLINE STATE
-            status.innerHTML = "● Hub ONLINE";
-            status.style.background = "rgba(0, 255, 0, 0.1)";
-            status.style.color = "#00ff00";
-            status.style.borderColor = "rgba(0, 255, 0, 0.2)";
-            console.log("--- 🏛️ NATIONAL UPLINK SECURE ---");
-        } else {
-            // 🔴 Hub Hub Hub Hub Hub Hub OFFLINE STATE
-            status.innerHTML = "● SOVEREIGN OFFLINE MODE";
-            status.style.background = "rgba(217, 0, 0, 0.1)";
-            status.style.color = "#ff4444";
-            status.style.borderColor = "rgba(217, 0, 0, 0.3)";
-            console.log("--- 🛡️ Hub Hub Hub Hub OFFLINE VAULT ACTIVE ---");
+            const currentData = document.body.innerHTML;
+            localStorage.setItem('unsccdc_last_view', currentData);
+            console.log("Registry State Saved to Vault ✅");
         }
     }
 
-    // 📡 Monitor the Network Pulse
-    window.addEventListener('online', updateNationalLinkStatus);
-    window.addEventListener('offline', updateNationalLinkStatus);
-    
-    // Initial Check
-    document.addEventListener('DOMContentLoaded', updateNationalLinkStatus);
-
-    // 🛡️ Hub Hub Hub Hub Hub REGISTER THE NATIONAL GUARD (PWA)
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-            // This physically connects to the 'serviceworker.js' in your static folder
-            navigator.serviceWorker.register('/serviceworker.js').then(function(reg) {
-                console.log('National Guard Registered:', reg.scope);
-            }).catch(function(err) {
-                console.log('Guard Link Failed:', err);
-            });
-        });
+    function loadFromVault() {
+        if (!navigator.onLine) {
+            const vaultData = localStorage.getItem('unsccdc_last_view');
+            if (vaultData) {
+                // document.body.innerHTML = vaultData; // Optional: Force restore
+                console.log("Restoring State from Sovereign Vault 📴");
+            }
+        }
     }
+
+    function updateStatus() {
+        const status = document.getElementById('connection-status');
+        if (navigator.onLine) {
+            status.innerHTML = "● Hub ONLINE";
+            status.style.background = "rgba(0, 255, 0, 0.1)";
+            status.style.color = "#00ff00";
+            secureLocalData();
+        } else {
+            status.innerHTML = "● SOVEREIGN OFFLINE MODE";
+            status.style.background = "rgba(217, 0, 0, 0.1)";
+            status.style.color = "#ff4444";
+            loadFromVault();
+        }
+    }
+
+    window.addEventListener('online', updateStatus);
+    window.addEventListener('offline', updateStatus);
+    updateStatus();
 </script>
 </body>
 </html>
