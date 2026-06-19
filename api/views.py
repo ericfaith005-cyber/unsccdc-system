@@ -1406,8 +1406,8 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-185, "OFFICIAL SCHOLASTIC PERFORMANCE RECORD")
         
         p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, height-215, f"STUDENT NAME: {student.full_name.upper()}")
-        p.drawString(50, height-230, f"NATIONAL ID: {student.account_number}")
+        p.drawString(50, height-200, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(50, height-200, f"NATIONAL ID: {student.account_number}")
         p.drawString(350, height-215, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
         p.drawString(350, height-230, f"TERM: EOT | YEAR: 2026")
 
