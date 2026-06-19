@@ -1308,7 +1308,10 @@ def generate_national_report_pdf(request, student_id):
     Generates a 12-Column National Scholastic Record with Uganda Flag Borders.
     """
     try:
-        # --- 🧮 Hub RANKING ENGINE ---
+        student = Student.objects.get(account_number=student_id)
+        marks = student.marks.all() # Uses the related_name='marks'
+        school = student.school
+
         all_class_students = Student.objects.filter(current_class=student.current_class, school=school)
         student_scores = []
         for s_obj in all_class_students:
@@ -1317,13 +1320,7 @@ def generate_national_report_pdf(request, student_id):
         
             student_scores.sort(key=lambda x: x['avg'], reverse=True)
             position = next((i + 1 for i, item in enumerate(student_scores) if item['id'] == student.id), "N/A")
-            total_in_class = len(student_scores)
             overall_avg = next((item['avg'] for item in student_scores if item['id'] == student.id), 0)
-       
-
-        student = Student.objects.get(account_number=student_id)
-        marks = student.marks.all() # Uses the related_name='marks'
-        school = student.school
         
         # 2. 📄 INITIALIZE THE CANVAS
         response = HttpResponse(content_type='application/pdf')
@@ -1417,13 +1414,31 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(0, 0, "UNSCCDC Hub Hub Hub Hub Hub Hub Hub Hub")
         p.restoreState()
 
-        # 8. 📚 NATIONAL GRADING EXPLANATORY KEY (The Footer logic)
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(50, 180, "NATIONAL GRADING SYSTEMS & STANDARDS:")
-        p.setFont("Helvetica", 6.5)
-        p.drawString(50, 165, "1. PRIMARY (PLE): DIV 1 (4-12 Agg) | DIV 2 (13-23 Agg) | DIV 3 (24-28 Agg)")
-        p.drawString(50, 155, "2. SECONDARY (CBC): 90-100: A+ (Exceptional) | 80-89: A (Superior) | 70-79: B (Outstanding)")
-        p.drawString(50, 145, "3. UACE: A (6pts) | B (5pts) | C (4pts) | D (3pts) | E (2pts) | O (1pt) | F (0pts)")
+        # 8. 📚 --- 💎 THE Hub Hub Hub Hub Hub Hub Hub UCE COMPETENCY TABLE ---
+        p.setFont("Helvetica-Bold", 9)
+        p.drawString(50, 260, "NATIONAL Hub Hub Hub Hub GRADING & COMPETENCY (UCE STANDARDS):")
+        
+        grade_data = [
+            ['GRADE', 'COMPETENCY', 'DESCRIPTION / SCORE BRACKET'],
+            ['A', 'Exceptional', '80% - 100%. Extraordinary mastery of knowledge and skills.'],
+            ['B', 'Outstanding', '70% - 79%. High competency in practical concepts.'],
+            ['C', 'Satisfactory', '60% - 69%. Adequate competency in application.'],
+            ['D', 'Basic', '50% - 59%. Minimum level of competency in problem-solving.'],
+            ['E', 'Elementary', '0% - 49%. Below the basic level of competency.']
+        ]
+        g_table = Table(grade_data, colWidths=[50, 100, 350])
+        g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.5,colors.black),('FONTNAME',(0,0),(-1,0),'Helvetica-Bold')]))
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, 175)
+
+        # 9. 📜 CERTIFICATION & RANKING STATUS
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, 160, "CERTIFICATION STATUS:")
+        p.setFont("Helvetica", 7)
+        p.drawString(60, 150, "Result 1: Qualifies for UCE (Score at least D in one subject).")
+        p.drawString(60, 140, "Result 2: Did not qualify (Missing projects or compulsory subjects).")
+        p.drawString(60, 130, "Result 3: Does not qualify (Scored only E in all subjects).")
+
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, 115, f"NATIONAL STANDING: Position {position} out of {total_in_class}")
+        p.setFont("Helvetica-Oblique", 6.5); p.drawString(50, 105, "Note: UNEB explicitly does not rank candidates via aggregates to avoid unethical competition.")
         
         # ✍️ AUTHORIZATION
         p.line(50, 80, 200, 80)
@@ -1434,7 +1449,7 @@ def generate_national_report_pdf(request, student_id):
         # Stamp Box
         p.setStrokeColor(colors.HexColor("#008080"))
         p.circle(width/2, 85, 35, stroke=1, fill=0)
-        p.drawCentredString(width/2, 85, "VERIFIED Hub")
+        p.drawCentredString(width/2, 85, "VERIFIED")
 
         p.showPage(); p.save()
         return response
