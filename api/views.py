@@ -1336,13 +1336,6 @@ def generate_national_report_pdf(request, student_id):
         width, height = A4
 
         # 3. 🎨 AUTOMATED REMARK LOGIC (AI)
-        # 💎 THE Hub Hub Hub AUTOMATIC GRADER (NLSC STANDARDS)
-        def calculate_uce_grade(score):
-            if score >= 80: return "A"
-            if score >= 70: return "B"
-            if score >= 60: return "C"
-            if score >= 50: return "D"
-            return "E"
         def get_sub_remark(score):
             if score >= 90: return "Exceptional mastery."
             if score >= 80: return "Excellent. Maintain focus."
