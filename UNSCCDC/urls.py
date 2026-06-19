@@ -33,9 +33,9 @@ urlpatterns = [
     path('favicon.png', RedirectView.as_view(url='/static/favicon.png')),
     path('staff-login/', include('api.urls')), # Link to staff views
     
-   path('serviceworker.js', TemplateView.as_view(
-        template_name="serviceworker.js", 
-        content_type='application/javascript'
+    path('serviceworker.js', TemplateView.as_view(
+    template_name='serviceworker.js', 
+    content_type='application/javascript'
     ), name='serviceworker.js'),
 
     path('manifest.json', TemplateView.as_view(

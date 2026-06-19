@@ -1,32 +1,46 @@
-// 🛡️ UNSCCDC INDESTRUCTIBLE GUARD v3.0
-const CACHE_NAME = 'unsccdc-sovereign-vault-v1';
-const Hub_FILES = [
-    '/',
-    '/api/home/',
-    '/static/css/unsccdc_prestige.css',
-    '/static/icons/hub_logo.png'
-];
+// 🛡️ UNSCCDC GLOBAL GUARDIAN v4.0 (OFFLINE SYSTEM REBIRTH)
+const CACHE_NAME = 'unsccdc-system-v4';
 
-// 📥 1. FORCED INSTALLATION
+// 1. 📥 Install: Save the foundation
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); 
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(Hub_FILES);
+            return cache.addAll([
+                '/',
+                '/api/home/',
+                '/static/css/unsccdc_prestige.css',
+                '/static/icons/hub_logo.png'
+            ]);
         })
     );
 });
 
-// ⚡ 2. CLAIM THE BROWSER
+// 2. ⚡ Activate: Claim control
 self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim()); 
+    event.waitUntil(clients.claim());
 });
 
-// 📡 3. THE Hub OFFLINE STRATEGY (Network First, then Cache)
+// 3. 📡 Fetch: THE OFFLINE Hub Hub Hub Hub Hub Hub STRATEGY
 self.addEventListener('fetch', (event) => {
+    // Only handle GET requests (standard page views)
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        fetch(event.request)
+            .then((response) => {
+                // If we have internet, save a copy of this page to the vault
+                const resClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, resClone);
+                });
+                return response;
+            })
+            .catch(() => {
+                // If internet fails, look in the vault for this specific URL
+                return caches.match(event.request).then((cachedResponse) => {
+                    return cachedResponse || caches.match('/'); // Fallback to Home
+                });
+            })
     );
 });
