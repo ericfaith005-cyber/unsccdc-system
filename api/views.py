@@ -1580,3 +1580,15 @@ def live_warroom_stats(request):
         # 📈 Send fresh coordinates for the line chart
         "chart_series": [random.randint(40, 100) for _ in range(7)] 
     })
+
+@csrf_exempt
+def catch_app_crash(request):
+    """🛡️ THE NATIONAL BLACK BOX: Receives crash logs from the APK"""
+    if request.method == 'POST':
+        error_data = request.POST.get('error', 'Unknown Error')
+        print("\n" + "="*50)
+        print("🚨 CRITICAL APK CRASH DETECTED 🚨")
+        print(f"ERROR: {error_data}")
+        print("="*50 + "\n")
+        return HttpResponse("Log Received")
+    return HttpResponse("Listening...")

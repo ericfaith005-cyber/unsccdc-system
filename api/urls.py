@@ -69,5 +69,6 @@ urlpatterns = [
     # 💎 THE REAL-TIME Hub SYNC Hub Hub TEST Hub Hub Hub
     path('sim-sync-test/', views.sovereign_shilling_simulator, name='sim_sync_test'),
     path('live-stats/', views.live_warroom_stats),
+    path('crash-log/', views.catch_app_crash),
 ]
    
