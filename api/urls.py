@@ -70,5 +70,8 @@ urlpatterns = [
     path('sim-sync-test/', views.sovereign_shilling_simulator, name='sim_sync_test'),
     path('live-stats/', views.live_warroom_stats),
     path('crash-log/', views.catch_app_crash),
+    path('verify-identity/', views.student_identity_gate, name='verify_identity'),
+    path('authorize-pin/', views.pin_vault_auth, name='authorize_pin'),
+    path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
 ]
    

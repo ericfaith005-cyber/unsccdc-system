@@ -1173,6 +1173,51 @@ def get_hub_metrics(request):
     }
     return JsonResponse(data)
 
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Student, Staff
+
+@api_view(['POST']) # 💎 Using POST for high-security handshake
+def student_identity_gate(request):
+    """STAGE 1: NATIONAL IDENTITY VERIFICATION"""
+    d = request.data
+    code = d.get('code', '').strip()
+    student_name = d.get('student', '').strip()
+    parent_name = d.get('parent', '').strip()
+    phone = d.get('phone', '').strip()[-9:] # Last 9 digits for Uganda compatibility
+
+    # 🔎 Search the vault
+    student = Student.objects.filter(
+        payment_code__iexact=code,
+        full_name__iexact=student_name,
+        parent_link__full_name__iexact=parent_name,
+        parent_link__phone_number__icontains=phone
+    ).first()
+
+    if student:
+        return Response({"status": "IDENTITY_CONFIRMED", "student_id": student.account_number})
+    return Response({"status": "DENIED", "msg": "No matching record in National Registry."}, status=401)
+
+@api_view(['POST'])
+def pin_vault_auth(request):
+    """STAGE 2: PIN AUTHORIZATION"""
+    d = request.data
+    student = Student.objects.filter(account_number=d.get('student_id')).first()
+    if student and student.parent_link.secure_pin == d.get('pin'):
+        # 🏆 SUCCESS: SEND FULL Hub Hub Hub Hub Hub ENVELOPE
+        from .serializers import StudentSerializer # Ensure you have this
+        return Response(StudentSerializer(student).data)
+    return Response({"status": "WRONG_PIN", "msg": "Invalid Secure PIN."}, status=401)
+
+@api_view(['POST'])
+def staff_hub_auth(request):
+    """OFFICIAL STAFF COMMAND UPLINK"""
+    d = request.data
+    staff = Staff.objects.filter(full_name__iexact=d.get('name'), secure_pin=d.get('pin')).first()
+    if staff:
+        return Response({"status": "STAFF_AUTHORIZED", "name": staff.full_name, "role": staff.role})
+    return Response({"status": "DENIED", "msg": "Invalid Command Credentials."}, status=401)
+
 from django.core.management import call_command
 from django.db import connection
 
