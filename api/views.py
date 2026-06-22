@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.views.decorators.csrf import csSrf_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, Count, Q, Avg
 from django.contrib.auth import get_user_model
 from .models import *
