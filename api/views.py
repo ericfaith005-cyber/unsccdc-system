@@ -1180,27 +1180,40 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Student, Staff
 
-@api_view(['POST']) # 💎 Using POST for high-security handshake
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def student_identity_gate(request):
-    """STAGE 1: NATIONAL IDENTITY VERIFICATION"""
+    """THE Hub Granular Identity Auditor"""
     d = request.data
-    code = d.get('code', '').strip()
-    student_name = d.get('student', '').strip()
-    parent_name = d.get('parent', '').strip()
-    phone = d.get('phone', '').strip()[-9:] # Last 9 digits for Uganda compatibility
+    code_in = d.get('code', '').strip()
+    student_in = d.get('student', '').strip()
+    parent_in = d.get('parent', '').strip()
+    phone_in = d.get('phone', '').strip()[-9:]
 
-    # 🔎 Search the vault
-    student = Student.objects.filter(
-        payment_code__iexact=code,
-        full_name__iexact=student_name,
-        parent_link__full_name__iexact=parent_name,
-        parent_link__phone_number__icontains=phone
-    ).first()
+    # 1. Check Access Code (PRN)
+    student = Student.objects.filter(payment_code__iexact=code_in).first()
+    if not student:
+        return Response({"status": "DENIED", "msg": "ACCESS CODE (PRN) NOT FOUND"}, status=401)
 
-    if student:
-        return Response({"status": "IDENTITY_CONFIRMED", "student_id": student.account_number})
-    return Response({"status": "DENIED", "msg": "No matching record in National Registry."}, status=401)
+    # 2. Check Student Name
+    if student.full_name.lower() != student_in.lower():
+        return Response({"status": "DENIED", "msg": "STUDENT NAME DOES NOT MATCH REGISTRY"}, status=401)
 
+    # 3. Check Parent Link & Name
+    parent = student.parent_link
+    if not parent or parent.full_name.lower() != parent_in.lower():
+        return Response({"status": "DENIED", "msg": "GUARDIAN IDENTITY MISMATCH"}, status=401)
+
+    # 4. Check Phone Number
+    if phone_in not in parent.phone_number:
+        return Response({"status": "DENIED", "msg": "UNAUTHORIZED PHONE NUMBER"}, status=401)
+
+    # ✅ TOTAL SUCCESS
+    return Response({
+        "status": "IDENTITY_CONFIRMED", 
+        "student_id": student.account_number,
+        "msg": f"Welcome {parent.full_name}. Identity Verified."
+    })
 @api_view(['POST'])
 def pin_vault_auth(request):
     """STAGE 2: PIN AUTHORIZATION"""

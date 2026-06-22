@@ -21,7 +21,7 @@ if IS_RENDER:
 else:
     # --- 🏠 LOCAL LAB SETTINGS (LAPTOP) ---
     DEBUG = True
-    ALLOWED_HOSTS = ['*', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['*', '172.24.144.47', 'localhost', '127.0.0.1']
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
