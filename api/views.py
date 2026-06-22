@@ -1,21 +1,22 @@
-import random
-import uuid
 import json
-import traceback
 from django.shortcuts import render
-from django.db.models import Sum, F
-from rest_framework.decorators import api_view, permission_classes # 💎 ADDED THIS
-from rest_framework.permissions import AllowAny                     # 💎 ADDED THIS
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+from django.db.models import Avg, Sum
+
+# 💎 THE Hub Hub Hub Hub REST FRAMEWORK Hub Hub Hub Hub 💎
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csSrf_exempt
 from django.db.models import Sum, Count, Q, Avg
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from .models import *
-# --- 🏛️ SURGERY: PDF IMPORTS (api/views.py) ---
-from django.http import HttpResponse
+
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
 from reportlab.lib.pagesizes import A4
@@ -35,7 +36,7 @@ try:
 except:
     print("SMS Gateway Standby")
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
+
 
 def birth_the_king(request):
     User = get_user_model()
@@ -941,7 +942,7 @@ def create_initial_king(request):
     return HttpResponse("The Throne is already occupied.")   
 # --- 👑 THE IMPERIAL KING-MAKER DOOR ---
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
+
 
 FLAG_STYLE = """
 <style>
@@ -1093,7 +1094,6 @@ def finances_tab(request):
     </div>"""
     return HttpResponse(content)
 
-from django.http import HttpResponse
 
 def home_tab(request):
     html = """
@@ -1361,7 +1361,6 @@ def generate_staff_dossier_pdf(request, staff_id):
 
 import datetime
 from django.db.models import Avg
-from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
