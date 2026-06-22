@@ -1,8 +1,15 @@
-
+import random
+import uuid
+import json
+import traceback
+from django.shortcuts import render
+from django.db.models import Sum, F
+from rest_framework.decorators import api_view, permission_classes # 💎 ADDED THIS
+from rest_framework.permissions import AllowAny                     # 💎 ADDED THIS
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csSrf_exempt
 from django.db.models import Sum, Count, Q, Avg
 from django.utils import timezone
 from django.contrib.auth import get_user_model
@@ -15,12 +22,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from .models import Staff, Student # 💎 Ensure Staff is imported!
 import africastalking
-import random
-import uuid
-import json
-import traceback
-from django.shortcuts import render
-from django.db.models import Sum, F
+
 from django.contrib.auth.decorators import login_required
 from .models import Student, SchoolPayLedger, FeesTracker, Subject
 
