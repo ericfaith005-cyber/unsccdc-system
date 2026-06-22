@@ -1,24 +1,24 @@
-from rest_framework import serializers
-from .models import Student, AcademicResult, FeesTracker
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def staff_hub_auth(request):
+    """OFFICIAL STAFF Hub Hub Hub COMMAND UPLINK"""
+    d = request.data
+    name = d.get('name', '').strip()
+    pin = d.get('pin', '').strip()
 
-class StudentSerializer(serializers.ModelSerializer):
-    # 🕵️ We include the child data so the app has 'everything' on login
-    marks = serializers.SerializerMethodField()
-    fees = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Student
-        fields = '__all__'
-
-    def get_marks(self, obj):
-        # Returns all academic results for this student
-        return list(obj.marks.values())
-
-    def get_fees(self, obj):
-        # Returns the current financial standing
-        tracker = FeesTracker.objects.filter(student=obj).first()
-        return {
-            "total_due": tracker.total_fees_due if tracker else 0,
-            "total_paid": tracker.total_fees_paid if tracker else 0,
-            "balance": tracker.fees_balance if tracker else 0
-        }
+    # 🔎 Search the vault
+    staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
+    
+    if staff:
+        # 🕵️ CRITICAL THINKING: We detect the role name automatically
+        # to prevent the 'AttributeError'
+        staff_role = getattr(staff, 'role', getattr(staff, 'position', 'Official Staff'))
+        
+        return Response({
+            "status": "STAFF_AUTHORIZED",
+            "name": staff.full_name,
+            "role": staff_role, # 💎 FIX: Safe attribute access
+            "school": staff.school.name if staff.school else "National Hub"
+        })
+    
+    return Response({"status": "DENIED", "msg": "Invalid Command Credentials."}, status=401)

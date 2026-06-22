@@ -1210,12 +1210,28 @@ def pin_vault_auth(request):
     return Response({"status": "WRONG_PIN", "msg": "Invalid Secure PIN."}, status=401)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def staff_hub_auth(request):
-    """OFFICIAL STAFF COMMAND UPLINK"""
+    """OFFICIAL STAFF Hub Hub Hub COMMAND UPLINK"""
     d = request.data
-    staff = Staff.objects.filter(full_name__iexact=d.get('name'), secure_pin=d.get('pin')).first()
+    name = d.get('name', '').strip()
+    pin = d.get('pin', '').strip()
+
+    # 🔎 Search the vault
+    staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
+    
     if staff:
-        return Response({"status": "STAFF_AUTHORIZED", "name": staff.full_name, "role": staff.role})
+        # 🕵️ CRITICAL THINKING: We detect the role name automatically
+        # to prevent the 'AttributeError'
+        staff_role = getattr(staff, 'role', getattr(staff, 'position', 'Official Staff'))
+        
+        return Response({
+            "status": "STAFF_AUTHORIZED",
+            "name": staff.full_name,
+            "role": staff_role, # 💎 FIX: Safe attribute access
+            "school": staff.school.name if staff.school else "National Hub"
+        })
+    
     return Response({"status": "DENIED", "msg": "Invalid Command Credentials."}, status=401)
 
 from django.core.management import call_command
