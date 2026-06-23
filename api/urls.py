@@ -6,6 +6,7 @@ from . import views
 # We keep the automated API endpoints here
 router = DefaultRouter()
 router.register(r'students', views.StudentViewSet, basename='studenthub')
+router.register(r'staff', views.StaffViewSet, basename='staffhub')
 
 urlpatterns = [
     # 🏛️ 2. THE Hub Hub ENTERPRISE COMMAND CENTER (WEB UI TABS)
