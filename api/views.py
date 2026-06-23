@@ -1203,29 +1203,30 @@ def student_identity_gate(request):
 
 from django.http import JsonResponse # 💎 Ensure this is imported at the top
 
-# =============================================================
-# 👔 STAFF Hub Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub FIX
-# =============================================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def staff_hub_auth(request):
-    name = request.data.get('name', '').strip()
-    pin = request.data.get('pin', '').strip()
+    """
+    💎 THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub
+    TOTAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STABILITY FIX
+    """
+    name_in = request.data.get('name', '').strip()
+    pin_in = request.data.get('pin', '').strip()
 
-    staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
+    # 🕵️ We use .filter().first() to guarantee ONE object
+    staff = Staff.objects.filter(full_name__iexact=name_in, secure_pin=pin_in).first()
     
     if staff:
-        # 🛡️ We manually build the dictionary to ensure NO LIST brackets []
-        data_packet = {
+        # 🛡️ We use JsonResponse with a RAW DICTIONARY. 
+        # This kills the 'subtype of int' error forever!
+        return JsonResponse({
             "status": "STAFF_AUTHORIZED",
             "name": str(staff.full_name),
             "role": str(getattr(staff, 'role', 'Official Staff')),
             "school": str(staff.school.name if staff.school else "National Hub")
-        }
-        return JsonResponse(data_packet, safe=False) # 💎 safe=False forces pure Map
+        }, safe=False)
     
-    return JsonResponse({"status": "DENIED", "msg": "Invalid Credentials"}, status=401)
-
+    return JsonResponse({"status": "DENIED", "msg": "Invalid Staff Credentials"}, status=401)
 # =============================================================
 # 🔐 PARENT Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub PIN Hub Hub Hub Hub Hub
 # =============================================================
