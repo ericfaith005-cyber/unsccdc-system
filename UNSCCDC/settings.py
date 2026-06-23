@@ -75,8 +75,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',           # 💎 THE Hub Hub Hub Hub Hub KEY FIX (MUST BE TOP)
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # 💎 Keep this for CSS
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -275,30 +276,21 @@ JAZZMIN_UI_TWEAKS = {
     }
 }
 
+# 🛡️ THE Hub Hub Hub Hub Hub REDIRECT SHIELD
+# Prevents Django from redirecting and losing your PIN/Login data
+APPEND_SLASH = False
 
 
 if IS_RENDER:
-    # --- 🏰 CLOUD Hub SETTINGS (RENDER) ---
-    DEBUG = True
-    SECURE_SSL_REDIRECT = False # 💎 Keep True on Render for National Trust
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    # Tell Django that Render's Proxy is handling the encryption
+    DEBUG = False # 💎 Set to False for Production Security
+    ALLOWED_HOSTS = ['unsccdc-system.onrender.com', 'unsccdc-hub.onrender.com', '.onrender.com']
+    
+    # 🛰️ Render-to-App Handshake
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True # Force HTTPS for National Trust
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 else:
-    # --- 🏠 LOCAL Hub SETTINGS (LAPTOP) ---
     DEBUG = True
-    SECURE_SSL_REDIRECT = False # 💎 Keep False for your IP testing
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-
-# 🌐 UNIVERSAL Hub PERMISSIONS (Sovereign Open Gates)
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
-
-# 🛰️ TRUSTED SATELLITES (Replace with your exact Vercel/GitHub links)
-CSRF_TRUSTED_ORIGINS = [
-    "https://unsccdc-system.onrender.com",
-    "https://schoolapp-lac.vercel.app", 
-    "https://ericfaith005-cyber.github.io",
-]
+    ALLOWED_HOSTS = ['*', '172.24.144.47', 'localhost', '127.0.0.1']
+    SECURE_SSL_REDIRECT = False
