@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from . import views 
 
 # 🛡️ 1. CONSOLIDATED Hub Hub Hub Hub ROUTER
 # We keep the automated API endpoints here
@@ -22,7 +22,7 @@ urlpatterns = [
     path('verify-identity/', views.student_identity_gate, name='verify_identity'),
     path('authorize-pin/', views.pin_vault_auth, name='authorize_pin'),
     path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
-    path('staff-login/', views.staff_hub_auth, name='staff_login'),
+   
 
     # 📊 4. THE Hub Hub Hub Hub Hub Hub CORE Hub Hub Hub API Hub Hub Hub
     path('', include(router.urls)), # DRF Student/Staff lists
