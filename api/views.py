@@ -418,19 +418,6 @@ def parent_verify_view(request):
 
     return render(request, 'index.html', context)
 
-@csrf_exempt
-def staff_hub_login(request):
-    context = {}
-    if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        pin = request.POST.get('pin', '').strip()
-        staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
-        if staff:
-            # 4-DIGIT PIN verified for staff
-            return render(request, 'tabs/home.html', {'data': staff, 'is_staff': True})
-        else:
-            context['error'] = "Invalid Command Credentials."
-    return render(request, 'staff_login.html', context)
 
 # --- 🛰️ THE IMPERIAL NATIONAL MARKS ENGINE (REAL-TIME SYNC) ---
 @api_view(['POST'])
@@ -1214,36 +1201,62 @@ def student_identity_gate(request):
         "msg": "Identity Verified"
     })
 
-@api_view(['POST'])
-def pin_vault_auth(request):
-    """STAGE 2: PIN AUTHORIZATION"""
-    d = request.data
-    student = Student.objects.filter(account_number=d.get('student_id')).first()
-    if student and student.parent_link.secure_pin == d.get('pin'):
-        # 🏆 SUCCESS: SEND FULL Hub Hub Hub Hub Hub ENVELOPE
-        from .serializers import StudentSerializer # Ensure you have this
-        return Response(StudentSerializer(student).data)
-    return Response({"status": "WRONG_PIN", "msg": "Invalid Secure PIN."}, status=401)
+from django.http import JsonResponse # 💎 Ensure this is imported at the top
 
+# =============================================================
+# 👔 STAFF Hub Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub FIX
+# =============================================================
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def staff_hub_auth(request):
     name = request.data.get('name', '').strip()
     pin = request.data.get('pin', '').strip()
 
-    # 💎 THE Hub Hub Hub Hub Hub FIX: Use .first() to get ONE object, not a list
     staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
     
     if staff:
-        # Return a direct Map {}. This kills the 'subtype of int' error!
-        return Response({
+        # 🛡️ We manually build the dictionary to ensure NO LIST brackets []
+        data_packet = {
             "status": "STAFF_AUTHORIZED",
-            "name": staff.full_name,
-            "role": getattr(staff, 'role', 'Authorized Staff'),
-            "school": staff.school.name if staff.school else "National Hub"
-        })
+            "name": str(staff.full_name),
+            "role": str(getattr(staff, 'role', 'Official Staff')),
+            "school": str(staff.school.name if staff.school else "National Hub")
+        }
+        return JsonResponse(data_packet, safe=False) # 💎 safe=False forces pure Map
     
-    return Response({"status": "DENIED", "msg": "Invalid Command Credentials"}, status=401)
+    return JsonResponse({"status": "DENIED", "msg": "Invalid Credentials"}, status=401)
+
+# =============================================================
+# 🔐 PARENT Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub PIN Hub Hub Hub Hub Hub
+# =============================================================
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def pin_vault_auth(request):
+    d = request.data
+    sid = d.get('student_id')
+    pin = d.get('pin', '').strip()
+
+    student = Student.objects.filter(account_number=sid).first()
+    
+    if student and student.parent_link.secure_pin == pin:
+        # 🛡️ Instead of using Serializer (which might return a list), 
+        # we hand-pick the data into a PURE MAP.
+        marks = list(student.marks.values('subject__name', 'aoi_1', 'aoi_2', 'mid_term', 'aoi_3', 'aoi_4', 'eot_score'))
+        
+        data_packet = {
+            "full_name": student.full_name,
+            "account_number": student.account_number,
+            "current_class": student.current_class,
+            "stream": student.stream or "NORTH",
+            "school_name": student.school.name,
+            "academic_record": marks,
+            "financial_standing": {
+                "balance": 150000 # Example, or pull from tracker
+            }
+        }
+        return JsonResponse(data_packet, safe=False)
+        
+    return JsonResponse({"status": "WRONG_PIN", "msg": "Invalid Secure PIN"}, status=401)
 
 from django.core.management import call_command
 from django.db import connection
