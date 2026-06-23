@@ -23,8 +23,6 @@ urlpatterns = [
     path('authorize-pin/', views.pin_vault_auth, name='authorize_pin'),
     path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
    
-
-    # 📊 4. THE Hub Hub Hub Hub Hub Hub CORE Hub Hub Hub API Hub Hub Hub
     path('', include(router.urls)), # DRF Student/Staff lists
     path('live-stats/', views.live_warroom_stats, name='live_stats'),
     path('analytics/', views.UNSCCDC_Analytics, name='analytics'),
