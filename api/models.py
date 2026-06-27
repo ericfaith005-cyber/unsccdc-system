@@ -31,6 +31,16 @@ class School(models.Model):
         ('UNI', 'University (Year 1 - Year 5)'),
         ('VOC', 'Vocational/Technical'),
     ]
+
+    SECTOR_CHOICES = [
+        ('PRIMARY', 'Primary Level (PLE System)'),
+        ('SECONDARY', 'Secondary Level (UCE/UACE System)'),
+        ('VOCATIONAL', 'Vocational/Technical (DIT/BTVET)'),
+        ('UNIVERSITY', 'Higher Education (NCHE/CGPA)'),
+    ]
+    name = models.CharField(max_length=255)
+    sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='SECONDARY')
+    # ... rest of your fields
     school_type = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='SEC')
     stamp_color = models.CharField(max_length=20, default="#002366", help_text="Hex color for digital stamp")
     SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]

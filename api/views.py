@@ -1460,6 +1460,29 @@ def generate_national_report_pdf(request, student_id):
             if avg >= 80: return "Disciplined and hardworking. High leadership potential."
             if avg >= 60: return "Good performance. Should focus more on technicals."
             return "Needs more effort and attend all remedial sessions."
+        
+        # 💎 THE Hub Hub Hub Hub Hub Hub Hub SECTOR-SPECIFIC GRADING
+        if school.sector == 'PRIMARY':
+            grade_title = "PRIMARY (PLE) GRADING STANDARDS"
+            grade_data = [
+                ['Agg', 'Div', 'Description'],
+                ['4-12', '1', 'Exceptional - High Distinction'],
+                ['13-23', '2', 'Strong Credit'],
+                ['24-28', '3', 'Pass'],
+                ['29-34', '4', 'Minimum Pass']
+            ]
+        elif school.sector == 'UNIVERSITY':
+            grade_title = "HIGHER EDUCATION (NCHE) CGPA STANDARDS"
+            grade_data = [
+                ['CGPA', 'Class', 'Standing'],
+                ['4.40-5.00', '1st Class', 'Exceptional Excellence'],
+                ['3.60-4.39', '2nd Upper', 'Strong Honors'],
+                ['2.80-3.59', '2nd Lower', 'Average Honors'],
+                ['2.00-2.79', 'Pass', 'Satisfactory']
+            ]
+        else: # Default UCE
+            grade_title = "SECONDARY (UCE) COMPETENCY STANDARDS"
+            grade_data = [ ... ] # Your existing UCE data
 
         # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
