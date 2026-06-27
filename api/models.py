@@ -148,6 +148,11 @@ class Student(models.Model):
 
     # 💰 INITIAL COMMITMENT
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
+
+    def __str__(self):
+        return self.full_name
+    
     def save(self, *args, **kwargs):
         if not self.account_number:
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
@@ -171,6 +176,7 @@ class Student(models.Model):
             bal = tracker.total_fees_due - tracker.total_fees_paid
             return f"UGX {bal:,.0f}"
         return "UGX 0"
+
         
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---

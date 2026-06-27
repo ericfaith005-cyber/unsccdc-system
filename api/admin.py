@@ -358,17 +358,29 @@ class SchoolAdmin(admin.ModelAdmin):
     readonly_fields = ('total_revenue_collected', 'total_commission_earned')
 admin.site.register(School, SchoolAdmin)
 
+from django.utils.safestring import mark_safe
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    # 💎 1. THE VIEW: Adding 'parent_link' to the scannable columns
-    list_display = ('full_name', 'current_class', 'stream', 'account_number', 'parent_link', 'fee_status_badge')
+    # 💎 1. Show the Dossier and Sector in the list
+    list_display = ('full_name', 'current_class', 'payment_code', 'get_sector', 'view_dossier_btn')
+    list_filter = ('school__sector', 'current_class', 'is_active')
     search_fields = ('full_name', 'account_number', 'payment_code')
-    list_filter = ('school', 'current_class', 'stream')
+
+    # 💎 2. THE Hub Hub Hub Hub Hub Hub DOSSIER BUTTON
     def view_dossier_btn(self, obj):
         url = f"/api/download-dossier/{obj.account_number}/"
-        return mark_safe(f'<a href="{url}" style="background:#002366; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">📁 PRINT DOSSIER</a>')
-    
+        return mark_safe(f'''
+            <a href="{url}" target="_blank" 
+               style="background:#002366; color:white; padding:6px 12px; border-radius:8px; font-weight:900; text-decoration:none; border: 1px solid #D4AF37;">
+               📄 PRINT DOSSIER
+            </a>
+        ''')
     view_dossier_btn.short_description = "National File"
+
+    def get_sector(self, obj):
+        return obj.school.get_sector_display()
+    get_sector.short_description = "Education Sector"
 
     # 💎 2. THE FORM: Physically adding the Parent selector into the Student Profile
     fieldsets = (
