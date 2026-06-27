@@ -364,6 +364,11 @@ class StudentAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'current_class', 'stream', 'account_number', 'parent_link', 'fee_status_badge')
     search_fields = ('full_name', 'account_number', 'payment_code')
     list_filter = ('school', 'current_class', 'stream')
+    def view_dossier_btn(self, obj):
+        url = f"/api/download-dossier/{obj.account_number}/"
+        return mark_safe(f'<a href="{url}" style="background:#002366; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">📁 PRINT DOSSIER</a>')
+    
+    view_dossier_btn.short_description = "National File"
 
     # 💎 2. THE FORM: Physically adding the Parent selector into the Student Profile
     fieldsets = (
@@ -381,6 +386,7 @@ class StudentAdmin(admin.ModelAdmin):
         ('🎓 ACADEMIC STANDING', {
             'fields': ('enrollment_status', 'academic_standing', 'payment_code')
         }),
+        
     )
 
     # We keep the account number read-only so it's never accidentally changed

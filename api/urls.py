@@ -47,4 +47,5 @@ urlpatterns = [
     path('birth-the-king-99/', views.birth_the_king, name='birth_king'),
     path('king-maker-secret-99/', views.create_initial_king, name='create_king'),
     path('test-hub/', views.parent_verify_view, name='test_hub'),
+    path('download-dossier/<str:student_id>/', views.generate_student_dossier, name='download_dossier'),
 ]

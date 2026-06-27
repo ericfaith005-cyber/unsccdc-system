@@ -1677,3 +1677,91 @@ def catch_app_crash(request):
         print("="*50 + "\n")
         return HttpResponse("Log Received")
     return HttpResponse("Listening...")
+
+def generate_student_dossier(request, student_id):
+    try:
+        student = Student.objects.get(account_number=student_id)
+        fees = FeesTracker.objects.get(student=student)
+        payments = SchoolPayLedger.objects.filter(student=student).order_by('-timestamp')
+        marks = AcademicResult.objects.filter(student=student)
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="DOSSIER_{student.full_name}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+
+        # 1. 🎨 BACKGROUND & BORDERS (England Standard)
+        p.setFillColor(colors.HexColor("#FDFDF5"))
+        p.rect(0, 0, width, height, fill=1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+
+        # 2. 🏛️ HEADER
+        p.setFillColor(gov_blue); p.setFont("Helvetica-Bold", 16)
+        p.drawCentredString(width/2, height-60, "NATIONAL STUDENT DOSSIER")
+        p.setFont("Helvetica", 8); p.setFillColor(colors.grey)
+        p.drawCentredString(width/2, height-75, "OFFICIAL RECORD OF THE REPUBLIC OF UGANDA | UNSCCDC GLOBAL")
+
+        # 3. 👤 SECTION: BIOMETRIC & IDENTITY
+        p.setFillColor(gov_blue); p.rect(40, height-130, width-80, 20, fill=1)
+        p.setFillColor(colors.white); p.setFont("Helvetica-Bold", 10)
+        p.drawString(50, height-125, "I. STUDENT IDENTITY & REGISTRY")
+        
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 9)
+        p.drawString(50, height-150, f"FULL NAME: {student.full_name.upper()}")
+        p.drawString(50, height-165, f"NATIONAL ID / PRN: {student.payment_code}")
+        p.drawString(300, height-150, f"CLASS: {student.current_class} ({student.stream})")
+        p.drawString(300, height-165, f"SYSTEM ID: {student.account_number}")
+
+        # 4. 💰 SECTION: FINANCIAL STANDING (Live Data)
+        p.setFillColor(gov_blue); p.rect(40, height-210, width-80, 20, fill=1)
+        p.setFillColor(colors.white); p.drawString(50, height-205, "II. FINANCIAL TREASURY STATUS")
+        
+        fin_data = [
+            ['Category', 'Amount (UGX)'],
+            ['Total Invoiced', f"{fees.total_fees_due:,.0f}"],
+            ['Initial Deposit', f"{student.initial_deposit:,.0f}"],
+            ['Total Paid to Date', f"{fees.total_fees_paid:,.0f}"],
+            ['Current Balance', f"{fees.fees_balance:,.0f}"]
+        ]
+        t = Table(fin_data, colWidths=[200, 200])
+        t.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold')]))
+        t.wrapOn(p, width, height); t.drawOn(p, 50, height-300)
+
+        # 5. 📑 SECTION: RECENT PAYSLIPS / PAYMENTS
+        p.setFillColor(gov_blue); p.drawString(50, height-330, "III. RECENT SETTLEMENT LOG (PAYSLIPS)")
+        pay_rows = [['Receipt #', 'Date', 'Amount', 'Channel']]
+        for pay in payments[:5]: # Show last 5
+            pay_rows.append([pay.receipt_number, pay.timestamp.strftime('%d/%m/%y'), f"{pay.amount:,.0f}", "SchoolPay"])
+        
+        pt = Table(pay_rows, colWidths=[120, 100, 100, 100])
+        pt.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('BACKGROUND', (0,0), (-1,0), colors.whitesmoke)]))
+        pt.wrapOn(p, width, height); pt.drawOn(p, 50, height-430)
+
+        # 6. 📜 SECTION: OFFICIAL DOCUMENT VERIFICATION
+        p.setFillColor(gov_blue); p.rect(40, height-470, width-80, 20, fill=1)
+        p.setFillColor(colors.white); p.drawString(50, height-465, "IV. DOCUMENT VERIFICATION STATUS")
+        
+        p.setFillColor(colors.black); p.setFont("Helvetica", 8)
+        docs = [
+            ("Birth Certificate", student.birth_certificate),
+            ("PLE Result Slip", student.ple_result_slip),
+            ("UCE Result Slip", student.uce_result_slip)
+        ]
+        y_pos = height-495
+        for label, file in docs:
+            status = "✅ VERIFIED & ATTACHED" if file else "❌ PENDING SUBMISSION"
+            p.drawString(50, y_pos, f"{label}: {status}")
+            y_pos -= 15
+
+        # 7. 🛡️ FOOTER STAMP
+        p.setStrokeColor(gov_blue); p.circle(width-100, 80, 40, stroke=1)
+        p.setFont("Helvetica-Bold", 8); p.drawCentredString(width-100, 85, "UNSCCDC")
+        p.drawCentredString(width-100, 75, "OFFICIAL SEAL")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"Dossier Error: {str(e)}")

@@ -124,12 +124,20 @@ class Student(models.Model):
         help_text="Student's SchoolPay PRN"
     )
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
-    api_password = models.CharField(max_length=255, blank=True, help_text="Secret password for API sync")
     stream = models.CharField(max_length=50, default="North")
     account_number = models.CharField(max_length=30, unique=True, editable=False)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
+
+    # 📑 OFFICIAL DOCUMENT VAULT
+    birth_certificate = models.FileField(upload_to='docs/birth/', null=True, blank=True)
+    ple_result_slip = models.FileField(upload_to='docs/ple/', null=True, blank=True)
+    uce_result_slip = models.FileField(upload_to='docs/uce/', null=True, blank=True)
+    admission_letter = models.FileField(upload_to='docs/admission/', null=True, blank=True)
+
+    # 💰 INITIAL COMMITMENT
+    initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     def save(self, *args, **kwargs):
         if not self.account_number:
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
@@ -153,6 +161,7 @@ class Student(models.Model):
             bal = tracker.total_fees_due - tracker.total_fees_paid
             return f"UGX {bal:,.0f}"
         return "UGX 0"
+        
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---
 class SubjectAssignment(models.Model):
