@@ -1,0 +1,79 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    .explorer-container { background: #050505; color: #fff; padding: 25px; border-radius: 20px; border: 1px solid #222; }
+    .sector-badge { background: rgba(212,175,55,0.1); color: #D4AF37; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: bold; }
+    
+    /* 💊 CLASS PILLS */
+    .class-pills { display: flex; flex-wrap: wrap; gap: 10px; margin: 25px 0; }
+    .pill { 
+        text-decoration: none; padding: 10px 25px; border-radius: 50px; font-weight: 900; font-size: 12px;
+        transition: 0.3s; border: 1px solid #333; color: #fff; background: #111;
+    }
+    .pill.active { background: #D4AF37; color: #000; border-color: #D4AF37; box-shadow: 0 5px 15px rgba(212,175,55,0.3); }
+    .pill:hover:not(.active) { border-color: #D4AF37; background: rgba(212,175,55,0.05); }
+
+    /* 📋 THE REGISTRY TABLE */
+    .registry-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 15px; overflow: hidden; }
+    .registry-table th { background: #111; color: #D4AF37; padding: 15px; text-align: left; font-size: 11px; letter-spacing: 1px; }
+    .registry-table td { padding: 15px; border-bottom: 1px solid #222; font-size: 13px; }
+    .registry-table tr:hover { background: rgba(255,255,255,0.02); }
+    
+    .btn-dossier { 
+        color: #D4AF37; border: 1px solid #D4AF37; padding: 6px 12px; border-radius: 8px; 
+        text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.3s;
+    }
+    .btn-dossier:hover { background: #D4AF37; color: #000; }
+</style>
+
+<div class="explorer-container">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 style="color: #D4AF37; font-weight: 900; margin: 0;">{{ school.name|upper }}</h2>
+            <span class="sector-badge">{{ school.sector }} SECTOR</span>
+        </div>
+        <button class="btn btn-outline-warning" onclick="window.print()">🖨️ PRINT CLASS LIST</button>
+    </div>
+
+    <div class="class-pills">
+        {% for c in available_classes %}
+            <a href="?class={{ c }}" class="pill {% if selected_class == c %}active{% endif %}">
+                {{ c }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <table class="registry-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>FULL NAME</th>
+                <th>PRN / ACCESS CODE</th>
+                <th>GENDER</th>
+                <th>STATUS</th>
+                <th style="text-align: right;">ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td style="color: #444;">{{ forloop.counter }}</td>
+                <td style="font-weight: bold;">{{ s.full_name|upper }}</td>
+                <td style="font-family: monospace; color: #00ff00;">{{ s.payment_code }}</td>
+                <td>{{ s.gender }}</td>
+                <td><span style="color: #00ff00; font-size: 10px;">● ACTIVE</span></td>
+                <td style="text-align: right;">
+                    <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-dossier">VIEW DOSSIER</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 100px; text-align: center; color: #444;">
+                    NO STUDENTS REGISTERED IN {{ selected_class }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

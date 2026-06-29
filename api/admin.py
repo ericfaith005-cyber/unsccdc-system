@@ -678,3 +678,12 @@ class FinancialWarRoomAdmin(admin.ModelAdmin):
         })
 
         return super().changelist_view(request, extra_context=extra_context)
+
+from django.shortcuts import redirect
+
+@admin.register(SovereignRegistry)
+class SovereignRegistryAdmin(admin.ModelAdmin):
+    # 💎 THE Hub Hub Hub Hub Hub MAGIC REDIRECT
+    # This ensures that clicking the tab opens the visual explorer
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/explorer/')

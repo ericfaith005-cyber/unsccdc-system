@@ -409,3 +409,9 @@ def imperial_real_time_settlement(sender, instance, created, **kwargs):
         )
         print(f"--- SETTLEMENT ---")
         print(f"Student: {instance.student.full_name} | Amount: {instance.amount} UGX | SYNCED!")
+    
+class SovereignRegistry(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "Sovereign Registry Explorer"
+        verbose_name_plural = "Sovereign Registry Explorer"

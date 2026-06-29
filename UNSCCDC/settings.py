@@ -210,6 +210,7 @@ JAZZMIN_SETTINGS = {
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {
+        "api.SovereignRegistry": "fas fa-shield-alt",
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "api.AcademicResultsCenter": "fas fa-medal",      # THE MASTER HUB
@@ -232,7 +233,8 @@ JAZZMIN_SETTINGS = {
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
         "api.Student", 
-        "api.Staff", 
+        "api.Staff",
+        "api.SovereignRegistry", 
         "api.School", 
         "api.Transaction",
         "api.Parent", 
