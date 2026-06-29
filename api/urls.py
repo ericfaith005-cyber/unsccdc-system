@@ -50,4 +50,5 @@ urlpatterns = [
     path('download-dossier/<str:student_id>/', views.generate_student_dossier, name='download_dossier'),
     # 💎 Points the 'registry' link to our visual dashboard
     path('registry/', views.sovereign_registry_view, name='sovereign_registry'),
+    path('seed-subjects-99/', views.inject_national_subjects),
 ]

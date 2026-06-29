@@ -1924,3 +1924,36 @@ def sovereign_registry_view(request):
     except Exception as e:
         # 🚑 This tells us EXACTLY what the error is instead of just '500'
         return HttpResponse(f"Registry Engine Error: {str(e)}")
+
+@login_required
+def inject_national_subjects(request):
+    """💎 THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MASTER SUBJECT SEED"""
+    if not request.user.is_superuser:
+        return HttpResponse("Unauthorized")
+
+    vocational_subjects = [
+        ('Information & Comm. Technology', 'ICT', 'VOCATIONAL'),
+        ('Tailoring & Fashion Design', 'TAIL', 'VOCATIONAL'),
+        ('Bakery & Cookery', 'BAKE', 'VOCATIONAL'),
+        ('Carpentry & Joinery', 'CARP', 'VOCATIONAL'),
+        ('Bricklaying & Concrete Practice', 'BRIC', 'VOCATIONAL'),
+        ('Art & Design', 'ART', 'VOCATIONAL'),
+        ('Agriculture & Farming', 'AGRI', 'VOCATIONAL'),
+        ('Hairdressing & Beauty', 'HAIR', 'VOCATIONAL'),
+    ]
+
+    academic_subjects = [
+        ('Mathematics', 'MTH', 'CORE'),
+        ('English Language', 'ENG', 'CORE'),
+        ('Physics', 'PHY', 'CORE'),
+        ('Chemistry', 'CHE', 'CORE'),
+        ('Biology', 'BIO', 'CORE'),
+        ('Geography', 'GEO', 'CORE'),
+        ('History', 'HIS', 'CORE'),
+    ]
+
+    # 🚀 Inject into the Registry
+    for name, code, cat in academic_subjects + vocational_subjects:
+        Subject.objects.get_or_create(name=name, defaults={'code': code, 'category': cat})
+
+    return HttpResponse("<h1 style='color:gold; background:black; padding:20px;'>NATIONAL SUBJECTS INJECTED SUCCESSFULLY! 🇺🇬</h1>")

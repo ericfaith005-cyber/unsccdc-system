@@ -74,6 +74,18 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ('name', 'code')
     ordering = ('level', 'name')
 
+    def colored_category(self, obj):
+        # 🎨 Advanced UI: Colors for different categories
+        colors = {
+            'CORE': '#002366', # Navy
+            'VOCATIONAL': '#D4AF37', # Gold
+            'ELECTIVE': '#008080', # Teal
+        }
+        color = colors.get(obj.category, '#666')
+        return mark_safe(f'<b style="color:{color};">{obj.category}</b>')
+    
+    colored_category.short_description = "Classification"
+
     # 🚀 THE MASTER ACTIONS: Populate UNEB/NCDC Curriculum automatically
     actions = ['generate_uce_defaults', 'generate_ple_defaults']
 
