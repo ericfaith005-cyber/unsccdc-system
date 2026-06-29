@@ -289,9 +289,9 @@ if IS_RENDER:
     
     # 🛰️ Render-to-App Handshake
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True # Force HTTPS for National Trust
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = False # Force HTTPS for National Trust
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 else:
     DEBUG = True
     ALLOWED_HOSTS = ['*', '172.24.144.47', 'localhost', '127.0.0.1']
