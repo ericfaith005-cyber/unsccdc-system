@@ -1425,6 +1425,19 @@ def generate_national_report_pdf(request, student_id):
         p = canvas.Canvas(response, pagesize=A4)
         width, height = A4 
 
+        # 🎨 3. NATIONAL PALETTE & BACKGROUND
+        gov_blue = colors.HexColor("#002366")   # Royal Navy
+        rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold
+        off_white = colors.HexColor("#FDFDF5")  # Parchment
+        
+        p.setFillColor(off_white)
+        p.rect(0, 0, width, height, fill=1, stroke=0)
+
+        # 🛡️ 4. TRIPLE-GUARD BORDERS
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(22, 22, width-44, height-44)
+        p.setStrokeColor(colors.HexColor("#D90000")); p.rect(23, 23, width-46, height-46)
+
         # 🎨 5. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub PAINT THE Hub Hub Hub Hub Hub Hub Hub FLOOR
         p.setFillColor(off_white)
         p.rect(0, 0, width, height, fill=1, stroke=0)
@@ -1489,8 +1502,19 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-58, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
         
-        p.setStrokeColor(colors.black); p.rect(width/2-25, height-110, 50, 45)
-        p.setFont("Helvetica-Bold", 7); p.drawCentredString(width/2, height-82, "OFFICIAL"); p.drawCentredString(width/2, height-95, "SEAL")
+       # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
+        if school.logo:
+            try:
+                # Path handles local and server storage automatically
+                p.drawImage(school.logo.path, width/2-35, height-115, width=70, height=70, mask='auto')
+            except:
+                p.setStrokeColor(gov_blue)
+                p.rect(width/2-25, height-115, 50, 50, stroke=1)
+                p.drawCentredString(width/2, height-95, "LOGO")
+        else:
+            p.setStrokeColor(gov_blue)
+            p.rect(width/2-25, height-115, 50, 50, stroke=1)
+            p.drawCentredString(width/2, height-95, "OFFICIAL")
 
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-135, school.name.upper())
@@ -1509,6 +1533,35 @@ def generate_national_report_pdf(request, student_id):
         for m in marks:
             auto_grade = calculate_uce_grade(m.eot_score) 
             data.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", auto_grade, 'STF', get_sub_remark(m.eot_score)])
+        
+        # 🕵️ 6. ELASTIC COLUMN LOGIC
+        # Check if any mark has an AOI score > 0
+        has_aois = any(m.aoi_1 > 0 or m.aoi_2 > 0 for m in marks)
+
+        if has_aois:
+            # 12-Column Modern Mode
+            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
+            col_widths = [45, 20, 20, 25, 20, 20, 25, 25, 30, 25, 30, 160]
+        else:
+            # 8-Column Traditional Mode (AOIs hidden, Subject name gets bigger)
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
+            col_widths = [100, 55, 55, 55, 55, 45, 55, 120]
+
+        data_rows = [headers]
+        for m in marks:
+            # Auto-Grader
+            g = "E"
+            if m.eot_score >= 80: g = "A"
+            elif m.eot_score >= 70: g = "B"
+            elif m.eot_score >= 60: g = "C"
+            elif m.eot_score >= 50: g = "D"
+            
+            rem = "Exceptional" if m.eot_score >= 80 else "Good" if m.eot_score >= 50 else "Incomplete"
+
+            if has_aois:
+                data_rows.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", g, 'STF', rem])
+            else:
+                data_rows.append([m.subject.name.upper(), m.mid_term, m.eot_score, m.project_work, f"{m.eot_score}%", g, 'STF', rem])
 
         table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
         table.setStyle(TableStyle([

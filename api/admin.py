@@ -341,6 +341,12 @@ admin.site.register([
 
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
+    readonly_fields = ('logo_preview',)
+    
+    def logo_preview(self, obj):
+        if obj.logo:
+            return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
+        return "No Logo Uploaded"
     
     # 💎 THE CATEGORIZED TABS (FIELDSETS)
     fieldsets = (

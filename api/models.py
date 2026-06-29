@@ -3,6 +3,8 @@ import random
 import string
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from PIL import Image
+import os
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone  # <--- THE FIX IS HERE!
 
@@ -39,6 +41,7 @@ class School(models.Model):
         ('UNIVERSITY', 'Higher Education (NCHE/CGPA)'),
     ]
     name = models.CharField(max_length=255)
+    logo = models.ImageField(upload_to='logos/', null=True, blank=True)
     sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='SECONDARY')
     # ... rest of your fields
     school_type = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='SEC')
@@ -46,6 +49,17 @@ class School(models.Model):
     SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]
     school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
     
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.logo:
+            # 🛡️ THE Hub Hub Hub Hub AUTO-FORMATTER
+            img = Image.open(self.logo.path)
+            # Resize to high-res standard (300x300) while keeping quality
+            if img.height > 300 or img.width > 300:
+                output_size = (300, 300)
+                img.thumbnail(output_size, Image.LANCZOS)
+                img.save(self.logo.path, quality=95)
+                
     # 💎 THE BRAIN: Automatically decides the National Grading Scale
     @property
     def grading_standard(self):
