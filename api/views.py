@@ -1607,7 +1607,7 @@ def generate_national_report_pdf(request, student_id):
         # =============================================================
         p.setFont("Helvetica-Bold", 8)
         p.setFillColor(gov_blue)
-        p.drawString(50, height - 565, "OFFICIAL ADMINISTRATIVE REMARKS:")
+        p.drawString(50, height - 530, "OFFICIAL ADMINISTRATIVE REMARKS:")
 
         # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
         p.setStrokeColor(colors.grey)
@@ -1617,14 +1617,14 @@ def generate_national_report_pdf(request, student_id):
         # A. Class Teacher Remarks
         p.setFillColor(colors.black)
         p.setFont("Helvetica-Bold", 7.5)
-        p.drawString(60, height - 595, "CLASS TEACHER:")
+        p.drawString(60, height - 560, "CLASS TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
         class_remark = get_teacher_comment(overall_avg)
         p.drawString(135, height - 595, f'"{class_remark}"')
 
         # B. Headteacher Remarks
         p.setFont("Helvetica-Bold", 7.5)
-        p.drawString(60, height - 620, "HEAD TEACHER:")
+        p.drawString(60, height - 585, "HEAD TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
         ht_remark = "Exceptional discipline. Highly recommended for National progressive placement." if overall_avg >= 75 else "Steady progress observed. Needs consistent focus in project-based assessments."
         p.drawString(135, height - 620, f'"{ht_remark}"')
@@ -1700,7 +1700,7 @@ def generate_national_report_pdf(request, student_id):
         # We use a bright, aggressive Red for high-visibility
         p.setFillColor(colors.HexColor("#FF0000")) # 🔴 PERFECT RED
         p.setFont("Helvetica-Bold", 8)
-        p.drawString(425, height - 605, "NATIONAL PRN (PAYMENT CODE)")
+        p.drawString(425, height - 605, "PAYMENT CODE")
         p.setFont("Helvetica-Bold", 14) # 💎 Large font so parents can't miss it!
         p.drawString(385, height - 625, f"{student.payment_code or 'N/A'}")
 
