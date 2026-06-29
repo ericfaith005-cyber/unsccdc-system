@@ -46,7 +46,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     "https://unsccdc-system.onrender.com",
-    "https://unsccdc-hub.onrender.com",
+    "https://*.onrender.com",
     "https://schoolapp-lac.vercel.app", # 💎 TRUST YOUR SPECIFIC APP
 ]
 CORS_ALLOW_HEADERS = [
