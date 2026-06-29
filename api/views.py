@@ -1386,6 +1386,7 @@ from django.db.models import Avg
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
+from .models import FeesTracker
 from reportlab.platypus import Table, TableStyle
 from .models import Student, AcademicResult
 
@@ -1404,6 +1405,11 @@ def generate_national_report_pdf(request, student_id):
     try:
         # 🔑 2. Hub Hub Hub Hub Hub Hub IDENTITY GATE
         student = Student.objects.get(account_number=student_id)
+        fees, _ = FeesTracker.objects.get_or_create(student=student)
+        
+        amt_to_be_paid = fees.total_fees_due
+        total_paid = fees.total_fees_paid
+        balance = fees.fees_balance
         marks = student.marks.all() 
         school = student.school
 
@@ -1519,7 +1525,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-135, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-160, "NATIONAL HUB SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-160, "NATIONA SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFont("Helvetica-Bold", 9)
@@ -1654,6 +1660,44 @@ def generate_national_report_pdf(request, student_id):
         # =============================================================
         p.setStrokeColor(gov_blue)
         p.setLineWidth(0.8)
+
+        # =============================================================
+        # 💰 --- SECTION 13.5: Hub Hub Hub NATIONAL TREASURY STANDING ---
+        # =============================================================
+        # 🛡️ Draw a prestigious "Gold-Edged" Financial Box
+        p.setStrokeColor(rich_gold)
+        p.setLineWidth(1.5)
+        p.setFillColor(colors.HexColor("#002366")) # Royal Navy
+        p.rect(50, height - 730, width - 100, 45, fill=1) # The background bar
+
+        # ✍️ Insert the Real Shillings
+        p.setFillColor(colors.white)
+        p.setFont("Helvetica-Bold", 8)
+        
+        # Column 1: Total Due
+        p.drawString(65, height - 705, "AMOUNT TO BE PAID")
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(65, height - 720, f"UGX {amt_to_be_paid:,.0f}")
+
+        # Column 2: Total Paid
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(235, height - 705, "TOTAL PAID")
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(235, height - 720, f"UGX {total_paid:,.0f}")
+
+        # Column 3: Balance (In Red/White for visibility)
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(410, height - 705, "OUTSTANDING BALANCE")
+        p.setFont("Helvetica-Bold", 11)
+        # If balance is 0, show green, otherwise show white/red
+        if balance <= 0:
+            p.setFillColor(colors.greenaccent) 
+        p.drawString(410, height - 720, f"UGX {balance:,.0f}")
+
+        # 📄 Security Note under the bar
+        p.setFillColor(colors.black)
+        p.setFont("Helvetica-Oblique", 7)
+        p.drawString(50, height - 742, f"Financial records are synced with SchoolPay and the National Registry as of {datetime.date.today().strftime('%d %B, %Y')}")
         
         # Left Signature
         p.line(50, height - 785, 200, height - 785)
