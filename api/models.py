@@ -59,7 +59,7 @@ class School(models.Model):
                 output_size = (300, 300)
                 img.thumbnail(output_size, Image.LANCZOS)
                 img.save(self.logo.path, quality=95)
-                
+
     # 💎 THE BRAIN: Automatically decides the National Grading Scale
     @property
     def grading_standard(self):
@@ -301,8 +301,18 @@ class AttendanceHub(Attendance):
         verbose_name_plural = "✅ MARK DAILY ATTENDANCE"
 
 class FeesTracker(models.Model):
-    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='fees'); total_fees_due = models.IntegerField(default=0); total_fees_paid = models.IntegerField(default=0)
+    student = models.OneToOneField('Student', on_delete=models.CASCADE, related_name='fees_tracker')
+    total_fees_due = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_fees_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # 💎 THE Hub Hub Hub Hub Hub AUTOMATIC BALANCE FORMULA
+    @property
+    def fees_balance(self):
+        return self.total_fees_due - self.total_fees_paid
+
+    def __str__(self):
+        return f"{self.student.full_name} - Balance: {self.fees_balance}"
+    
 class StaffPayroll(models.Model):
     staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name='payrolls')
     month = models.CharField(max_length=30)
