@@ -9,6 +9,7 @@ from django.db.models import Sum, Avg, Count
 from django.db import connection 
 from datetime import timedelta
 from .models import *
+from .models import SovereignRegistry
 
 
 def dossier_button(obj):
@@ -681,9 +682,14 @@ class FinancialWarRoomAdmin(admin.ModelAdmin):
 
 from django.shortcuts import redirect
 
+from .models import SovereignRegistry # 💎 Make sure you import it!
+
 @admin.register(SovereignRegistry)
 class SovereignRegistryAdmin(admin.ModelAdmin):
-    # 💎 THE Hub Hub Hub Hub Hub MAGIC REDIRECT
-    # This ensures that clicking the tab opens the visual explorer
+    # This is the "Magic Trick"
     def changelist_view(self, request, extra_context=None):
-        return redirect('/api/explorer/')
+        return redirect('/api/registry/') # 💎 Make sure this matches your URL name!
+
+    # 🛡️ Give it a dummy field so Django doesn't complain
+    def has_add_permission(self, request): return False
+    def has_delete_permission(self, request, obj=None): return False
