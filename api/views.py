@@ -1691,7 +1691,11 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 11)
         # If balance is 0, show green, otherwise show white/red
         if balance <= 0:
-            p.setFillColor(colors.greenaccent) 
+            
+            p.setFillColor(colors.HexColor("#00FF00")) 
+        else:
+            p.setFillColor(colors.white)
+            
         p.drawString(410, height - 720, f"UGX {balance:,.0f}")
 
         # 📄 Security Note under the bar
