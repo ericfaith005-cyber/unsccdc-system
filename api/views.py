@@ -1525,7 +1525,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-135, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-160, "NATIONA SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-160, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFont("Helvetica-Bold", 9)
@@ -1662,47 +1662,52 @@ def generate_national_report_pdf(request, student_id):
         p.setLineWidth(0.8)
 
         # =============================================================
-        # 💰 --- SECTION 13.5: Hub Hub Hub NATIONAL TREASURY STANDING ---
+        # 💰 --- SECTION 13.5: Hub Hub Hub NATIONAL TREASURY STANDING (REFINED) ---
         # =============================================================
-        # 🛡️ Draw a prestigious "Gold-Edged" Financial Box
+        # 🛡️ 1. Draw the Royal Navy Background Bar
         p.setStrokeColor(rich_gold)
         p.setLineWidth(1.5)
-        p.setFillColor(colors.HexColor("#002366")) # Royal Navy
-        p.rect(50, height - 730, width - 100, 45, fill=1) # The background bar
+        p.setFillColor(gov_blue) 
+        p.rect(45, height - 730, width - 90, 50, fill=1) # Widened slightly
 
-        # ✍️ Insert the Real Shillings
+        # ✍️ 2. Insert the Real Shillings & National PRN
         p.setFillColor(colors.white)
-        p.setFont("Helvetica-Bold", 8)
         
         # Column 1: Total Due
-        p.drawString(65, height - 705, "AMOUNT TO BE PAID")
+        p.setFont("Helvetica-Bold", 7)
+        p.drawString(55, height - 700, "TOTAL BILLED")
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(65, height - 720, f"UGX {amt_to_be_paid:,.0f}")
+        p.drawString(55, height - 715, f"{amt_to_be_paid:,.0f}")
 
         # Column 2: Total Paid
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(235, height - 705, "TOTAL PAID")
+        p.setFont("Helvetica-Bold", 7)
+        p.drawString(165, height - 700, "TOTAL PAID")
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(235, height - 720, f"UGX {total_paid:,.0f}")
+        p.drawString(165, height - 715, f"{total_paid:,.0f}")
 
-        # Column 3: Balance (In Red/White for visibility)
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(410, height - 705, "OUTSTANDING BALANCE")
+        # Column 3: Balance
+        p.setFont("Helvetica-Bold", 7)
+        p.drawString(285, height - 700, "OUTSTANDING BAL")
         p.setFont("Helvetica-Bold", 11)
-        # If balance is 0, show green, otherwise show white/red
         if balance <= 0:
-            
-            p.setFillColor(colors.HexColor("#00FF00")) 
+            p.setFillColor(colors.HexColor("#00FF00")) # Success Green
+            p.drawString(285, height - 715, "CLEARED")
         else:
             p.setFillColor(colors.white)
-            
-        p.drawString(410, height - 720, f"UGX {balance:,.0f}")
+            p.drawString(285, height - 715, f"{balance:,.0f}")
 
-        # 📄 Security Note under the bar
+        # 🔥 Column 4: THE Hub Hub NATIONAL PRN (THE KEY)
+        # We use a bright, aggressive Red for high-visibility
+        p.setFillColor(colors.HexColor("#FF0000")) # 🔴 PERFECT RED
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(425, height - 700, "NATIONAL PRN (PAYMENT CODE)")
+        p.setFont("Helvetica-Bold", 14) # 💎 Large font so parents can't miss it!
+        p.drawString(425, height - 718, f"{student.payment_code or 'N/A'}")
+
+        # 📄 3. Security Footer under the bar
         p.setFillColor(colors.black)
         p.setFont("Helvetica-Oblique", 7)
-        p.drawString(50, height - 742, f"Financial records are synced with SchoolPay and the National Registry as of {datetime.date.today().strftime('%d %B, %Y')}")
-        
+        p.drawString(50, height - 745, f"Payment status is live. Reference the Red PRN code for all Bank/Mobile Money settlements.")
         # Left Signature
         p.line(50, height - 785, 200, height - 785)
         p.setFont("Helvetica-Bold", 7)
