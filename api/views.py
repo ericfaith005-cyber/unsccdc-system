@@ -1637,7 +1637,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(50, height - 660, "CERTIFICATION STATUS:")
         p.setFont("Helvetica", 7)
         p.drawString(60, height - 672, f"• Result 1: Qualifies for UCE certificate. (Student achieved overall average of {overall_avg:.1f}%)")
-        p.drawString(60, height - 682, "• Result 2: Successfully completed National Project Assessment requirements.")
+        
         
         # 📊 National Standing & PRN Bar (Clean Horizontal Alignment)
         p.setStrokeColor(rich_gold)
@@ -1700,7 +1700,7 @@ def generate_national_report_pdf(request, student_id):
         # We use a bright, aggressive Red for high-visibility
         p.setFillColor(colors.HexColor("#FF0000")) # 🔴 PERFECT RED
         p.setFont("Helvetica-Bold", 8)
-        p.drawString(425, height - 700, "NATIONAL PRN (PAYMENT CODE)")
+        p.drawString(425, height - 700, "PAYMENT CODE")
         p.setFont("Helvetica-Bold", 14) # 💎 Large font so parents can't miss it!
         p.drawString(425, height - 718, f"{student.payment_code or 'N/A'}")
 
