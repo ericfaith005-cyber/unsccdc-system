@@ -413,5 +413,6 @@ def imperial_real_time_settlement(sender, instance, created, **kwargs):
 class SovereignRegistry(Student):
     class Meta:
         proxy = True
-        verbose_name = "Sovereign Registry Explorer"
-        verbose_name_plural = "Sovereign Registry Explorer"
+        # 💎 THE ONE TRUE NAME
+        verbose_name = "Sovereign National Registry"
+        verbose_name_plural = "Sovereign National Registry"

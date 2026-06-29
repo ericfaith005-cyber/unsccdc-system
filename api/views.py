@@ -1791,27 +1791,39 @@ def generate_student_dossier(request, student_id):
 
 @login_required
 def sovereign_registry_view(request):
-    school = getattr(request.user, 'school', None)
-    if not school:
-        return HttpResponse("Unauthorized.")
+    try:
+        # 1. 🛡️ Safe School Fetching
+        # We check if the user has a school attribute, otherwise we grab the first school in the DB
+        school = getattr(request.user, 'school', None)
+        if not school:
+            school = School.objects.first() # Fallback for Superadmins
+        
+        if not school:
+            return HttpResponse("Error: No schools found in the system. Please create a school in the Admin first.")
 
-    # 🧠 Logic that switches P.1, S.1, Year 1 based on school
-    class_map = {
-        'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
-        'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
-        'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
-    }
-    
-    available_classes = class_map.get(school.sector, ['General'])
-    selected_class = request.GET.get('class', available_classes[0])
-    
-    # 🕵️ ALPHABETICAL A-Z REGISTRY
-    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+        # 2. 🧠 Dynamic Sector Logic (P.1 vs S.1)
+        class_map = {
+            'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+            'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+            'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+        }
+        
+        # Get sector (default to SECONDARY if not set)
+        sector = getattr(school, 'sector', 'SECONDARY')
+        available_classes = class_map.get(sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
+        
+        selected_class = request.GET.get('class', available_classes[0])
+        
+        # 🕵️ Fetch Students (Filtered by School and Class)
+        students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
 
-    return render(request, 'admin/sovereign_registry.html', {
-        'students': students,
-        'available_classes': available_classes,
-        'selected_class': selected_class,
-        'school': school,
-        'title': "SOVEREIGN NATIONAL REGISTRY"
-    })
+        return render(request, 'admin/sovereign_registry.html', {
+            'students': students,
+            'available_classes': available_classes,
+            'selected_class': selected_class,
+            'school': school,
+            'title': "SOVEREIGN NATIONAL REGISTRY"
+        })
+    except Exception as e:
+        # 🚑 This tells us EXACTLY what the error is instead of just '500'
+        return HttpResponse(f"Registry Engine Error: {str(e)}")
