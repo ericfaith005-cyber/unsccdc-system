@@ -1668,41 +1668,41 @@ def generate_national_report_pdf(request, student_id):
         p.setStrokeColor(rich_gold)
         p.setLineWidth(1.5)
         p.setFillColor(gov_blue) 
-        p.rect(45, height - 730, width - 90, 50, fill=1) # Widened slightly
+        p.rect(45, height - 640, width - 90, 50, fill=1, stroke=0) # Widened slightly
 
         # ✍️ 2. Insert the Real Shillings & National PRN
         p.setFillColor(colors.white)
         
         # Column 1: Total Due
         p.setFont("Helvetica-Bold", 7)
-        p.drawString(55, height - 700, "TOTAL BILLED")
+        p.drawString(55, height - 605, "TOTAL BILLED")
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(55, height - 715, f"{amt_to_be_paid:,.0f}")
+        p.drawString(55, height - 625, f"{amt_to_be_paid:,.0f}")
 
         # Column 2: Total Paid
         p.setFont("Helvetica-Bold", 7)
-        p.drawString(165, height - 700, "TOTAL PAID")
+        p.drawString(165, height - 605, "TOTAL PAID")
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(165, height - 715, f"{total_paid:,.0f}")
+        p.drawString(165, height - 625, f"{total_paid:,.0f}")
 
         # Column 3: Balance
         p.setFont("Helvetica-Bold", 7)
-        p.drawString(285, height - 700, "OUTSTANDING BAL")
+        p.drawString(285, height - 605, "OUTSTANDING BAL")
         p.setFont("Helvetica-Bold", 11)
         if balance <= 0:
             p.setFillColor(colors.HexColor("#00FF00")) # Success Green
-            p.drawString(285, height - 715, "CLEARED")
+            p.drawString(275, height - 625, "CLEARED")
         else:
             p.setFillColor(colors.white)
-            p.drawString(285, height - 715, f"{balance:,.0f}")
+            p.drawString(275, height - 625, f"{balance:,.0f}")
 
         # 🔥 Column 4: THE Hub Hub NATIONAL PRN (THE KEY)
         # We use a bright, aggressive Red for high-visibility
         p.setFillColor(colors.HexColor("#FF0000")) # 🔴 PERFECT RED
         p.setFont("Helvetica-Bold", 8)
-        p.drawString(425, height - 700, "NATIONAL PRN (PAYMENT CODE)")
+        p.drawString(425, height - 605, "NATIONAL PRN (PAYMENT CODE)")
         p.setFont("Helvetica-Bold", 14) # 💎 Large font so parents can't miss it!
-        p.drawString(425, height - 718, f"{student.payment_code or 'N/A'}")
+        p.drawString(385, height - 625, f"{student.payment_code or 'N/A'}")
 
         # 📄 3. Security Footer under the bar
         p.setFillColor(colors.black)
