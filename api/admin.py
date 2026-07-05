@@ -712,14 +712,23 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
 
+from .models import DataIngestionVault # 💎 Make sure this is imported!
+
 @admin.register(DataIngestionVault)
 class DataIngestionAdmin(admin.ModelAdmin):
     list_display = ('school', 'timestamp', 'processed', 'process_button')
-
+    list_filter = ('processed', 'school')
+    
+    # 💎 THE Hub Hub Hub Hub Hub Hub Hub PROCESS BUTTON
     def process_button(self, obj):
         if not obj.processed:
             url = f"/api/process-pdf/{obj.id}/"
-            return mark_safe(f'<a href="{url}" style="background:#D4AF37; color:black; padding:5px 10px; border-radius:5px; font-weight:bold;">⚡ RUN INGESTION</a>')
-        return "✅ COMPLETED"
+            return mark_safe(f'''
+                <a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; 
+                border-radius:10px; font-weight:900; text-decoration:none; border:1px solid #000;">
+                ⚡ RUN INGESTION
+                </a>
+            ''')
+        return mark_safe('<b style="color:green;">✅ COMPLETED</b>')
     
-    process_button.short_description = "Action"
+    process_button.short_description = "National Action"

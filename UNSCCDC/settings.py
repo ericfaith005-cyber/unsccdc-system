@@ -210,6 +210,7 @@ JAZZMIN_SETTINGS = {
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {
+        "api.DataIngestionVault": "fas fa-file-upload", 
         "api.SovereignRegistry": "fas fa-shield-alt",
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
@@ -230,6 +231,7 @@ JAZZMIN_SETTINGS = {
     
     # SIDEBAR PRIORITY ORDER
     "order_with_respect_to": [
+        "api.DataIngestionVault",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
         "api.Student", 
