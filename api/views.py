@@ -1967,15 +1967,13 @@ def inject_national_subjects(request):
 
     return HttpResponse("<h1 style='color:gold; background:black; padding:20px;'>NATIONAL SUBJECTS INJECTED SUCCESSFULLY! 🇺🇬</h1>")
 
-import pdfplumber
+import pdfplumber # 💎 Ensure 'pip install pdfplumber' is done
 from django.db import transaction
-from .models import Student, Parent, School
 
 @login_required
 def process_national_pdf(request, vault_id):
     vault = get_object_or_404(DataIngestionVault, id=vault_id)
     school = vault.school
-    
     count = 0
     try:
         with pdfplumber.open(vault.uploaded_pdf.path) as pdf:
@@ -1983,32 +1981,30 @@ def process_national_pdf(request, vault_id):
                 table = page.extract_table()
                 if not table: continue
                 
-                # We skip the first row if it's a header (Name, PRN, etc.)
+                # row[0]=Name, row[1]=PRN, row[2]=Class, row[3]=Stream, row[4]=Parent, row[5]=Phone
                 for row in table[1:]: 
-                    # row[0]=Name, row[1]=PRN, row[2]=Class, row[3]=Parent, row[4]=Phone
+                    if not row[1]: continue # Skip if PRN is empty
                     with transaction.atomic():
-                        # 1. Create or Find the Parent
+                        # A. Create/Find Parent
                         parent_obj, _ = Parent.objects.get_or_create(
-                            phone_number=row[4],
-                            defaults={'full_name': row[3], 'secure_pin': '123456'} # Default PIN
+                            phone_number=row[5],
+                            defaults={'full_name': row[4], 'secure_pin': '123456'}
                         )
-                        
-                        # 2. Create the Student
+                        # B. Create/Update Student
                         Student.objects.update_or_create(
-                            payment_code=row[1], # PRN is unique
+                            payment_code=row[1],
                             defaults={
                                 'full_name': row[0],
                                 'current_class': row[2],
+                                'stream': row[3] or 'NORTH',
                                 'school': school,
                                 'parent_link': parent_obj,
                                 'is_active': True
                             }
                         )
                         count += 1
-        
         vault.processed = True
         vault.save()
-        return HttpResponse(f"<h1 style='color:gold; background:black; padding:20px;'>SUCCESS: {count} National Students Integrated!</h1>")
-    
+        return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;'><h1>SUCCESS: {count} Students Integrated!</h1><a href='/admin/'>Back to Office</a></body>")
     except Exception as e:
         return HttpResponse(f"Ingestion Error: {str(e)}")
