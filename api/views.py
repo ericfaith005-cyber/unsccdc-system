@@ -1966,3 +1966,49 @@ def inject_national_subjects(request):
         Subject.objects.get_or_create(name=name, defaults={'code': code, 'category': cat})
 
     return HttpResponse("<h1 style='color:gold; background:black; padding:20px;'>NATIONAL SUBJECTS INJECTED SUCCESSFULLY! 🇺🇬</h1>")
+
+import pdfplumber
+from django.db import transaction
+from .models import Student, Parent, School
+
+@login_required
+def process_national_pdf(request, vault_id):
+    vault = get_object_or_404(DataIngestionVault, id=vault_id)
+    school = vault.school
+    
+    count = 0
+    try:
+        with pdfplumber.open(vault.uploaded_pdf.path) as pdf:
+            for page in pdf.pages:
+                table = page.extract_table()
+                if not table: continue
+                
+                # We skip the first row if it's a header (Name, PRN, etc.)
+                for row in table[1:]: 
+                    # row[0]=Name, row[1]=PRN, row[2]=Class, row[3]=Parent, row[4]=Phone
+                    with transaction.atomic():
+                        # 1. Create or Find the Parent
+                        parent_obj, _ = Parent.objects.get_or_create(
+                            phone_number=row[4],
+                            defaults={'full_name': row[3], 'secure_pin': '123456'} # Default PIN
+                        )
+                        
+                        # 2. Create the Student
+                        Student.objects.update_or_create(
+                            payment_code=row[1], # PRN is unique
+                            defaults={
+                                'full_name': row[0],
+                                'current_class': row[2],
+                                'school': school,
+                                'parent_link': parent_obj,
+                                'is_active': True
+                            }
+                        )
+                        count += 1
+        
+        vault.processed = True
+        vault.save()
+        return HttpResponse(f"<h1 style='color:gold; background:black; padding:20px;'>SUCCESS: {count} National Students Integrated!</h1>")
+    
+    except Exception as e:
+        return HttpResponse(f"Ingestion Error: {str(e)}")

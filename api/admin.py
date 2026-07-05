@@ -711,3 +711,15 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     # 🛡️ Give it a dummy field so Django doesn't complain
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
+
+@admin.register(DataIngestionVault)
+class DataIngestionAdmin(admin.ModelAdmin):
+    list_display = ('school', 'timestamp', 'processed', 'process_button')
+
+    def process_button(self, obj):
+        if not obj.processed:
+            url = f"/api/process-pdf/{obj.id}/"
+            return mark_safe(f'<a href="{url}" style="background:#D4AF37; color:black; padding:5px 10px; border-radius:5px; font-weight:bold;">⚡ RUN INGESTION</a>')
+        return "✅ COMPLETED"
+    
+    process_button.short_description = "Action"
