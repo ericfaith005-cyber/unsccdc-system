@@ -51,6 +51,4 @@ urlpatterns = [
     # 💎 Points the 'registry' link to our visual dashboard
     path('registry/', views.sovereign_registry_view, name='sovereign_registry'),
     path('seed-subjects-99/', views.inject_national_subjects),
-    path('process-pdf/<int:vault_id>/', views.process_national_pdf, name='process_pdf'),
-    path('registry/', views.sovereign_registry_view, name='sovereign_registry'),
 ]
