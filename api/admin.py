@@ -698,20 +698,13 @@ class FinancialWarRoomAdmin(admin.ModelAdmin):
 
         return super().changelist_view(request, extra_context=extra_context)
 
-from django.shortcuts import redirect
-
-# 💎 ADD THESE TO YOUR ADMIN.PY
 @admin.register(DataIngestionVault)
 class DataIngestionAdmin(admin.ModelAdmin):
-    list_display = ('school', 'timestamp', 'processed', 'run_btn')
-    def run_btn(self, obj):
+    list_display = ('school', 'timestamp', 'total_records', 'processed', 'run_button')
+    
+    def run_button(self, obj):
         if not obj.processed:
-            return mark_safe(f'<a href="/api/process-pdf/{obj.id}/" style="background:gold;color:black;padding:5px 10px;font-weight:bold;border-radius:5px;">⚡ RUN INGESTION</a>')
-        return "✅ PROCESSED"
-    run_btn.short_description = "Action"
-
-@admin.register(SovereignRegistry)
-class SovereignRegistryAdmin(admin.ModelAdmin):
-    # This forces the tab to open our custom visual explorer
-    def changelist_view(self, request, extra_context=None):
-        return redirect('/api/registry/')
+            return mark_safe(f'<a href="/api/process-pdf/{obj.id}/" style="background:gold;color:black;padding:7px 15px;font-weight:900;border-radius:10px;text-decoration:none;">⚡ RUN AUTO-ARRANGE</a>')
+        return mark_safe("<b style='color:green;'>✅ COMPLETED</b>")
+    
+    run_button.short_description = "National Action"

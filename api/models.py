@@ -440,20 +440,14 @@ class SovereignRegistry(Student):
         # 💎 THE ONE TRUE NAME
         verbose_name = "Sovereign National Registry"
         verbose_name_plural = "Sovereign National Registry"
-# 📂 1. THE DATA INGESTION ENGINE
+
 class DataIngestionVault(models.Model):
     school = models.ForeignKey('School', on_delete=models.CASCADE)
     uploaded_pdf = models.FileField(upload_to='ingestion/pdfs/')
     processed = models.BooleanField(default=False)
+    total_records = models.IntegerField(default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "1. Upload National PDF"
-        verbose_name_plural = "1. Upload National PDF"
-
-# 🛡️ 2. THE REGISTRY EXPLORER TAB (Proxy)
-class SovereignRegistry(Student):
-    class Meta:
-        proxy = True
-        verbose_name = "2. Sovereign National Registry"
-        verbose_name_plural = "2. Sovereign National Registry"
+        verbose_name = "1. National Data Ingestion"
+        verbose_name_plural = "1. National Data Ingestion"

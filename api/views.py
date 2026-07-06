@@ -1967,44 +1967,61 @@ def inject_national_subjects(request):
 
     return HttpResponse("<h1 style='color:gold; background:black; padding:20px;'>NATIONAL SUBJECTS INJECTED SUCCESSFULLY! 🇺🇬</h1>")
 
-import pdfplumber # 💎 Ensure 'pip install pdfplumber' is done
+import pdfplumber
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from .models import Student, Parent, School, DataIngestionVault
 
 @login_required
 def process_national_pdf(request, vault_id):
     vault = get_object_or_404(DataIngestionVault, id=vault_id)
     school = vault.school
     count = 0
+    
     try:
         with pdfplumber.open(vault.uploaded_pdf.path) as pdf:
             for page in pdf.pages:
                 table = page.extract_table()
                 if not table: continue
                 
-                # row[0]=Name, row[1]=PRN, row[2]=Class, row[3]=Stream, row[4]=Parent, row[5]=Phone
-                for row in table[1:]: 
-                    if not row[1]: continue # Skip if PRN is empty
+                # 🧠 THE Hub Hub Hub AUTO-ARRANGER LOGIC
+                # Assumption: Column 0:Name, 1:PRN, 2:Class, 3:Stream, 4:Parent, 5:Phone
+                for row in table[1:]: # Skip header
+                    if not row[0] or not row[1]: continue # Skip empty rows
+                    
                     with transaction.atomic():
-                        # A. Create/Find Parent
+                        # 1. CLEAN & ARRANGE DATA
+                        s_name = str(row[0]).strip().upper()
+                        s_prn  = str(row[1]).strip().upper()
+                        s_class = str(row[2]).strip().upper()
+                        s_stream = str(row[3]).strip().upper() if row[3] else "NORTH"
+                        p_name = str(row[4]).strip()
+                        p_phone = str(row[5]).strip()
+
+                        # 2. WELD THE PARENT (Find by phone or create new)
                         parent_obj, _ = Parent.objects.get_or_create(
-                            phone_number=row[5],
-                            defaults={'full_name': row[4], 'secure_pin': '123456'}
+                            phone_number=p_phone,
+                            defaults={'full_name': p_name, 'secure_pin': '123456'}
                         )
-                        # B. Create/Update Student
+
+                        # 3. WELD THE STUDENT TO THE CLASS & PARENT
                         Student.objects.update_or_create(
-                            payment_code=row[1],
+                            payment_code=s_prn,
                             defaults={
-                                'full_name': row[0],
-                                'current_class': row[2],
-                                'stream': row[3] or 'NORTH',
+                                'full_name': s_name,
+                                'current_class': s_class,
+                                'stream': s_stream,
                                 'school': school,
                                 'parent_link': parent_obj,
                                 'is_active': True
                             }
                         )
                         count += 1
+        
         vault.processed = True
+        vault.total_records = count
         vault.save()
-        return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;'><h1>SUCCESS: {count} Students Integrated!</h1><a href='/admin/'>Back to Office</a></body>")
+        return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;font-family:sans-serif;text-align:center;'><h1>PROCESSED SUCCESSFULLY!</h1><p style='color:white;'>{count} National Students have been arranged and set in the registry.</p><a href='/admin/api/dataingestionvault/' style='color:gold;'>Return to Office</a></body>")
+    
     except Exception as e:
         return HttpResponse(f"Ingestion Error: {str(e)}")
