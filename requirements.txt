@@ -11,3 +11,4 @@ reportlab
 africastalking
 pdfplumber
 pandas
+python-docx
