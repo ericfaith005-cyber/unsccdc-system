@@ -104,6 +104,7 @@ class School(models.Model):
 
     def __str__(self): return self.name
 
+
 # --- 🏛️ SURGERY: NATIONAL CURRICULUM REGISTRY ---
 
 class Subject(models.Model):
@@ -138,15 +139,8 @@ class Student(models.Model):
     full_name = models.CharField(max_length=255)
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')], default='M')
     age = models.IntegerField(default=15)
-    current_class = models.CharField(max_length=50)
-    # 💎 THE CORE FIX: This field MUST exist here for the Admin to see it!
-    payment_code = models.CharField(
-        max_length=100, 
-        unique=True, 
-        null=True, 
-        blank=True, 
-        help_text="Student's SchoolPay PRN"
-    )
+    current_class = models.CharField(max_length=50) # e.g., "S.1", "P.7"
+    payment_code = models.CharField(max_length=100, unique=True, null=True, blank=True, help_text="Student's SchoolPay PRN")
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     stream = models.CharField(max_length=50, default="North")
     account_number = models.CharField(max_length=30, unique=True, editable=False)
@@ -154,27 +148,26 @@ class Student(models.Model):
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
 
-    # 📑 OFFICIAL DOCUMENT VAULT
+    # OFFICIAL DOCUMENT VAULT
     birth_certificate = models.FileField(upload_to='docs/birth/', null=True, blank=True)
     ple_result_slip = models.FileField(upload_to='docs/ple/', null=True, blank=True)
     uce_result_slip = models.FileField(upload_to='docs/uce/', null=True, blank=True)
     admission_letter = models.FileField(upload_to='docs/admission/', null=True, blank=True)
 
-    # 💰 INITIAL COMMITMENT
+    # INITIAL COMMITMENT
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
-
-    def __str__(self):
-        return self.full_name
     
     def save(self, *args, **kwargs):
         if not self.account_number:
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
         super().save(*args, **kwargs)
-    def __str__(self): return self.full_name
+
+    def __str__(self): 
+        return self.full_name
+
     @property
     def national_category(self):
-        """🕵️ THE BRAIN: Determines if child is PRI, UCE, or UACE"""
         c = str(self.current_class).upper()
         if c.startswith('P'): return 'PRIMARY'
         if c in ['S.1', 'S.2', 'S.3', 'S.4']: return 'O-LEVEL'
@@ -183,7 +176,6 @@ class Student(models.Model):
     
     @property
     def fees_balance(self):
-        # 🧮 Helper to show balance on the slip
         from .models import FeesTracker
         tracker = FeesTracker.objects.filter(student=self).first()
         if tracker:

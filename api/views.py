@@ -1966,3 +1966,65 @@ def inject_national_subjects(request):
         Subject.objects.get_or_create(name=name, defaults={'code': code, 'category': cat})
 
     return HttpResponse("<h1 style='color:gold; background:black; padding:20px;'>NATIONAL SUBJECTS INJECTED SUCCESSFULLY! 🇺🇬</h1>")
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+from api.models import Student, School
+from .utils import auto_arrange_pdf_data
+import pandas as pd
+from docx import Document
+
+def upload_uneb_roster(request, school_id):
+    if request.method == "POST" and request.FILES.get("pdf_document"):
+        uploaded_pdf = request.FILES["pdf_document"]
+        auto_arrange_pdf_data(uploaded_pdf, school_id)
+        return redirect('student_roster_dashboard', school_id=school_id)
+        
+    return render(request, 'upload.html', {'school_id': school_id})
+
+def export_styled_layout(request, school_id, layout_format):
+    students = Student.objects.filter(school_id=school_id).order_by('current_class', 'stream', 'full_name')
+    school_obj = School.objects.get(id=school_id)
+
+    # 📊 Layout Choice 1: Microsoft Excel Template
+    if layout_format == "excel":
+        dataset = []
+        for s in students:
+            dataset.append([s.account_number, s.payment_code, s.full_name, s.current_class, s.stream, s.gender, s.fees_balance])
+            
+        columns = ["System ID", "SchoolPay PRN", "Full Student Name", "Class", "Stream", "Gender", "Current Balance"]
+        df = pd.DataFrame(dataset, columns=columns)
+        
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{school_obj.name}_Roster.xlsx"'
+        df.to_excel(response, index=False)
+        return response
+
+    # 📝 Layout Choice 2: Microsoft Word Structured Table
+    elif layout_format == "word":
+        doc = Document()
+        doc.add_heading(f'{school_obj.name} - Sorted Registry', level=1)
+        doc.add_paragraph(f"Motto: {school_obj.school_motto} | Center: {school_obj.uneb_center_number}")
+        
+        table = doc.add_table(rows=1, cols=5)
+        table.style = 'Table Grid'
+        
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'PRN (SchoolPay)'
+        hdr_cells[1].text = 'Student Name'
+        hdr_cells[2].text = 'Class'
+        hdr_cells[3].text = 'Stream'
+        hdr_cells[4].text = 'Balance status'
+        
+        for s in students:
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(s.payment_code or 'N/A')
+            row_cells[1].text = s.full_name
+            row_cells[2].text = s.current_class
+            row_cells[3].text = s.stream
+            row_cells[4].text = s.fees_balance
+            
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = f'attachment; filename="{school_obj.name}_Roster.docx"'
+        doc.save(response)
+        return response

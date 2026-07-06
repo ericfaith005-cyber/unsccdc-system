@@ -1,0 +1,20 @@
+<div class="container">
+    <h2>Data Successfully Arranged In System!</h2>
+    <p>Choose your preferred layout design styling below to download:</p>
+    
+    <div class="layout-grid">
+        <!-- Excel Theme Box -->
+        <div class="card structural-excel">
+            <h3>📊 Microsoft Excel Spreadsheet</h3>
+            <p>Perfect for sorting data, filtering classes, and mathematical tracking.</p>
+            <a href="{% url 'export_data' 'excel' %}" class="btn excel-btn">Download Excel</a>
+        </div>
+
+        <!-- Word Theme Box -->
+        <div class="card structural-word">
+            <h3>📝 Microsoft Word Table</h3>
+            <p>Designed clean print styles, letterhead-ready rosters, and clear typography.</p>
+            <a href="{% url 'export_data' 'word' %}" class="btn word-btn">Download Word Doc</a>
+        </div>
+    </div>
+</div>
