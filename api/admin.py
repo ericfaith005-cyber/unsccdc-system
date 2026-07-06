@@ -342,15 +342,15 @@ class ParentAdmin(admin.ModelAdmin):
     secure_pin_styled.short_description = "Access PIN"
 
     def get_linked_students(self, obj):
-        # 💎 We now use the new 'related_name' we just set
-        children = obj.registered_children.all() 
-
-        if children:
-            html = ""
-            for s in children:
-                html += f'<span style="background: #002366; color: white; padding: 2px 8px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()}</span>'
-            return mark_safe(html)
-        return "No children linked"
+        # 💎 Use the 'related_name' we just defined in the model
+        try:
+            children = obj.registered_children.all() 
+            if children:
+                html = "".join([f'<span style="background:#002366;color:white;padding:2px 8px;border-radius:10px;margin-right:5px;font-size:10px;">{s.full_name.upper()}</span>' for s in children])
+                return mark_safe(html)
+            return "No children"
+        except:
+            return "Syncing..."
 
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):

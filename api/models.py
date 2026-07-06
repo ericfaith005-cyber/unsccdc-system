@@ -153,10 +153,7 @@ class Student(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
-    parent_link = models.ForeignKey(
-        'Parent', 
-        on_delete=models.CASCADE, 
-        related_name='registered_children')
+    
     # 📑 OFFICIAL DOCUMENT VAULT
     birth_certificate = models.FileField(upload_to='docs/birth/', null=True, blank=True)
     ple_result_slip = models.FileField(upload_to='docs/ple/', null=True, blank=True)
@@ -166,6 +163,10 @@ class Student(models.Model):
     # 💰 INITIAL COMMITMENT
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
+    parent_link = models.ForeignKey(
+        'Parent', 
+        on_delete=models.CASCADE, 
+        related_name='registered_children')
 
     def __str__(self):
         return self.full_name
