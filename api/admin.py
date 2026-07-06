@@ -334,7 +334,7 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe # 💎 ENSURE THIS IS AT THE TOP
 from .models import Parent, Student
 
-
+@admin.register(Parent)
 class ParentAdmin(admin.ModelAdmin):
     list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'get_linked_students')
     search_fields = ('full_name', 'phone_number')
