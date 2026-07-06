@@ -698,13 +698,16 @@ class FinancialWarRoomAdmin(admin.ModelAdmin):
 
         return super().changelist_view(request, extra_context=extra_context)
 
-@admin.register(DataIngestionVault)
-class DataIngestionAdmin(admin.ModelAdmin):
-    list_display = ('school', 'timestamp', 'total_records', 'processed', 'run_button')
-    
-    def run_button(self, obj):
-        if not obj.processed:
-            return mark_safe(f'<a href="/api/process-pdf/{obj.id}/" style="background:gold;color:black;padding:7px 15px;font-weight:900;border-radius:10px;text-decoration:none;">⚡ RUN AUTO-ARRANGE</a>')
-        return mark_safe("<b style='color:green;'>✅ COMPLETED</b>")
-    
-    run_button.short_description = "National Action"
+from django.shortcuts import redirect
+
+from .models import SovereignRegistry # 💎 Make sure you import it!
+
+@admin.register(SovereignRegistry)
+class SovereignRegistryAdmin(admin.ModelAdmin):
+    # This is the "Magic Trick"
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/registry/') # 💎 Make sure this matches your URL name!
+
+    # 🛡️ Give it a dummy field so Django doesn't complain
+    def has_add_permission(self, request): return False
+    def has_delete_permission(self, request, obj=None): return False
