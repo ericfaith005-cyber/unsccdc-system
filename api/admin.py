@@ -341,20 +341,16 @@ class ParentAdmin(admin.ModelAdmin):
         return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 3px 8px; border-radius: 5px;">{obj.secure_pin}</code>')
     secure_pin_styled.short_description = "Access PIN"
 
-    # 👨‍🎓 4. DYNAMICALLY FETCH LINKED STUDENTS
     def get_linked_students(self, obj):
-        # This looks at the Student table and finds everyone linked to this parent
-        # Note: 'students' comes from the related_name we set in the Student model
-        students = obj.students.all() 
-        if students:
-            # Create a list of names with nice badges
-            html_list = ""
-            for s in students:
-                html_list += f'<span style="background: #002366; color: white; padding: 2px 10px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()} ({s.current_class})</span>'
-            return mark_safe(html_list)
-        return mark_safe('<i style="color: #666;">No students linked</i>')
-    
-    get_linked_students.short_description = "Registered Children"
+        # 💎 We now use the new 'related_name' we just set
+        children = obj.registered_children.all() 
+
+        if children:
+            html = ""
+            for s in children:
+                html += f'<span style="background: #002366; color: white; padding: 2px 8px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()}</span>'
+            return mark_safe(html)
+        return "No children linked"
 
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):

@@ -153,7 +153,10 @@ class Student(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
-
+    parent_link = models.ForeignKey(
+        'Parent', 
+        on_delete=models.CASCADE, 
+        related_name='registered_children')
     # 📑 OFFICIAL DOCUMENT VAULT
     birth_certificate = models.FileField(upload_to='docs/birth/', null=True, blank=True)
     ple_result_slip = models.FileField(upload_to='docs/ple/', null=True, blank=True)
@@ -255,7 +258,6 @@ class Staff(models.Model):
 
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
-    linked_student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='parent_link'); secure_pin = models.CharField(max_length=6, default="123456"); security_motto = models.CharField(max_length=100, default="Education is Light")
     def __str__(self):
         return self.full_name.upper()
 
