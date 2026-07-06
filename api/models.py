@@ -260,7 +260,9 @@ class Staff(models.Model):
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
     def __str__(self):
-        return self.full_name.upper()
+        # 🛡️ THE Hub Hub Hub Hub Hub NULL SHIELD
+        # If name is empty, show the phone number instead of crashing!
+        return str(self.full_name).upper() if self.full_name else f"Parent {self.phone_number}"
 
 class BioAndCareer(models.Model):
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='bio'); future_career = models.CharField(max_length=255, default="Leader"); challenges_faced = models.TextField(default="None"); student_inspiration = models.TextField(default="Uganda")

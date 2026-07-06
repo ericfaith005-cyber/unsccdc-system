@@ -330,47 +330,43 @@ from django.utils.safestring import mark_safe # 💎 CRITICAL IMPORT
 from .models import Parent, Student
 
 
+from django.contrib import admin
+from django.utils.safestring import mark_safe # 💎 ENSURE THIS IS AT THE TOP
+from .models import Parent, Student
+
+
 class ParentAdmin(admin.ModelAdmin):
     list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'get_linked_students')
     search_fields = ('full_name', 'phone_number')
-    list_per_page = 20
 
-    # 💎 1. STYLE THE NAME (With Null Shield)
     def full_name_styled(self, obj):
-        if obj.full_name:
-            return mark_safe(f'<b style="color: #D4AF37; font-size: 13px;">{obj.full_name.upper()}</b>')
-        return "NO NAME"
+        # 🛡️ Safety Check
+        name = str(obj.full_name).upper() if obj.full_name else "NO NAME"
+        return mark_safe(f'<b style="color: #D4AF37;">{name}</b>')
     full_name_styled.short_description = "Parent Name"
 
-    # 🔐 2. SHOW PIN (With Null Shield)
     def secure_pin_styled(self, obj):
-        val = obj.secure_pin if obj.secure_pin else "----"
-        return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 3px 8px; border-radius: 5px;">{val}</code>')
-    secure_pin_styled.short_description = "Access PIN"
+        pin = obj.secure_pin if obj.secure_pin else "----"
+        return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 2px 5px;">{pin}</code>')
+    secure_pin_styled.short_description = "PIN"
 
-    # 👨‍🎓 3. FETCH LINKED STUDENTS (Self-Healing Logic)
     def get_linked_students(self, obj):
         try:
-            # We try the new name 'registered_children' first
+            # 🕵️ This line checks all possible link names to prevent a crash
+            children = []
             if hasattr(obj, 'registered_children'):
                 children = obj.registered_children.all()
-            # Fallback to the default Django name if migrations haven't finished
+            elif hasattr(obj, 'students'):
+                children = obj.students.all()
             else:
                 children = obj.student_set.all()
 
             if children:
-                html = "".join([
-                    f'<span style="background: #002366; color: white; padding: 2px 8px; '
-                    f'border-radius: 10px; margin-right: 5px; font-size: 10px;">'
-                    f'{s.full_name.upper() if s.full_name else "STUDENT"}</span>' 
-                    for s in children
-                ])
+                html = "".join([f'<span style="background: #002366; color: white; padding: 2px 8px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()}</span>' for s in children])
                 return mark_safe(html)
-            return "No children"
-        except Exception as e:
-            return f"Syncing... ({str(e)})"
-    
-    get_linked_students.short_description = "Registered Children"
+            return "No children linked"
+        except:
+            return "Syncing..."
 
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
