@@ -153,7 +153,7 @@ class Student(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
     photo = models.ImageField(upload_to='students/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
-    
+
     # 📑 OFFICIAL DOCUMENT VAULT
     birth_certificate = models.FileField(upload_to='docs/birth/', null=True, blank=True)
     ple_result_slip = models.FileField(upload_to='docs/ple/', null=True, blank=True)
@@ -163,10 +163,6 @@ class Student(models.Model):
     # 💰 INITIAL COMMITMENT
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
-    parent_link = models.ForeignKey(
-        'Parent', 
-        on_delete=models.CASCADE, 
-        related_name='registered_children')
 
     def __str__(self):
         return self.full_name
@@ -259,10 +255,7 @@ class Staff(models.Model):
 
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
-    def __str__(self):
-        # 🛡️ THE Hub Hub Hub Hub Hub NULL SHIELD
-        # If name is empty, show the phone number instead of crashing!
-        return str(self.full_name).upper() if self.full_name else f"Parent {self.phone_number}"
+    linked_student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='parent_link'); secure_pin = models.CharField(max_length=6, default="123456"); security_motto = models.CharField(max_length=100, default="Education is Light")
 
 class BioAndCareer(models.Model):
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='bio'); future_career = models.CharField(max_length=255, default="Leader"); challenges_faced = models.TextField(default="None"); student_inspiration = models.TextField(default="Uganda")

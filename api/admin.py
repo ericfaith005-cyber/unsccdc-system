@@ -322,51 +322,6 @@ class FeesTrackerAdmin(admin.ModelAdmin):
     payment_percentage.short_description = "Progress"
 admin.site.register(FeesTracker, FeesTrackerAdmin)
 
-from django.utils.safestring import mark_safe
-
-
-from django.contrib import admin
-from django.utils.safestring import mark_safe # 💎 CRITICAL IMPORT
-from .models import Parent, Student
-
-
-from django.contrib import admin
-from django.utils.safestring import mark_safe # 💎 ENSURE THIS IS AT THE TOP
-from .models import Parent, Student
-
-@admin.register(Parent)
-class ParentAdmin(admin.ModelAdmin):
-    list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'get_linked_students')
-    search_fields = ('full_name', 'phone_number')
-
-    def full_name_styled(self, obj):
-        # 🛡️ Safety Check
-        name = str(obj.full_name).upper() if obj.full_name else "NO NAME"
-        return mark_safe(f'<b style="color: #D4AF37;">{name}</b>')
-    full_name_styled.short_description = "Parent Name"
-
-    def secure_pin_styled(self, obj):
-        pin = obj.secure_pin if obj.secure_pin else "----"
-        return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 2px 5px;">{pin}</code>')
-    secure_pin_styled.short_description = "PIN"
-
-    def get_linked_students(self, obj):
-        try:
-            # 🕵️ This line checks all possible link names to prevent a crash
-            children = []
-            if hasattr(obj, 'registered_children'):
-                children = obj.registered_children.all()
-            elif hasattr(obj, 'students'):
-                children = obj.students.all()
-            else:
-                children = obj.student_set.all()
-
-            if children:
-                html = "".join([f'<span style="background: #002366; color: white; padding: 2px 8px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()}</span>' for s in children])
-                return mark_safe(html)
-            return "No children linked"
-        except:
-            return "Syncing..."
 
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
@@ -378,9 +333,9 @@ admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Subject, SubjectAdmin) 
-admin.site.register(Parent, ParentAdmin)
 
 admin.site.register([ 
+    Parent,
     Student, 
     AcademicResult,
     AttendanceHub,
