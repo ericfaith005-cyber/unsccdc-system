@@ -322,6 +322,39 @@ class FeesTrackerAdmin(admin.ModelAdmin):
     payment_percentage.short_description = "Progress"
 admin.site.register(FeesTracker, FeesTrackerAdmin)
 
+from django.utils.safestring import mark_safe
+
+@admin.register(Parent)
+class ParentAdmin(admin.ModelAdmin):
+    # 📊 1. THE Hub Hub Hub Hub Hub Hub Hub TABLE COLUMNS
+    list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'get_linked_students')
+    search_fields = ('full_name', 'phone_number')
+    list_per_page = 20 # Keep it clean
+
+    # 💎 2. STYLE THE NAME (Prestige Look)
+    def full_name_styled(self, obj):
+        return mark_safe(f'<b style="color: #D4AF37; font-size: 13px;">{obj.full_name.upper()}</b>')
+    full_name_styled.short_description = "Parent Name"
+
+    # 🔐 3. SHOW PIN WITH SECURITY FEEL
+    def secure_pin_styled(self, obj):
+        return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 3px 8px; border-radius: 5px;">{obj.secure_pin}</code>')
+    secure_pin_styled.short_description = "Access PIN"
+
+    # 👨‍🎓 4. DYNAMICALLY FETCH LINKED STUDENTS
+    def get_linked_students(self, obj):
+        # This looks at the Student table and finds everyone linked to this parent
+        # Note: 'students' comes from the related_name we set in the Student model
+        students = obj.students.all() 
+        if students:
+            # Create a list of names with nice badges
+            html_list = ""
+            for s in students:
+                html_list += f'<span style="background: #002366; color: white; padding: 2px 10px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()} ({s.current_class})</span>'
+            return mark_safe(html_list)
+        return mark_safe('<i style="color: #666;">No students linked</i>')
+    
+    get_linked_students.short_description = "Registered Children"
 
 @admin.register(SchoolPost)
 class SchoolPostAdmin(SchoolIsolatedAdmin):
@@ -335,7 +368,6 @@ admin.site.register(Staff, StaffAdmin)
 admin.site.register(Subject, SubjectAdmin) 
 
 admin.site.register([ 
-    Parent,
     Student, 
     AcademicResult,
     AttendanceHub,
