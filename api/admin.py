@@ -324,7 +324,7 @@ admin.site.register(FeesTracker, FeesTrackerAdmin)
 
 from django.utils.safestring import mark_safe
 
-@admin.register(Parent)
+
 class ParentAdmin(admin.ModelAdmin):
     # 📊 1. THE Hub Hub Hub Hub Hub Hub Hub TABLE COLUMNS
     list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'get_linked_students')
@@ -366,6 +366,7 @@ admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Subject, SubjectAdmin) 
+admin.site.register(Parent, ParentAdmin)
 
 admin.site.register([ 
     Student, 
