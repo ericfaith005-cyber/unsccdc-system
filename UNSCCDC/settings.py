@@ -170,6 +170,7 @@ JAZZMIN_SETTINGS = {
         "api": [
             {
                 "icon": "fas fa-print",
+                "name": "Operations Dashboard",
                 "permissions": ["auth.view_user"]
             },
             {

@@ -713,8 +713,9 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None): return False
 
 from .models import OperationsHub # 💎 IMPORT IT
+from django.shortcuts import redirect
 
-@admin.register(OperationsHub)
+
 class OperationsHubAdmin(admin.ModelAdmin):
     # 🎯 THE MAGIC REDIRECT
     def changelist_view(self, request, extra_context=None):
@@ -722,3 +723,5 @@ class OperationsHubAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
+
+admin.site.register(OperationsHub, OperationsHubAdmin)
