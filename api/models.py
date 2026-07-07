@@ -445,8 +445,8 @@ class NationalDataBridge(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "3. National Data Bridge"
-        verbose_name_plural = "3. National Data Bridge"
+        verbose_name = "National Data Bridge"
+        verbose_name_plural = "National Data Bridge"
 
     def __str__(self):
         return f"Bridge for {self.school.name} - {self.timestamp}"

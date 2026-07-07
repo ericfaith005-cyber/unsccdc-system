@@ -729,10 +729,19 @@ admin.site.register(OperationsHub, OperationsHubAdmin)
 
 from .models import NationalDataBridge # 💎 IMPORT IT
 
+from django.contrib import admin
+from django.utils.safestring import mark_safe # 💎 CRITICAL IMPORT
+from django.shortcuts import redirect
+
 class NationalDataBridgeAdmin(admin.ModelAdmin):
-    # 📊 THE Hub Hub Hub Hub Hub COLUMNS
-    list_display = ('school', 'timestamp', 'records_synced', 'status_badge', 'bridge_action')
+    # 📊 We list the fields carefully
+    list_display = ('school', 'timestamp', 'get_records', 'status_badge', 'bridge_action')
     list_filter = ('is_processed', 'school')
+
+    # 🛡️ Safety Check for records
+    def get_records(self, obj):
+        return obj.records_synced
+    get_records.short_description = "Records"
 
     def status_badge(self, obj):
         if obj.is_processed:
@@ -741,7 +750,8 @@ class NationalDataBridgeAdmin(admin.ModelAdmin):
     status_badge.short_description = "Status"
 
     def bridge_action(self, obj):
-        if not obj.is_processed:
+        # 🕵️ Safety check: Ensure the ID exists before drawing the button
+        if obj.id and not obj.is_processed:
             url = f"/api/execute-bridge/{obj.id}/"
             return mark_safe(f'''
                 <a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; 
@@ -749,7 +759,7 @@ class NationalDataBridgeAdmin(admin.ModelAdmin):
                 ⚡ START AUTO-ARRANGE
                 </a>
             ''')
-        return mark_safe("<span style='color: #666;'>Task Completed</span>")
+        return "Task Completed"
     bridge_action.short_description = "National Action"
 
 admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)
