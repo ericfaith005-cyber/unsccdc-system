@@ -142,7 +142,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "UNSCCDC",
     "site_brand": "UNSCCDC",
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
-    "copyright": "UNSCCDC GLOBAL Hub 2026",
+    "copyright": "UNSCCDC GLOBAL 2026",
     "custom_css": "css/unsccdc_prestige.css",
     "custom_js": None,
     
@@ -210,6 +210,7 @@ JAZZMIN_SETTINGS = {
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {
+        "api.OperationsHub": "fas fa-th-large",
         "api.DataIngestionVault": "fas fa-file-upload", 
         "api.SovereignRegistry": "fas fa-shield-alt",
         "auth": "fas fa-users-cog",
@@ -231,6 +232,7 @@ JAZZMIN_SETTINGS = {
     
     # SIDEBAR PRIORITY ORDER
     "order_with_respect_to": [
+        "api.OperationsHub",
         "api.DataIngestionVault",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
@@ -241,6 +243,16 @@ JAZZMIN_SETTINGS = {
         "api.Transaction",
         "api.Parent", 
         "api.FeesTracker"
+    ],
+
+     "side_menu_order": [
+        "api.OperationsHub",           # 1. The 12-Tab Dashboard First!
+        "api.SovereignRegistry",      # 2. Class Explorer
+        "api.Student",                 # 3. Individual Students
+        "api.Parent",                  # 4. Guardian Registry
+        "api.Staff",                   # 5. Teacher Force
+        "api.School",                  # 6. Institution Setup
+        "api.SchoolPayLedger",         # 7. Financial Records
     ],
 }
 

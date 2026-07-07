@@ -712,9 +712,13 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
 
-from .models import OperationsHub
+from .models import OperationsHub # 💎 IMPORT IT
 
 @admin.register(OperationsHub)
 class OperationsHubAdmin(admin.ModelAdmin):
+    # 🎯 THE MAGIC REDIRECT
     def changelist_view(self, request, extra_context=None):
-        return redirect('/api/ops-hub/')
+        return redirect('/api/ops-hub/') # 💎 This opens the 12 tabs!
+
+    def has_add_permission(self, request): return False
+    def has_delete_permission(self, request, obj=None): return False
