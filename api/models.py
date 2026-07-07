@@ -436,18 +436,3 @@ class OperationsHub(Student):
         proxy = True
         verbose_name = "NATIONAL OPERATIONS HUB"
         verbose_name_plural = "NATIONAL OPERATIONS HUB"
-
-class DataIngestionVault(models.Model):
-    school = models.ForeignKey('School', on_delete=models.CASCADE)
-    uploaded_pdf = models.FileField(upload_to='ingestion/pdfs/')
-    processed = models.BooleanField(default=False)
-    total_records = models.IntegerField(default=0, help_text="Number of students imported")
-    import_log = models.TextField(blank=True, null=True) # 💎 Captures errors/successes
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = "1. National Data Ingestion"
-        verbose_name_plural = "1. National Data Ingestion"
-
-    def __str__(self):
-        return f"Import for {self.school.name} - {self.timestamp.strftime('%d/%m/%Y')}"
