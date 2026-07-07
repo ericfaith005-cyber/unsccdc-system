@@ -702,7 +702,6 @@ from django.shortcuts import redirect
 
 from .models import SovereignRegistry # 💎 Make sure you import it!
 
-@admin.register(SovereignRegistry)
 class SovereignRegistryAdmin(admin.ModelAdmin):
     # This is the "Magic Trick"
     def changelist_view(self, request, extra_context=None):
@@ -711,6 +710,8 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     # 🛡️ Give it a dummy field so Django doesn't complain
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
+
+admin.site.register(SovereignRegistry, SovereignRegistryAdmin)
 
 from .models import OperationsHub # 💎 IMPORT IT
 from django.shortcuts import redirect
