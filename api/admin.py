@@ -727,15 +727,29 @@ class OperationsHubAdmin(admin.ModelAdmin):
 
 admin.site.register(OperationsHub, OperationsHubAdmin)
 
-from .models import NationalDataBridge
+from .models import NationalDataBridge # 💎 IMPORT IT
 
-@admin.register(NationalDataBridge)
 class NationalDataBridgeAdmin(admin.ModelAdmin):
-    list_display = ('school', 'timestamp', 'records_synced', 'is_processed', 'bridge_action')
-    
+    # 📊 THE Hub Hub Hub Hub Hub COLUMNS
+    list_display = ('school', 'timestamp', 'records_synced', 'status_badge', 'bridge_action')
+    list_filter = ('is_processed', 'school')
+
+    def status_badge(self, obj):
+        if obj.is_processed:
+            return mark_safe('<b style="color: #00ff00;">✅ SYNCED</b>')
+        return mark_safe('<b style="color: #ff9900;">⏳ PENDING</b>')
+    status_badge.short_description = "Status"
+
     def bridge_action(self, obj):
         if not obj.is_processed:
             url = f"/api/execute-bridge/{obj.id}/"
-            return mark_safe(f'<a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; border-radius:10px; font-weight:900; text-decoration:none;">⚡ START AUTO-ARRANGE</a>')
-        return mark_safe("<span style='color:green;'>✅ SYNCED</span>")
+            return mark_safe(f'''
+                <a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; 
+                border-radius:10px; font-weight:900; text-decoration:none; border:1px solid #000;">
+                ⚡ START AUTO-ARRANGE
+                </a>
+            ''')
+        return mark_safe("<span style='color: #666;'>Task Completed</span>")
     bridge_action.short_description = "National Action"
+
+admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)

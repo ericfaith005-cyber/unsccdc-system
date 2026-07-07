@@ -234,8 +234,8 @@ JAZZMIN_SETTINGS = {
     # SIDEBAR PRIORITY ORDER
     "order_with_respect_to": [
         "api.OperationsHub",
+        "api.NationalDataBridge",
         "api.SovereignRegistry",
-        "api.DataIngestionVault",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
         "api.Student", 
@@ -248,6 +248,7 @@ JAZZMIN_SETTINGS = {
 
      "side_menu_order": [
         "api.OperationsHub",           # 1. The 12-Tab Dashboard First!
+        "api.NationalDataBridge",
         "api.SovereignRegistry",      # 2. Class Explorer
         "api.Student",                 # 3. Individual Students
         "api.Parent",                  # 4. Guardian Registry
