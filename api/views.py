@@ -2145,3 +2145,20 @@ def execute_data_bridge(request, bridge_id):
         return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;text-align:center;'><h1>BRIDGE SUCCESS!</h1><p style='color:white;'>{count} Students automatically arranged.</p><a href='/admin/'>Back to Dashboard</a></body>")
     except Exception as e:
         return HttpResponse(f"Bridge Error: {str(e)}")
+
+from django.db import connection
+
+def nuke_problem_table(request):
+    """🛡️ THE Hub Hub Hub Hub Hub NUCLEAR TABLE DESTROYER"""
+    try:
+        with connection.cursor() as cursor:
+            # 1. Physically drop the old table that is causing the error
+            cursor.execute("DROP TABLE IF EXISTS api_dataingestionvault CASCADE;")
+            
+            # 2. Delete the record of the migrations for your 'api' app
+            # This makes Django think it is starting fresh!
+            cursor.execute("DELETE FROM django_migrations WHERE app = 'api';")
+            
+        return HttpResponse("<h1 style='color:white; background:red; padding:50px;'>SUCCESS: Table and History Nuked! Ready for Fresh Start.</h1>")
+    except Exception as e:
+        return HttpResponse(f"Nuke Error: {str(e)}")
