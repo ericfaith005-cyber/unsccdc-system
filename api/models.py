@@ -440,13 +440,15 @@ class OperationsHub(Student):
 class NationalDataBridge(models.Model):
     school = models.ForeignKey('School', on_delete=models.CASCADE)
     source_file = models.FileField(upload_to='national_bridge/files/')
+    # 💎 NEW: Stores the 'Ghost Data' for previewing
+    preview_data = models.JSONField(null=True, blank=True) 
     is_processed = models.BooleanField(default=False)
-    processed_date = models.DateTimeField(auto_now=True)
+    records_count = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "National Data Bridge"
-        verbose_name_plural = "National Data Bridge"
+        verbose_name = "3. National Data Bridge"
+        verbose_name_plural = "3. National Data Bridge"
 
     def __str__(self):
-        # 🛡️ Safest string method to prevent 500 errors
-        return f"Bridge Entry #{self.id}"
+        return f"Bridge Entry #{self.id} - {self.school.name}"

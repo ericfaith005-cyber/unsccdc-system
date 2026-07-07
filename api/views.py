@@ -2211,3 +2211,89 @@ def nuke_problem_table(request):
         return HttpResponse("<h1 style='color:white; background:red; padding:50px;'>SUCCESS: Table and History Nuked! Ready for Fresh Start.</h1><a href='/admin/'>Go Back to Office</a>")
     except Exception as e:
         return HttpResponse(f"Nuke Error: {str(e)}")
+
+import pdfplumber
+from django.db import transaction
+
+@login_required
+def bridge_preview_portal(request, bridge_id):
+    bridge = get_object_or_404(NationalDataBridge, id=bridge_id)
+    
+    if not bridge.preview_data:
+        try:
+            with pdfplumber.open(bridge.source_file.path) as pdf:
+                all_rows = []
+                for page in pdf.pages:
+                    table = page.extract_table()
+                    if table: all_rows.extend(table)
+                
+                if not all_rows: return HttpResponse("No table found in PDF.")
+
+                # 🧠 AI Column Intelligence
+                header = [str(h).upper() for h in all_rows[0]]
+                def find_idx(keys, default):
+                    for i, h in enumerate(header):
+                        if any(k in h for k in keys): return i
+                    return default
+
+                idx_name = find_idx(["NAME", "STUDENT"], 0)
+                idx_prn = find_idx(["PRN", "CODE", "ID"], 1)
+                idx_class = find_idx(["CLASS", "LEVEL"], 2)
+                idx_stream = find_idx(["STREAM", "HOUSE"], 3)
+                idx_parent = find_idx(["PARENT", "GUARDIAN"], 4)
+                idx_phone = find_idx(["PHONE", "CONTACT"], 5)
+
+                # Format the data for the preview
+                formatted = []
+                for row in all_rows[1:]:
+                    if not row[idx_name]: continue
+                    formatted.append({
+                        'name': str(row[idx_name]).strip().upper(),
+                        'prn': str(row[idx_prn]).strip().upper(),
+                        'class': str(row[idx_class]).strip().upper(),
+                        'stream': str(row[idx_stream]).strip().upper() if row[idx_stream] else "NORTH",
+                        'parent': str(row[idx_parent]).strip().title(),
+                        'phone': str(row[idx_phone]).strip()
+                    })
+                
+                bridge.preview_data = formatted
+                bridge.records_count = len(formatted)
+                bridge.save()
+        except Exception as e:
+            return HttpResponse(f"Scan Error: {str(e)}")
+
+    return render(request, 'admin/bridge_preview.html', {
+        'bridge': bridge,
+        'preview': bridge.preview_data,
+        'title': "NATIONAL DATA PREVIEW"
+    })
+
+@login_required
+@transaction.atomic
+def bridge_commit_final(request, bridge_id):
+    """The Final Trigger: Turns 'Ghost Data' into Real Registry Records"""
+    bridge = get_object_or_404(NationalDataBridge, id=bridge_id)
+    if bridge.is_processed: return HttpResponse("Already Processed.")
+
+    for item in bridge.preview_data:
+        # 1. Weld Parent
+        parent_obj, _ = Parent.objects.get_or_create(
+            phone_number=item['phone'],
+            defaults={'full_name': item['parent'], 'secure_pin': '123456'}
+        )
+        # 2. Weld Student
+        Student.objects.update_or_create(
+            payment_code=item['prn'],
+            defaults={
+                'full_name': item['name'],
+                'current_class': item['class'],
+                'stream': item['stream'],
+                'school': bridge.school,
+                'parent_link': parent_obj,
+                'is_active': True
+            }
+        )
+    
+    bridge.is_processed = True
+    bridge.save()
+    return redirect('/admin/api/student/')

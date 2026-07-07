@@ -733,21 +733,14 @@ from django.contrib import admin
 from django.utils.safestring import mark_safe # 💎 CRITICAL IMPORT
 from django.shortcuts import redirect
 
+
 class NationalDataBridgeAdmin(admin.ModelAdmin):
-    list_display = ('school', 'processed_date', 'is_processed', 'go_to_preview')
-
-    def save_model(self, request, obj, form, change):
-        # 🛡️ Force link to the user's school automatically
-        if not obj.school_id:
-            obj.school = request.user.school
-        super().save_model(request, obj, form, change)
-
+    list_display = ('school', 'records_count', 'is_processed', 'open_bridge')
+    def open_bridge(self, obj):
+        return mark_safe(f'<a href="/api/bridge-preview/{obj.id}/" style="background:gold; color:black; padding:5px 10px; border-radius:5px; font-weight:bold;">VIEW & SYNC</a>')
+    
+    # 💎 REDIRECT AFTER SAVE
     def response_add(self, request, obj, post_url_continue=None):
-        # 💎 THE Hub Hub Hub Hub Hub MAGIC REDIRECT
-        # After clicking 'Save', go STRAIGHT to the Preview Portal
         return redirect(f'/api/bridge-preview/{obj.id}/')
-
-    def go_to_preview(self, obj):
-        return mark_safe(f'<a href="/api/bridge-preview/{obj.id}/" style="color:gold;">Open Preview</a>')
-
+    
 admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)
