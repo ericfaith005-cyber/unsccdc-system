@@ -734,32 +734,20 @@ from django.utils.safestring import mark_safe # 💎 CRITICAL IMPORT
 from django.shortcuts import redirect
 
 class NationalDataBridgeAdmin(admin.ModelAdmin):
-    # 📊 We list the fields carefully
-    list_display = ('school', 'timestamp', 'get_records', 'status_badge', 'bridge_action')
-    list_filter = ('is_processed', 'school')
+    list_display = ('school', 'processed_date', 'is_processed', 'go_to_preview')
 
-    # 🛡️ Safety Check for records
-    def get_records(self, obj):
-        return obj.records_synced
-    get_records.short_description = "Records"
+    def save_model(self, request, obj, form, change):
+        # 🛡️ Force link to the user's school automatically
+        if not obj.school_id:
+            obj.school = request.user.school
+        super().save_model(request, obj, form, change)
 
-    def status_badge(self, obj):
-        if obj.is_processed:
-            return mark_safe('<b style="color: #00ff00;">✅ SYNCED</b>')
-        return mark_safe('<b style="color: #ff9900;">⏳ PENDING</b>')
-    status_badge.short_description = "Status"
+    def response_add(self, request, obj, post_url_continue=None):
+        # 💎 THE Hub Hub Hub Hub Hub MAGIC REDIRECT
+        # After clicking 'Save', go STRAIGHT to the Preview Portal
+        return redirect(f'/api/bridge-preview/{obj.id}/')
 
-    def bridge_action(self, obj):
-        # 🕵️ Safety check: Ensure the ID exists before drawing the button
-        if obj.id and not obj.is_processed:
-            url = f"/api/execute-bridge/{obj.id}/"
-            return mark_safe(f'''
-                <a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; 
-                border-radius:10px; font-weight:900; text-decoration:none; border:1px solid #000;">
-                ⚡ START AUTO-ARRANGE
-                </a>
-            ''')
-        return "Task Completed"
-    bridge_action.short_description = "National Action"
+    def go_to_preview(self, obj):
+        return mark_safe(f'<a href="/api/bridge-preview/{obj.id}/" style="color:gold;">Open Preview</a>')
 
 admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)

@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    .preview-box { background: #080808; border: 2px solid #D4AF37; border-radius: 25px; padding: 40px; color: #fff; }
+    .status-pill { background: rgba(0,255,0,0.1); color: #00ff00; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: 900; }
+    
+    .data-table { width: 100%; border-collapse: collapse; margin: 30px 0; border-radius: 15px; overflow: hidden; }
+    .data-table th { background: #002366; color: #D4AF37; padding: 15px; text-align: left; font-size: 11px; letter-spacing: 2px; }
+    .data-table td { background: #111; padding: 15px; border-bottom: 1px solid #222; font-family: monospace; color: #aaa; }
+    
+    .commit-btn { 
+        background: #D4AF37; color: #000; padding: 20px 40px; border-radius: 15px; 
+        font-weight: 900; text-decoration: none; display: inline-block; transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(212,175,55,0.2); border: none; cursor: pointer;
+    }
+    .commit-btn:hover { transform: scale(1.05); box-shadow: 0 15px 30px rgba(212,175,55,0.4); }
+</style>
+
+<div class="preview-box">
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>NATIONAL DATA PREVIEW</h1>
+        <span class="status-pill">SYSTEM SCAN COMPLETE</span>
+    </div>
+    
+    <p style="color: #666;">The Imperial Brain has scanned your file. Please verify the column mapping below before committing to the National Registry.</p>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>PROPOSED NAME</th>
+                <th>PROPOSED PRN / CODE</th>
+                <th>ASSIGNED CLASS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in preview_rows %}
+            <tr>
+                <td style="color: #fff; font-weight: bold;">{{ row.name }}</td>
+                <td style="color: #00ff00;">{{ row.prn }}</td>
+                <td>{{ row.class }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="text-align: center; margin-top: 40px;">
+        <p style="color: #888; font-size: 12px; margin-bottom: 20px;">By clicking below, you authorize the mass-import of these records.</p>
+        <a href="/api/process-pdf/{{ bridge.id }}/" class="commit-btn">🚀 COMMENCE NATIONAL INTEGRATION</a>
+        <br><br>
+        <a href="/admin/api/nationaldatabridge/" style="color: #555; text-decoration: none; font-size: 11px;">CANCEL AND GO BACK</a>
+    </div>
+</div>
+{% endblock %}

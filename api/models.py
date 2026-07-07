@@ -439,14 +439,14 @@ class OperationsHub(Student):
 
 class NationalDataBridge(models.Model):
     school = models.ForeignKey('School', on_delete=models.CASCADE)
-    source_pdf = models.FileField(upload_to='national_bridge/pdfs/')
+    source_file = models.FileField(upload_to='national_bridge/files/')
     is_processed = models.BooleanField(default=False)
-    records_synced = models.IntegerField(default=0)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    processed_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "National Data Bridge"
         verbose_name_plural = "National Data Bridge"
 
     def __str__(self):
-        return f"Bridge for {self.school.name} - {self.timestamp}"
+        # 🛡️ Safest string method to prevent 500 errors
+        return f"Bridge Entry #{self.id}"

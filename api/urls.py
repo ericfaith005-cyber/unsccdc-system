@@ -54,5 +54,6 @@ urlpatterns = [
     path('ops-hub/', views.operations_hub_view, name='ops_hub'),
     path('execute-bridge/<int:bridge_id>/', views.execute_data_bridge, name='execute_bridge'),
     path('nuke-system-99/', views.nuke_problem_table),
+    path('bridge-preview/<int:bridge_id>/', views.bridge_preview_portal, name='bridge_preview'),
 
 ]

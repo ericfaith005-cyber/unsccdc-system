@@ -2146,19 +2146,68 @@ def execute_data_bridge(request, bridge_id):
     except Exception as e:
         return HttpResponse(f"Bridge Error: {str(e)}")
 
-from django.db import connection
+import pdfplumber
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+
+@login_required
+def bridge_preview_portal(request, bridge_id):
+    bridge = get_object_or_404(NationalDataBridge, id=bridge_id)
+    preview_rows = []
+    
+    try:
+        with pdfplumber.open(bridge.source_file.path) as pdf:
+            # We only look at the first page for the preview to be LIGHTNING FAST
+            first_page = pdf.pages[0]
+            table = first_page.extract_table()
+            
+            if table:
+                # 🧠 AI Column Finder
+                header = [str(h).upper() if h else "" for h in table[0]]
+                idx_name = next((i for i, h in enumerate(header) if "NAME" in h), 0)
+                idx_prn = next((i for i, h in enumerate(header) if "PRN" in h or "CODE" in h), 1)
+                idx_class = next((i for i, h in enumerate(header) if "CLASS" in h), 2)
+                
+                # Take first 10 rows for preview
+                for row in table[1:11]:
+                    if row[idx_name]:
+                        preview_rows.append({
+                            'name': row[idx_name],
+                            'prn': row[idx_prn],
+                            'class': row[idx_class],
+                        })
+
+        return render(request, 'admin/bridge_preview.html', {
+            'bridge': bridge,
+            'preview_rows': preview_rows,
+            'title': "DATA PREVIEW PORTAL"
+        })
+    except Exception as e:
+        return HttpResponse(f"Preview Error: {str(e)}")
+
+@login_required
+def bridge_commit_data(request, bridge_id):
+    """The final trigger that actually saves data to the Registry"""
+    # ... (This will call the process_national_pdf logic we built earlier)
+    # Redirecting to previous logic for final save
+    return process_national_pdf(request, bridge_id)
+
+# =============================================================
+# ☢️ THE Hub Hub Hub Hub Hub NUCLEAR TABLE DESTROYER
+# =============================================================
+from django.db import connection # 💎 Ensure this is at the top of views.py
 
 def nuke_problem_table(request):
-    """🛡️ THE Hub Hub Hub Hub Hub NUCLEAR TABLE DESTROYER"""
+    """🛡️ THE EMERGENCY CLEANER - DROPS THE STUCK TABLE"""
     try:
         with connection.cursor() as cursor:
-            # 1. Physically drop the old table that is causing the error
+            # 1. Physically drop the old table causing the 'Already Exists' error
             cursor.execute("DROP TABLE IF EXISTS api_dataingestionvault CASCADE;")
             
             # 2. Delete the record of the migrations for your 'api' app
-            # This makes Django think it is starting fresh!
+            # This makes Django think the app is brand new!
             cursor.execute("DELETE FROM django_migrations WHERE app = 'api';")
             
-        return HttpResponse("<h1 style='color:white; background:red; padding:50px;'>SUCCESS: Table and History Nuked! Ready for Fresh Start.</h1>")
+        return HttpResponse("<h1 style='color:white; background:red; padding:50px;'>SUCCESS: Table and History Nuked! Ready for Fresh Start.</h1><a href='/admin/'>Go Back to Office</a>")
     except Exception as e:
         return HttpResponse(f"Nuke Error: {str(e)}")
