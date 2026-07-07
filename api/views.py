@@ -3,7 +3,7 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.db.models import Avg, Sum
+from django.db.models import Q, Avg, Sum
 
 # 💎 THE Hub Hub Hub Hub REST FRAMEWORK Hub Hub Hub Hub 💎
 from rest_framework.decorators import api_view, permission_classes
@@ -1934,6 +1934,24 @@ def sovereign_registry_view(request):
             current_class=selected_class,
             is_active=True
         ).order_by('full_name')
+
+        # 🔎 4. INTELLIGENT SEARCH & FILTER LOGIC
+        query = request.GET.get('q', '').strip()
+        selected_class = request.GET.get('class', available_classes[0])
+        
+        # Start with base filter
+        students = Student.objects.filter(school=school, is_active=True)
+
+        if query:
+            # 🛰️ SEARCH MODE: Scans Names, PRNs, and Streams across the WHOLE school
+            students = students.filter(
+                Q(full_name__icontains=query) | 
+                Q(payment_code__icontains=query) | 
+                Q(stream__icontains=query)
+            ).order_by('full_name')
+        else:
+            # 💊 CLASS MODE: Only shows students in the selected class
+            students = students.filter(current_class=selected_class).order_by('full_name')
 
         # 5. 📦 THE DATA PACKET (All variables the template needs)
         context = {
