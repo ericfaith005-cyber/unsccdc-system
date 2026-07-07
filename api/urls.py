@@ -53,4 +53,5 @@ urlpatterns = [
     path('seed-subjects-99/', views.inject_national_subjects),
     path('ops-hub/', views.operations_hub_view, name='ops_hub'),
     path('process-pdf/<int:vault_id>/', views.process_national_pdf, name='process_pdf'),
+    path('force-sync-99/', views.force_registry_sync),
 ]

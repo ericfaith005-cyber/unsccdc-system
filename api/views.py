@@ -2176,3 +2176,14 @@ def process_national_pdf(request, vault_id):
     
     except Exception as e:
         return HttpResponse(f"<body style='background:black; color:red; padding:50px;'><h1>Ingestion Error</h1><p>{str(e)}</p></body>")
+
+from django.core.management import call_command
+
+def force_registry_sync(request):
+    """🛡️ THE Hub Hub Hub Hub EMERGENCY SYNC"""
+    try:
+        # This tells the system to fake the migrations for the 'api' app
+        call_command('migrate', 'api', fake=True)
+        return HttpResponse("<h1 style='color:green;'>SUCCESS: National Registry Synced and Faked!</h1>")
+    except Exception as e:
+        return HttpResponse(f"Sync Error: {str(e)}")
