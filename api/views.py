@@ -1895,43 +1895,61 @@ def generate_student_dossier(request, student_id):
     except Exception as e:
         return HttpResponse(f"Dossier Error: {str(e)}")
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.db.models import Avg, Sum # 💎 CRITICAL IMPORT
+from .models import Student, School
+
 @login_required
 def sovereign_registry_view(request):
     try:
-        # 1. 🛡️ Safe School Fetching
-        # We check if the user has a school attribute, otherwise we grab the first school in the DB
+        # 1. 🛡️ SAFE SCHOOL FETCHING
+        # Check if the user has a school. If not, grab the first one (for testing/superadmins)
         school = getattr(request.user, 'school', None)
         if not school:
-            school = School.objects.first() # Fallback for Superadmins
-        
+            school = School.objects.first()
+            
         if not school:
-            return HttpResponse("Error: No schools found in the system. Please create a school in the Admin first.")
+            return HttpResponse("<body style='background:black;color:gold;padding:50px;'><h1>ERROR: No School found in the Registry.</h1><p>Please add a school in the Admin first.</p></body>")
 
-        # 2. 🧠 Dynamic Sector Logic (P.1 vs S.1)
-        class_map = {
+        # 2. 🧠 NATIONAL SECTOR MAP (Uganda Standards)
+        sector_map = {
             'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
             'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+            'VOCATIONAL': ['Year 1', 'Year 2', 'Year 3'],
             'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
         }
         
-        # Get sector (default to SECONDARY if not set)
-        sector = getattr(school, 'sector', 'SECONDARY')
-        available_classes = class_map.get(sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
+        # 3. 🎯 FETCH AVAILABLE CLASSES
+        current_sector = getattr(school, 'sector', 'SECONDARY')
+        available_classes = sector_map.get(current_sector, ['General'])
         
+        # 4. 🔎 FILTER LOGIC
         selected_class = request.GET.get('class', available_classes[0])
         
-        # 🕵️ Fetch Students (Filtered by School and Class)
-        students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+        # Fetch students for this school and class, A-Z
+        students = Student.objects.filter(
+            school=school, 
+            current_class=selected_class,
+            is_active=True
+        ).order_by('full_name')
 
-        return render(request, 'admin/sovereign_registry.html', {
-            'students': students,
+        # 5. 📦 THE DATA PACKET (All variables the template needs)
+        context = {
+            'school': school,
             'available_classes': available_classes,
             'selected_class': selected_class,
-            'school': school,
+            'students': students,
+            'total_count': students.count(), # 💎 FIX: This was likely missing!
             'title': "SOVEREIGN NATIONAL REGISTRY"
-        })
-    except Exception as e:
+        }
+        
         return render(request, 'sovereign_registry.html', context)
+
+    except Exception as e:
+        # 🚑 THE TRUTH TRAP: Instead of 500, see the error message
+        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Registry Engine Error</h1><p>{str(e)}</p><p>Check if you have all imports and that the template exists.</p></body>")
 
 @login_required
 def inject_national_subjects(request):
