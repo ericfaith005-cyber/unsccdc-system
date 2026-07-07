@@ -436,3 +436,17 @@ class OperationsHub(Student):
         proxy = True
         verbose_name = "NATIONAL OPERATIONS HUB"
         verbose_name_plural = "NATIONAL OPERATIONS HUB"
+
+class NationalDataBridge(models.Model):
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+    source_pdf = models.FileField(upload_to='national_bridge/pdfs/')
+    is_processed = models.BooleanField(default=False)
+    records_synced = models.IntegerField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "3. National Data Bridge"
+        verbose_name_plural = "3. National Data Bridge"
+
+    def __str__(self):
+        return f"Bridge for {self.school.name} - {self.timestamp}"

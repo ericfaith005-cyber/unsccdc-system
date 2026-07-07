@@ -726,3 +726,16 @@ class OperationsHubAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None): return False
 
 admin.site.register(OperationsHub, OperationsHubAdmin)
+
+from .models import NationalDataBridge
+
+@admin.register(NationalDataBridge)
+class NationalDataBridgeAdmin(admin.ModelAdmin):
+    list_display = ('school', 'timestamp', 'records_synced', 'is_processed', 'bridge_action')
+    
+    def bridge_action(self, obj):
+        if not obj.is_processed:
+            url = f"/api/execute-bridge/{obj.id}/"
+            return mark_safe(f'<a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; border-radius:10px; font-weight:900; text-decoration:none;">⚡ START AUTO-ARRANGE</a>')
+        return mark_safe("<span style='color:green;'>✅ SYNCED</span>")
+    bridge_action.short_description = "National Action"

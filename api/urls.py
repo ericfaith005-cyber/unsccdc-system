@@ -52,5 +52,6 @@ urlpatterns = [
     path('registry/', views.sovereign_registry_view, name='sovereign_registry'),
     path('seed-subjects-99/', views.inject_national_subjects),
     path('ops-hub/', views.operations_hub_view, name='ops_hub'),
+    path('execute-bridge/<int:bridge_id>/', views.execute_data_bridge, name='execute_bridge'),
 
 ]

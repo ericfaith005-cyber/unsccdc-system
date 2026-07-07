@@ -2090,3 +2090,58 @@ def operations_hub_view(request):
         'school': school,
         'title': "NATIONAL OPERATIONS COMMAND"
     })
+
+import pdfplumber
+from django.db import transaction
+
+@login_required
+def execute_data_bridge(request, bridge_id):
+    bridge = get_object_or_404(NationalDataBridge, id=bridge_id)
+    school = bridge.school
+    count = 0
+    
+    try:
+        with pdfplumber.open(bridge.source_pdf.path) as pdf:
+            for page in pdf.pages:
+                table = page.extract_table()
+                if not table or len(table) < 2: continue
+                
+                # 🧠 AI HEADER DETECTION
+                header = [str(h).upper() if h else "" for h in table[0]]
+                idx_name = next((i for i, h in enumerate(header) if "NAME" in h), 0)
+                idx_prn = next((i for i, h in enumerate(header) if "PRN" in h or "CODE" in h), 1)
+                idx_class = next((i for i, h in enumerate(header) if "CLASS" in h), 2)
+                idx_stream = next((i for i, h in enumerate(header) if "STREAM" in h), 3)
+                idx_parent = next((i for i, h in enumerate(header) if "PARENT" in h), 4)
+                idx_phone = next((i for i, h in enumerate(header) if "PHONE" in h), 5)
+
+                for row in table[1:]:
+                    if not row[idx_name] or not row[idx_prn]: continue
+                    with transaction.atomic():
+                        # 1. Sync Parent
+                        p_phone = str(row[idx_phone]).strip() if row[idx_phone] else "000"
+                        parent_obj, _ = Parent.objects.get_or_create(
+                            phone_number=p_phone,
+                            defaults={'full_name': str(row[idx_parent]), 'secure_pin': '123456'}
+                        )
+                        # 2. Sync Student & Auto-Arrange Class/Stream
+                        student_obj, _ = Student.objects.update_or_create(
+                            payment_code=str(row[idx_prn]).strip().upper(),
+                            defaults={
+                                'full_name': str(row[idx_name]).strip().upper(),
+                                'current_class': str(row[idx_class]).strip().upper(),
+                                'stream': str(row[idx_stream]).strip().upper() if row[idx_stream] else "NORTH",
+                                'school': school,
+                                'parent_link': parent_obj,
+                            }
+                        )
+                        # 3. Initialize Fees
+                        FeesTracker.objects.get_or_create(student=student_obj)
+                        count += 1
+        
+        bridge.is_processed = True
+        bridge.records_synced = count
+        bridge.save()
+        return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;text-align:center;'><h1>BRIDGE SUCCESS!</h1><p style='color:white;'>{count} Students automatically arranged.</p><a href='/admin/'>Back to Dashboard</a></body>")
+    except Exception as e:
+        return HttpResponse(f"Bridge Error: {str(e)}")
