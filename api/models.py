@@ -183,6 +183,12 @@ class Student(models.Model):
             return f"UGX {bal:,.0f}"
         return "UGX 0"
 
+class OperationsHub(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "0. NATIONAL OPERATIONS HUB"
+        verbose_name_plural = "0. NATIONAL OPERATIONS HUB"
+
         
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---

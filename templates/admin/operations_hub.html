@@ -1,0 +1,134 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    /* 🏛️ NATIONAL Hub Hub PRESTIGE THEME */
+    :root {
+        --royal-navy: #002366;
+        --imperial-gold: #D4AF37;
+        --ug-black: #000000;
+        --ug-yellow: #FCDC04;
+        --ug-red: #D90000;
+        --obsidian: #080808;
+    }
+
+    #content { background: #000 !important; padding: 0 !important; }
+
+    .hub-wrapper {
+        background: var(--bg);
+        padding: 30px;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* 📊 THE Hub Hub Hub Hub GRID */
+    .hub-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+        gap: 25px; 
+        padding-top: 30px; 
+    }
+
+    /* 💎 THE Hub Hub Hub Hub ADVANCED "LIQUID" CARDS */
+    .minor-tab-card {
+        background: var(--obsidian);
+        border: 1px solid #1a1a1a;
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none !important;
+        position: relative;
+        overflow: hidden;
+        display: block;
+    }
+
+    /* 🇺🇬 THE Hub Hub Hub NATIONAL FLAG BORDER (TOP RIBBON) */
+    .minor-tab-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(to right, 
+            var(--ug-black) 33%, 
+            var(--ug-yellow) 33%, var(--ug-yellow) 66%, 
+            var(--ug-red) 66%);
+    }
+
+    .minor-tab-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        border-color: var(--imperial-gold);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 15px rgba(212,175,55,0.2);
+    }
+
+    /* 🛰️ ICON STYLING (FIXES THE RED ERRORS) */
+    .tab-icon {
+        font-size: 45px;
+        margin-bottom: 20px;
+        display: block;
+        filter: drop-shadow(0 0 10px rgba(255,255,255,0.1));
+        transition: 0.3s;
+    }
+
+    .minor-tab-card:hover .tab-icon {
+        filter: drop-shadow(0 0 15px currentColor);
+    }
+
+    /* ✍️ TYPOGRAPHY (ENGLAND INSTITUTION STYLE) */
+    .tab-title {
+        color: #FFFFFF;
+        font-weight: 900;
+        font-size: 15px;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+        display: block;
+        text-transform: uppercase;
+    }
+
+    .tab-desc {
+        color: #666;
+        font-size: 11px;
+        font-weight: 500;
+        display: block;
+        letter-spacing: 1px;
+    }
+
+    .status-indicator {
+        position: absolute;
+        top: 15px; right: 15px;
+        font-size: 8px;
+        font-weight: 900;
+        color: var(--imperial-gold);
+        opacity: 0.5;
+        letter-spacing: 1px;
+    }
+
+    .page-header {
+        border-left: 5px solid var(--imperial-gold);
+        padding-left: 20px;
+        margin-bottom: 40px;
+    }
+</style>
+
+<div class="hub-wrapper">
+    <div class="page-header">
+        <h1 style="color: #FFF; font-weight: 900; letter-spacing: 4px; margin:0; font-size: 32px;">
+            {{ school.name|upper }}
+        </h1>
+        <p style="color: var(--imperial-gold); font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 3px;">
+            NATIONAL OPERATIONS COMMAND CENTRE <span style="color: #444; margin: 0 10px;">|</span> SOVEREIGN SYSTEM
+        </p>
+    </div>
+
+    <div class="hub-grid">
+        {% for name, icon, color, link, desc in minor_tabs %}
+        <a href="{{ link }}" class="minor-tab-card">
+            <span class="status-indicator">NODE: ACTIVE</span>
+            <!-- 💎 FIXED LINE: No more red errors by using standard CSS variable pass -->
+            <i class="fas {{ icon }} tab-icon" style="color: {{ color }};"></i>
+            
+            <span class="tab-title">{{ name }}</span>
+            <span class="tab-desc">{{ desc }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

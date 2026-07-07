@@ -711,3 +711,10 @@ class SovereignRegistryAdmin(admin.ModelAdmin):
     # 🛡️ Give it a dummy field so Django doesn't complain
     def has_add_permission(self, request): return False
     def has_delete_permission(self, request, obj=None): return False
+
+from .models import OperationsHub
+
+@admin.register(OperationsHub)
+class OperationsHubAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/ops-hub/')

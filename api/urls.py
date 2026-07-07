@@ -51,4 +51,5 @@ urlpatterns = [
     # 💎 Points the 'registry' link to our visual dashboard
     path('registry/', views.sovereign_registry_view, name='sovereign_registry'),
     path('seed-subjects-99/', views.inject_national_subjects),
+    path('ops-hub/', views.operations_hub_view, name='ops_hub'),
 ]

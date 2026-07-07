@@ -2028,3 +2028,30 @@ def export_styled_layout(request, school_id, layout_format):
         response['Content-Disposition'] = f'attachment; filename="{school_obj.name}_Roster.docx"'
         doc.save(response)
         return response
+
+@login_required
+def operations_hub_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    
+    # 🎨 THE Hub Hub Hub Hub Hub Hub Hub MINOR TABS REGISTRY
+    # Each item: (Name, Icon, Color, Link, Description)
+    minor_tabs = [
+        ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
+        ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
+        ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
+        ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
+        ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
+        ("SMS Broadcast", "fa-comment-alt", "#e67e22", "#", "Notify Parents"),
+        ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
+        ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
+        ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
+        ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
+        ("UNEB/DIT Portal", "fa-medal", "#c0392b", "#", "National Exams"),
+        ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
+    ]
+
+    return render(request, 'admin/operations_hub.html', {
+        'minor_tabs': minor_tabs,
+        'school': school,
+        'title': "NATIONAL OPERATIONS COMMAND"
+    })
