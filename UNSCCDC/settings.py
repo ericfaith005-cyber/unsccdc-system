@@ -240,7 +240,6 @@ JAZZMIN_SETTINGS = {
         "api.AcademicResult",
         "api.Student", 
         "api.Staff",
-        , 
         "api.School", 
         "api.Transaction",
         "api.Parent", 
