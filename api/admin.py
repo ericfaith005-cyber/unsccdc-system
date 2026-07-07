@@ -726,3 +726,27 @@ class OperationsHubAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None): return False
 
 admin.site.register(OperationsHub, OperationsHubAdmin)
+
+@admin.register(DataIngestionVault)
+class DataIngestionAdmin(admin.ModelAdmin):
+    list_display = ('school', 'timestamp', 'total_records', 'status_badge', 'run_ingestion_btn')
+    list_filter = ('processed', 'school')
+    readonly_fields = ('total_records', 'import_log', 'timestamp')
+
+    def status_badge(self, obj):
+        if obj.processed:
+            return mark_safe('<span style="color: #00ff00; font-weight: bold;">✅ PROCESSED</span>')
+        return mark_safe('<span style="color: #ff9900; font-weight: bold;">⏳ PENDING</span>')
+    status_badge.short_description = "Status"
+
+    def run_ingestion_btn(self, obj):
+        if not obj.processed:
+            url = f"/api/process-pdf/{obj.id}/"
+            return mark_safe(f'''
+                <a href="{url}" style="background:#D4AF37; color:black; padding:8px 15px; 
+                border-radius:10px; font-weight:900; text-decoration:none; border: 1px solid #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                ⚡ RUN AUTO-ARRANGE
+                </a>
+            ''')
+        return mark_safe('<span style="color: #888;">Complete</span>')
+    run_ingestion_btn.short_description = "National Action"
