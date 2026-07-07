@@ -234,12 +234,13 @@ JAZZMIN_SETTINGS = {
     # SIDEBAR PRIORITY ORDER
     "order_with_respect_to": [
         "api.OperationsHub",
+        "api.SovereignRegistry",
         "api.DataIngestionVault",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
         "api.Student", 
         "api.Staff",
-        "api.SovereignRegistry", 
+        , 
         "api.School", 
         "api.Transaction",
         "api.Parent", 

@@ -1,79 +1,238 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+
 {% block content %}
 <style>
-    .explorer-container { background: #050505; color: #fff; padding: 25px; border-radius: 20px; border: 1px solid #222; }
-    .sector-badge { background: rgba(212,175,55,0.1); color: #D4AF37; padding: 5px 15px; border-radius: 50px; font-size: 10px; font-weight: bold; }
-    
-    /* 💊 CLASS PILLS */
-    .class-pills { display: flex; flex-wrap: wrap; gap: 10px; margin: 25px 0; }
-    .pill { 
-        text-decoration: none; padding: 10px 25px; border-radius: 50px; font-weight: 900; font-size: 12px;
-        transition: 0.3s; border: 1px solid #333; color: #fff; background: #111;
+    /* 🏛️ NATIONAL REGISTRY PRESTIGE THEME */
+    :root {
+        --royal-navy: #002366;
+        --imperial-gold: #D4AF37;
+        --ug-black: #000000;
+        --ug-yellow: #FCDC04;
+        --ug-red: #D90000;
+        --obsidian: #080808;
     }
-    .pill.active { background: #D4AF37; color: #000; border-color: #D4AF37; box-shadow: 0 5px 15px rgba(212,175,55,0.3); }
-    .pill:hover:not(.active) { border-color: #D4AF37; background: rgba(212,175,55,0.05); }
+
+    /* Reset background for the admin content area */
+    #content { background: #000 !important; padding: 0 !important; }
+
+    .registry-wrapper {
+        background: #000;
+        min-height: 80vh;
+        padding: 30px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* 🛡️ TOP BRANDING HEADER */
+    .registry-header {
+        border-left: 6px solid var(--imperial-gold);
+        padding-left: 20px;
+        margin-bottom: 35px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .sector-tag {
+        background: rgba(212,175,55,0.1);
+        color: var(--imperial-gold);
+        padding: 5px 15px;
+        border-radius: 50px;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border: 1px solid rgba(212,175,55,0.2);
+    }
+
+    /* 💊 DYNAMIC CLASS PILLS */
+    .class-pill-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 30px;
+        padding: 10px 0;
+        border-bottom: 1px solid #1a1a1a;
+    }
+
+    .class-pill {
+        text-decoration: none !important;
+        padding: 12px 28px;
+        border-radius: 50px;
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: 1px;
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        color: #888;
+        background: #111;
+        border: 1px solid #222;
+    }
+
+    .class-pill:hover {
+        border-color: var(--imperial-gold);
+        color: #fff;
+        transform: translateY(-3px);
+    }
+
+    .class-pill.active {
+        background: var(--imperial-gold);
+        color: #000;
+        border-color: var(--imperial-gold);
+        box-shadow: 0 10px 20px rgba(212,175,55,0.2);
+    }
 
     /* 📋 THE REGISTRY TABLE */
-    .registry-table { width: 100%; border-collapse: collapse; margin-top: 10px; border-radius: 15px; overflow: hidden; }
-    .registry-table th { background: #111; color: #D4AF37; padding: 15px; text-align: left; font-size: 11px; letter-spacing: 1px; }
-    .registry-table td { padding: 15px; border-bottom: 1px solid #222; font-size: 13px; }
-    .registry-table tr:hover { background: rgba(255,255,255,0.02); }
-    
-    .btn-dossier { 
-        color: #D4AF37; border: 1px solid #D4AF37; padding: 6px 12px; border-radius: 8px; 
-        text-decoration: none; font-size: 11px; font-weight: bold; transition: 0.3s;
+    .table-container {
+        background: var(--obsidian);
+        border-radius: 20px;
+        border: 1px solid #1a1a1a;
+        overflow: hidden;
+        position: relative;
     }
-    .btn-dossier:hover { background: #D4AF37; color: #000; }
+
+    /* 🇺🇬 THE NATIONAL FLAG RIBBON */
+    .table-container::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(to right, 
+            var(--ug-black) 33%, 
+            var(--ug-yellow) 33%, var(--ug-yellow) 66%, 
+            var(--ug-red) 66%);
+    }
+
+    .registry-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .registry-table th {
+        background: rgba(255,255,255,0.02);
+        color: var(--imperial-gold);
+        padding: 20px 15px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        border-bottom: 2px solid #1a1a1a;
+    }
+
+    .registry-table td {
+        padding: 18px 15px;
+        border-bottom: 1px solid #111;
+        color: #fff;
+        font-size: 13px;
+        vertical-align: middle;
+    }
+
+    .registry-table tr:hover {
+        background: rgba(212,175,55,0.02);
+    }
+
+    .prn-code {
+        font-family: 'Courier New', Courier, monospace;
+        color: #00ff00;
+        font-weight: bold;
+        background: rgba(0,255,0,0.05);
+        padding: 4px 10px;
+        border-radius: 5px;
+    }
+
+    /* 📄 ACTION BUTTON */
+    .btn-dossier {
+        text-decoration: none !important;
+        color: var(--imperial-gold);
+        border: 1px solid var(--imperial-gold);
+        padding: 8px 16px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 900;
+        transition: 0.3s;
+        display: inline-block;
+    }
+
+    .btn-dossier:hover {
+        background: var(--imperial-gold);
+        color: #000;
+        box-shadow: 0 5px 15px rgba(212,175,55,0.3);
+    }
+
+    .status-badge {
+        font-size: 9px;
+        font-weight: 900;
+        color: #00ff00;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
 </style>
 
-<div class="explorer-container">
-    <div class="d-flex justify-content-between align-items-center">
+<div class="registry-wrapper">
+    <!-- Header -->
+    <div class="registry-header">
         <div>
-            <h2 style="color: #D4AF37; font-weight: 900; margin: 0;">{{ school.name|upper }}</h2>
-            <span class="sector-badge">{{ school.sector }} SECTOR</span>
+            <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0; font-size: 28px;">
+                {{ school.name|upper }}
+            </h1>
+            <div style="margin-top: 5px;">
+                <span class="sector-tag">{{ school.sector }} SECTOR</span>
+                <span style="color: #444; margin-left: 10px; font-size: 11px;">NATIONAL REGISTRY COUNT: {{ total_count }}</span>
+            </div>
         </div>
-        <button class="btn btn-outline-warning" onclick="window.print()">🖨️ PRINT CLASS LIST</button>
+        <button class="btn btn-outline-warning" onclick="window.print()" style="font-weight: 900; border-radius: 12px;">🖨️ PRINT REGISTRY</button>
     </div>
 
-    <div class="class-pills">
+    <!-- Class Pills -->
+    <div class="class-pill-container">
         {% for c in available_classes %}
-            <a href="?class={{ c }}" class="pill {% if selected_class == c %}active{% endif %}">
+            <a href="?class={{ c }}" class="class-pill {% if selected_class == c %}active{% endif %}">
                 {{ c }}
             </a>
         {% endfor %}
     </div>
 
-    <table class="registry-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>FULL NAME</th>
-                <th>PRN / ACCESS CODE</th>
-                <th>GENDER</th>
-                <th>STATUS</th>
-                <th style="text-align: right;">ACTION</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for s in students %}
-            <tr>
-                <td style="color: #444;">{{ forloop.counter }}</td>
-                <td style="font-weight: bold;">{{ s.full_name|upper }}</td>
-                <td style="font-family: monospace; color: #00ff00;">{{ s.payment_code }}</td>
-                <td>{{ s.gender }}</td>
-                <td><span style="color: #00ff00; font-size: 10px;">● ACTIVE</span></td>
-                <td style="text-align: right;">
-                    <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-dossier">VIEW DOSSIER</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" style="padding: 100px; text-align: center; color: #444;">
-                    NO STUDENTS REGISTERED IN {{ selected_class }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- Student Table -->
+    <div class="table-container">
+        <table class="registry-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>FULL NAME (ALPHABETICAL)</th>
+                    <th>PRN / ACCESS CODE</th>
+                    <th>GENDER</th>
+                    <th>STATUS</th>
+                    <th style="text-align: right;">ACTION</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td style="color: #444; font-weight: bold;">{{ forloop.counter }}</td>
+                    <td style="font-weight: 800; letter-spacing: 0.5px;">{{ s.full_name|upper }}</td>
+                    <td><span class="prn-code">{{ s.payment_code }}</span></td>
+                    <td>{{ s.gender }}</td>
+                    <td>
+                        <div class="status-badge">
+                            <span style="height: 6px; width: 6px; background: #00ff00; border-radius: 50%;"></span>
+                            ACTIVE
+                        </div>
+                    </td>
+                    <td style="text-align: right;">
+                        <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-dossier">
+                            <i class="fas fa-file-pdf"></i> VIEW DOSSIER
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 120px; text-align: center;">
+                        <i class="fas fa-user-slash" style="font-size: 40px; color: #222; display: block; margin-bottom: 15px;"></i>
+                        <span style="color: #444; font-weight: bold; letter-spacing: 2px;">NO STUDENTS REGISTERED IN {{ selected_class }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -1931,8 +1931,7 @@ def sovereign_registry_view(request):
             'title': "SOVEREIGN NATIONAL REGISTRY"
         })
     except Exception as e:
-        # 🚑 This tells us EXACTLY what the error is instead of just '500'
-        return HttpResponse(f"Registry Engine Error: {str(e)}")
+        return render(request, 'sovereign_registry.html', context)
 
 @login_required
 def inject_national_subjects(request):
