@@ -1,6 +1,8 @@
 # --- 💎 SURGERY: RESTORING IMPERIAL IMPORTS 💎 ---
 import random
 import string
+import datetime # 💎 CRITICAL: Needed for the Year in Staff ID
+from django.db import models
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
 from PIL import Image

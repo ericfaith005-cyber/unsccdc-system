@@ -82,7 +82,15 @@ class StaffAdmin(admin.ModelAdmin):
     secure_pin_box.short_description = "Current PIN"
 
     def display_subjects(self, obj):
-        return ", ".join([s.name for s in obj.subjects.all()])
+        try:
+            # 🛡️ This safely joins names or returns 'None' if empty
+            subs = obj.subjects.all()
+            if subs:
+                return ", ".join([s.name for s in subs])
+            return mark_safe('<i style="color: #666;">No subjects assigned</i>')
+        except:
+            return "Syncing..."
+    
     display_subjects.short_description = "Subjects Handled"
 
     # 💎 THE RESET BUTTON
