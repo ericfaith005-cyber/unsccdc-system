@@ -2297,3 +2297,20 @@ def bridge_commit_final(request, bridge_id):
     bridge.is_processed = True
     bridge.save()
     return redirect('/admin/api/student/')
+
+@login_required
+def reset_staff_pin(request, staff_id):
+    """🛡️ GENERATES A NEW 4-DIGIT Hub Hub Hub PIN"""
+    staff = get_object_or_404(Staff, id=staff_id)
+    new_pin = ''.join(random.choices(string.digits, k=4))
+    staff.secure_pin = new_pin
+    staff.save()
+    
+    return HttpResponse(f"""
+        <body style="background:#000; color:white; text-align:center; padding:50px; font-family:sans-serif;">
+            <h2 style="color:gold;">PIN RESET SUCCESSFUL</h2>
+            <p>New Security PIN for <b>{staff.full_name}</b> is:</p>
+            <h1 style="font-size:50px; color:#00ff00; letter-spacing:10px;">{new_pin}</h1>
+            <a href="/admin/api/staff/" style="color:gold; text-decoration:none; border:1px solid gold; padding:10px 20px; border-radius:10px;">RETURN TO REGISTRY</a>
+        </body>
+    """)

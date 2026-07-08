@@ -222,14 +222,25 @@ class Transaction(models.Model):
 
 class Staff(models.Model):
     # CORE IDENTITY
+    ROLE_CHOICES = [
+        ('TEACHER', 'Class Teacher'),
+        ('BURSAR', 'School Bursar'),
+        ('HEADTEACHER', 'Head Teacher'),
+        ('DIRECTOR', 'School Director'),
+        ('SECRETARY', 'Front Desk/Secretary'),
+        ('LIBRARIAN', 'Library Manager'),
+    ]
+
     full_name = models.CharField(max_length=255)
     passport_photo = models.ImageField(upload_to='staff/photos/', null=True, blank=True)
     national_id_copy = models.ImageField(upload_to='staff/ids/', null=True, blank=True)
     cv_pdf = models.FileField(upload_to='staff/cvs/', null=True, blank=True)
     
     # SYSTEM ACCESS
-    staff_id = models.CharField(max_length=100, unique=True, editable=False)
-    secure_pin = models.CharField(max_length=6, blank=True)
+    staff_id = models.CharField(max_length=20, unique=True, editable=False)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='TEACHER')
+    subjects = models.ManyToManyField('Subject', blank=True, help_text="Select subjects taught by this staff")
+    secure_pin = models.CharField(max_length=4, editable=False)
     
     # HR & AUDIT DATA
     tin_number = models.CharField(max_length=30, blank=True, verbose_name="URA TIN")
@@ -242,7 +253,23 @@ class Staff(models.Model):
     phone = models.CharField(max_length=30)
     momo_number = models.CharField(max_length=30, blank=True, null=True)
 
-    def __str__(self): return f"{self.full_name} ({self.designation})"
+
+
+    def save(self, *args, **kwargs):
+        # 🤖 AUTO-GENERATE STAFF ID (Format: UNS/STF/Year/Random)
+        if not self.staff_id:
+            year = datetime.date.today().year
+            rand = ''.join(random.choices(string.digits, k=4))
+            self.staff_id = f"UNS/STF/{year}/{rand}"
+        
+        # 🤖 AUTO-GENERATE 4-DIGIT PIN
+        if not self.secure_pin:
+            self.secure_pin = ''.join(random.choices(string.digits, k=4))
+            
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.role})"
 
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
@@ -447,8 +474,8 @@ class NationalDataBridge(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "3. National Data Bridge"
-        verbose_name_plural = "3. National Data Bridge"
+        verbose_name = "National Data Bridge"
+        verbose_name_plural = "National Data Bridge"
 
     def __str__(self):
         return f"Bridge Entry #{self.id} - {self.school.name}"

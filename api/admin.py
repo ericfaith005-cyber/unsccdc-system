@@ -35,9 +35,10 @@ dossier_button.short_description = 'HR Archive'
 
 class StaffAdmin(admin.ModelAdmin):
     # 💎 1. THE VIEW: Scannable columns in the list
-    list_display = ('full_name', 'designation', 'school', 'staff_id', dossier_button)
+    list_display = ('full_name_styled', 'role_badge', 'school', 'display_subjects', 'staff_id', 'secure_pin_box', 'reset_pin_btn', dossier_button)
     search_fields = ('full_name', 'staff_id', 'tin_number')
-    list_filter = ('school', 'designation')
+    list_filter = ('role', 'school', 'subjects')
+    filter_horizontal = ('subjects',) 
 
     # 💎 2. THE CATEGORIZED TABS (The 'Fieldsets' logic)
     # This physically separates CVs and IDs from basic names
@@ -65,6 +66,30 @@ class StaffAdmin(admin.ModelAdmin):
     def dossier_button_link(self, obj):
         return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
     dossier_button_link.short_description = 'HR Archive'
+
+    def full_name_styled(self, obj):
+        return mark_safe(f'<b style="color: #D4AF37;">{obj.full_name.upper()}</b>')
+    full_name_styled.short_description = "Staff Name"
+
+    def role_badge(self, obj):
+        colors = {'TEACHER': '#3498db', 'BURSAR': '#2ecc71', 'HEADTEACHER': '#e74c3c', 'DIRECTOR': '#9b59b6'}
+        color = colors.get(obj.role, '#7f8c8d')
+        return mark_safe(f'<span style="background:{color}; color:white; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:bold;">{obj.role}</span>')
+    role_badge.short_description = "Position"
+
+    def secure_pin_box(self, obj):
+        return mark_safe(f'<code style="background:#222; color:#00ff00; padding:5px; border-radius:5px; font-weight:bold;">{obj.secure_pin}</code>')
+    secure_pin_box.short_description = "Current PIN"
+
+    def display_subjects(self, obj):
+        return ", ".join([s.name for s in obj.subjects.all()])
+    display_subjects.short_description = "Subjects Handled"
+
+    # 💎 THE RESET BUTTON
+    def reset_pin_btn(self, obj):
+        url = f"/api/staff/reset-pin/{obj.id}/"
+        return mark_safe(f'<a href="{url}" style="background:#444; color:white; padding:5px 8px; border-radius:5px; text-decoration:none; font-size:10px;">🔄 RESET PIN</a>')
+    reset_pin_btn.short_description = "Action"
 
 
 class SubjectAdmin(admin.ModelAdmin):

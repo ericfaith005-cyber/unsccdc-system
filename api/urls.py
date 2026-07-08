@@ -56,5 +56,6 @@ urlpatterns = [
     path('nuke-system-99/', views.nuke_problem_table),
     path('bridge-preview/<int:bridge_id>/', views.bridge_preview_portal),
     path('bridge-commit/<int:bridge_id>/', views.bridge_commit_final),
+    path('staff/reset-pin/<int:staff_id>/', views.reset_staff_pin),
 
 ]
