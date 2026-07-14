@@ -1171,47 +1171,42 @@ from .models import Student, Staff
 @permission_classes([AllowAny])
 def student_identity_gate(request):
     d = request.data
-    # 💎 CLEANING THE INPUTS
+    # 🕵️ LOG THE INCOMING DATA TO RENDER TERMINAL
+    print(f"--- 🛡️ IDENTITY ATTEMPT: {d} ---") 
+    
     code_in = d.get('code', '').strip().upper()
     student_in = d.get('student', '').strip().lower()
-    parent_in = d.get('parent', '').strip().lower()
-    phone_in = d.get('phone', '').strip()[-9:] 
-
-    # 🔎 Search
+    
     student = Student.objects.filter(payment_code__iexact=code_in).first()
     
-    if student:
-        # Check names carefully
-        if student.full_name.lower().strip() == student_in:
-            parent = student.parent_link
-            if parent and parent.full_name.lower().strip() == parent_in:
-                return Response({
-                    "status": "IDENTITY_CONFIRMED", 
-                    "student_id": str(student.account_number),
-                    "msg": "Identity matched."
-                })
+    if not student:
+        print(f"❌ REJECTED: PRN {code_in} not found in DB.")
+        return Response({"status": "DENIED", "msg": "PRN NOT FOUND"}, status=401)
     
-    return Response({"status": "DENIED", "msg": "Credentials do not match National Registry."}, status=401)
+    if student.full_name.lower().strip() != student_in:
+        print(f"❌ REJECTED: Name {student_in} does not match {student.full_name.lower()}.")
+        return Response({"status": "DENIED", "msg": "STUDENT NAME MISMATCH"}, status=401)
 
-from django.http import JsonResponse # 💎 Ensure this is imported at the top
+    return Response({"status": "IDENTITY_CONFIRMED", "student_id": str(student.account_number)})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def staff_hub_auth(request):
-    name_in = request.data.get('name', '').strip().lower()
-    pin_in = request.data.get('pin', '').strip()
+    d = request.data
+    # 🕵️ LOG THE INCOMING DATA
+    print(f"--- 👔 STAFF ATTEMPT: {d} ---")
+    
+    name_in = d.get('name', '').strip()
+    pin_in = d.get('pin', '').strip()
 
-    # 💎 .first() kills the 'subtype of int' crash!
     staff = Staff.objects.filter(full_name__iexact=name_in, secure_pin=pin_in).first()
     
     if staff:
-        return Response({
-            "status": "STAFF_AUTHORIZED",
-            "name": staff.full_name,
-            "role": getattr(staff, 'role', 'Authorized Instructor'),
-            "type": "staff" # 👈 CRITICAL: Tells the app to show staff tabs
-        })
-    return Response({"status": "DENIED", "msg": "Staff Credentials Rejected."}, status=401)
+        print(f"✅ AUTHORIZED: {staff.full_name}")
+        return Response({"status": "STAFF_AUTHORIZED", "name": staff.full_name, "role": "Teacher"})
+    
+    print(f"❌ REJECTED: Staff {name_in} with PIN {pin_in} not found.")
+    return Response({"status": "DENIED", "msg": "STAFF NOT FOUND"}, status=401)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
