@@ -2299,3 +2299,51 @@ def reset_staff_pin(request, staff_id):
             <a href="/admin/api/staff/" style="color:gold; text-decoration:none; border:1px solid gold; padding:10px 20px; border-radius:10px;">RETURN TO REGISTRY</a>
         </body>
     """)
+
+# =============================================================
+# 🏛️ THE Hub Hub Hub Hub NATIONAL LANDING GATE (FIXES ATTRIBUTE ERROR)
+# =============================================================
+def national_landing_page(request):
+    """The prestigious entry point for the UNSCCDC Global System"""
+    html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UNSCCDC GLOBAL | National Hub</title>
+        <style>
+            body { background: #050505; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; padding: 50px 20px; margin: 0; }
+            .container { max-width: 800px; margin: auto; border: 2px solid #D4AF37; padding: 40px; border-radius: 30px; background: rgba(212,175,55,0.02); box-shadow: 0 0 50px rgba(212,175,55,0.1); }
+            h1 { color: #D4AF37; letter-spacing: 4px; font-size: 32px; margin-bottom: 10px; font-weight: 900; }
+            p { color: #888; font-size: 16px; line-height: 1.6; }
+            .btn-group { margin-top: 40px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+            .btn { text-decoration: none; padding: 18px 30px; border-radius: 15px; font-weight: 900; width: 280px; transition: 0.3s; display: block; border: 1px solid #D4AF37; cursor: pointer; }
+            .btn-gold { background: #D4AF37; color: #000; }
+            .btn-outline { color: #D4AF37; background: transparent; }
+            .btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(212,175,55,0.4); }
+            .footer { margin-top: 50px; font-size: 11px; color: #444; letter-spacing: 1px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div style="font-size: 60px; margin-bottom: 20px;">🌍</div>
+            <h1>UNSCCDC GLOBAL</h1>
+            <p>Uganda National Schools Central Control Digital Centre<br>
+            <span style="color: #666;">Sovereign Infrastructure for Modern Education</span></p>
+            
+            <div class="btn-group">
+                <a href="/admin/" class="btn btn-gold">ENTER MASTER OFFICE</a>
+                <a href="/api/about/" class="btn btn-outline">ABOUT THE HUB</a>
+                <a href="/api/get-app/" class="btn btn-outline" style="border-color: #00ff00; color: #00ff00;">📥 DOWNLOAD MOBILE APP</a>
+            </div>
+            
+            <div class="footer">
+                Developed by Yawe Eric &copy; 2026<br>
+                Digitizing the Pearl of Africa
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
