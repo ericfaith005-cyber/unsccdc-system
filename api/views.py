@@ -1171,65 +1171,48 @@ from .models import Student, Staff
 @permission_classes([AllowAny])
 def student_identity_gate(request):
     d = request.data
-    # 🧼 CLEAN EVERYTHING
-    code_in = d.get('code', '').strip()
-    student_in = d.get('student', '').strip()
-    parent_in = d.get('parent', '').strip()
-    phone_in = d.get('phone', '').strip()[-9:] # Last 9 digits (770...)
+    # 💎 CLEANING THE INPUTS
+    code_in = d.get('code', '').strip().upper()
+    student_in = d.get('student', '').strip().lower()
+    parent_in = d.get('parent', '').strip().lower()
+    phone_in = d.get('phone', '').strip()[-9:] 
 
-    # 🕵️ Check Access Code First
+    # 🔎 Search
     student = Student.objects.filter(payment_code__iexact=code_in).first()
-    if not student:
-        return Response({"status": "DENIED", "msg": "PRN / ACCESS CODE NOT FOUND"}, status=401)
-
-    # 🕵️ Check Student Name (Ignoring Case)
-    if student.full_name.strip().lower() != student_in.lower():
-        return Response({"status": "DENIED", "msg": "STUDENT NAME MISMATCH"}, status=401)
-
-    # 🕵️ Check Parent Identity
-    parent = student.parent_link
-    if not parent or parent.full_name.strip().lower() != parent_in.lower():
-        return Response({"status": "DENIED", "msg": "GUARDIAN NAME MISMATCH"}, status=401)
-
-    # 🕵️ Check Phone (Does the stored phone contain the last 9 digits?)
-    if phone_in not in parent.phone_number:
-        return Response({"status": "DENIED", "msg": "PHONE NUMBER NOT LINKED"}, status=401)
-
-    return Response({
-        "status": "IDENTITY_CONFIRMED", 
-        "student_id": str(student.account_number),
-        "msg": "Identity Verified"
-    })
+    
+    if student:
+        # Check names carefully
+        if student.full_name.lower().strip() == student_in:
+            parent = student.parent_link
+            if parent and parent.full_name.lower().strip() == parent_in:
+                return Response({
+                    "status": "IDENTITY_CONFIRMED", 
+                    "student_id": str(student.account_number),
+                    "msg": "Identity matched."
+                })
+    
+    return Response({"status": "DENIED", "msg": "Credentials do not match National Registry."}, status=401)
 
 from django.http import JsonResponse # 💎 Ensure this is imported at the top
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def staff_hub_auth(request):
-    """
-    💎 THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub
-    TOTAL Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STABILITY FIX
-    """
-    name_in = request.data.get('name', '').strip()
+    name_in = request.data.get('name', '').strip().lower()
     pin_in = request.data.get('pin', '').strip()
 
-    # 🕵️ We use .filter().first() to guarantee ONE object
+    # 💎 .first() kills the 'subtype of int' crash!
     staff = Staff.objects.filter(full_name__iexact=name_in, secure_pin=pin_in).first()
     
     if staff:
-        # 🛡️ We use JsonResponse with a RAW DICTIONARY. 
-        # This kills the 'subtype of int' error forever!
-        return JsonResponse({
+        return Response({
             "status": "STAFF_AUTHORIZED",
-            "name": str(staff.full_name),
-            "role": str(getattr(staff, 'role', 'Official Staff')),
-            "school": str(staff.school.name if staff.school else "National Hub")
-        }, safe=False)
-    
-    return JsonResponse({"status": "DENIED", "msg": "Invalid Staff Credentials"}, status=401)
-# =============================================================
-# 🔐 PARENT Hub Hub Hub Hub Hub FINAL Hub Hub Hub Hub Hub Hub PIN Hub Hub Hub Hub Hub
-# =============================================================
+            "name": staff.full_name,
+            "role": getattr(staff, 'role', 'Authorized Instructor'),
+            "type": "staff" # 👈 CRITICAL: Tells the app to show staff tabs
+        })
+    return Response({"status": "DENIED", "msg": "Staff Credentials Rejected."}, status=401)
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def pin_vault_auth(request):

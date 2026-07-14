@@ -7,6 +7,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from api import views # 💎 Uses the module directly to avoid naming ghosts
 
 urlpatterns = [
+    path('', views.national_landing_page, name='app_root'),
     # 🏛️ 1. THE Hub Hub Hub Hub Hub Hub Hub FRONT DOOR (PWA / App Entry)
     # This is what people see at the main link
     path('', TemplateView.as_view(template_name="index.html"), name='app'),
