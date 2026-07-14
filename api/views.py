@@ -1797,15 +1797,17 @@ def live_warroom_stats(request):
 
 @csrf_exempt
 def catch_app_crash(request):
-    """🛡️ THE NATIONAL BLACK BOX: Receives crash logs from the APK"""
+    """🛡️ THE Hub Hub Hub Hub Hub Hub NATIONAL MONITOR"""
     if request.method == 'POST':
-        error_data = request.POST.get('error', 'Unknown Error')
-        print("\n" + "="*50)
-        print("🚨 CRITICAL APK CRASH DETECTED 🚨")
-        print(f"ERROR: {error_data}")
-        print("="*50 + "\n")
-        return HttpResponse("Log Received")
-    return HttpResponse("Listening...")
+        error_msg = request.POST.get('error', 'Unknown Log')
+        
+        # 💎 This makes the message look HUGE in the Render Terminal
+        print("\n" + "📡" * 20)
+        print(f"NATIONAL APP SIGNAL: {error_msg}")
+        print("📡" * 20 + "\n")
+        
+        return HttpResponse("LOG_OK")
+    return HttpResponse("LISTENING")
 
 def generate_student_dossier(request, student_id):
     try:
