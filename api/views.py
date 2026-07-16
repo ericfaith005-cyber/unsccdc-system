@@ -2367,7 +2367,7 @@ def generate_fees_reminder_pdf(request, student_id):
         p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44)
 
         # 2. LOGO & HEADER
-         logo_drawn = False
+        logo_drawn = False
         if school.logo:
             try:
                 # 🕵️ We check if the file physically exists on the disk
@@ -2389,7 +2389,7 @@ def generate_fees_reminder_pdf(request, student_id):
             p.drawCentredString(width/2, height-72, "U") # 'U' for Uganda / UNSCCDC
             p.setFont("Helvetica-Bold", 7)
             p.drawCentredString(width/2, height-105, "OFFICIAL SEAL")
-            
+
         p.setFillColor(gov_blue); p.setFont("Helvetica-Bold", 16)
         p.drawCentredString(width/2, height-130, school.name.upper())
         p.setFont("Helvetica-Bold", 10); p.setFillColor(colors.black)
