@@ -620,6 +620,25 @@ class SchoolPayLedgerAdmin(admin.ModelAdmin):
         return mark_safe(f'<span style="background:{color}; color:{t_color}; padding:2px 10px; border-radius:15px; font-size:9px; font-weight:900;">{channel}</span>')
     channel_badge.short_description = "Method"
 
+    def amount_styled(self, obj):
+        color = "red" if obj.is_reversed else "green"
+        return mark_safe(f'<b style="color:{color};">UGX {obj.amount:,.0f}</b>')
+    amount_styled.short_description = "Amount"
+
+    def reversal_action(self, obj):
+        if not obj.is_reversed:
+            url = f"/api/reverse-txn/{obj.id}/"
+            # 💎 JavaScript prompt to ask for the reason
+            return mark_safe(f'''
+                <a href="#" onclick="let r = prompt('Enter reason for reversal:'); if(r) window.location.href='{url}?reason=' + r;" 
+                   style="background:#ff4444; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-size:10px;">
+                   ❌ REVERSE
+                </a>
+            ''')
+        return mark_safe('<i style="color:grey;">Voided</i>')
+    
+    reversal_action.short_description = "Treasury Action"
+
 admin.site.register(SchoolPayLedger, SchoolPayLedgerAdmin)
 
 

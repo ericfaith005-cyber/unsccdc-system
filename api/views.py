@@ -2503,3 +2503,46 @@ def sovereign_parents_view(request):
         return render(request, 'sovereign_parents.html', context)
     except Exception as e:
         return HttpResponse(f"Guardian Registry Error: {str(e)}")
+
+@login_required
+@transaction.atomic # 💎 Ensures the reversal and balance update happen together or not at all
+def execute_sovereign_reversal(request, txn_id):
+    txn = get_object_or_404(SchoolPayLedger, id=txn_id)
+    
+    if txn.is_reversed:
+        return HttpResponse("Error: This transaction was already reversed.")
+
+    try:
+        # 1. Deduct the amount from the student's total paid in FeesTracker
+        from .models import FeesTracker
+        tracker = FeesTracker.objects.get(student=txn.student)
+        tracker.total_fees_paid -= txn.amount
+        tracker.save()
+
+        # 2. Mark the transaction as reversed
+        txn.is_reversed = True
+        txn.reversal_reason = request.GET.get('reason', 'Correction of wrong entry')
+        txn.reversed_at = timezone.now()
+        txn.save()
+
+        # 3. Log it in the National Audit Ledger (The permanent record)
+        from .models import NationalLedger
+        NationalLedger.objects.create(
+            transaction_id=f"REV-{txn.receipt_number}",
+            school=txn.school,
+            student=txn.student,
+            category="SYSTEM REVERSAL",
+            amount_paid=(txn.amount * -1), # Negative amount to show reversal
+            note=f"Reversal of {txn.receipt_number}: {txn.reversal_reason}"
+        )
+
+        return HttpResponse(f"""
+            <body style="background:#000; color:white; text-align:center; padding:50px; font-family:sans-serif;">
+                <h1 style="color:#ff4444;">REVERSAL SUCCESSFUL</h1>
+                <p>Transaction <b>{txn.receipt_number}</b> has been voided.</p>
+                <p>UGX {txn.amount:,.0f} has been deducted from {txn.student.full_name}'s balance.</p>
+                <a href="/admin/api/schoolpayledger/" style="color:gold;">Return to Ledger</a>
+            </body>
+        """)
+    except Exception as e:
+        return HttpResponse(f"Reversal Failed: {str(e)}")

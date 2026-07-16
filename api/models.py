@@ -392,6 +392,13 @@ class SchoolPayLedger(models.Model):
 
     # 💎 THE FIX: Add this specific line here! 💎
     raw_data = models.JSONField(default=dict, blank=True, null=True)
+    is_reversed = models.BooleanField(default=False, verbose_name="Transaction Void")
+    reversal_reason = models.TextField(blank=True, null=True, help_text="Why was this reversed?")
+    reversed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "National Treasury Ledger"
+        verbose_name_plural = "National Treasury Ledger"
 
     class Meta:
         verbose_name = "🛡️ SCHOOLPAY LEDGER"
