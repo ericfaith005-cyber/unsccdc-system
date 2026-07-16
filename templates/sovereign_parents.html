@@ -46,7 +46,7 @@
                     <td>{{ p.phone_number }}</td>
                     <td><span class="pin-code">{{ p.secure_pin }}</span></td>
                     <td>
-                        {% for s in p.registered_children.all %}
+                        {% for s in p.students.all %}
                             <span class="child-badge">{{ s.full_name|upper }} ({{ s.current_class }})</span>
                         {% empty %}
                             <span style="color: #444;">No links</span>

@@ -2486,7 +2486,7 @@ def sovereign_parents_view(request):
         query = request.GET.get('q', '').strip()
         
         # 🔎 Search for parents who have children in THIS school
-        parents = Parent.objects.filter(registered_children__school=school).distinct()
+        parents = Parent.objects.filter(students__school=school).distinct()
 
         if query:
             parents = parents.filter(
