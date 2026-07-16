@@ -2060,6 +2060,7 @@ def operations_hub_view(request):
         ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
         ("Fees Reminders", "fa-bell", "#f39c12", "/admin/api/feesreminder/", "Print Reminders"), 
         ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
+        ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
         ("SMS Broadcast", "fa-comment-alt", "#e67e22", "#", "Notify Parents"),
         ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
@@ -2477,3 +2478,28 @@ def generate_fees_reminder_pdf(request, student_id):
         return response
     except Exception as e:
         return HttpResponse(f"Reminder Engine Error: {str(e)}")
+
+@login_required
+def sovereign_parents_view(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        query = request.GET.get('q', '').strip()
+        
+        # 🔎 Search for parents who have children in THIS school
+        parents = Parent.objects.filter(registered_children__school=school).distinct()
+
+        if query:
+            parents = parents.filter(
+                Q(full_name__icontains=query) | 
+                Q(phone_number__icontains=query)
+            )
+
+        context = {
+            'parents': parents,
+            'school': school,
+            'title': "NATIONAL GUARDIAN REGISTRY",
+            'total_count': parents.count()
+        }
+        return render(request, 'sovereign_parents.html', context)
+    except Exception as e:
+        return HttpResponse(f"Guardian Registry Error: {str(e)}")

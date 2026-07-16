@@ -517,3 +517,9 @@ class FeesReminder(Student):
         proxy = True
         verbose_name = "National Fees Reminders"
         verbose_name_plural = "National Fees Reminders"
+
+class SovereignParentRegistry(Parent):
+    class Meta:
+        proxy = True
+        verbose_name = "Sovereign Parent Registry"
+        verbose_name_plural = "Sovereign Parent Registry"

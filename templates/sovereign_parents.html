@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --gold: #D4AF37; --navy: #002366; --obsidian: #080808; --ug-yellow: #FCDC04; --ug-red: #D90000; }
+    #content { background: #000 !important; padding: 0 !important; }
+    .wrapper { background: #000; min-height: 80vh; padding: 30px; font-family: sans-serif; }
+    .header { border-left: 6px solid var(--gold); padding-left: 20px; margin-bottom: 30px; }
+    .table-box { background: var(--obsidian); border-radius: 20px; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
+    .table-box::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(to right, #000 33%, var(--ug-yellow) 33%, var(--ug-yellow) 66%, var(--ug-red) 66%); }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(255,255,255,0.02); color: var(--gold); padding: 20px; text-align: left; font-size: 11px; letter-spacing: 2px; }
+    td { padding: 18px 20px; border-bottom: 1px solid #111; color: #fff; font-size: 13px; }
+    .pin-code { font-family: monospace; color: #00ff00; background: rgba(0,255,0,0.05); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+    .child-badge { background: var(--navy); color: white; padding: 2px 10px; border-radius: 10px; margin-right: 5px; font-size: 10px; display: inline-block; margin-bottom: 3px; }
+</style>
+
+<div class="wrapper">
+    <div class="header">
+        <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0;">{{ school.name|upper }}</h1>
+        <span style="color: var(--gold); font-size: 10px; font-weight: 900;">NATIONAL GUARDIAN REGISTRY</span>
+    </div>
+
+    <!-- 🔍 SEARCH -->
+    <form method="GET" style="margin-bottom: 25px; display: flex; gap: 10px;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search Parent Name or Phone..." 
+               style="flex-grow: 1; padding: 12px; background: #111; border: 1px solid #333; border-radius: 12px; color: #fff;">
+        <button type="submit" class="btn btn-warning" style="font-weight: 900;">SEARCH</button>
+    </form>
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>PARENT NAME</th>
+                    <th>CONTACT</th>
+                    <th>SECURE PIN</th>
+                    <th>LINKED STUDENTS</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in parents %}
+                <tr>
+                    <td style="color: #444;">{{ forloop.counter }}</td>
+                    <td style="font-weight: 800;">{{ p.full_name|upper }}</td>
+                    <td>{{ p.phone_number }}</td>
+                    <td><span class="pin-code">{{ p.secure_pin }}</span></td>
+                    <td>
+                        {% for s in p.registered_children.all %}
+                            <span class="child-badge">{{ s.full_name|upper }} ({{ s.current_class }})</span>
+                        {% empty %}
+                            <span style="color: #444;">No links</span>
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

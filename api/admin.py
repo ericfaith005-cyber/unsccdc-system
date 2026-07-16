@@ -842,3 +842,10 @@ class FeesReminderAdmin(admin.ModelAdmin):
     print_reminder_btn.short_description = "Action"
 
 admin.site.register(FeesReminder, FeesReminderAdmin)
+
+
+class SovereignParentRegistryAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/parents/')
+
+admin.site.register(SovereignParentRegistry, SovereignParentRegistryAdmin)

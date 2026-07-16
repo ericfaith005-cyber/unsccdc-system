@@ -239,6 +239,7 @@ JAZZMIN_SETTINGS = {
         "api.FeesReminder",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
+        "api.SovereignParentRegistry",
         "api.Student", 
         "api.Staff",
         "api.School", 
@@ -252,6 +253,7 @@ JAZZMIN_SETTINGS = {
         "api.NationalDataBridge",
         "api.SovereignRegistry",      # 2. Class Explorer
         "api.FeesReminder",
+        "api.SovereignParentRegistry",
         "api.Student",                 # 3. Individual Students
         "api.Parent",                  # 4. Guardian Registry
         "api.Staff",                   # 5. Teacher Force
