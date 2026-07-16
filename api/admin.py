@@ -366,8 +366,14 @@ admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Subject, SubjectAdmin) 
-admin.site.register(Parent, ParentAdmin) 
 
+class StudentInline(admin.TabularInline):
+    model = Student
+    extra = 0  # No empty rows
+    fields = ('full_name', 'current_class', 'payment_code')
+    readonly_fields = ('full_name', 'current_class', 'payment_code')
+    verbose_name = "Linked Student"
+    verbose_name_plural = "Registered Children in Registry"
 
 @admin.register(Parent)
 class ParentAdmin(admin.ModelAdmin):
@@ -522,15 +528,6 @@ def payslip_button(obj):
         </a>
     ''')
 payslip_button.short_description = 'Finance Action'
-
-class StudentInline(admin.TabularInline):
-    model = Student
-    extra = 0  # No empty rows
-    fields = ('full_name', 'current_class', 'payment_code')
-    readonly_fields = ('full_name', 'current_class', 'payment_code')
-    verbose_name = "Linked Student"
-    verbose_name_plural = "Registered Children in Registry"
-
 
 # --- 🛰️ 1. THE ASSIGNMENT INLINE ---
 class AssignmentInline(admin.TabularInline):
