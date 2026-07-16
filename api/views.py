@@ -2360,6 +2360,7 @@ def generate_fees_reminder_pdf(request, student_id):
         gov_blue = colors.HexColor("#002366")
         rich_gold = colors.HexColor("#D4AF37")
         off_white = colors.HexColor("#FDFDF5")
+        ug_red = colors.HexColor("#D90000")  
 
         # 1. BACKGROUND & BORDERS
         p.setFillColor(off_white); p.rect(0, 0, width, height, fill=1)
