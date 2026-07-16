@@ -208,18 +208,20 @@
                     <td class="counter-circle">{{ forloop.counter }}</td>
                     <td>
                         <span class="parent-name">{{ p.full_name|upper }}</span>
-                        <span class="parent-phone"><i class="fas fa-phone-alt" style="font-size: 10px; margin-right: 5px;"></i>{{ p.phone_number }}</span>
+                        <span class="parent-phone"><i class="fas fa-phone-alt"></i> {{ p.phone_number }}</span>
                     </td>
                     <td><span class="pin-box">{{ p.secure_pin }}</span></td>
                     <td>
                         <div class="children-flow">
+                            <!-- 💎 THE Hub Hub Hub Hub Hub PRECISION LINK -->
+                            <!-- We only look for students that belong to THIS parent AND THIS school -->
                             {% for s in p.students.all %}
-                                <div class="child-card">
-                                    <span class="child-name">{{ s.full_name|upper }}</span>
-                                    <span class="child-class">{{ s.current_class }}</span>
-                                </div>
-                            {% empty %}
-                                <span style="color: #333; font-style: italic;">No students linked in registry</span>
+                                {% if s.school == school %}
+                                    <div class="child-card">
+                                        <span class="child-name">{{ s.full_name|upper }}</span>
+                                        <span class="child-class">{{ s.current_class }}</span>
+                                    </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
                     </td>
