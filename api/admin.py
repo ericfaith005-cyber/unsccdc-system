@@ -827,7 +827,6 @@ admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)
 
 from .models import FeesReminder
 
-@admin.register(FeesReminder)
 class FeesReminderAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'current_class', 'get_balance', 'print_reminder_btn')
     list_filter = ('current_class', 'school')
@@ -841,3 +840,5 @@ class FeesReminderAdmin(admin.ModelAdmin):
         url = f"/api/print-fees-reminder/{obj.account_number}/"
         return mark_safe(f'<a href="{url}" style="background:#002366; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">🖨️ PRINT REMINDER</a>')
     print_reminder_btn.short_description = "Action"
+
+admin.site.register(FeesReminder, FeesReminderAdmin)
