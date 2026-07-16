@@ -1,56 +1,227 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
+
 {% block content %}
 <style>
-    :root { --gold: #D4AF37; --navy: #002366; --obsidian: #080808; --ug-yellow: #FCDC04; --ug-red: #D90000; }
+    /* 🏛️ NATIONAL GUARDIAN REGISTRY PRESTIGE THEME */
+    :root {
+        --royal-navy: #002366;
+        --imperial-gold: #D4AF37;
+        --ug-black: #000000;
+        --ug-yellow: #FCDC04;
+        --ug-red: #D90000;
+        --obsidian: #080808;
+        --glass-white: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Reset admin container to full dark mode */
     #content { background: #000 !important; padding: 0 !important; }
-    .wrapper { background: #000; min-height: 80vh; padding: 30px; font-family: sans-serif; }
-    .header { border-left: 6px solid var(--gold); padding-left: 20px; margin-bottom: 30px; }
-    .table-box { background: var(--obsidian); border-radius: 20px; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
-    .table-box::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(to right, #000 33%, var(--ug-yellow) 33%, var(--ug-yellow) 66%, var(--ug-red) 66%); }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: rgba(255,255,255,0.02); color: var(--gold); padding: 20px; text-align: left; font-size: 11px; letter-spacing: 2px; }
-    td { padding: 18px 20px; border-bottom: 1px solid #111; color: #fff; font-size: 13px; }
-    .pin-code { font-family: monospace; color: #00ff00; background: rgba(0,255,0,0.05); padding: 4px 8px; border-radius: 5px; font-weight: bold; }
-    .child-badge { background: var(--navy); color: white; padding: 2px 10px; border-radius: 10px; margin-right: 5px; font-size: 10px; display: inline-block; margin-bottom: 3px; }
+    .registry-wrapper {
+        background: #000;
+        min-height: 100vh;
+        padding: 35px;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* 🛡️ TOP BRANDING HEADER */
+    .page-header {
+        border-left: 6px solid var(--imperial-gold);
+        padding-left: 25px;
+        margin-bottom: 40px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* 🔍 SEARCH ENGINE DESIGN */
+    .search-container {
+        max-width: 600px;
+        margin-bottom: 30px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-input {
+        flex-grow: 1;
+        padding: 14px 20px;
+        background: var(--obsidian);
+        border: 1px solid #222;
+        border-radius: 12px;
+        color: #fff;
+        font-weight: 600;
+        outline: none;
+        transition: 0.3s;
+    }
+
+    .search-input:focus {
+        border-color: var(--imperial-gold);
+        box-shadow: 0 0 15px rgba(212,175,55,0.1);
+    }
+
+    /* 📊 THE Hub TABLE ARCHITECTURE */
+    .table-container {
+        background: var(--obsidian);
+        border-radius: 20px;
+        border: 1px solid #1a1a1a;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+
+    /* 🇺🇬 THE NATIONAL FLAG RIBBON */
+    .table-container::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(to right, 
+            var(--ug-black) 33%, 
+            var(--ug-yellow) 33%, var(--ug-yellow) 66%, 
+            var(--ug-red) 66%);
+    }
+
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+    th {
+        background: var(--royal-navy);
+        color: var(--imperial-gold);
+        padding: 20px 15px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        border-bottom: 2px solid var(--imperial-gold);
+    }
+
+    tr:nth-child(even) { background: #0c0c0c; }
+    tr:hover { background: rgba(212, 175, 55, 0.03); }
+
+    td {
+        padding: 20px 15px;
+        border-bottom: 1px solid #111;
+        color: #fff;
+        font-size: 13px;
+        vertical-align: top;
+    }
+
+    /* 👤 GUARDIAN IDENTITY STYLING */
+    .parent-name { font-weight: 800; font-size: 14px; color: #fff; display: block; margin-bottom: 4px; }
+    .parent-phone { font-family: 'Courier New', monospace; color: #666; font-size: 12px; }
+
+    /* 🔐 PIN VAULT STYLING */
+    .pin-box {
+        background: #000;
+        color: #00ff00;
+        font-family: 'Courier New', monospace;
+        font-weight: 900;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #222;
+        display: inline-block;
+    }
+
+    /* 👨‍👩‍👧‍👦 DYNAMIC CHILD BADGES (THE Hub Hub Hub FIX) */
+    .children-flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .child-card {
+        background: rgba(0, 35, 102, 0.3);
+        border: 1px solid rgba(212, 175, 55, 0.15);
+        padding: 5px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        transition: 0.3s;
+    }
+
+    .child-card:hover {
+        background: rgba(0, 35, 102, 0.6);
+        border-color: var(--imperial-gold);
+        transform: translateY(-2px);
+    }
+
+    .child-name {
+        color: #5fb1ff;
+        font-weight: 800;
+        font-size: 11px;
+        margin-right: 8px;
+    }
+
+    .child-class {
+        color: var(--imperial-gold);
+        font-weight: 900;
+        font-size: 10px;
+        background: rgba(0,0,0,0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    .counter-circle {
+        color: #333;
+        font-weight: 900;
+    }
 </style>
 
-<div class="wrapper">
-    <div class="header">
-        <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0;">{{ school.name|upper }}</h1>
-        <span style="color: var(--gold); font-size: 10px; font-weight: 900;">NATIONAL GUARDIAN REGISTRY</span>
+<div class="registry-wrapper">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0; font-size: 32px;">
+                {{ school.name|upper }}
+            </h1>
+            <p style="color: var(--imperial-gold); font-size: 12px; font-weight: bold; margin-top: 5px; letter-spacing: 3px;">
+                NATIONAL GUARDIAN REGISTRY <span style="color: #333;">|</span> TOTAL: {{ total_count }}
+            </p>
+        </div>
+        <button class="btn btn-outline-warning" onclick="window.print()" style="font-weight: 900; border-radius: 12px; padding: 10px 25px;">
+            <i class="fas fa-print"></i> PRINT DIRECTORY
+        </button>
     </div>
 
-    <!-- 🔍 SEARCH -->
-    <form method="GET" style="margin-bottom: 25px; display: flex; gap: 10px;">
-        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search Parent Name or Phone..." 
-               style="flex-grow: 1; padding: 12px; background: #111; border: 1px solid #333; border-radius: 12px; color: #fff;">
-        <button type="submit" class="btn btn-warning" style="font-weight: 900;">SEARCH</button>
+    <!-- Search Engine -->
+    <form method="GET" class="search-container">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search by Parent Name or Phone Number..." class="search-input">
+        <button type="submit" class="btn btn-warning" style="font-weight: 900; border-radius: 12px; width: 120px;">SEARCH</button>
+        {% if request.GET.q %}
+            <a href="?" class="btn btn-outline-secondary" style="border-radius: 12px;">RESET</a>
+        {% endif %}
     </form>
 
-    <div class="table-box">
+    <!-- Data Table -->
+    <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>PARENT NAME</th>
-                    <th>CONTACT</th>
-                    <th>SECURE PIN</th>
-                    <th>LINKED STUDENTS</th>
+                    <th style="width: 60px;">#</th>
+                    <th style="width: 280px;">GUARDIAN IDENTITY</th>
+                    <th style="width: 140px;">SECURE PIN</th>
+                    <th>REGISTERED CHILDREN (LINKED DATA)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for p in parents %}
                 <tr>
-                    <td style="color: #444;">{{ forloop.counter }}</td>
-                    <td style="font-weight: 800;">{{ p.full_name|upper }}</td>
-                    <td>{{ p.phone_number }}</td>
-                    <td><span class="pin-code">{{ p.secure_pin }}</span></td>
+                    <td class="counter-circle">{{ forloop.counter }}</td>
                     <td>
-                        {% for s in p.students.all %}
-                            <span class="child-badge">{{ s.full_name|upper }} ({{ s.current_class }})</span>
-                        {% empty %}
-                            <span style="color: #444;">No links</span>
-                        {% endfor %}
+                        <span class="parent-name">{{ p.full_name|upper }}</span>
+                        <span class="parent-phone"><i class="fas fa-phone-alt" style="font-size: 10px; margin-right: 5px;"></i>{{ p.phone_number }}</span>
+                    </td>
+                    <td><span class="pin-box">{{ p.secure_pin }}</span></td>
+                    <td>
+                        <div class="children-flow">
+                            {% for s in p.students.all %}
+                                <div class="child-card">
+                                    <span class="child-name">{{ s.full_name|upper }}</span>
+                                    <span class="child-class">{{ s.current_class }}</span>
+                                </div>
+                            {% empty %}
+                                <span style="color: #333; font-style: italic;">No students linked in registry</span>
+                            {% endfor %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
