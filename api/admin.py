@@ -366,6 +366,47 @@ admin.site.register(AcademicResultsCenter, AcademicResultsHubAdmin)
 admin.site.register(NationalLedger, NationalLedgerAdmin)
 admin.site.register(Staff, StaffAdmin)
 admin.site.register(Subject, SubjectAdmin) 
+admin.site.register(Parent, ParentAdmin) 
+
+
+@admin.register(Parent)
+class ParentAdmin(admin.ModelAdmin):
+    # 📊 THE Hub Hub Hub Hub Hub TABLE COLUMNS
+    list_display = ('full_name_styled', 'phone_number', 'secure_pin_styled', 'display_children')
+    
+    # 💎 THE MAGIC LINK: This pulls the Inline we defined above into the page
+    inlines = [StudentInline] 
+    
+    search_fields = ('full_name', 'phone_number')
+
+    # --- 🎨 PRESTIGE STYLING METHODS ---
+
+    def full_name_styled(self, obj):
+        if obj.full_name:
+            return mark_safe(f'<b style="color: #D4AF37; font-size: 13px;">{obj.full_name.upper()}</b>')
+        return "NO NAME"
+    full_name_styled.short_description = "Parent Name"
+
+    def secure_pin_styled(self, obj):
+        val = obj.secure_pin if obj.secure_pin else "----"
+        return mark_safe(f'<code style="background: #222; color: #00ff00; padding: 3px 8px; border-radius: 5px;">{val}</code>')
+    secure_pin_styled.short_description = "Access PIN"
+
+    def display_children(self, obj):
+        # 🔗 This reaches through the 'related_name' in models.py
+        try:
+            # We try 'students' (the related_name we set in the surgery)
+            children = obj.students.all()
+            if children:
+                html = ""
+                for s in children:
+                    html += f'<span style="background: #002366; color: white; padding: 2px 8px; border-radius: 10px; margin-right: 5px; font-size: 10px;">{s.full_name.upper()}</span>'
+                return mark_safe(html)
+            return mark_safe('<b style="color:red;">❌ NO LINKED STUDENT</b>')
+        except:
+            return "Syncing..."
+    
+    display_children.short_description = "Registered Children"
 
 admin.site.register([ 
     Parent,
@@ -481,6 +522,15 @@ def payslip_button(obj):
         </a>
     ''')
 payslip_button.short_description = 'Finance Action'
+
+class StudentInline(admin.TabularInline):
+    model = Student
+    extra = 0  # No empty rows
+    fields = ('full_name', 'current_class', 'payment_code')
+    readonly_fields = ('full_name', 'current_class', 'payment_code')
+    verbose_name = "Linked Student"
+    verbose_name_plural = "Registered Children in Registry"
+
 
 # --- 🛰️ 1. THE ASSIGNMENT INLINE ---
 class AssignmentInline(admin.TabularInline):

@@ -160,6 +160,14 @@ class Student(models.Model):
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
     
+    parent_link = models.ForeignKey(
+        'Parent', 
+        on_delete=models.CASCADE, 
+        related_name='students', 
+        null=True, 
+        blank=True
+    )
+    
     def save(self, *args, **kwargs):
         if not self.account_number:
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))

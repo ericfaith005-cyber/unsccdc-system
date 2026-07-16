@@ -1171,9 +1171,7 @@ from .models import Student, Staff
 @permission_classes([AllowAny])
 def student_identity_gate(request):
     d = request.data
-    # 🕵️ LOG THE INCOMING DATA TO RENDER TERMINAL
     print(f"--- 🛡️ IDENTITY ATTEMPT: {d} ---") 
-    
     code_in = d.get('code', '').strip().upper()
     student_in = d.get('student', '').strip().lower()
     
