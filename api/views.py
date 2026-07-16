@@ -2367,8 +2367,29 @@ def generate_fees_reminder_pdf(request, student_id):
         p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44)
 
         # 2. LOGO & HEADER
+         logo_drawn = False
         if school.logo:
-            p.drawImage(school.logo.path, width/2-35, height-100, width=70, height=70, mask='auto')
+            try:
+                # 🕵️ We check if the file physically exists on the disk
+                if os.path.exists(school.logo.path):
+                    p.drawImage(school.logo.path, width/2-35, height-100, width=70, height=70, mask='auto')
+                    logo_drawn = True
+                else:
+                    print(f"--- ⚠️ Logo file missing on server: {school.logo.path} ---")
+            except Exception as e:
+                print(f"--- ⚠️ Logo Error: {e} ---")
+
+        if not logo_drawn:
+            # 🛡️ THE Hub Hub Hub Hub Hub Hub Hub EMERGENCY Hub Hub Hub Hub Hub Hub Hub SHIELD
+            # If logo is missing, draw a professional Gold Seal so the PDF doesn't fail!
+            p.setStrokeColor(rich_gold)
+            p.setLineWidth(2)
+            p.circle(width/2, height-65, 30, stroke=1, fill=0)
+            p.setFont("Helvetica-Bold", 20)
+            p.drawCentredString(width/2, height-72, "U") # 'U' for Uganda / UNSCCDC
+            p.setFont("Helvetica-Bold", 7)
+            p.drawCentredString(width/2, height-105, "OFFICIAL SEAL")
+            
         p.setFillColor(gov_blue); p.setFont("Helvetica-Bold", 16)
         p.drawCentredString(width/2, height-130, school.name.upper())
         p.setFont("Helvetica-Bold", 10); p.setFillColor(colors.black)
