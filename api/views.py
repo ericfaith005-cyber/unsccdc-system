@@ -1913,23 +1913,29 @@ def sovereign_registry_view(request):
             is_active=True
         ).order_by('full_name')
 
-        # 🔎 4. INTELLIGENT SEARCH & FILTER LOGIC
+        # 🔎 4. MAXIMUM VISIBILITY FILTERING
         query = request.GET.get('q', '').strip()
         selected_class = request.GET.get('class', available_classes[0])
         
-        # Start with base filter
-        students = Student.objects.filter(school=school, is_active=True)
+        # 💎 THE Hub Hub Hub Hub Hub "ALL-SEEING" QUERY
+        # We fetch ALL students linked to the school, even if they are inactive 
+        # or missing parent links. This ensures NO ONE is hidden.
+        base_students = Student.objects.filter(school=school).select_related('parent_link')
 
         if query:
-            # 🛰️ SEARCH MODE: Scans Names, PRNs, and Streams across the WHOLE school
-            students = students.filter(
+            # 🛰️ SEARCH MODE: Scans every corner of the registry
+            students = base_students.filter(
                 Q(full_name__icontains=query) | 
                 Q(payment_code__icontains=query) | 
+                Q(account_number__icontains=query) |
                 Q(stream__icontains=query)
             ).order_by('full_name')
         else:
-            # 💊 CLASS MODE: Only shows students in the selected class
-            students = students.filter(current_class=selected_class).order_by('full_name')
+            # 💊 CLASS MODE: Shows every student in the selected class
+            students = base_students.filter(current_class=selected_class).order_by('full_name')
+
+        # 📊 Update the count to reflect the real number
+        total_count = students.count()
 
         # 5. 📦 THE DATA PACKET (All variables the template needs)
         context = {
