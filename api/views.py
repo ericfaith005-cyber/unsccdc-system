@@ -2052,6 +2052,7 @@ def operations_hub_view(request):
         ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
         ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
         ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
+        ("Fees Reminders", "fa-bell", "#f39c12", "/admin/api/feesreminder/", "Print Reminders"), 
         ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
         ("SMS Broadcast", "fa-comment-alt", "#e67e22", "#", "Notify Parents"),
@@ -2340,3 +2341,111 @@ def national_landing_page(request):
     </html>
     """
     return HttpResponse(html)
+
+def generate_fees_reminder_pdf(request, student_id):
+    try:
+        student = Student.objects.get(account_number=student_id)
+        parent = student.parent_link
+        school = student.school
+        fees = FeesTracker.objects.get(student=student)
+        txns = SchoolPayLedger.objects.filter(student=student).order_by('-timestamp')
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="Reminder_{student.full_name}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        
+        # 🎨 IMPERIAL COLORS
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        off_white = colors.HexColor("#FDFDF5")
+
+        # 1. BACKGROUND & BORDERS
+        p.setFillColor(off_white); p.rect(0, 0, width, height, fill=1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44)
+
+        # 2. LOGO & HEADER
+        if school.logo:
+            p.drawImage(school.logo.path, width/2-35, height-100, width=70, height=70, mask='auto')
+        p.setFillColor(gov_blue); p.setFont("Helvetica-Bold", 16)
+        p.drawCentredString(width/2, height-130, school.name.upper())
+        p.setFont("Helvetica-Bold", 10); p.setFillColor(colors.black)
+        p.drawCentredString(width/2, height-150, "OFFICIAL FEES REMITTANCE NOTICE")
+        p.line(50, height-160, width-50, height-160)
+
+        # 3. PERSONALIZED GREETING
+        p.setFont("Helvetica-Bold", 11)
+        # Determine Salutation based on Parent Gender (if available, otherwise Mr/Mrs)
+        salutation = "Mr/Mrs." 
+        if hasattr(parent, 'gender'):
+            salutation = "Mr." if parent.gender == 'M' else "Mrs."
+            
+        p.drawString(50, height-190, f"Dear {salutation} {parent.full_name},")
+        p.setFont("Helvetica", 10)
+        p.drawString(50, height-205, f"RE: FEES REMINDER FOR {student.full_name.upper()} ({student.current_class})")
+
+        # 4. FINANCIAL SUMMARY
+        paid_pct = (fees.total_fees_paid / fees.total_fees_due * 100) if fees.total_fees_due > 0 else 0
+        
+        p.setFillColor(gov_blue); p.rect(50, height-280, width-100, 60, fill=1)
+        p.setFillColor(colors.white); p.setFont("Helvetica-Bold", 9)
+        p.drawString(65, height-240, "TOTAL BILLED")
+        p.drawString(200, height-240, "TOTAL PAID")
+        p.drawString(335, height-240, "PERCENTAGE")
+        p.drawString(450, height-240, "BALANCE DUE")
+        
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(65, height-265, f"{fees.total_fees_due:,.0f}")
+        p.drawString(200, height-265, f"{fees.total_fees_paid:,.0f}")
+        p.drawString(335, height-265, f"{paid_pct:.1f}%")
+        p.setFillColor(colors.orange); p.drawString(450, height-265, f"{fees.fees_balance:,.0f}")
+
+        # 5. TRANSACTION HISTORY
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 9)
+        p.drawString(50, height-310, "RECENT SETTLEMENT HISTORY:")
+        
+        data = [['Date', 'Receipt #', 'Category', 'Amount (UGX)']]
+        for t in txns[:5]:
+            data.append([t.timestamp.strftime('%d/%m/%y'), t.transaction_id, t.category, f"{t.amount_paid:,.0f}"])
+        
+        table = Table(data, colWidths=[100, 150, 130, 120])
+        table.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,0), gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white),('GRID',(0,0),(-1,-1),0.1,colors.grey),('FONTSIZE',(0,0),(-1,-1),8)]))
+        table.wrapOn(p, width, height); table.drawOn(p, 50, height-430)
+
+        # 6. THE HUMBLE REMINDER MESSAGE
+        p.setFont("Helvetica-Oblique", 9)
+        msg = f"We kindly request you to complete the outstanding balance of UGX {fees.fees_balance:,.0f} to ensure " \
+              f"uninterrupted learning for {student.full_name.split()[0]}. Thank you for your continued support."
+        # Simple text wrap
+        p.drawString(50, height-460, msg[:100])
+        p.drawString(50, height-475, msg[100:])
+
+        # 7. 📱 USSD PAYMENT GUIDELINES (DETAILED)
+        p.setFillColor(colors.HexColor("#F2F2F2")); p.rect(50, 100, width-100, 130, fill=1, stroke=0)
+        p.setFillColor(gov_blue); p.setFont("Helvetica-Bold", 9)
+        p.drawString(60, 215, "HOW TO PAY VIA SCHOOLPAY (USSD GUIDE):")
+        
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 8)
+        p.drawString(65, 195, "MTN MOBILE MONEY:")
+        p.setFont("Helvetica", 7.5)
+        p.drawString(65, 185, "Dial *165# > Select 4 (Payments) > Select 4 (School Fees) > Select 1 (SchoolPay) > Enter PRN")
+        
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(65, 160, "AIRTEL MONEY:")
+        p.setFont("Helvetica", 7.5)
+        p.drawString(65, 150, "Dial *185# > Select 6 (School Fees) > Select 2 (SchoolPay) > Select 1 (Pay Fees) > Enter PRN")
+
+        p.setFillColor(ug_red); p.setFont("Helvetica-Bold", 12)
+        p.drawCentredString(width/2, 115, f"YOUR UNIQUE PRN: {student.payment_code}")
+
+        # ✍️ FOOTER
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 8)
+        p.line(50, 60, 200, 60); p.drawString(80, 50, "Bursar's Signature")
+        p.drawRightString(width-50, 50, f"Issued Date: {datetime.date.today().strftime('%d/%b/%Y')}")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"Reminder Engine Error: {str(e)}")

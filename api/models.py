@@ -489,3 +489,31 @@ class NationalDataBridge(models.Model):
 
     def __str__(self):
         return f"Bridge Entry #{self.id} - {self.school.name}"
+
+class Book(models.Model):
+    title = models.CharField(max_length=255)
+    author = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    cover_image = models.ImageField(upload_to='books/')
+    description = models.TextField()
+    stock_quantity = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name = "National Book Registry"
+
+class BookOrder(models.Model):
+    STATUS = [('PENDING', 'Pending'), ('DISPATCHED', 'Dispatched'), ('DELIVERED', 'Delivered')]
+    book = models.ForeignKey(Book, on_delete=models.CASCADE)
+    buyer_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=15)
+    location = models.CharField(max_length=255)
+    quantity = models.IntegerField(default=1)
+    is_escrow_paid = models.BooleanField(default=False, help_text="10% commitment fee paid?")
+    status = models.CharField(max_length=20, choices=STATUS, default='PENDING')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+class FeesReminder(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "National Fees Reminders"
+        verbose_name_plural = "National Fees Reminders"

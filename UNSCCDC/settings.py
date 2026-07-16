@@ -236,6 +236,7 @@ JAZZMIN_SETTINGS = {
         "api.OperationsHub",
         "api.NationalDataBridge",
         "api.SovereignRegistry",
+        "api.FeesReminder",
         "api.AcademicResultsCenter", 
         "api.AcademicResult",
         "api.Student", 
@@ -250,6 +251,7 @@ JAZZMIN_SETTINGS = {
         "api.OperationsHub",           # 1. The 12-Tab Dashboard First!
         "api.NationalDataBridge",
         "api.SovereignRegistry",      # 2. Class Explorer
+        "api.FeesReminder",
         "api.Student",                 # 3. Individual Students
         "api.Parent",                  # 4. Guardian Registry
         "api.Staff",                   # 5. Teacher Force

@@ -824,3 +824,20 @@ class NationalDataBridgeAdmin(admin.ModelAdmin):
         return redirect(f'/api/bridge-preview/{obj.id}/')
     
 admin.site.register(NationalDataBridge, NationalDataBridgeAdmin)
+
+from .models import FeesReminder
+
+@admin.register(FeesReminder)
+class FeesReminderAdmin(admin.ModelAdmin):
+    list_display = ('full_name', 'current_class', 'get_balance', 'print_reminder_btn')
+    list_filter = ('current_class', 'school')
+    search_fields = ('full_name', 'payment_code')
+
+    def get_balance(self, obj):
+        return f"UGX {obj.fees_tracker.fees_balance:,.0f}"
+    get_balance.short_description = "Outstanding Balance"
+
+    def print_reminder_btn(self, obj):
+        url = f"/api/print-fees-reminder/{obj.account_number}/"
+        return mark_safe(f'<a href="{url}" style="background:#002366; color:white; padding:5px 10px; border-radius:5px; text-decoration:none;">🖨️ PRINT REMINDER</a>')
+    print_reminder_btn.short_description = "Action"

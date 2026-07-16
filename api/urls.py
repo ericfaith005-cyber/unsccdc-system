@@ -57,5 +57,6 @@ urlpatterns = [
     path('bridge-preview/<int:bridge_id>/', views.bridge_preview_portal),
     path('bridge-commit/<int:bridge_id>/', views.bridge_commit_final),
     path('staff/reset-pin/<int:staff_id>/', views.reset_staff_pin),
-
+    path('print-fees-reminder/<str:student_id>/', views.generate_fees_reminder_pdf, name='print_reminder'),
+    
 ]
