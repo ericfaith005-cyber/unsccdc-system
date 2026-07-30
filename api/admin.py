@@ -83,9 +83,11 @@ class StaffAdmin(admin.ModelAdmin):
     secure_pin_box.short_description = "Current PIN"
 
     def display_subjects(self, obj):
-        return ", ".join([s.name for s in obj.subjects.all()]) if obj.subjects.exists() else "None"
-
-    display_subjects.short_description = "Subjects Handled"
+        # 🛡️ Check if the object has been saved to the DB first
+        if obj.pk:
+            subs = obj.subjects.all()
+            return ", ".join([s.name for s in subs]) if subs.exists() else "None"
+        return "Will show after saving"
 
     def logo_preview(self, obj):
         if obj.photo:
