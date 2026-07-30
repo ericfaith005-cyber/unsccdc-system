@@ -131,7 +131,7 @@ class Subject(models.Model):
     )
 
     class Meta:
-        verbose_name = "National Subject Registry"
+        verbose_name = "NATIONAL SUBJECT REGISTRY"
         ordering = ['level', 'name']
 
     def __str__(self):
@@ -314,8 +314,8 @@ class Attendance(models.Model):
 
     class Meta:
         unique_together = ('student', 'date') # Prevents double marking on the same day
-        verbose_name = "Daily Attendance"
-        verbose_name_plural = "Daily Attendance"
+        verbose_name = "DAILY ATTENDANCE"
+        verbose_name_plural = "DAILY ATTENDANCE"
 
     def __str__(self):
         return f"{self.student.full_name} - {self.date} ({self.status})"
@@ -324,8 +324,8 @@ class AttendanceHub(Attendance):
     """Proxy for a dedicated high-speed Attendance Tab"""
     class Meta:
         proxy = True
-        verbose_name = "✅ MARK DAILY ATTENDANCE"
-        verbose_name_plural = "✅ MARK DAILY ATTENDANCE"
+        verbose_name = "MARK DAILY ATTENDANCE"
+        verbose_name_plural = "MARK DAILY ATTENDANCE"
 
 class FeesTracker(models.Model):
     student = models.OneToOneField('Student', on_delete=models.CASCADE, related_name='fees_tracker')
@@ -372,13 +372,13 @@ class StaffPayroll(models.Model):
 
 # --- 👑 PROXY MODELS FOR COMMAND CENTER ---
 class NationalLedger(Transaction):
-    class Meta: proxy = True; verbose_name_plural = "🛡️ NATIONAL UNEDITABLE LEDGER"
+    class Meta: proxy = True; verbose_name_plural = "NATIONAL UNEDITABLE LEDGER"
 class CommissionAnalytics(School):
-    class Meta: proxy = True; verbose_name_plural = "💰 MY COMMISSION TRACKER"
+    class Meta: proxy = True; verbose_name_plural = "MY COMMISSION TRACKER"
 class AcademicResultsCenter(Student):
-    class Meta: proxy = True; verbose_name_plural = "📊 ACADEMIC HUB (MASTER GRID)"
+    class Meta: proxy = True; verbose_name_plural = "ACADEMIC HUB (MASTER GRID)"
 class SovereignProfessionalInsights(School):
-    class Meta: proxy = True; verbose_name_plural = "⭐ SOVEREIGN ANALYTICS (PRO)"
+    class Meta: proxy = True; verbose_name_plural = "SOVEREIGN ANALYTICS (PRO)"
 
 class SchoolPayLedger(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE)
@@ -397,8 +397,8 @@ class SchoolPayLedger(models.Model):
     reversed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "National Treasury Ledger"
-        verbose_name_plural = "National Treasury Ledger"
+        verbose_name = "NATIONAL TREASURY LEDGER"
+        verbose_name_plural = "NATIONAL TREASURY LEDGER"
 
     class Meta:
         verbose_name = "🛡️ SCHOOLPAY LEDGER"
@@ -407,8 +407,8 @@ class FinancialCommandCenter(School):
     """Proxy model for the Director's high-level dashboard"""
     class Meta:
         proxy = True
-        verbose_name = "📊 NATIONAL FINANCIAL COMMAND"
-        verbose_name_plural = "📊 NATIONAL FINANCIAL COMMAND"
+        verbose_name = "NATIONAL FINANCIAL COMMAND"
+        verbose_name_plural = "NATIONAL FINANCIAL COMMAND"
 
 # --- 🛰️ SURGERY: NATIONAL HUB INSTANT ALERTS ---
 from django.db.models.signals import post_save
@@ -472,8 +472,8 @@ class SovereignRegistry(Student):
     class Meta:
         proxy = True
         # 💎 THE ONE TRUE NAME
-        verbose_name = "Sovereign National Registry"
-        verbose_name_plural = "Sovereign National Registry"
+        verbose_name = "SOVEREIGN NATIONAL REGISTRY"
+        verbose_name_plural = "SOVEREIGN NATIONAL REGISTRY"
 
 class OperationsHub(Student):
     class Meta:
@@ -491,8 +491,8 @@ class NationalDataBridge(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "National Data Bridge"
-        verbose_name_plural = "National Data Bridge"
+        verbose_name = "NATIONAL DATA BRIDGE"
+        verbose_name_plural = "NATIONAL DATA BRIDGE"
 
     def __str__(self):
         return f"Bridge Entry #{self.id} - {self.school.name}"
@@ -522,14 +522,14 @@ class BookOrder(models.Model):
 class FeesReminder(Student):
     class Meta:
         proxy = True
-        verbose_name = "National Fees Reminders"
-        verbose_name_plural = "National Fees Reminders"
+        verbose_name = "NATIONAL FEES REMINDERS"
+        verbose_name_plural = "NATIONAL FEES REMINDERS"
 
 class SovereignParentRegistry(Parent):
     class Meta:
         proxy = True
-        verbose_name = "Sovereign Parent Registry"
-        verbose_name_plural = "Sovereign Parent Registry"
+        verbose_name = "SOVEREIGN PARENT REGISTRY"
+        verbose_name_plural = "SOVEREIGN PARENT REGISTRY"
 
 class SystemSettings(models.Model):
     academic_year = models.IntegerField(default=2026)
