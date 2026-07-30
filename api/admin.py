@@ -52,7 +52,7 @@ class StaffAdmin(admin.ModelAdmin):
     # 💎 3. FIXED: Changed 'designation' to 'role' to use your dropdown choices
     fieldsets = (
         ('👤 CORE IDENTITY', {
-            'fields': ('full_name', 'role', 'school', 'staff_id', 'logo_preview')
+            'fields': ('full_name', 'role', 'school', 'staff_id', 'subjects', 'logo_preview')
         }),
         ('📂 OFFICIAL DOCUMENTATION', {
             'description': "Legal bio-metrics and career documents",
@@ -67,6 +67,7 @@ class StaffAdmin(admin.ModelAdmin):
             'fields': ('phone', 'momo_number', 'secure_pin', 'next_of_kin', 'next_of_kin_phone')
         }),
     )
+    
 
     def dossier_button_link(self, obj):
         if obj.staff_id:
