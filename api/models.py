@@ -230,6 +230,11 @@ class Transaction(models.Model):
 
 # --- 🏛️ SURGERY: ADVANCED HR & AUDIT REGISTRY (api/models.py) ---
 
+import random
+import string
+import datetime
+from django.db import models
+
 class Staff(models.Model):
     # CORE IDENTITY
     ROLE_CHOICES = [
@@ -263,8 +268,6 @@ class Staff(models.Model):
     phone = models.CharField(max_length=30)
     momo_number = models.CharField(max_length=30, blank=True, null=True)
 
-
-
     def save(self, *args, **kwargs):
         # 🤖 AUTO-GENERATE STAFF ID (Format: UNS/STF/Year/Random)
         if not self.staff_id:
@@ -279,8 +282,12 @@ class Staff(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.full_name} ({self.role})"
+        # 🛡️ This prevents the 500 error if a name is somehow empty
+        name = self.full_name if self.full_name else "Unknown Staff"
+        sid = self.staff_id if self.staff_id else "No-ID"
+        return f"{name} ({sid})"
 
+        
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
     

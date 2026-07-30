@@ -37,6 +37,7 @@ class StaffAdmin(admin.ModelAdmin):
     # 💎 1. THE VIEW: Scannable columns in the list
     list_display = ('full_name_styled', 'role_badge', 'school', 'display_subjects', 'staff_id', 'secure_pin_box', 'reset_pin_btn', dossier_button)
     search_fields = ('full_name', 'staff_id', 'tin_number')
+    readonly_fields = ('staff_id', 'secure_pin', 'logo_preview')
     list_filter = ('role', 'school', 'subjects')
     filter_horizontal = ('subjects',) 
 
@@ -82,16 +83,14 @@ class StaffAdmin(admin.ModelAdmin):
     secure_pin_box.short_description = "Current PIN"
 
     def display_subjects(self, obj):
-        try:
-            # 🛡️ This safely joins names or returns 'None' if empty
-            subs = obj.subjects.all()
-            if subs:
-                return ", ".join([s.name for s in subs])
-            return mark_safe('<i style="color: #666;">No subjects assigned</i>')
-        except:
-            return "Syncing..."
-    
+        return ", ".join([s.name for s in obj.subjects.all()]) if obj.subjects.exists() else "None"
+
     display_subjects.short_description = "Subjects Handled"
+
+    def logo_preview(self, obj):
+        if obj.photo:
+            return mark_safe(f'<img src="{obj.photo.url}" width="100" />')
+        return "No Photo"
 
     # 💎 THE RESET BUTTON
     def reset_pin_btn(self, obj):
