@@ -1763,6 +1763,56 @@ def sovereign_shilling_simulator(request):
     except Exception as e:
         return JsonResponse({"status": "Simulation Failed", "error": str(e)})
 
+# 💎 ADD THESE TO YOUR BATCH ENGINE IN views.py
+
+@login_required
+def batch_report_generator(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class')
+    
+    if not selected_class:
+        return HttpResponse("Please select a class first.")
+
+    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
+    
+    # Create the canvas once
+    p = canvas.Canvas(response, pagesize=A4)
+    
+    for student in students:
+        # 🧪 CALL YOUR EXISTING REPORT DRAWING LOGIC HERE
+        # (For efficiency, move your drawing code into a helper function)
+        draw_single_report_page(p, student) 
+        p.showPage() # 📄 THIS IS THE MAGIC: It starts a new page for the next student
+        
+    p.save()
+    return response
+
+@login_required
+def batch_reminder_generator(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class')
+    
+    if not selected_class:
+        return HttpResponse("Please select a class first.")
+
+    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="BATCH_REMINDERS_{selected_class}.pdf"'
+    
+    p = canvas.Canvas(response, pagesize=A4)
+    
+    for student in students:
+        # 🧪 CALL YOUR EXISTING REMINDER DRAWING LOGIC HERE
+        draw_single_reminder_page(p, student)
+        p.showPage() # 📄 New page for each parent's notice
+        
+    p.save()
+    return response
+
 @api_view(['GET'])
 def live_warroom_stats(request):
     """
