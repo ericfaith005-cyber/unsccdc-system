@@ -415,8 +415,8 @@ class ParentAdmin(admin.ModelAdmin):
     display_children.short_description = "Registered Children"
 
 admin.site.register([ 
-    Parent,
-    Student, 
+    PARENT,
+    STUDENT, 
     AcademicResult,
     AttendanceHub,
     StaffPayroll,
