@@ -208,12 +208,6 @@ JAZZMIN_SETTINGS = {
     # 🎨 THE DESIGN (DIAMOND OBSIDIAN)
     "theme": "darkly", # Deep Black Theme
     "dark_mode_theme": "darkly",
-    "custom_css": "css/national_prestige.css",
-    "custom_js": "js/national_flag.js",
-    
-    # 💎 2. THE TIERED SIDEBAR (Dribbble Style)
-    "show_ui_builder": True,
-    "change_list_template": "admin/class_explorer.html",
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {
