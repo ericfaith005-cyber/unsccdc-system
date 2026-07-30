@@ -212,7 +212,7 @@ JAZZMIN_SETTINGS = {
     "custom_js": "js/national_flag.js",
     
     # 💎 2. THE TIERED SIDEBAR (Dribbble Style)
-    "show_ui_builder": False,
+    "show_ui_builder": True,
     "change_list_template": "admin/class_explorer.html",
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
