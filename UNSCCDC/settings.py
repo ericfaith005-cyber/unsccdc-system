@@ -148,6 +148,12 @@ JAZZMIN_SETTINGS = {
     
     "theme": "darkly",
     "site_brand": "UNSCCDC",
+    "custom_css": "css/national_prestige.css",
+    "custom_js": "js/national_flag.js",
+    
+    # 💎 2. THE TIERED SIDEBAR (Dribbble Style)
+    "show_ui_builder": False,
+    "change_list_template": "admin/class_explorer.html",
     
     # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
     "topmenu_links": [
@@ -208,6 +214,12 @@ JAZZMIN_SETTINGS = {
     # 🎨 THE DESIGN (DIAMOND OBSIDIAN)
     "theme": "darkly", # Deep Black Theme
     "dark_mode_theme": "darkly",
+    "custom_css": "css/national_prestige.css",
+    "custom_js": "js/national_flag.js",
+    
+    # 💎 2. THE TIERED SIDEBAR (Dribbble Style)
+    "show_ui_builder": False,
+    "change_list_template": "admin/class_explorer.html",
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
     "icons": {

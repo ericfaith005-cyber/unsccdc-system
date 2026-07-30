@@ -530,3 +530,12 @@ class SovereignParentRegistry(Parent):
         proxy = True
         verbose_name = "Sovereign Parent Registry"
         verbose_name_plural = "Sovereign Parent Registry"
+
+class SystemSettings(models.Model):
+    academic_year = models.IntegerField(default=2026)
+    current_term = models.CharField(max_length=10, choices=[('1','Term 1'),('2','Term 2'),('3','Term 3')])
+    maintenance_mode = models.BooleanField(default=False)
+    system_logo = models.ImageField(upload_to='system/')
+
+    class Meta:
+        verbose_name = "Global System Settings"

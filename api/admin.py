@@ -462,9 +462,15 @@ from django.utils.safestring import mark_safe
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
     # 💎 1. Show the Dossier and Sector in the list
-    list_display = ('full_name', 'current_class', 'payment_code', 'get_sector', 'view_dossier_btn')
+    list_display = ('photo_preview','full_name', 'current_class', 'payment_code', 'get_sector', 'view_dossier_btn')
     list_filter = ('school__sector', 'current_class', 'is_active')
     search_fields = ('full_name', 'account_number', 'payment_code')
+
+    def photo_preview(self, obj):
+        if obj.photo:
+            return mark_safe(f'<img src="{obj.photo.url}" width="50" style="border-radius:50%; border:2px solid #D4AF37;" />')
+        return "No Photo"
+    photo_preview.short_description = "Identity"
 
     # 💎 2. THE Hub Hub Hub Hub Hub Hub DOSSIER BUTTON
     def view_dossier_btn(self, obj):
@@ -485,6 +491,7 @@ class StudentAdmin(admin.ModelAdmin):
     fieldsets = (
         ('👤 STUDENT IDENTITY', {
             'fields': (
+                'photo',
                 'full_name', 
                 'gender',
                 'account_number', 

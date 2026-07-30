@@ -582,6 +582,17 @@ def generate_imperial_pdf(request, student_id):
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="National_Report_{student.full_name}.pdf"'
 
+        if student.photo:
+            try:
+                # We use the path to the photo
+                p.drawImage(student.photo.path, width-130, height-150, width=80, height=100, mask='auto')
+                # Gold Frame
+                p.setStrokeColor(rich_gold)
+                p.setLineWidth(1)
+                p.rect(width-130, height-150, 80, 100, stroke=1)
+            except Exception as photo_error:
+                print(f"Photo Error: {photo_error}") # Don't crash if photo is missing
+
         p = canvas.Canvas(response, pagesize=A4)
         width, height = A4
 
@@ -2069,6 +2080,7 @@ def operations_hub_view(request):
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "#", "National Exams"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
+        ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
     ]
 
     return render(request, 'admin/operations_hub.html', {

@@ -1,0 +1,28 @@
+/* 🏛️ NATIONAL SUPREME FONT */
+* {
+    font-family: "Times New Roman", Times, serif !important;
+}
+
+/* 🇺🇬 THE GLASSMORPHISM CARDS */
+.card, .content-wrapper, .main-sidebar {
+    background: rgba(0, 0, 0, 0.7) !important; /* Semi-transparent black */
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 20px !important;
+}
+
+/* 🎬 LIVE BACKGROUND FIX */
+body {
+    background: transparent !important;
+}
+
+#bg-video {
+    position: fixed;
+    top: 50%; left: 50%;
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
+    z-index: -100;
+    transform: translateX(-50%) translateY(-50%);
+    opacity: 0.25; /* Adjusted so you can see the data clearly */
+    filter: saturate(1.5);
+}
