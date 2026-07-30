@@ -252,10 +252,11 @@ class Staff(models.Model):
     cv_pdf = models.FileField(upload_to='staff/cvs/', null=True, blank=True)
     
     # SYSTEM ACCESS
-    staff_id = models.CharField(max_length=20, unique=True, editable=False)
+    staff_id = models.CharField(max_length=50, unique=True, editable=False, blank=True)
+    secure_pin = models.CharField(max_length=4, editable=False, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='TEACHER')
     subjects = models.ManyToManyField('Subject', blank=True)
-    secure_pin = models.CharField(max_length=4, editable=False)
+    
     
     # HR & AUDIT DATA
     tin_number = models.CharField(max_length=30, blank=True, verbose_name="URA TIN")
@@ -283,9 +284,7 @@ class Staff(models.Model):
 
     def __str__(self):
         # 🛡️ This prevents the 500 error if a name is somehow empty
-        name = self.full_name if self.full_name else "Unknown Staff"
-        sid = self.staff_id if self.staff_id else "No-ID"
-        return f"{self.full_name or 'New Staff'}"
+        name = self.full_name 
 
 
 class Parent(models.Model):

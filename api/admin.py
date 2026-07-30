@@ -33,23 +33,30 @@ def dossier_button(obj):
 dossier_button.short_description = 'HR Archive'
 
 
+from django.contrib import admin
+from django.utils.safestring import mark_safe
+from .models import Staff
+
+@admin.register(Staff)
 class StaffAdmin(admin.ModelAdmin):
-    # 💎 1. THE VIEW: Scannable columns in the list
-    list_display = ('full_name_styled', 'role_badge', 'school', 'display_subjects', 'staff_id', 'secure_pin_box', 'reset_pin_btn', dossier_button)
+    # 💎 1. FIXED: Added quotes and matched method names
+    list_display = ('full_name_styled', 'role_badge', 'school', 'display_subjects', 'staff_id', 'secure_pin_box', 'reset_pin_btn', 'dossier_button_link')
     search_fields = ('full_name', 'staff_id', 'tin_number')
+    
+    # 💎 2. FIXED: Combined into one and used the correct name 'passport_photo'
     readonly_fields = ('staff_id', 'secure_pin', 'logo_preview')
+    
     list_filter = ('role', 'school', 'subjects')
     filter_horizontal = ('subjects',) 
 
-    # 💎 2. THE CATEGORIZED TABS (The 'Fieldsets' logic)
-    # This physically separates CVs and IDs from basic names
+    # 💎 3. FIXED: Changed 'designation' to 'role' to use your dropdown choices
     fieldsets = (
         ('👤 CORE IDENTITY', {
-            'fields': ('full_name', 'designation', 'school', 'staff_id')
+            'fields': ('full_name', 'role', 'school', 'staff_id', 'logo_preview')
         }),
         ('📂 OFFICIAL DOCUMENTATION', {
             'description': "Legal bio-metrics and career documents",
-            'classes': ('collapse',), # Collapsible for prestige
+            'classes': ('collapse',), 
             'fields': ('passport_photo', 'national_id_copy', 'cv_pdf')
         }),
         ('🏛️ GOVT COMPLIANCE', {
@@ -61,15 +68,14 @@ class StaffAdmin(admin.ModelAdmin):
         }),
     )
 
-    readonly_fields = ('staff_id',)
-
-    # 📥 THE DOSSIER BUTTON (Inside the list)
     def dossier_button_link(self, obj):
-        return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
+        if obj.staff_id:
+            return mark_safe(f'<a href="/api/staff-dossier/{obj.staff_id}/" target="_blank" style="background-color: #002366; color: white; padding: 5px 10px; border-radius: 5px; font-weight: bold; text-decoration: none;">Download Dossier</a>')
+        return "N/A"
     dossier_button_link.short_description = 'HR Archive'
 
     def full_name_styled(self, obj):
-        return mark_safe(f'<b style="color: #D4AF37;">{obj.full_name.upper()}</b>')
+        return mark_safe(f'<b style="color: #D4AF37;">{obj.full_name.upper() if obj.full_name else "NEW STAFF"}</b>')
     full_name_styled.short_description = "Staff Name"
 
     def role_badge(self, obj):
@@ -83,21 +89,22 @@ class StaffAdmin(admin.ModelAdmin):
     secure_pin_box.short_description = "Current PIN"
 
     def display_subjects(self, obj):
-        # 🛡️ Check if the object has been saved to the DB first
         if obj.pk:
             subs = obj.subjects.all()
             return ", ".join([s.name for s in subs]) if subs.exists() else "None"
-        return "Will show after saving"
+        return "Saving..."
 
     def logo_preview(self, obj):
-        if obj.photo:
-            return mark_safe(f'<img src="{obj.photo.url}" width="100" />')
+        # 💎 FIXED: Pointed to the correct field name
+        if obj.passport_photo:
+            return mark_safe(f'<img src="{obj.passport_photo.url}" width="100" style="border-radius:10px;"/>')
         return "No Photo"
 
-    # 💎 THE RESET BUTTON
     def reset_pin_btn(self, obj):
-        url = f"/api/staff/reset-pin/{obj.id}/"
-        return mark_safe(f'<a href="{url}" style="background:#444; color:white; padding:5px 8px; border-radius:5px; text-decoration:none; font-size:10px;">🔄 RESET PIN</a>')
+        if obj.pk:
+            url = f"/api/staff/reset-pin/{obj.id}/"
+            return mark_safe(f'<a href="{url}" style="background:#444; color:white; padding:5px 8px; border-radius:5px; text-decoration:none; font-size:10px;">🔄 RESET PIN</a>')
+        return "N/A"
     reset_pin_btn.short_description = "Action"
 
 
