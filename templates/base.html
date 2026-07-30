@@ -16,6 +16,38 @@
     <!-- 🎨 2. HIGH-PRESTIGE STYLING (Bootstrap 5 + Custom Obsidian) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+    /* 🏛️ NATIONAL AUTHORITY FONT */
+    body, h1, h2, h3, p, table, .btn {
+        font-family: "Times New Roman", Times, serif !important;
+    }
+
+    /* 🇺🇬 LIVE BACKGROUND: THE BLOWING FLAG */
+    /* We use a high-quality video loop for the 'Live' effect */
+    .dashboard-bg-video {
+        position: fixed;
+        right: 0; bottom: 0;
+        min-width: 100%; min-height: 100%;
+        z-index: -1;
+        opacity: 0.15; /* Subtly in the background so text is readable */
+        filter: blur(2px);
+        object-fit: cover;
+    }
+
+    /* 💎 DRIBBBLE-STYLE CARDS (From your photo) */
+    .card-container {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        transition: 0.4s;
+    }
+    .card-container:hover {
+        transform: translateY(-5px);
+        border-color: #D4AF37;
+    }
+
+
         :root { 
             --uns-gold: #D4AF37; 
             --uns-dark: #050505; 
@@ -82,6 +114,9 @@
     </style>
 </head>
 <body>
+    <video autoplay muted loop playsinline class="dashboard-bg-video">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-flag-of-uganda-waving-in-the-wind-32538-large.mp4" type="video/mp4">
+</video>
 
     <!-- 🏛️ NATIONAL NAVIGATION -->
     <nav class="navbar navbar-expand-lg sticky-top">
