@@ -2111,6 +2111,9 @@ def export_styled_layout(request, school_id, layout_format):
 
 @login_required
 def operations_hub_view(request):
+    sync_national_notifications()
+    
+    updates = NationalUpdate.objects.all()[:5] # Get latest 5
     school = getattr(request.user, 'school', None) or School.objects.first()
     
     # 🎨 THE Hub Hub Hub Hub Hub Hub Hub MINOR TABS REGISTRY
@@ -2137,6 +2140,7 @@ def operations_hub_view(request):
 
     return render(request, 'admin/operations_hub.html', {
         'minor_tabs': minor_tabs,
+        'national_updates': updates, # 💎 Send the news!
         'school': school,
         'title': "NATIONAL OPERATIONS COMMAND"
     })
@@ -2863,3 +2867,33 @@ def uneb_dit_gateway(request):
         'school': school,
         'title': "NATIONAL EXTERNAL GATEWAY"
     })
+
+import requests
+from bs4 import BeautifulSoup
+
+def sync_national_notifications():
+    """📡 THE Hub Hub Hub SATELLITE SCRAPER"""
+    targets = [
+        {'name': 'UNEB', 'url': 'https://uneb.ac.ug/news/'},
+        {'name': 'MoES', 'url': 'https://www.education.go.ug/category/news/'}
+    ]
+    
+    for target in targets:
+        try:
+            response = requests.get(target['url'], timeout=10)
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # 🕵️ Find the first 3 news headlines (Logic adapts to their site structure)
+            links = soup.find_all('a', href=True)
+            for link in links:
+                text = link.get_text().strip()
+                href = link['href']
+                
+                # Filter for actual news titles (usually longer than 20 chars)
+                if len(text) > 25 and ("2024" in text or "2025" in text or "Circular" in text):
+                    NationalUpdate.objects.get_or_create(
+                        title=text, 
+                        defaults={'source': target['name'], 'link': href}
+                    )
+        except:
+            pass # Ignore if site is down

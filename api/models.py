@@ -563,3 +563,14 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} @ {self.school.name}"
+
+class NationalUpdate(models.Model):
+    source = models.CharField(max_length=50) # e.g., UNEB, MoES
+    title = models.CharField(max_length=500)
+    link = models.URLField()
+    date_found = models.DateTimeField(auto_now_add=True)
+    is_new = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-date_found']
+        verbose_name = "NATIONAL LIVE FEED"
