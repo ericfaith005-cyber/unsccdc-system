@@ -2656,3 +2656,48 @@ def national_landing_page(request):
         # Note: You can link the profile here too if needed
     
     # ... rest of your code ...
+
+# 1. 💎 THE Hub Hub Hub Hub Hub REPORT CONTENT HELPER
+# (Move your drawing logic here so it can be used for 1 or 1,000 students)
+def draw_report_card_layout(p, student):
+    width, height = A4
+    school = student.school
+    marks = student.marks.all()
+    gov_blue = colors.HexColor("#002366")
+    rich_gold = colors.HexColor("#D4AF37")
+    
+    # [PASTE YOUR EXISTING DRAWING LOGIC HERE]
+    # Use: p.rect, p.drawString, p.drawImage, etc.
+    # IMPORTANT: DO NOT include p.save() or p.showPage() inside this helper!
+    
+    p.setFillColor(gov_blue)
+    p.setFont("Times-Bold", 18)
+    p.drawCentredString(width/2, height-135, school.name.upper())
+    # ... (Rest of your beautiful design)
+    
+# 2. 🚀 THE Hub Hub Hub Hub Hub BATCH GENERATOR
+@login_required
+def batch_report_download(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class')
+    
+    if not selected_class:
+        return HttpResponse("Please select a class first.")
+
+    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
+    
+    # 📄 Initialize the Multi-Page Document
+    p = canvas.Canvas(response, pagesize=A4)
+    
+    for student in students:
+        # Draw the report for this specific student
+        draw_report_card_layout(p, student)
+        
+        # 💎 THE MAGIC LINE: Tells the PDF to start a new page for the next student
+        p.showPage() 
+        
+    p.save()
+    return response

@@ -156,6 +156,7 @@ class SchoolIsolatedAdmin(admin.ModelAdmin):
             return qs.filter(school=request.user.profile.school)
         except:
             return qs.none() # Hide everything if profile is missing
+        
 admin.site.site_header = "UNSCCDC NATIONAL HUB - COMMAND CENTER"
 
 class ImperialAdminSite(admin.AdminSite):

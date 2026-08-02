@@ -62,5 +62,6 @@ urlpatterns = [
     path('reverse-txn/<int:txn_id>/', views.execute_sovereign_reversal, name='reverse_txn'),
     path('parents/', views.sovereign_parents_view, name='sovereign_parents'),
     path('print-fees-reminder/<str:student_id>/', views.generate_fees_reminder_pdf, name='print_reminder'),
+    path('batch-reports/', views.batch_report_download, name='batch_reports'),
     
 ]
