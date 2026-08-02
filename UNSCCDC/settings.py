@@ -189,8 +189,7 @@ JAZZMIN_SETTINGS = {
         "api.BursarTerminal": "fas fa-print",
     },
 
-    "custom_css": "css/national_prestige.css", # 💎 Pointing to our new design
-    "custom_js": "js/national_flag.js",
+
     "theme": "darkly",
     "show_ui_builder": False,
 
