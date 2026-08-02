@@ -12,3 +12,5 @@ africastalking
 pdfplumber
 pandas
 python-docx
+beautifulsoup4
+requests
