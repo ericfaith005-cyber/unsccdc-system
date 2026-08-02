@@ -147,7 +147,6 @@ JAZZMIN_SETTINGS = {
     "custom_js": None,
     "user_avatar": "photo",
     
-    "custom_js": "js/national_flag.js",
     "theme": "darkly",
     "site_brand": "UNSCCDC",
    
