@@ -2657,47 +2657,123 @@ def national_landing_page(request):
     
     # ... rest of your code ...
 
-# 1. 💎 THE Hub Hub Hub Hub Hub REPORT CONTENT HELPER
-# (Move your drawing logic here so it can be used for 1 or 1,000 students)
+import os
+from django.db.models import Avg
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+
+# 💎 1. THE BULLETPROOF DRAWING HELPER
 def draw_report_card_layout(p, student):
-    width, height = A4
-    school = student.school
-    marks = student.marks.all()
-    gov_blue = colors.HexColor("#002366")
-    rich_gold = colors.HexColor("#D4AF37")
+    try:
+        width, height = A4
+        school = student.school
+        marks = student.marks.all()
+        
+        # 🎨 NATIONAL COLORS
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        off_white = colors.HexColor("#FDFDF5")
+
+        # A. Background & Borders
+        p.setFillColor(off_white)
+        p.rect(0, 0, width, height, fill=1, stroke=0)
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+
+        # B. School Logo (Self-Healing)
+        if school.logo and os.path.exists(school.logo.path):
+            p.drawImage(school.logo.path, width/2-35, height-110, width=70, height=70, mask='auto')
+        else:
+            p.setStrokeColor(gov_blue); p.circle(width/2, height-75, 30, stroke=1)
+            p.drawCentredString(width/2, height-80, "U")
+
+        # C. Headers (Times New Roman style)
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-135, school.name.upper())
+
+        # D. Student Biometrics
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+        p.drawString(50, height-200, f"STUDENT: {student.full_name.upper()}")
+        p.drawString(50, height-215, f"ID: {student.account_number}")
+        p.drawString(380, height-200, f"CLASS: {student.current_class}")
+        
+        # E. Student Photo (Self-Healing)
+        if student.photo and os.path.exists(student.photo.path):
+            p.drawImage(student.photo.path, width-130, height-135, width=80, height=90, mask='auto')
+
+        # F. Elastic Table (The Logic we built)
+        has_aois = any(m.aoi_1 > 0 for m in marks)
+        if has_aois:
+            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD']
+            col_widths = [50, 30, 30, 35, 30, 30, 35, 35, 40, 35]
+        else:
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE']
+            col_widths = [150, 70, 70, 70, 70, 60]
+
+        data_rows = [headers]
+        for m in marks:
+            row = [m.subject.name.upper(), m.mid_term, m.eot_score, m.project_work, f"{m.eot_score}%", "B"]
+            if has_aois:
+                row = [m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", "B"]
+            data_rows.append(row)
+
+        if len(data_rows) > 1:
+            table = Table(data_rows, colWidths=col_widths)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+                ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('FONTNAME', (0,0), (-1,-1), 'Times-Roman')
+            ]))
+            table.wrapOn(p, width, height); table.drawOn(p, 40, height - 380)
+        else:
+            p.drawCentredString(width/2, height-300, "NO ACADEMIC RECORDS FOUND")
+
+        # G. Treasury Bar (The Red PRN)
+        p.setFillColor(gov_blue); p.rect(45, height - 550, width - 90, 50, fill=1, stroke=0)
+        p.setFillColor(colors.white); p.setFont("Times-Bold", 7)
+        p.drawString(55, height - 520, "OUTSTANDING BALANCE")
+        p.drawString(385, height - 520, "NATIONAL PRN")
+        
+        # Pull real fees safely
+        from .models import FeesTracker
+        fees = FeesTracker.objects.filter(student=student).first()
+        bal = fees.fees_balance if fees else 0
+        
+        p.setFont("Times-Bold", 12); p.drawString(55, height - 540, f"UGX {bal:,.0f}")
+        p.setFillColor(colors.red); p.drawString(385, height - 540, f"{student.payment_code}")
+
+    except Exception as e:
+        # 🚑 If one student fails, draw an error message on their page but DON'T stop the batch
+        p.setFont("Helvetica-Bold", 12); p.setFillColor(colors.red)
+        p.drawCentredString(300, 500, f"ERROR GENERATING DATA FOR: {student.full_name}")
+        print(f"Critial Student PDF Error: {str(e)}")
     
-    # [PASTE YOUR EXISTING DRAWING LOGIC HERE]
-    # Use: p.rect, p.drawString, p.drawImage, etc.
-    # IMPORTANT: DO NOT include p.save() or p.showPage() inside this helper!
-    
-    p.setFillColor(gov_blue)
-    p.setFont("Times-Bold", 18)
-    p.drawCentredString(width/2, height-135, school.name.upper())
-    # ... (Rest of your beautiful design)
-    
-# 2. 🚀 THE Hub Hub Hub Hub Hub BATCH GENERATOR
 @login_required
 def batch_report_download(request):
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    selected_class = request.GET.get('class')
-    
-    if not selected_class:
-        return HttpResponse("Please select a class first.")
-
-    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
-    
-    # 📄 Initialize the Multi-Page Document
-    p = canvas.Canvas(response, pagesize=A4)
-    
-    for student in students:
-        # Draw the report for this specific student
-        draw_report_card_layout(p, student)
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class')
         
-        # 💎 THE MAGIC LINE: Tells the PDF to start a new page for the next student
-        p.showPage() 
+        if not selected_class:
+            return HttpResponse("Error: Please select a class to print.")
+
+        students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+
+        if not students.exists():
+            return HttpResponse(f"No active students found in {selected_class}")
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
         
-    p.save()
-    return response
+        # Create canvas
+        p = canvas.Canvas(response, pagesize=A4)
+        
+        for student in students:
+            draw_report_card_layout(p, student)
+            p.showPage() # 📄 Start a new page for the next student
+            
+        p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"National Batch Error: {str(e)}")
