@@ -2128,7 +2128,7 @@ def operations_hub_view(request):
         ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
         ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
-        ("UNEB/DIT Portal", "fa-medal", "#c0392b", "#", "National Exams"),
+        ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
         ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
@@ -2818,3 +2818,48 @@ def academic_results_center(request):
         return render(request, 'admin/academic_results_center.html', context)
     except Exception as e:
         return HttpResponse(f"Command Centre Error: {str(e)}")
+
+@login_required
+def uneb_dit_gateway(request):
+    """🏛️ THE NATIONAL EXTERNAL PORTAL BRIDGE"""
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    
+    # 🔗 OFFICIAL GOVERNMENT LINKS
+    portals = [
+        {
+            "name": "UNEB e-Registration",
+            "url": "https://ereg.uneb.ac.ug/",
+            "desc": "Register candidates for PLE, UCE, and UACE examinations.",
+            "color": "#d35400" # Deep Orange
+        },
+        {
+            "name": "UNEB Results Portal",
+            "url": "https://eresults.uneb.ac.ug/",
+            "desc": "Access and download official school performance results.",
+            "color": "#2980b9" # Navy Blue
+        },
+        {
+            "name": "MoES Official Website",
+            "url": "https://www.education.go.ug/",
+            "desc": "Ministry of Education & Sports policies and circulars.",
+            "color": "#27ae60" # Emerald Green
+        },
+        {
+            "name": "DIT Assessment",
+            "url": "https://dit.go.ug/",
+            "desc": "Directorate of Industrial Training - Vocational Standards.",
+            "color": "#8e44ad" # Amethyst Purple
+        },
+        {
+            "name": "EMIS Portal",
+            "url": "https://emis.go.ug/",
+            "desc": "Educational Management Information System login.",
+            "color": "#f1c40f" # Sun Yellow
+        }
+    ]
+
+    return render(request, 'admin/uneb_gateway.html', {
+        'portals': portals,
+        'school': school,
+        'title': "NATIONAL EXTERNAL GATEWAY"
+    })

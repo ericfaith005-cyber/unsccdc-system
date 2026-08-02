@@ -1,0 +1,75 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --gold: #D4AF37; --navy: #002366; --obsidian: #080808; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 30px !important; }
+
+    .gateway-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+        gap: 25px; 
+        margin-top: 40px;
+    }
+
+    .portal-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #222;
+        padding: 30px;
+        border-radius: 25px;
+        text-align: center;
+        text-decoration: none !important;
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .portal-card::before {
+        content: ""; position: absolute; top:0; left:0; width:100%; height:4px;
+        background: var(--gold); opacity: 0.5;
+    }
+
+    .portal-card:hover {
+        transform: translateY(-10px) scale(1.03);
+        border-color: var(--gold);
+        background: rgba(212, 175, 55, 0.05);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+
+    .portal-name { color: #fff; font-weight: 900; font-size: 18px; display: block; margin-top: 15px; }
+    .portal-desc { color: #666; font-size: 11px; margin-top: 10px; line-height: 1.5; display: block; }
+    
+    .external-badge {
+        display: inline-block; padding: 4px 12px; border-radius: 50px;
+        background: rgba(0,255,0,0.1); color: #00ff00; font-size: 8px;
+        font-weight: 900; letter-spacing: 1px; margin-bottom: 10px;
+    }
+</style>
+
+<div class="header" style="border-left: 6px solid var(--gold); padding-left: 20px;">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 4px; margin: 0; font-size: 32px;">
+        EXTERNAL GOVERNMENT PORTALS
+    </h1>
+    <p style="color: var(--gold); font-size: 12px; font-weight: bold; letter-spacing: 2px;">
+        SECURE BRIDGE TO UNEB & MINISTRY OF EDUCATION SERVICES
+    </p>
+</div>
+
+<div class="gateway-grid">
+    {% for p in portals %}
+    <a href="{{ p.url }}" target="_blank" class="portal-card">
+        <span class="external-badge">EXTERNAL LINK</span>
+        <i class="fas fa-landmark" style="font-size: 40px; color: {{ p.color }};"></i>
+        <span class="portal-name">{{ p.name|upper }}</span>
+        <span class="portal-desc">{{ p.desc }}</span>
+        <div style="margin-top: 20px; color: var(--gold); font-size: 10px; font-weight: bold;">
+            PROCEED TO OFFICIAL SITE <i class="fas fa-external-link-alt"></i>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 50px; text-align: center; color: #333; font-size: 10px;">
+    SYSTEM VERIFIED CONNECTION ● DATA SOVEREIGNTY SECURED BY UNSCCDC
+</div>
+{% endblock %}

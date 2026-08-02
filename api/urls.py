@@ -64,5 +64,6 @@ urlpatterns = [
     path('print-fees-reminder/<str:student_id>/', views.generate_fees_reminder_pdf, name='print_reminder'),
     path('batch-reports/', views.batch_report_download, name='batch_reports'),
     path('results-center/', views.academic_results_center, name='results_center'),
+    path('uneb-gateway/', views.uneb_dit_gateway, name='uneb_gateway'),
     
 ]
