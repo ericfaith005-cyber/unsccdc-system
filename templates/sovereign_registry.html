@@ -3,251 +3,188 @@
 
 {% block content %}
 <style>
-    /* 🏛️ NATIONAL REGISTRY PRESTIGE THEME */
+    /* 🏛️ THE Hub Hub Hub Hub Hub NATIONAL AUTHORITY THEME */
     :root {
-        --royal-navy: #002366;
+        --zeraki-green: #2d8e5e; /* The professional green from your photo */
         --imperial-gold: #D4AF37;
         --ug-black: #000000;
         --ug-yellow: #FCDC04;
         --ug-red: #D90000;
-        --obsidian: #080808;
     }
 
-    /* Reset background for the admin content area */
-    #content { background: #000 !important; padding: 0 !important; }
-
-    .registry-wrapper {
-        background: #000;
-        min-height: 80vh;
-        padding: 30px;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    #content { background: #f4f7f6 !important; padding: 0 !important; }
+    
+    .registry-container {
+        padding: 20px;
+        font-family: "Times New Roman", Times, serif !important;
     }
 
-    /* 🛡️ TOP BRANDING HEADER */
-    .registry-header {
-        border-left: 6px solid var(--imperial-gold);
-        padding-left: 20px;
-        margin-bottom: 35px;
+    /* 🟢 THE Hub Hub Hub Hub Hub ADVANCED ACTION BAR (From your Image) */
+    .action-bar {
+        background: var(--zeraki-green);
+        padding: 12px 20px;
+        border-radius: 8px 8px 0 0;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    .sector-tag {
-        background: rgba(212,175,55,0.1);
-        color: var(--imperial-gold);
-        padding: 5px 15px;
-        border-radius: 50px;
-        font-size: 10px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        border: 1px solid rgba(212,175,55,0.2);
-    }
-
-    /* 💊 DYNAMIC CLASS PILLS */
-    .class-pill-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 30px;
-        padding: 10px 0;
-        border-bottom: 1px solid #1a1a1a;
-    }
-
-    .class-pill {
-        text-decoration: none !important;
-        padding: 12px 28px;
-        border-radius: 50px;
-        font-weight: 900;
-        font-size: 12px;
-        letter-spacing: 1px;
-        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        color: #888;
-        background: #111;
-        border: 1px solid #222;
-    }
-
-    .class-pill:hover {
-        border-color: var(--imperial-gold);
-        color: #fff;
-        transform: translateY(-3px);
-    }
-
-    .class-pill.active {
-        background: var(--imperial-gold);
-        color: #000;
-        border-color: var(--imperial-gold);
-        box-shadow: 0 10px 20px rgba(212,175,55,0.2);
-    }
-
-    /* 📋 THE REGISTRY TABLE */
-    .table-container {
-        background: var(--obsidian);
+    .action-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.4);
+        padding: 6px 15px;
         border-radius: 20px;
-        border: 1px solid #1a1a1a;
+        font-size: 12px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+
+    .action-btn:hover { background: white; color: var(--zeraki-green); }
+
+    /* 📊 THE Hub Hub Hub Hub Hub HIGH-DENSITY TABLE */
+    .data-card {
+        background: white;
+        border-radius: 0 0 15px 15px;
+        border: 1px solid #e0e0e0;
         overflow: hidden;
-        position: relative;
     }
 
-    /* 🇺🇬 THE NATIONAL FLAG RIBBON */
-    .table-container::before {
-        content: "";
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(to right, 
-            var(--ug-black) 33%, 
-            var(--ug-yellow) 33%, var(--ug-yellow) 66%, 
-            var(--ug-red) 66%);
-    }
-
-    .registry-table {
+    .uneb-table {
         width: 100%;
         border-collapse: collapse;
     }
 
-    .registry-table th {
-        background: rgba(255,255,255,0.02);
-        color: var(--imperial-gold);
-        padding: 20px 15px;
+    .uneb-table th {
+        background: #f8f9fa;
+        color: #666;
+        text-transform: uppercase;
+        font-size: 10px;
+        padding: 15px;
         text-align: left;
-        font-size: 11px;
-        font-weight: 900;
-        letter-spacing: 2px;
-        border-bottom: 2px solid #1a1a1a;
+        border-bottom: 2px solid #eee;
     }
 
-    .registry-table td {
-        padding: 18px 15px;
-        border-bottom: 1px solid #111;
-        color: #fff;
-        font-size: 13px;
+    .uneb-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
         vertical-align: middle;
+        color: #333;
+        font-size: 14px;
     }
 
-    .registry-table tr:hover {
-        background: rgba(212,175,55,0.02);
+    .uneb-table tr:hover { background: #f9fbf9; }
+
+    /* 📸 CIRCULAR AVATAR (From your Image) */
+    .student-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #eee;
+        background: #fafafa;
     }
 
-    .prn-code {
-        font-family: 'Courier New', Courier, monospace;
-        color: #00ff00;
+    /* 🇺🇬 NATIONAL FLAG ACCENT */
+    .flag-line {
+        height: 4px;
+        width: 100%;
+        background: linear-gradient(to right, black 33%, #FCDC04 33%, #FCDC04 66%, #D90000 66%);
+        margin-bottom: 10px;
+        border-radius: 2px;
+    }
+
+    .id-badge {
+        font-family: monospace;
+        background: #eef2ff;
+        color: #002366;
+        padding: 4px 8px;
+        border-radius: 4px;
         font-weight: bold;
-        background: rgba(0,255,0,0.05);
-        padding: 4px 10px;
-        border-radius: 5px;
+        font-size: 12px;
     }
 
-    /* 📄 ACTION BUTTON */
-    .btn-dossier {
-        text-decoration: none !important;
-        color: var(--imperial-gold);
-        border: 1px solid var(--imperial-gold);
-        padding: 8px 16px;
-        border-radius: 10px;
+    .gender-tag {
         font-size: 11px;
-        font-weight: 900;
-        transition: 0.3s;
-        display: inline-block;
+        font-weight: bold;
+        color: #888;
     }
 
-    .btn-dossier:hover {
-        background: var(--imperial-gold);
-        color: #000;
-        box-shadow: 0 5px 15px rgba(212,175,55,0.3);
+    /* 📄 DOSSIER BUTTON */
+    .btn-view {
+        color: var(--zeraki-green);
+        border: 1px solid var(--zeraki-green);
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 11px;
+        text-decoration: none;
+        font-weight: bold;
     }
-
-    .status-badge {
-        font-size: 9px;
-        font-weight: 900;
-        color: #00ff00;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
+    .btn-view:hover { background: var(--zeraki-green); color: white; }
 </style>
 
-<div class="registry-wrapper">
-    <!-- Header -->
-    <div class="registry-header">
+<div class="registry-container">
+    <div class="flag-line"></div>
+    
+    <!-- Title & Stats -->
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin:0; color: #1a1a1a; font-weight: 900;">{{ school.name|upper }}</h2>
+        <span style="font-size: 12px; color: #888;">NATIONAL REGISTRY ● {{ selected_class }} ● {{ total_count }} LEARNERS</span>
+    </div>
+
+    <!-- 🟢 ACTION BAR (Matches Image) -->
+    <div class="action-bar">
         <div>
-            <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0; font-size: 28px;">
-                {{ school.name|upper }}
-            </h1>
-            <div style="margin-top: 5px;">
-                <span class="sector-tag">{{ school.sector }} SECTOR</span>
-                <span style="color: #444; margin-left: 10px; font-size: 11px;">NATIONAL REGISTRY COUNT: {{ total_count }}</span>
-            </div>
+            <a href="#" class="action-btn"><i class="fas fa-tasks"></i> Manage Classes</a>
+            <a href="/admin/api/student/add/" class="action-btn" style="margin-left:10px;"><i class="fas fa-plus"></i> Add New Learner</a>
         </div>
-        <button class="btn btn-outline-warning" onclick="window.print()" style="font-weight: 900; border-radius: 12px;">🖨️ PRINT REGISTRY</button>
+        <div style="font-size: 13px; font-weight: bold;">
+            <i class="fas fa-book-open"></i> {{ school.sector }} SECTOR
+        </div>
     </div>
 
-    <!-- 🔍 THE Hub Hub Hub Hub Hub NATIONAL SEARCH BAR -->
-    <div style="margin-bottom: 25px;">
-        <form method="GET" action="" style="display: flex; gap: 10px; max-width: 600px;">
-            <div style="position: relative; flex-grow: 1;">
-                <i class="fas fa-search" style="position: absolute; left: 15px; top: 15px; color: #D4AF37; opacity: 0.5;"></i>
-                <input type="text" name="q" value="{{ request.GET.q }}" 
-                       placeholder="Search by Name, PRN, or Stream..." 
-                       style="width: 100%; padding: 12px 15px 12px 45px; background: #111; border: 1px solid #333; border-radius: 12px; color: #fff; font-weight: 600; outline: none; transition: 0.3s;"
-                       onfocus="this.style.borderColor='#D4AF37'; this.style.boxShadow='0 0 15px rgba(212,175,55,0.1)';"
-                       onblur="this.style.borderColor='#333';">
-            </div>
-            <button type="submit" class="btn btn-warning" style="font-weight: 900; border-radius: 12px; padding: 0 25px;">
-                SEARCH
-            </button>
-            {% if request.GET.q %}
-                <a href="?" class="btn btn-outline-secondary" style="border-radius: 12px; display: flex; align-items: center;">RESET</a>
-            {% endif %}
-        </form>
-    </div>
-
-    <!-- Class Pills -->
-    <div class="class-pill-container">
-        {% for c in available_classes %}
-            <a href="?class={{ c }}" class="class-pill {% if selected_class == c %}active{% endif %}">
-                {{ c }}
-            </a>
-        {% endfor %}
-    </div>
-
-    <!-- Student Table -->
-    <div class="table-container">
-        <table class="registry-table">
+    <!-- 📊 DATA TABLE (Matches Image) -->
+    <div class="data-card">
+        <table class="uneb-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>FULL NAME (ALPHABETICAL)</th>
-                    <th>PRN / ACCESS CODE</th>
+                    <th style="width: 50px;">NO.</th>
+                    <th style="width: 70px;">PHOTO</th>
+                    <th style="width: 150px;">ADMISSION / PRN</th>
+                    <th>FULL LEGAL NAME</th>
+                    <th>STREAM</th>
                     <th>GENDER</th>
-                    <th>STATUS</th>
-                    <th style="text-align: right;">ACTION</th>
+                    <th style="text-align: right;">MANAGEMENT</th>
                 </tr>
             </thead>
             <tbody>
                 {% for s in students %}
                 <tr>
-                    <td style="color: #444; font-weight: bold;">{{ forloop.counter }}</td>
-                    <td style="font-weight: 800; letter-spacing: 0.5px;">{{ s.full_name|upper }}</td>
-                    <td><span class="prn-code">{{ s.payment_code }}</span></td>
-                    <td>{{ s.gender }}</td>
+                    <td style="color: #bbb; font-weight: bold;">{{ forloop.counter }}</td>
                     <td>
-                        <div class="status-badge">
-                            <span style="height: 6px; width: 6px; background: #00ff00; border-radius: 50%;"></span>
-                            ACTIVE
-                        </div>
+                        {% if s.photo %}
+                            <img src="{{ s.photo.url }}" class="student-avatar">
+                        {% else %}
+                            <div class="student-avatar" style="display:flex; align-items:center; justify-content:center; color:#ccc;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        {% endif %}
                     </td>
+                    <td><span class="id-badge">{{ s.payment_code }}</span></td>
+                    <td style="font-weight: bold; letter-spacing: 0.5px;">{{ s.full_name|upper }}</td>
+                    <td>{{ s.stream|default:"NORTH" }}</td>
+                    <td class="gender-tag">{{ s.gender|upper }}</td>
                     <td style="text-align: right;">
-                        <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-dossier">
-                            <i class="fas fa-file-pdf"></i> VIEW DOSSIER
-                        </a>
+                        <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-view">VIEW DOSSIER</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="padding: 120px; text-align: center;">
-                        <i class="fas fa-user-slash" style="font-size: 40px; color: #222; display: block; margin-bottom: 15px;"></i>
-                        <span style="color: #444; font-weight: bold; letter-spacing: 2px;">NO STUDENTS REGISTERED IN {{ selected_class }}</span>
+                    <td colspan="7" style="padding: 100px; text-align: center; color: #999;">
+                        NO LEARNERS REGISTERED IN {{ selected_class }}
                     </td>
                 </tr>
                 {% endfor %}

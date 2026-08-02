@@ -148,9 +148,6 @@ JAZZMIN_SETTINGS = {
     "user_avatar": "photo",
     
     "theme": "darkly",
-    "dark_mode_theme": "darkly",
-    "custom_css": "css/national_prestige.css", # 🇺🇬 The Zeraki-Style & Flag CSS
-    "custom_js": "js/national_flag.js",         # 🎬 The Live Flag Script
     "site_brand": "UNSCCDC",
    
     # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
