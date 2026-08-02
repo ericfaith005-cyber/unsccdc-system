@@ -260,6 +260,7 @@ JAZZMIN_SETTINGS = {
         "api.School",                  # 6. Institution Setup
         "api.SchoolPayLedger",         # 7. Financial Records
     ],
+    "custom_css": "css/national_prestige.css", # 💎 Pointing to our new design
 }
 
 JAZZMIN_UI_TWEAKS = {
