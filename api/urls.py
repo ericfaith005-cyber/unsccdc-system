@@ -63,5 +63,6 @@ urlpatterns = [
     path('parents/', views.sovereign_parents_view, name='sovereign_parents'),
     path('print-fees-reminder/<str:student_id>/', views.generate_fees_reminder_pdf, name='print_reminder'),
     path('batch-reports/', views.batch_report_download, name='batch_reports'),
+    path('results-center/', views.academic_results_center, name='results_center'),
     
 ]

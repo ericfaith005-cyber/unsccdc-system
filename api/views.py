@@ -2130,6 +2130,7 @@ def operations_hub_view(request):
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "#", "National Exams"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
+        ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
         ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
         ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), # 💎 15th TAB
     ]
@@ -2777,3 +2778,43 @@ def batch_report_download(request):
         return response
     except Exception as e:
         return HttpResponse(f"National Batch Error: {str(e)}")
+
+
+@login_required
+def academic_results_center(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        
+        # 🧠 Get Classes and Subjects
+        sector_map = {
+            'PRIMARY': ['P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+            'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+        }
+        classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4'])
+        subjects = Subject.objects.all()
+
+        # 🔎 Filter Logic
+        sel_class = request.GET.get('class', classes[0])
+        sel_sub = request.GET.get('subject')
+        
+        results = AcademicResult.objects.filter(student__school=school, student__current_class=sel_class)
+        if sel_sub:
+            results = results.filter(subject__id=sel_sub)
+
+        # 📊 Calculate Analytics
+        class_avg = results.aggregate(Avg('eot_score'))['eot_score__avg'] or 0
+        top_score = results.order_by('-eot_score').first()
+
+        context = {
+            'school': school,
+            'results': results,
+            'classes': classes,
+            'subjects': subjects,
+            'sel_class': sel_class,
+            'sel_sub': sel_sub,
+            'class_avg': round(class_avg, 1),
+            'top_student': top_score.student.full_name if top_score else "N/A"
+        }
+        return render(request, 'admin/academic_results_center.html', context)
+    except Exception as e:
+        return HttpResponse(f"Command Centre Error: {str(e)}")

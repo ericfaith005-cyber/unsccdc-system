@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --navy: #002366; --gold: #D4AF37; --glass: rgba(255, 255, 255, 0.03); }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 20px !important; }
+
+    /* 📊 ANALYTICS CARDS */
+    .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--glass); border: 1px solid #222; padding: 20px; border-radius: 15px; border-left: 4px solid var(--gold); }
+    .stat-val { font-size: 24px; font-weight: 900; color: #fff; display: block; }
+    .stat-lbl { font-size: 10px; color: var(--gold); letter-spacing: 2px; }
+
+    /* 🔍 SEARCH & FILTER BAR */
+    .filter-bar { background: var(--navy); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--gold); }
+    select { background: #000; color: gold; border: 1px solid #444; padding: 8px; border-radius: 8px; outline: none; }
+
+    /* 🏆 RESULTS TABLE */
+    .results-container { background: #080808; border-radius: 20px; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
+    .results-container::before { content: ""; position: absolute; top:0; left:0; right:0; height:4px; background: linear-gradient(to right, #000 33%, #FCDC04 33%, #FCDC04 66%, #D90000 66%); }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(255,255,255,0.02); color: var(--gold); padding: 15px; text-align: left; font-size: 11px; text-transform: uppercase; }
+    td { padding: 15px; border-bottom: 1px solid #111; color: #fff; font-size: 14px; }
+    tr:hover { background: rgba(212, 175, 55, 0.05); }
+
+    /* 📈 PROGRESS BAR */
+    .progress-track { width: 100px; height: 6px; background: #222; border-radius: 10px; overflow: hidden; display: inline-block; margin-right: 10px; }
+    .progress-fill { height: 100%; transition: 1s ease-in-out; }
+    
+    .grade-badge { padding: 4px 10px; border-radius: 5px; font-weight: 900; font-size: 10px; }
+    .grade-A { background: rgba(0, 255, 0, 0.1); color: #00ff00; }
+    .grade-F { background: rgba(255, 0, 0, 0.1); color: #ff0000; }
+</style>
+
+<div class="page-header" style="margin-bottom: 30px;">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin:0;">{{ school.name|upper }}</h1>
+    <p style="color: var(--gold); font-size: 12px;">NATIONAL ACADEMIC COMMAND CENTRE</p>
+</div>
+
+<div class="stat-row">
+    <div class="stat-card"><span class="stat-val">{{ results.count }}</span><span class="stat-lbl">RECORDS LOADED</span></div>
+    <div class="stat-card"><span class="stat-val">{{ class_avg }}%</span><span class="stat-lbl">CLASS AVERAGE</span></div>
+    <div class="stat-card"><span class="stat-val" style="font-size: 16px;">{{ top_student|upper }}</span><span class="stat-lbl">TOP PERFORMER</span></div>
+</div>
+
+<form method="GET" class="filter-bar">
+    <span style="color:white; font-weight:bold; font-size:12px;">FILTERS:</span>
+    <select name="class" onchange="this.form.submit()">
+        {% for c in classes %}<option value="{{ c }}" {% if sel_class == c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <select name="subject" onchange="this.form.submit()">
+        <option value="">ALL SUBJECTS</option>
+        {% for s in subjects %}<option value="{{ s.id }}" {% if sel_sub == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select>
+    <button type="button" onclick="window.print()" style="margin-left:auto; background:gold; border:none; padding:8px 20px; border-radius:8px; font-weight:900; cursor:pointer;">🖨️ PRINT SHEET</button>
+</form>
+
+<div class="results-container">
+    <table>
+        <thead>
+            <tr>
+                <th>STUDENT NAME</th>
+                <th>SUBJECT</th>
+                <th>SCORE (%)</th>
+                <th>PERFORMANCE VISUAL</th>
+                <th>GRADE</th>
+                <th>ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr>
+                <td style="font-weight: bold;">{{ r.student.full_name|upper }}</td>
+                <td style="color: #888;">{{ r.subject.name }}</td>
+                <td style="font-weight: 900; font-family: monospace;">{{ r.eot_score }}%</td>
+                <td>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width: {{ r.eot_score }}%; background: {% if r.eot_score >= 80 %}#00ff00{% elif r.eot_score >= 50 %}#D4AF37{% else %}#ff0000{% endif %};"></div>
+                    </div>
+                </td>
+                <td>
+                    <span class="grade-badge {% if r.eot_score >= 80 %}grade-A{% elif r.eot_score < 50 %}grade-F{% endif %}">
+                        {% if r.eot_score >= 80 %}DISTINCTION{% elif r.eot_score >= 50 %}CREDIT{% else %}FAIL{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="/admin/api/academicresult/{{ r.id }}/change/" style="color:var(--gold); text-decoration:none; font-size:11px; font-weight:bold;">MODIFY</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // ✨ JavaScript "Pulse" for high scores
+    document.querySelectorAll('.stat-val').forEach(el => {
+        if(parseFloat(el.innerText) > 80) el.style.textShadow = "0 0 15px #00ff00";
+    });
+</script>
+{% endblock %}
