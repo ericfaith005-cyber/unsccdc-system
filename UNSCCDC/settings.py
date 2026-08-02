@@ -137,130 +137,91 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 JAZZMIN_SETTINGS = {
-   
+    # 🏛️ 1. BRANDING & TITLES
     "site_title": "UNSCCDC GLOBAL",
     "site_header": "UNSCCDC",
-    "site_brand": "UNSCCDC",
+    "site_brand": "UNSCCDC GLOBAL",
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL 2026",
-    "custom_css": "css/unsccdc_prestige.css",
-    "custom_css": "css/national_prestige.css", # 💎 Pointing to our new design
-    "custom_js": "js/national_flag.js",
-    
+    "user_avatar": "photo", # 📸 Points to the 'photo' field in your User/Staff model
+
+    # 🎨 2. THE Hub Hub Hub Hub Hub DESIGN (CSS & JS)
     "theme": "darkly",
-    "site_brand": "UNSCCDC",
-   
-    # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
+    "dark_mode_theme": "darkly",
+    "custom_css": "css/national_prestige.css", # 🇺🇬 The Zeraki-Style & Flag CSS
+    "custom_js": "js/national_flag.js",         # 🎬 The Live Flag Script
+    "show_ui_builder": False,
+
+    # 🔗 3. THE ANIMATED TOP TABS (The "Website" Navigation)
     "topmenu_links": [
         {"name": "HOME", "url": "/api/home/", "new_window": False},
         {"name": "ABOUT", "url": "/api/about/", "new_window": False},
         {"name": "ACADEMICS", "url": "/api/academics/", "new_window": False},
         {"name": "FINANCES", "url": "/api/finances/", "new_window": False},
-        {"name": "PROFILE", "url": "/api/profile/", "new_window": False},
-        {"name": "DASHBOARD", "url": "admin:index"}, # Back to standard view
+        {"name": "NATIONAL REGISTRY", "url": "/api/registry/", "new_window": False}, # 💎 NEW
         {"name": "NATIONAL WAR-ROOM", "url": "/admin/api/financialcommandcenter/", "new_window": False},
-        
     ],
 
-    # 🏛️ THE SIDEBAR REGISTRY
+    # 🏛️ 4. THE Hub Hub Hub Hub Hub SIDEBAR ORDER (THE COMMAND MAP)
     "navigation_expanded": True,
-    "order_with_respect_to": ["api.School", "api.Student", "api.Parent"],
-    
-    # 💎 THE BURSAR COMMAND TABS (Sidebar Customization)
+    "side_menu_order": [
+        "api.OperationsHub",           # 1. The 12-Tab Grid Dashboard
+        "api.NationalDataBridge",      # 2. PDF Auto-Arranger
+        "api.SovereignRegistry",       # 3. A-Z Class Explorer
+        "api.FeesReminder",            # 4. Mass Print Reminders
+        "api.SovereignParentRegistry", # 5. Linked Guardian List
+        "api.Student",                 # 6. Student Files
+        "api.Staff",                   # 7. Teacher Force
+        "api.School",                  # 8. Institution Setup
+        "api.SchoolPayLedger",         # 9. Financial Records
+        "api.Subject",                 # 10. Curriculum
+        "auth.User",                   # 11. System Access
+    ],
+
+    # 💎 5. THE BURSAR COMMAND LINKS
     "custom_links": {
         "api": [
             {
-                "icon": "fas fa-print",
-                "name": "Operations Dashboard",
+                "name": "Operations Dashboard", 
+                "url": "/api/ops-hub/", 
+                "icon": "fas fa-rocket",
                 "permissions": ["auth.view_user"]
             },
             {
-                "name": "Financial war-room", 
+                "name": "Financial Analytics", 
                 "url": "/admin/api/financialcommandcenter/", 
                 "icon": "fas fa-chart-line"
             },
         ]
     },
     
-    # 🎨 THE Hub ICONS
-    "icons": {
-        "api.SchoolPayLedger": "fas fa-money-check-alt",
-        "api.FeesTracker": "fas fa-wallet",
-        "api.BursarTerminal": "fas fa-print",
-    },
-
-
-    "theme": "darkly",
-    "show_ui_builder": False,
-
-
-    # 🛠️ SIDEBAR SETTINGS
-    "navigation_expanded": True,
-    "hide_apps": [],
-    "hide_models": [],
-    "icons": {
-        "api.Student": "fas fa-user-graduate",
-        "api.School": "fas fa-university",
-        "api.Staff": "fas fa-chalkboard-teacher",
-        "api.SchoolPayLedger": "fas fa-money-check-alt",
-        "api.FinancialCommandCenter": "fas fa-chart-line",
-    },
-
-    # 🎨 THE DESIGN (DIAMOND OBSIDIAN)
-    "theme": "darkly", # Deep Black Theme
-    "dark_mode_theme": "darkly",
-
-    # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
+    # 🎨 6. EVERY SINGLE ICON MAPPED & PROTECTED
     "icons": {
         "api.OperationsHub": "fas fa-th-large",
-        "api.DataIngestionVault": "fas fa-file-upload", 
+        "api.NationalDataBridge": "fas fa-file-import", 
         "api.SovereignRegistry": "fas fa-shield-alt",
-        "auth": "fas fa-users-cog",
-        "auth.user": "fas fa-user",
-        "api.AcademicResultsCenter": "fas fa-medal",      # THE MASTER HUB
-        "api.AcademicResult": "fas fa-edit",               # MARKS ENTRY
-        "api.Student": "fas fa-user-graduate",             # STUDENTS
-        "api.Staff": "fas fa-chalkboard-teacher",          # STAFF
-        "api.School": "fas fa-university",                 # SCHOOLS
-        "api.Parent": "fas fa-user-shield",                # PARENTS
-        "api.FeesTracker": "fas fa-wallet",                # FEES
-        "api.Transaction": "fas fa-file-invoice-dollar",   # BURSAR LEDGER
-        "api.Subject": "fas fa-book",                      # SUBJECTS
-        "api.SchoolPost": "fas fa-broadcast-tower",        # SOCIAL HUB
-        "api.NationalTopPerformer": "fas fa-trophy",       # 3D SLIDERS
-        "api.BioAndCareer": "fas fa-user-tie",             # CAREER HUB
-        "api.SovereignProfessionalInsights": "fas fa-chart-bar", # PRO ANALYTICS
+        "api.FeesReminder": "fas fa-bell",
+        "api.SovereignParentRegistry": "fas fa-users-cog",
+        "api.Student": "fas fa-user-graduate",
+        "api.Staff": "fas fa-chalkboard-teacher",
+        "api.School": "fas fa-university",
+        "api.Parent": "fas fa-user-shield",
+        "api.SchoolPayLedger": "fas fa-money-check-alt",
+        "api.FeesTracker": "fas fa-wallet",
+        "api.Transaction": "fas fa-file-invoice-dollar",
+        "api.Subject": "fas fa-book",
+        "api.SchoolPost": "fas fa-broadcast-tower",
+        "api.NationalTopPerformer": "fas fa-trophy",
+        "api.BioAndCareer": "fas fa-user-tie",
+        "api.SystemSettings": "fas fa-cogs",
+        "auth.User": "fas fa-user-lock",
+        "auth.Group": "fas fa-users",
     },
     
-    # SIDEBAR PRIORITY ORDER
-    "order_with_respect_to": [
-        "api.OperationsHub",
-        "api.NationalDataBridge",
-        "api.SovereignRegistry",
-        "api.FeesReminder",
-        "api.AcademicResultsCenter", 
-        "api.AcademicResult",
-        "api.SovereignParentRegistry",
-        "api.Student", 
-        "api.Staff",
-        "api.School", 
-        "api.Transaction",
-        "api.Parent", 
-        "api.FeesTracker"
-    ],
-
-     "side_menu_order": [
-        "api.OperationsHub",           # 1. The 12-Tab Dashboard First!
-        "api.NationalDataBridge",
-        "api.SovereignRegistry",      # 2. Class Explorer
-        "api.FeesReminder",
-        "api.SovereignParentRegistry",
-        "api.Student",                 # 3. Individual Students
-        "api.Parent",                  # 4. Guardian Registry
-        "api.Staff",                   # 5. Teacher Force
-        "api.School",                  # 6. Institution Setup
-        "api.SchoolPayLedger",         # 7. Financial Records
-    ],
+    # 🕵️ 7. GLOBAL SETTINGS
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "change_list_template": "admin/class_explorer.html", # Optional override
 }
 
 JAZZMIN_UI_TWEAKS = {
