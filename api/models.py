@@ -574,3 +574,17 @@ class NationalUpdate(models.Model):
     class Meta:
         ordering = ['-date_found']
         verbose_name = "NATIONAL LIVE FEED"
+
+class BroadcastLog(models.Model):
+    MSG_TYPES = [('SMS', 'SMS Text'), ('WHATSAPP', 'WhatsApp Message')]
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+    recipient_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20)
+    message_body = models.TextField()
+    message_type = models.CharField(max_length=10, choices=MSG_TYPES, default='SMS')
+    status = models.CharField(max_length=20, default='SENT')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "COMMUNICATION LOGS"
+        ordering = ['-timestamp']

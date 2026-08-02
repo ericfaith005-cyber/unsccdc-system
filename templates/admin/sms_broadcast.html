@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --gold: #D4AF37; --navy: #002366; --whatsapp: #25D366; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #050505 !important; padding: 30px !important; }
+
+    .broadcast-box { background: rgba(255,255,255,0.02); border: 2px solid #222; border-radius: 25px; padding: 40px; max-width: 800px; margin: auto; }
+    .input-group { margin-bottom: 25px; text-align: left; }
+    label { color: var(--gold); display: block; margin-bottom: 10px; font-weight: bold; font-size: 14px; }
+    
+    textarea, select { 
+        width: 100%; background: #111; border: 1px solid #333; color: white; padding: 15px; 
+        border-radius: 12px; outline: none; font-size: 16px;
+    }
+    
+    .template-btn { 
+        background: #111; color: #aaa; border: 1px dashed #444; padding: 8px 15px; 
+        border-radius: 8px; cursor: pointer; font-size: 11px; margin-right: 10px;
+    }
+    .template-btn:hover { border-color: var(--gold); color: white; }
+
+    .btn-send {
+        background: var(--gold); color: black; border: none; padding: 20px; 
+        width: 100%; border-radius: 15px; font-weight: 900; letter-spacing: 2px; cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-send:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(212,175,55,0.3); }
+</style>
+
+<div class="broadcast-box">
+    <h1 style="color: #fff; margin: 0;">NATIONAL BROADCAST CENTRE</h1>
+    <p style="color: #666; margin-bottom: 40px;">SOVEREIGN COMMUNICATION UPLINK</p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="input-group">
+            <label>COMMUNICATION CHANNEL</label>
+            <select name="msg_type">
+                <option value="SMS">Standard SMS (Low Latency)</option>
+                <option value="WHATSAPP">WhatsApp Business (Rich Media)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>RECIPIENT GROUP</label>
+            <select name="target">
+                <option value="ALL">All Registered Parents ({{ parents_count }})</option>
+                <option value="DEBTORS">Outstanding Balance Only (Automatic)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>MESSAGE BODY</label>
+            <div style="margin-bottom: 10px;">
+                <span class="template-btn" onclick="setTemplate('FEES')">Insert Fees Reminder</span>
+                <span class="template-btn" onclick="setTemplate('UPDATE')">Insert School Update</span>
+            </div>
+            <textarea name="message" id="messageArea" rows="6" placeholder="Type your national broadcast here..."></textarea>
+            <p style="color: #444; font-size: 10px; margin-top: 5px;">Use [NAME] to insert parent's full name automatically.</p>
+        </div>
+
+        <button type="submit" class="btn-send">🚀 COMMENCE BROADCAST</button>
+    </form>
+</div>
+
+<script>
+    function setTemplate(type) {
+        const area = document.getElementById('messageArea');
+        if(type === 'FEES') {
+            area.value = "Dear [NAME], this is a humble reminder from {{ school.name }} regarding your child's outstanding fees. Please reference your PRN in the app to settle. Thank you.";
+        } else {
+            area.value = "Greetings [NAME], we would like to update you that school will be closing for holidays on... ";
+        }
+    }
+</script>
+{% endblock %}

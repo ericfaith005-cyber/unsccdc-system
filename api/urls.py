@@ -65,5 +65,6 @@ urlpatterns = [
     path('batch-reports/', views.batch_report_download, name='batch_reports'),
     path('results-center/', views.academic_results_center, name='results_center'),
     path('uneb-gateway/', views.uneb_dit_gateway, name='uneb_gateway'),
+    path('sms-hub/', views.sms_broadcast_view, name='sms_hub'),
     
 ]

@@ -2126,7 +2126,7 @@ def operations_hub_view(request):
         ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
         ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
-        ("SMS Broadcast", "fa-comment-alt", "#e67e22", "#", "Notify Parents"),
+        ("SMS Broadcast", "fa-comment-alt", "#e67e22", "/api/sms-hub/", "Notify Parents"),
         ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
         ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
         ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
@@ -2897,3 +2897,46 @@ def sync_national_notifications():
                     )
         except:
             pass # Ignore if site is down
+
+@login_required
+def sms_broadcast_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    parents = Parent.objects.filter(students__school=school).distinct()
+    
+    if request.method == "POST":
+        msg_type = request.POST.get('msg_type') # 'SMS' or 'WHATSAPP'
+        target = request.POST.get('target') # 'ALL' or 'DEBTORS'
+        custom_msg = request.POST.get('message')
+        
+        count = 0
+        target_parents = parents
+        
+        if target == 'DEBTORS':
+            # 🕵️ Filter parents who have children with balance > 0
+            target_parents = parents.filter(students__fees_tracker__total_fees_due__gt=models.F('students__fees_tracker__total_fees_paid'))
+
+        for p in target_parents:
+            # 🤖 LOGIC: Auto-personalize message
+            # "Dear Mr. Musoke, your child Kato has a balance of..."
+            final_msg = custom_msg.replace("[NAME]", p.full_name)
+            
+            # 🛰️ CALL THE EXTERNAL GATEWAY (Placeholder)
+            # In real life: send_sms(p.phone_number, final_msg) 
+            # Or: send_whatsapp(p.phone_number, final_msg)
+            
+            BroadcastLog.objects.create(
+                school=school,
+                recipient_name=p.full_name,
+                phone_number=p.phone_number,
+                message_body=final_msg,
+                message_type=msg_type
+            )
+            count += 1
+            
+        return HttpResponse(f"<body style='background:#000;color:gold;padding:50px;text-align:center;'><h1>BROADCAST SUCCESSFUL!</h1><p>{count} {msg_type} messages sent to {target}.</p><a href='/api/sms-hub/'>Back to Comms</a></body>")
+
+    return render(request, 'admin/sms_broadcast.html', {
+        'school': school,
+        'parents_count': parents.count(),
+        'title': "NATIONAL BROADCAST CENTRE"
+    })
