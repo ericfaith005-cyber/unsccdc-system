@@ -144,7 +144,8 @@ JAZZMIN_SETTINGS = {
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL 2026",
     "custom_css": "css/unsccdc_prestige.css",
-    "custom_js": None,
+    "custom_css": "css/national_prestige.css", # 💎 Pointing to our new design
+    "custom_js": "js/national_flag.js",
     
     "theme": "darkly",
     "site_brand": "UNSCCDC",
@@ -260,7 +261,6 @@ JAZZMIN_SETTINGS = {
         "api.School",                  # 6. Institution Setup
         "api.SchoolPayLedger",         # 7. Financial Records
     ],
-    "custom_css": "css/national_prestige.css", # 💎 Pointing to our new design
 }
 
 JAZZMIN_UI_TWEAKS = {
