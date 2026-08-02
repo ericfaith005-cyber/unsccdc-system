@@ -148,8 +148,6 @@ JAZZMIN_SETTINGS = {
     # 🎨 2. THE Hub Hub Hub Hub Hub DESIGN (CSS & JS)
     "theme": "darkly",
     "dark_mode_theme": "darkly",
-    "custom_css": "css/national_prestige.css", # 🇺🇬 The Zeraki-Style & Flag CSS
-    "custom_js": "js/national_flag.js",         # 🎬 The Live Flag Script
     "show_ui_builder": False,
 
     # 🔗 3. THE ANIMATED TOP TABS (The "Website" Navigation)
