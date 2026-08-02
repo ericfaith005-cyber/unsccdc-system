@@ -1,19 +1,17 @@
-/* 🏛️ NATIONAL SUPREME FONT */
-* {
+/* 🏛️ NATIONAL AUTHORITY FONT - PROTECTING ICONS */
+body, p, span, div, h1, h2, h3, h4, h5, h6, table, label, input, select, textarea, .brand-text {
     font-family: "Times New Roman", Times, serif !important;
 }
 
-/* 🇺🇬 THE GLASSMORPHISM CARDS */
-.card, .content-wrapper, .main-sidebar {
-    background: rgba(0, 0, 0, 0.7) !important; /* Semi-transparent black */
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(212, 175, 55, 0.2) !important;
-    border-radius: 20px !important;
+/* 🛡️ ICON PROTECTION: Ensure FontAwesome remains untouched */
+i.fas, i.fab, i.far, .fa {
+    font-family: "Font Awesome 5 Free" !important;
+    font-weight: 900 !important;
 }
 
 /* 🎬 LIVE BACKGROUND FIX */
 body {
-    background: transparent !important;
+    background: #000 !important; /* Base black */
 }
 
 #bg-video {
@@ -21,43 +19,69 @@ body {
     top: 50%; left: 50%;
     min-width: 100%; min-height: 100%;
     width: auto; height: auto;
-    z-index: -100;
+    z-index: -1000; /* Deep background */
     transform: translateX(-50%) translateY(-50%);
-    opacity: 0.25; /* Adjusted so you can see the data clearly */
-    filter: saturate(1.5);
+    opacity: 0.20; /* Transparency for readability */
+    filter: saturate(1.2) blur(1px);
+    pointer-events: none;
 }
-/* 🏛️ Hub Hub Hub Hub Hub ZERAKI-STYLE TABLE OVERRIDE */
-.results table {
+
+/* 💎 THE GLASSMORPHISM CARDS (DRIBBBLE STYLE) */
+.card, .content-wrapper, .main-sidebar, .nav-sidebar {
+    background: rgba(10, 10, 10, 0.75) !important; 
+    backdrop-filter: blur(15px) saturate(150%);
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    border-radius: 20px !important;
+    margin-bottom: 20px;
+}
+
+/* 🦓 ZERAKI-STYLE "FLOATING" TABLES */
+#result_list {
     border-collapse: separate !important;
-    border-spacing: 0 8px !important; /* Creates the "Row Gap" effect */
+    border-spacing: 0 10px !important; /* The "Row Gap" effect */
     background: transparent !important;
+    width: 100%;
 }
 
-.results table tr {
-    background: rgba(255, 255, 255, 0.03) !important;
-    transition: 0.3s;
-}
-
-.results table tr:hover {
-    background: rgba(212, 175, 55, 0.08) !important;
-    transform: scale(1.002);
-}
-
-.results table th {
-    background: #002366 !important; /* Royal Navy Header */
+#result_list thead th {
+    background: #002366 !important; /* Royal Navy */
     color: #D4AF37 !important;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    font-size: 11px;
+    font-weight: 900;
+    padding: 15px !important;
     border: none !important;
+    letter-spacing: 1px;
 }
 
-.results table td {
-    border-top: 1px solid #1a1a1a !important;
-    border-bottom: 1px solid #1a1a1a !important;
-    vertical-align: middle !important;
+#result_list tbody tr {
+    background: rgba(255, 255, 255, 0.04) !important;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Rounded corners for rows */
-.results table td:first-child { border-left: 1px solid #1a1a1a !important; border-radius: 12px 0 0 12px; }
-.results table td:last-child { border-right: 1px solid #1a1a1a !important; border-radius: 0 12px 12px 0; }
+#result_list tbody tr:hover {
+    transform: scale(1.01) translateY(-3px);
+    background: rgba(212, 175, 55, 0.1) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+#result_list tbody td {
+    padding: 18px 15px !important;
+    border-top: 1px solid rgba(255,255,255,0.05) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+    color: #fff !important;
+    vertical-align: middle;
+}
+
+/* Rounded corners for the "Zeraki" rows */
+#result_list tbody td:first-child { 
+    border-left: 3px solid #D4AF37 !important; 
+    border-radius: 12px 0 0 12px; 
+}
+#result_list tbody td:last-child { 
+    border-radius: 0 12px 12px 0; 
+}
+
+/* 🇺🇬 NATIONAL SCROLLBAR */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 10px; }
