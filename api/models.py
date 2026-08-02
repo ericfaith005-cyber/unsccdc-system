@@ -545,3 +545,20 @@ class SystemSettings(models.Model):
 
     class Meta:
         verbose_name = "Global System Settings"
+
+from django.conf import settings # 💎 THE KEY: Accesses the active User model
+from django.db import models
+
+# 🛡️ THE Hub Hub Hub Hub Hub USER ATTACHMENT
+class UserProfile(models.Model):
+    # 💎 FIX: Point to settings.AUTH_USER_MODEL instead of 'User'
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='profile'
+    )
+    school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='user_profiles')
+    is_school_admin = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.school.name}"

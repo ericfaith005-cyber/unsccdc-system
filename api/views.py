@@ -2131,6 +2131,7 @@ def operations_hub_view(request):
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "#", "National Exams"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
+        ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), # 💎 15th TAB
     ]
 
     return render(request, 'admin/operations_hub.html', {
@@ -2363,10 +2364,19 @@ def reset_staff_pin(request, staff_id):
         </body>
     """)
 
-# =============================================================
-# 🏛️ THE Hub Hub Hub Hub NATIONAL LANDING GATE (FIXES ATTRIBUTE ERROR)
-# =============================================================
+from django.contrib.auth import get_user_model # 💎 THE UNIVERSAL KEY
+
 def national_landing_page(request):
+    User = get_user_model() # 🛡️ This grabs the CORRECT user model automatically
+    
+    # 💎 EMERGENCY AUTO-ACCOUNT CREATION (Updated for safety)
+    if not User.objects.filter(username='Josephat').exists():
+        u = User.objects.create_user('Josephat', password='Josephat123')
+        u.is_staff = True
+        u.save()
+        # Note: You can link the profile here too if needed
+    
+    # ... rest of your code ...
     """The prestigious entry point for the UNSCCDC Global System"""
     html = """
     <!DOCTYPE html>
@@ -2608,3 +2618,41 @@ def execute_sovereign_reversal(request, txn_id):
         """)
     except Exception as e:
         return HttpResponse(f"Reversal Failed: {str(e)}")
+
+@login_required
+def add_school_user(request):
+    """🛡️ ALLOWS ADMINS TO ADD STAFF TO THEIR OWN SCHOOL ONLY"""
+    if not request.user.is_staff:
+        return HttpResponse("Unauthorized")
+
+    my_school = request.user.profile.school # 💎 THE Hub Hub Hub Hub Hub Hub PRIVACY LOCK
+
+    if request.method == "POST":
+        new_username = request.POST.get('username')
+        new_pass = request.POST.get('password')
+        
+        # 1. Create the User
+        user = User.objects.create_user(username=new_username, password=new_pass)
+        user.is_staff = True # Allow them to see the dashboard
+        user.save()
+
+        # 2. Weld them to the school
+        UserProfile.objects.create(user=user, school=my_school)
+        
+        return HttpResponse(f"<h1 style='color:gold;'>User {new_username} added to {my_school.name} Registry!</h1>")
+
+    return render(request, 'admin/add_user_custom.html', {'school': my_school})
+
+from django.contrib.auth import get_user_model # 💎 THE UNIVERSAL KEY
+
+def national_landing_page(request):
+    User = get_user_model() # 🛡️ This grabs the CORRECT user model automatically
+    
+    # 💎 EMERGENCY AUTO-ACCOUNT CREATION (Updated for safety)
+    if not User.objects.filter(username='Josephat').exists():
+        u = User.objects.create_user('Josephat', password='Josephat123')
+        u.is_staff = True
+        u.save()
+        # Note: You can link the profile here too if needed
+    
+    # ... rest of your code ...

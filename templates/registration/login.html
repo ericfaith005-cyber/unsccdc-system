@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UNSCCDC GLOBAL | National Access</title>
+    <style>
+        /* 🏛️ THE Hub Hub Hub Hub Hub LONDON/TIMES NEW ROMAN AUTHORITY */
+        * { font-family: "Times New Roman", Times, serif; }
+        body { margin: 0; padding: 0; background: #000; overflow: hidden; color: white; }
+
+        /* 🇺🇬 THE LIVE WAVING FLAG BACKGROUND */
+        #bg-video {
+            position: fixed; top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            width: auto; height: auto; z-index: -100;
+            transform: translateX(-50%) translateY(-50%);
+            opacity: 0.2; filter: saturate(1.5) blur(3px);
+        }
+
+        /* 🎓 THE Hub Hub Hub Hub Hub PULSING GRADUATION LOGO (SVG + CSS) */
+        .logo-container { margin-bottom: 30px; animation: pulse 2s infinite ease-in-out; }
+        @keyframes pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 5px #D4AF37); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 25px #D4AF37); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 5px #D4AF37); }
+        }
+
+        /* 💎 ADVANCED GLASSMORPHISM BOX */
+        .login-box {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px; padding: 50px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 30px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        input {
+            width: 100%; padding: 15px; margin: 10px 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333; border-radius: 10px;
+            color: gold; font-size: 16px; outline: none;
+            transition: 0.3s;
+        }
+        input:focus { border-color: #D4AF37; background: rgba(255,255,255,0.1); }
+
+        .btn-gold {
+            background: #D4AF37; color: black; border: none;
+            padding: 15px 30px; border-radius: 12px;
+            font-weight: 900; width: 100%; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px;
+            margin-top: 20px; transition: 0.3s;
+        }
+        .btn-gold:hover { transform: scale(1.03); box-shadow: 0 0 20px rgba(212,175,55,0.4); }
+
+        .links { margin-top: 20px; font-size: 12px; color: #888; }
+        .links a { color: #D4AF37; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <video autoplay muted loop playsinline id="bg-video">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-flag-of-uganda-waving-in-the-wind-32538-large.mp4" type="video/mp4">
+    </video>
+
+    <div class="login-box">
+        <div class="logo-container">
+            <span style="font-size: 60px;">🎓</span>
+        </div>
+        <h1 style="color: #D4AF37; margin: 0; letter-spacing: 3px;">UNSCCDC GLOBAL</h1>
+        <p style="font-size: 10px; color: #666; margin-bottom: 30px;">NATIONAL SCHOOL CONTROL CENTRE</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="NATIONAL USER ID" required>
+            <input type="password" name="password" placeholder="SECURE ACCESS KEY" required>
+            <button type="submit" class="btn-gold">Authorize Entry</button>
+        </form>
+
+        <div class="links">
+            <a href="/api/register/">Request School Node</a> | 
+            <a href="/api/reset-password/">Recover Key</a>
+        </div>
+    </div>
+
+    <script>
+        // ✨ Add some JS "Matrix" sparkles on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const box = document.querySelector('.login-box');
+            let xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            let yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            box.style.transform = `translate(-50%, -50%) rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+    </script>
+</body>
+</html>
