@@ -138,11 +138,12 @@ class Subject(models.Model):
         return f"[{self.level}] {self.name}"
 
 class Student(models.Model):
-    full_name = models.CharField(max_length=255)
+
+    full_name = models.CharField(max_length=255, db_index=True) # 💎 Fast Search
     gender = models.CharField(max_length=10, choices=[('M', 'Male'), ('F', 'Female')], default='M')
     age = models.IntegerField(default=15)
     current_class = models.CharField(max_length=50) # e.g., "S.1", "P.7"
-    payment_code = models.CharField(max_length=100, unique=True, null=True, blank=True, help_text="Student's SchoolPay PRN")
+    payment_code = models.CharField(max_length=100, unique=True, null=True, blank=True, db_index=True, help_text="Student's SchoolPay PRN")
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     stream = models.CharField(max_length=50, default="North")
     account_number = models.CharField(max_length=30, unique=True, editable=False)

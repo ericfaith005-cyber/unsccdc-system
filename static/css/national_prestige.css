@@ -26,3 +26,38 @@ body {
     opacity: 0.25; /* Adjusted so you can see the data clearly */
     filter: saturate(1.5);
 }
+/* 🏛️ Hub Hub Hub Hub Hub ZERAKI-STYLE TABLE OVERRIDE */
+.results table {
+    border-collapse: separate !important;
+    border-spacing: 0 8px !important; /* Creates the "Row Gap" effect */
+    background: transparent !important;
+}
+
+.results table tr {
+    background: rgba(255, 255, 255, 0.03) !important;
+    transition: 0.3s;
+}
+
+.results table tr:hover {
+    background: rgba(212, 175, 55, 0.08) !important;
+    transform: scale(1.002);
+}
+
+.results table th {
+    background: #002366 !important; /* Royal Navy Header */
+    color: #D4AF37 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 11px;
+    border: none !important;
+}
+
+.results table td {
+    border-top: 1px solid #1a1a1a !important;
+    border-bottom: 1px solid #1a1a1a !important;
+    vertical-align: middle !important;
+}
+
+/* Rounded corners for rows */
+.results table td:first-child { border-left: 1px solid #1a1a1a !important; border-radius: 12px 0 0 12px; }
+.results table td:last-child { border-right: 1px solid #1a1a1a !important; border-radius: 0 12px 12px 0; }
