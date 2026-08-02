@@ -148,17 +148,14 @@ class SubjectAdmin(admin.ModelAdmin):
 class SchoolIsolatedAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        if request.user.is_superuser: # 💎 THE KING SEES ALL
+        if request.user.is_superuser:
             return qs
-        if request.user.school:
-            return qs.filter(school=request.user.school)
-        return qs.none() # 🛡️ Others see nothing
-
-    def save_model(self, request, obj, form, change):
-        if not request.user.is_superuser and hasattr(request.user, 'school'):
-            obj.school = request.user.school
-        super().save_model(request, obj, form, change)
-
+        
+        # 🛡️ THE Hub Hub Hub Hub Hub USER PROFILE SHIELD
+        try:
+            return qs.filter(school=request.user.profile.school)
+        except:
+            return qs.none() # Hide everything if profile is missing
 admin.site.site_header = "UNSCCDC NATIONAL HUB - COMMAND CENTER"
 
 class ImperialAdminSite(admin.AdminSite):
