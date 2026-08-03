@@ -284,21 +284,20 @@ class Staff(models.Model):
     momo_number = models.CharField(max_length=30, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        # 🤖 AUTO-GENERATE STAFF ID (Format: UNS/STF/Year/Random)
+        # 🤖 AUTO-GENERATE STAFF ID
         if not self.staff_id:
             year = datetime.date.today().year
             rand = ''.join(random.choices(string.digits, k=4))
             self.staff_id = f"UNS/STF/{year}/{rand}"
-        
-        # 🤖 AUTO-GENERATE 4-DIGIT PIN
+
         if not self.secure_pin:
             self.secure_pin = ''.join(random.choices(string.digits, k=4))
             
         super().save(*args, **kwargs)
 
     def __str__(self):
-        # 🛡️ This prevents the 500 error if a name is somehow empty
-        name = self.full_name 
+        # We MUST return the string, and use a fallback if it's empty
+        return f"{self.full_name}" if self.full_name else "New Staff Member"
 
 
 class Parent(models.Model):

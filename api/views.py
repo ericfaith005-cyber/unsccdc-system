@@ -488,7 +488,11 @@ def pay_fees(request):
 class StaffViewSet(viewsets.ViewSet):
     def list(self, request):
         staff = Staff.objects.all()
-        return Response([{"name": s.full_name, "id": s.staff_id, "designation": s.designation} for s in staff])
+        return Response([{
+            "name": s.full_name, 
+            "id": s.staff_id, 
+            "designation": s.get_role_display() # This shows 'Class Teacher' instead of 'TEACHER'
+        } for s in staff])
 
 @api_view(['GET'])
 def UNSCCDC_Analytics(request):
@@ -520,7 +524,7 @@ def staff_marks_engine(request):
     except Exception as e:
         return Response({"msg": f"Registry Error: {str(e)}"}, status=400)
     
-    from django.http import StreamingHttpResponse
+from django.http import StreamingHttpResponse
 import json
 
 # --- 🛡️ SURGERY: IMPERIAL PRIVACY LOCK ---
