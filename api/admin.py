@@ -108,6 +108,13 @@ class StaffAdmin(admin.ModelAdmin):
         return "N/A"
     reset_pin_btn.short_description = "Action"
 
+def photo_thumbnail(self, obj):
+    if obj.photo:
+        return mark_safe(f'<img src="{obj.photo.url}" width="45" height="45" style="border-radius:50%; border: 2px solid #D4AF37;" />')
+    
+    # 💎 THE Hub Hub Hub Hub Hub FLAG FALLBACK
+    return mark_safe('<img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6eHh6eHh6eHh6eHh6eHh6eHh6eHh6eHh6eHh6eHh6eHh6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxx6D8YvE4M/giphy.gif" width="45" height="45" style="border-radius:50%; border: 2px solid #D4AF37;" />')
+
 
 class SubjectAdmin(admin.ModelAdmin):
     # 💎 THE VIEW: Clean and Scannable

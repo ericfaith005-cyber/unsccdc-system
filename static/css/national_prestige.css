@@ -85,3 +85,21 @@ body {
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: #000; }
 ::-webkit-scrollbar-thumb { background: #D4AF37; border-radius: 10px; }
+
+/* 🇺🇬 THE GLOWING SATELLITE AVATAR */
+.user-image, .img-circle {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.5); /* Gold Glow */
+    background: black !important;
+    animation: flag-pulse 3s infinite;
+}
+
+@keyframes flag-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Hide the 'online' dot to keep it clean */
+.user-panel .info i.fa-circle {
+    color: #00ff00 !important; /* National Green for Active */
+}
