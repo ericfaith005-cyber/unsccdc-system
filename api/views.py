@@ -1770,31 +1770,132 @@ def sovereign_shilling_simulator(request):
 
 # 💎 ADD THESE TO YOUR BATCH ENGINE IN views.py
 
+# =============================================================
+# 📜 HELPER 1: THE Hub Hub Hub Hub Hub REPORT CARD ARCHITECT
+# =============================================================
+def draw_single_report_page(p, student):
+    try:
+        width, height = A4
+        school = student.school
+        marks = student.marks.all()
+        fees_obj, _ = FeesTracker.objects.get_or_create(student=student)
+        
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        off_white = colors.HexColor("#FDFDF5")
+
+        # 1. Background & National Borders
+        p.setFillColor(off_white); p.rect(0, 0, width, height, fill=1)
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(22, 22, width-44, height-44)
+
+        # 2. School Logo
+        if school.logo and os.path.exists(school.logo.path):
+            p.drawImage(school.logo.path, width/2-35, height-110, width=70, height=70, mask='auto')
+        
+        # 3. Header Text
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-135, school.name.upper())
+
+        # 4. Student Info & Photo
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+        p.drawString(50, height-200, f"STUDENT: {student.full_name.upper()}")
+        p.drawString(50, height-215, f"NATIONAL ID: {student.account_number}")
+        p.drawString(350, height-200, f"CLASS: {student.current_class} ({student.stream})")
+        
+        if student.photo and os.path.exists(student.photo.path):
+            p.drawImage(student.photo.path, width-130, height-140, width=80, height=90, mask='auto')
+
+        # 5. Elastic Marks Table
+        has_aois = any(m.aoi_1 > 0 for m in marks)
+        if has_aois:
+            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD']
+            col_widths = [50, 30, 30, 35, 30, 30, 35, 35, 40, 35]
+        else:
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE']
+            col_widths = [150, 70, 70, 70, 70, 60]
+
+        data_rows = [headers]
+        for m in marks:
+            row = [m.subject.name.upper(), m.mid_term, m.eot_score, m.project_work, f"{m.eot_score}%", "B"]
+            if has_aois:
+                row = [m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", "B"]
+            data_rows.append(row)
+
+        table = Table(data_rows, colWidths=col_widths)
+        table.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white), ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('FONTNAME', (0,0), (-1,-1), 'Times-Bold')]))
+        table.wrapOn(p, width, height); table.drawOn(p, 40, height - 380)
+
+        # 6. Treasury Bar
+        p.setFillColor(gov_blue); p.rect(45, height - 670, width - 90, 50, fill=1, stroke=0)
+        p.setFillColor(colors.white); p.setFont("Times-Bold", 7)
+        p.drawString(55, height - 635, "OUTSTANDING BALANCE")
+        p.drawString(385, height - 635, "NATIONAL PRN")
+        p.setFont("Times-Bold", 12); p.drawString(55, height - 655, f"UGX {fees_obj.fees_balance:,.0f}")
+        p.setFillColor(colors.red); p.drawString(385, height - 655, f"{student.payment_code}")
+
+    except Exception as e:
+        print(f"Error drawing page for {student.full_name}: {e}")
+
+# =============================================================
+# 🔔 HELPER 2: THE Hub Hub Hub Hub Hub FEES REMINDER ARCHITECT
+# =============================================================
+def draw_single_reminder_page(p, student):
+    try:
+        width, height = A4
+        school = student.school
+        fees, _ = FeesTracker.objects.get_or_create(student=student)
+        
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        
+        p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+        p.setFillColor(gov_blue); p.setFont("Times-Bold", 16)
+        p.drawCentredString(width/2, height-100, school.name.upper())
+        p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
+        p.drawCentredString(width/2, height-130, "OFFICIAL FEES REMINDER")
+        
+        p.setFont("Times-Bold", 11)
+        p.drawString(50, height-180, f"TO THE PARENT/GUARDIAN OF: {student.full_name.upper()}")
+        p.drawString(50, height-200, f"CLASS: {student.current_class}")
+        
+        p.rect(50, height-300, width-100, 80)
+        p.drawString(70, height-250, f"TOTAL BALANCE DUE: UGX {fees.fees_balance:,.0f}")
+        p.setFillColor(colors.red); p.setFont("Times-Bold", 14)
+        p.drawString(70, height-280, f"PAYMENT PRN: {student.payment_code}")
+        
+        p.setFillColor(colors.black); p.setFont("Times-Roman", 10)
+        instructions = "Please settle this balance via MTN/Airtel using the PRN above to avoid service interruption."
+        p.drawString(50, height-350, instructions)
+    except Exception as e:
+        print(f"Reminder Error: {e}")
+
 @login_required
 def batch_report_generator(request):
     school = getattr(request.user, 'school', None) or School.objects.first()
     selected_class = request.GET.get('class')
     
-    if not selected_class:
-        return HttpResponse("Please select a class first.")
-
     students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="REPORTS_{selected_class}.pdf"'
     
-    # Create the canvas once
     p = canvas.Canvas(response, pagesize=A4)
     
     for student in students:
-        # 🧪 CALL YOUR EXISTING REPORT DRAWING LOGIC HERE
-        # (For efficiency, move your drawing code into a helper function)
-        draw_single_report_page(p, student) 
-        p.showPage() # 📄 THIS IS THE MAGIC: It starts a new page for the next student
+        # 🛡️ THE Hub Hub Hub Hub Hub SAFETY SHIELD
+        try:
+            draw_single_report_page(p, student)
+            p.showPage() 
+        except:
+            continue # If one student fails, just go to the next!
         
     p.save()
     return response
 
+    
 @login_required
 def batch_reminder_generator(request):
     school = getattr(request.user, 'school', None) or School.objects.first()
