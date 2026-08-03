@@ -3064,33 +3064,54 @@ def staff_payroll_view(request):
 @login_required
 def secretary_marks_entry(request):
     school = getattr(request.user, 'school', None) or School.objects.first()
-    selected_class = request.GET.get('class')
-    selected_subject = request.GET.get('subject')
     
-    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+    # 1. 🧠 DYNAMIC CLASS LIST BASED ON SECTOR
+    sector_map = {
+        'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+        'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+        'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+    }
+    classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
+    
+    selected_class = request.GET.get('class', classes[0])
+    selected_student_id = request.GET.get('student_id')
+    
+    # 2. ⚡ HIGH-SPEED DATA FETCHING
+    # Fetch all students in class and pre-load their marks
+    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name').prefetch_related('marks')
     subjects = Subject.objects.all()
 
-    if request.method == "POST":
-        # ⚡ BATCH SAVE LOGIC
-        max_val = int(request.POST.get('max_val', 100))
-        field_type = request.POST.get('field_type') # e.g., 'eot_score'
+    # 3. 💾 THE Hub Hub Hub Hub Hub SAVING LOGIC (One Student, All Subjects)
+    if request.method == "POST" and selected_student_id:
+        student = get_object_or_404(Student, id=selected_student_id)
+        field_type = request.POST.get('field_type', 'eot_score')
         
-        for student in students:
-            score = request.POST.get(f'score_{student.id}', 0)
-            if score:
-                res, _ = AcademicResult.objects.get_or_create(student=student, subject_id=selected_subject)
+        for sub in subjects:
+            score = request.POST.get(f'sub_{sub.id}')
+            if score is not None and score != "":
+                res, _ = AcademicResult.objects.get_or_create(student=student, subject=sub)
                 setattr(res, field_type, float(score))
-                # Set the 'max' field dynamically
-                max_field = field_type.replace('score', 'max').replace('mid_term', 'mid_max')
-                if hasattr(res, max_field):
-                    setattr(res, max_field, max_val)
                 res.save()
-        return HttpResponse("<script>alert('National Registry Updated!'); window.location.reload();</script>")
+        
+        # 💎 SUCCESS REDIRECT (Prevents "Infinite Loading")
+        return redirect(f"/api/secretary-entry/?class={selected_class}&status=success")
+
+    # 4. 🕵️ AUDIT LOGIC: Find missing marks for the class view
+    audit_data = []
+    for s in students:
+        marks_count = s.marks.count()
+        missing = subjects.count() - marks_count
+        audit_data.append({
+            'student': s,
+            'complete': missing <= 0,
+            'missing_count': missing if missing > 0 else 0
+        })
 
     return render(request, 'admin/secretary_marks.html', {
-        'students': students,
-        'subjects': subjects,
+        'classes': classes,
         'selected_class': selected_class,
-        'selected_subject': selected_subject,
+        'audit_data': audit_data,
+        'subjects': subjects,
+        'selected_student': students.filter(id=selected_student_id).first() if selected_student_id else None,
         'school': school
     })
