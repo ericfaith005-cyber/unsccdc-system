@@ -468,18 +468,19 @@ from django.utils.safestring import mark_safe
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    # 💎 1. Show the Dossier and Sector in the list
+
     list_display = ('photo_thumbnail', 'photo_preview', 'full_name_styled', 
         'payment_code_styled', 'current_class', 'payment_code', 'get_sector', 'view_dossier_btn', 'status_badge',)
     list_filter = ('school__sector', 'current_class', 'is_active')
     search_fields = ('full_name', 'account_number', 'payment_code')
     list_per_page = 25 
+    readonly_fields = ('account_number', 'photo_preview')
 
     def photo_thumbnail(self, obj):
         if obj.photo:
             return mark_safe(f'<img src="{obj.photo.url}" width="45" height="45" style="border-radius:50%; border: 2px solid #D4AF37; object-fit: cover;" />')
         return mark_safe('<div style="width:45px; height:45px; border-radius:50%; background:#222; display:flex; align-items:center; justify-content:center; color:#555;"><i class="fas fa-user"></i></div>')
-    photo_thumbnail.short_description = "Avatar"
+    photo_thumbnail.short_description = "ID"
 
     def full_name_styled(self, obj):
         return mark_safe(f'<div style="font-weight:bold; color:#fff; font-size:14px;">{obj.full_name.upper()}</div>'
