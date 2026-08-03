@@ -147,8 +147,8 @@ class Student(models.Model):
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     stream = models.CharField(max_length=50, default="North")
     account_number = models.CharField(max_length=30, unique=True, editable=False)
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
-    photo = models.ImageField(upload_to='students/', null=True, blank=True)
+    school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='students_in_school')
+    photo = models.ImageField(upload_to='students/photos/', null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
 
     # OFFICIAL DOCUMENT VAULT
@@ -161,14 +161,9 @@ class Student(models.Model):
     initial_deposit = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
     
-    parent_link = models.ForeignKey(
-        'Parent', 
-        on_delete=models.CASCADE, 
-        related_name='students', 
-        null=True, 
-        blank=True
-    )
-    
+    parent_link = models.ForeignKey('Parent', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    is_active = models.BooleanField(default=True)
+
     def save(self, *args, **kwargs):
         if not self.account_number:
             self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
@@ -184,7 +179,7 @@ class Student(models.Model):
         if c in ['S.1', 'S.2', 'S.3', 'S.4']: return 'O-LEVEL'
         if c in ['S.5', 'S.6']: return 'A-LEVEL'
         return 'OTHER'
-    
+
     @property
     def fees_balance(self):
         from .models import FeesTracker
@@ -193,6 +188,12 @@ class Student(models.Model):
             bal = tracker.total_fees_due - tracker.total_fees_paid
             return f"UGX {bal:,.0f}"
         return "UGX 0"
+
+    def __str__(self):
+            # 🛡️ This prevents 500 error if name is missing during save
+            return f"{self.full_name or 'NEW REGISTRATION'}"
+        
+
 
 
 # --- 📑 THE IMPERIAL SUBJECT ASSIGNMENT (FIXED) ---
