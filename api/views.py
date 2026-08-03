@@ -649,6 +649,7 @@ def generate_imperial_pdf(request, student_id):
         
         marks = student.marks.all()
         for m in marks:
+            formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
             # Automated Remark Logic
             score = m.eot_score
             remark = "Superior" if score >= 90 else ("Excellent" if score >= 75 else "Satisfactory")
@@ -1529,6 +1530,7 @@ def generate_national_report_pdf(request, student_id):
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
+            formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
             auto_grade = calculate_uce_grade(m.eot_score) 
             data.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", auto_grade, 'STF', get_sub_remark(m.eot_score)])
         
@@ -2226,6 +2228,7 @@ def operations_hub_view(request):
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
+        ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
         ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
         ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), # 💎 15th TAB
     ]
@@ -3057,3 +3060,37 @@ def staff_payroll_view(request):
         'title': "NATIONAL STAFF PAYROLL"
     }
     return render(request, 'admin/staff_payroll.html', context)
+
+@login_required
+def secretary_marks_entry(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class')
+    selected_subject = request.GET.get('subject')
+    
+    students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+    subjects = Subject.objects.all()
+
+    if request.method == "POST":
+        # ⚡ BATCH SAVE LOGIC
+        max_val = int(request.POST.get('max_val', 100))
+        field_type = request.POST.get('field_type') # e.g., 'eot_score'
+        
+        for student in students:
+            score = request.POST.get(f'score_{student.id}', 0)
+            if score:
+                res, _ = AcademicResult.objects.get_or_create(student=student, subject_id=selected_subject)
+                setattr(res, field_type, float(score))
+                # Set the 'max' field dynamically
+                max_field = field_type.replace('score', 'max').replace('mid_term', 'mid_max')
+                if hasattr(res, max_field):
+                    setattr(res, max_field, max_val)
+                res.save()
+        return HttpResponse("<script>alert('National Registry Updated!'); window.location.reload();</script>")
+
+    return render(request, 'admin/secretary_marks.html', {
+        'students': students,
+        'subjects': subjects,
+        'selected_class': selected_class,
+        'selected_subject': selected_subject,
+        'school': school
+    })

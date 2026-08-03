@@ -627,3 +627,26 @@ class PayrollCommand(StaffSalary):
         proxy = True
         verbose_name = "NATIONAL STAFF PAYROLL"
         verbose_name_plural = "NATIONAL STAFF PAYROLL"
+
+class AcademicResult(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='marks')
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    
+    # 📝 THE Hub Hub Hub Hub MARK FIELDS
+    aoi_1 = models.FloatField(default=0)
+    aoi_1_max = models.IntegerField(default=10) # 💎 e.g., Out of 10
+    
+    mid_term = models.FloatField(default=0)
+    mid_max = models.IntegerField(default=100) # 💎 e.g., Out of 100
+    
+    eot_score = models.FloatField(default=0)
+    eot_max = models.IntegerField(default=100) # 💎 e.g., Out of 100
+    
+    project_work = models.FloatField(default=0)
+    project_max = models.IntegerField(default=20) # 💎 e.g., Out of 20
+
+    # 🤖 AUTO-PERCENTAGE FORMULA
+    @property
+    def total_percentage(self):
+        # Weighted calculation or simple average? Let's do simple average for now
+        return ((self.eot_score / self.eot_max) * 100) if self.eot_max > 0 else 0
