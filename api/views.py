@@ -3063,55 +3063,81 @@ def staff_payroll_view(request):
 
 @login_required
 def secretary_marks_entry(request):
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    
-    # 1. 🧠 DYNAMIC CLASS LIST BASED ON SECTOR
-    sector_map = {
-        'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
-        'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
-        'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
-    }
-    classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
-    
-    selected_class = request.GET.get('class', classes[0])
-    selected_student_id = request.GET.get('student_id')
-    
-    # 2. ⚡ HIGH-SPEED DATA FETCHING
-    # Fetch all students in class and pre-load their marks
-    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name').prefetch_related('marks')
-    subjects = Subject.objects.all()
-
-    # 3. 💾 THE Hub Hub Hub Hub Hub SAVING LOGIC (One Student, All Subjects)
-    if request.method == "POST" and selected_student_id:
-        student = get_object_or_404(Student, id=selected_student_id)
-        field_type = request.POST.get('field_type', 'eot_score')
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
         
-        for sub in subjects:
-            score = request.POST.get(f'sub_{sub.id}')
-            if score is not None and score != "":
-                res, _ = AcademicResult.objects.get_or_create(student=student, subject=sub)
-                setattr(res, field_type, float(score))
-                res.save()
+        # 1. 🧠 COMPREHENSIVE CLASS LIST (All Levels)
+        sector_map = {
+            'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
+            'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
+            'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
+        }
+        classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
         
-        # 💎 SUCCESS REDIRECT (Prevents "Infinite Loading")
-        return redirect(f"/api/secretary-entry/?class={selected_class}&status=success")
+        selected_class = request.GET.get('class', classes[0])
+        selected_student_id = request.GET.get('student_id')
+        field_type = request.GET.get('field_type', 'eot_score') # Persistent field selection
 
-    # 4. 🕵️ AUDIT LOGIC: Find missing marks for the class view
-    audit_data = []
-    for s in students:
-        marks_count = s.marks.count()
-        missing = subjects.count() - marks_count
-        audit_data.append({
-            'student': s,
-            'complete': missing <= 0,
-            'missing_count': missing if missing > 0 else 0
+        # 2. 🔎 ALL-SEEING STUDENT FILTRATION
+        # We use __icontains to make sure "S.1" finds "S1", "s.1", and "S.1 "
+        clean_class = selected_class.replace(".", "").strip()
+        students = Student.objects.filter(
+            school=school
+        ).filter(
+            Q(current_class__iexact=selected_class) | 
+            Q(current_class__icontains=clean_class)
+        ).order_by('full_name')
+
+        subjects = Subject.objects.all()
+
+        # 3. 💾 SAVE & REFRESH LOGIC
+        if request.method == "POST" and selected_student_id:
+            student = get_object_or_404(Student, id=selected_student_id)
+            target_field = request.POST.get('field_type', 'eot_score')
+            
+            for sub in subjects:
+                score = request.POST.get(f'sub_{sub.id}')
+                if score is not None and score != "":
+                    res, _ = AcademicResult.objects.get_or_create(student=student, subject=sub)
+                    setattr(res, target_field, float(score))
+                    res.save()
+            
+            # 💎 REDIRECT: Keep the student and class selected after saving!
+            return redirect(f"/api/secretary-entry/?class={selected_class}&student_id={selected_student_id}&field_type={target_field}")
+
+        # 4. 🧠 THE MEMORY ENGINE: Fetch existing marks for the UI
+        existing_marks = {}
+        selected_student = None
+        if selected_student_id:
+            selected_student = students.filter(id=selected_student_id).first()
+            if selected_student:
+                marks_objs = AcademicResult.objects.filter(student=selected_student)
+                for m in marks_objs:
+                    # Store the specific score we are currently editing
+                    val = getattr(m, field_type, None)
+                    existing_marks[m.subject.id] = val if val is not None else ""
+
+        # 5. 🚩 AUDIT: Missing marks calculation
+        audit_data = []
+        for s in students:
+            # Check how many subjects have a score for the selected field_type
+            completed = AcademicResult.objects.filter(student=s).exclude(**{f"{field_type}": 0}).count()
+            missing = subjects.count() - completed
+            audit_data.append({
+                'student': s,
+                'complete': missing <= 0,
+                'missing_count': missing if missing > 0 else 0
+            })
+
+        return render(request, 'admin/secretary_marks.html', {
+            'classes': classes,
+            'selected_class': selected_class,
+            'audit_data': audit_data,
+            'subjects': subjects,
+            'selected_student': selected_student,
+            'existing_marks': existing_marks, # 💎 Send memory to UI
+            'field_type': field_type,
+            'school': school
         })
-
-    return render(request, 'admin/secretary_marks.html', {
-        'classes': classes,
-        'selected_class': selected_class,
-        'audit_data': audit_data,
-        'subjects': subjects,
-        'selected_student': students.filter(id=selected_student_id).first() if selected_student_id else None,
-        'school': school
-    })
+    except Exception as e:
+        return HttpResponse(f"Registry Error: {str(e)}")
