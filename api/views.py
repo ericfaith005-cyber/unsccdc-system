@@ -2217,6 +2217,7 @@ def operations_hub_view(request):
         ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
         ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
+        ("Staff Salaries", "fa-hand-holding-usd", "#9b59b6", "/api/payroll-hub/", "Payroll & Tax"),
         ("SMS Broadcast", "fa-comment-alt", "#e67e22", "/api/sms-hub/", "Notify Parents"),
         ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
         ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
@@ -3031,3 +3032,28 @@ def sms_broadcast_view(request):
         'parents_count': parents.count(),
         'title': "NATIONAL BROADCAST CENTRE"
     })
+
+
+@login_required
+def staff_payroll_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    month = request.GET.get('month', str(datetime.date.today().month))
+    
+    # 🕵️ Fetch all salary records for this school
+    payroll = StaffSalary.objects.filter(staff__school=school, month=month).select_related('staff')
+    
+    # 🧮 CALCULATE TREASURY TOTALS
+    total_wage_bill = sum(item.net_pay for item in payroll)
+    paid_count = payroll.filter(status='PAID').count()
+    pending_count = payroll.filter(status='PENDING').count()
+
+    context = {
+        'payroll': payroll,
+        'school': school,
+        'total_bill': total_wage_bill,
+        'paid_count': paid_count,
+        'pending_count': pending_count,
+        'current_month': datetime.date(2000, int(month), 1).strftime('%B'),
+        'title': "NATIONAL STAFF PAYROLL"
+    }
+    return render(request, 'admin/staff_payroll.html', context)

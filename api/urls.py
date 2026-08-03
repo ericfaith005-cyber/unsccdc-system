@@ -66,5 +66,5 @@ urlpatterns = [
     path('results-center/', views.academic_results_center, name='results_center'),
     path('uneb-gateway/', views.uneb_dit_gateway, name='uneb_gateway'),
     path('sms-hub/', views.sms_broadcast_view, name='sms_hub'),
-    
+    path('payroll-hub/', views.staff_payroll_view, name='payroll_hub'),
 ]

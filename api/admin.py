@@ -904,3 +904,10 @@ class SovereignParentRegistryAdmin(admin.ModelAdmin):
         return redirect('/api/parents/')
 
 admin.site.register(SovereignParentRegistry, SovereignParentRegistryAdmin)
+
+from .models import PayrollCommand
+
+@admin.register(PayrollCommand)
+class PayrollCommandAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/payroll-hub/')

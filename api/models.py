@@ -600,3 +600,30 @@ class BroadcastLog(models.Model):
     class Meta:
         verbose_name = "COMMUNICATION LOGS"
         ordering = ['-timestamp']
+
+class StaffSalary(models.Model):
+    STATUS_CHOICES = [('PENDING', 'Pending'), ('PROCESSING', 'Processing'), ('PAID', 'Paid/Disbursed')]
+    
+    staff = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='salary_records')
+    amount_base = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Base Salary")
+    allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    deductions_tax = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="PAYE/Tax")
+    month = models.CharField(max_length=20, choices=[(str(i), datetime.date(2000, i, 1).strftime('%B')) for i in range(1, 13)])
+    year = models.IntegerField(default=2026)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    disbursement_date = models.DateField(null=True, blank=True)
+
+    @property
+    def net_pay(self):
+        return (self.amount_base + self.allowances) - self.deductions_tax
+
+    class Meta:
+        verbose_name = "Staff Payroll Record"
+        verbose_name_plural = "Staff Payroll Records"
+
+# 💎 THE PROXY TAB FOR THE SIDEBAR
+class PayrollCommand(StaffSalary):
+    class Meta:
+        proxy = True
+        verbose_name = "NATIONAL STAFF PAYROLL"
+        verbose_name_plural = "NATIONAL STAFF PAYROLL"
