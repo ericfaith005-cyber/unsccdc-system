@@ -165,13 +165,29 @@ class Student(models.Model):
     is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
+        # 1. 🤖 GENERATE SYSTEM ID (Do this BEFORE saving)
         if not self.account_number:
-            self.account_number = "UNS" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))
-        super().save(*args, **kwargs)
+            # 💎 Ensure random and string are imported at the top!
+            rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            self.account_number = f"UNS-{rand}"
+        
+        # 2. 🧼 CLEAN DATA
+        if self.full_name:
+            self.full_name = self.full_name.strip().upper()
 
-    def __str__(self): 
-        return self.full_name
+        # 3. 💾 SAVE THE STUDENT FIRST (The Horse)
+        # This gives the student a Primary Key (ID)
+        super(Student, self).save(*args, **kwargs)
+        
+        # 4. 💰 CREATE THE TREASURY RECORD AFTER (The Cart)
+        # Now that the student has an ID, we can link the money record!
+        from .models import FeesTracker
+        FeesTracker.objects.get_or_create(student=self)
 
+    def __str__(self):
+        return f"{self.full_name or 'NEW REGISTRATION'}"
+
+    
     @property
     def national_category(self):
         c = str(self.current_class).upper()
@@ -189,10 +205,6 @@ class Student(models.Model):
             return f"UGX {bal:,.0f}"
         return "UGX 0"
 
-    def __str__(self):
-            # 🛡️ This prevents 500 error if name is missing during save
-            return f"{self.full_name or 'NEW REGISTRATION'}"
-        
 
 
 
