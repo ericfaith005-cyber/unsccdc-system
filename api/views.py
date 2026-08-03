@@ -1944,79 +1944,61 @@ from .models import Student, School
 @login_required
 def sovereign_registry_view(request):
     try:
-        # 1. 🛡️ SAFE SCHOOL FETCHING
-        # Check if the user has a school. If not, grab the first one (for testing/superadmins)
+        # 1. 🛡️ IDENTITY GATE
         school = getattr(request.user, 'school', None) or School.objects.first()
-
+        
         if not school:
-            school = School.objects.first()
-            
-        if not school:
-            return HttpResponse("<body style='background:black;color:gold;padding:50px;'><h1>ERROR: No School found in the Registry.</h1><p>Please add a school in the Admin first.</p></body>")
+            return HttpResponse("<h1>Error: No School Found</h1>")
 
-        # 2. 🧠 NATIONAL SECTOR MAP (Uganda Standards)
+        # 2. 🧠 NATIONAL SECTOR MAP
         sector_map = {
             'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
             'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
-            'VOCATIONAL': ['Year 1', 'Year 2', 'Year 3'],
             'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
         }
         
-        # 3. 🎯 FETCH AVAILABLE CLASSES
+        # 🎯 Ensure available_classes is defined first
         current_sector = getattr(school, 'sector', 'SECONDARY')
-        available_classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
+        available_classes = sector_map.get(current_sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
         
-        # 4. 🔎 FILTER LOGIC
-        
-        # Fetch students for this school and class, A-Z
-        students = Student.objects.filter(
-            school=school, 
-            current_class=selected_class,
-            is_active=True
-        ).order_by('full_name')
-
-        # 🔎 4. MAXIMUM VISIBILITY FILTERING
-        query = request.GET.get('q', '').strip()
+        # 💎 THE FIX: Define 'selected_class' at the TOP level so it's always associated with a value
         selected_class = request.GET.get('class', available_classes[0])
-        
-        # 💎 THE Hub Hub Hub Hub Hub "ALL-SEEING" QUERY
-        # We fetch ALL students linked to the school, even if they are inactive 
-        # or missing parent links. This ensures NO ONE is hidden.
-        base_students = Student.objects.filter(school=school).select_related('parent_link')
+        query = request.GET.get('q', '').strip()
+
+        # 3. 🔎 ALL-SEEING FILTER LOGIC
+        base_students = Student.objects.filter(school=school)
 
         if query:
-            # 🛰️ SEARCH MODE: Scans every corner of the registry
+            # If searching, we look through all classes for that name/PRN
             students = base_students.filter(
                 Q(full_name__icontains=query) | 
-                Q(payment_code__icontains=query) | 
-                Q(account_number__icontains=query) |
+                Q(payment_code__icontains=query) |
                 Q(stream__icontains=query)
             ).order_by('full_name')
-
         else:
-            # Class mode: We use __icontains to be "Fuzzy" 
-            # This ensures "S.1" matches "S1" or "S.1 "
-            clean_class_name = selected_class.replace(".", "") # "S.1" -> "S1"
-            students = students.filter(
+            # If not searching, we filter strictly by the selected class
+            # We use __icontains to make sure "S.1" matches "S1"
+            clean_name = selected_class.replace(".", "")
+            students = base_students.filter(
                 Q(current_class__iexact=selected_class) | 
-                Q(current_class__icontains=clean_class_name)
-            )
+                Q(current_class__icontains=clean_name)
+            ).order_by('full_name')
 
-        # 4. 🗂️ FINAL ARRANGEMENT
-        students = students.order_by('full_name')
-        total_count = students.count()
-
-        return render(request, 'sovereign_registry.html', {
-            'students': students,
-            'available_classes': available_classes,
-            'selected_class': selected_class,
+        # 4. 📦 PREPARE CONTEXT
+        context = {
             'school': school,
-            'total_count': total_count,
+            'available_classes': available_classes,
+            'selected_class': selected_class, # Now guaranteed to have a value!
+            'students': students,
+            'total_count': students.count(),
             'title': "SOVEREIGN NATIONAL REGISTRY"
-        })
+        }
+        
+        return render(request, 'sovereign_registry.html', context)
+
     except Exception as e:
-        # 🚑 THE TRUTH TRAP: Instead of 500, see the error message
-        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Registry Engine Error</h1><p>{str(e)}</p><p>Check if you have all imports and that the template exists.</p></body>")
+        # 🚑 If it fails, this will show the new error clearly
+        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Registry Engine Error</h1><p>{str(e)}</p></body>")
 
 @login_required
 def inject_national_subjects(request):
