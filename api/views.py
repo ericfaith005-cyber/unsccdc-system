@@ -1946,7 +1946,8 @@ def sovereign_registry_view(request):
     try:
         # 1. 🛡️ SAFE SCHOOL FETCHING
         # Check if the user has a school. If not, grab the first one (for testing/superadmins)
-        school = getattr(request.user, 'school', None)
+        school = getattr(request.user, 'school', None) or School.objects.first()
+
         if not school:
             school = School.objects.first()
             
@@ -1963,10 +1964,9 @@ def sovereign_registry_view(request):
         
         # 3. 🎯 FETCH AVAILABLE CLASSES
         current_sector = getattr(school, 'sector', 'SECONDARY')
-        available_classes = sector_map.get(current_sector, ['General'])
+        available_classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
         
         # 4. 🔎 FILTER LOGIC
-        selected_class = request.GET.get('class', available_classes[0])
         
         # Fetch students for this school and class, A-Z
         students = Student.objects.filter(
@@ -1992,25 +1992,28 @@ def sovereign_registry_view(request):
                 Q(account_number__icontains=query) |
                 Q(stream__icontains=query)
             ).order_by('full_name')
-        else:
-            # 💊 CLASS MODE: Shows every student in the selected class
-            students = base_students.filter(current_class=selected_class).order_by('full_name')
 
-        # 📊 Update the count to reflect the real number
+        else:
+            # Class mode: We use __icontains to be "Fuzzy" 
+            # This ensures "S.1" matches "S1" or "S.1 "
+            clean_class_name = selected_class.replace(".", "") # "S.1" -> "S1"
+            students = students.filter(
+                Q(current_class__iexact=selected_class) | 
+                Q(current_class__icontains=clean_class_name)
+            )
+
+        # 4. 🗂️ FINAL ARRANGEMENT
+        students = students.order_by('full_name')
         total_count = students.count()
 
-        # 5. 📦 THE DATA PACKET (All variables the template needs)
-        context = {
-            'school': school,
+        return render(request, 'sovereign_registry.html', {
+            'students': students,
             'available_classes': available_classes,
             'selected_class': selected_class,
-            'students': students,
-            'total_count': students.count(), # 💎 FIX: This was likely missing!
+            'school': school,
+            'total_count': total_count,
             'title': "SOVEREIGN NATIONAL REGISTRY"
-        }
-        
-        return render(request, 'sovereign_registry.html', context)
-
+        })
     except Exception as e:
         # 🚑 THE TRUTH TRAP: Instead of 500, see the error message
         return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Registry Engine Error</h1><p>{str(e)}</p><p>Check if you have all imports and that the template exists.</p></body>")
