@@ -137,17 +137,20 @@
                 <tr>
                     <td style="color: #ccc; font-weight: bold;">{{ forloop.counter }}</td>
                     <td>
-                        <div style="display: flex; align-items: center; gap: 15px;">
-                            {% if s.photo %}
-                                <img src="{{ s.photo.url }}" class="student-avatar" onclick="openPreview('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
-                            {% else %}
-                                <div class="student-avatar" style="background: #eee; display:flex; align-items:center; justify-content:center;">
-                                    <i class="fas fa-user" style="color:#ccc"></i>
-                                </div>
-                            {% endif %}
-                            <b style="color: #000; letter-spacing: 0.5px;">{{ s.full_name|upper }}</b>
-                        </div>
-                    </td>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        {% if s.photo %}
+                            <!-- 💎 THE Hub FIX: Ensure 's.photo.url' is used -->
+                            <img src="{{ s.photo.url }}" class="student-avatar" 
+                                onclick="openPreview('{{ s.photo.url }}', '{{ s.full_name|upper }}')"
+                                onerror="this.src='https://via.placeholder.com/150';">
+                        {% else %}
+                            <div class="student-avatar" style="background: #eee; display:flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-user" style="color:#ccc"></i>
+                            </div>
+                        {% endif %}
+                        <b style="color: #000;">{{ s.full_name|upper }}</b>
+                    </div>
+                </td>
                     <td>
                         <span style="font-weight: bold; color: var(--zeraki-green);">{{ s.current_class }}</span>
                         <br><small style="color: #888;">STREAM: {{ s.stream|default:"NORTH" }}</small>
