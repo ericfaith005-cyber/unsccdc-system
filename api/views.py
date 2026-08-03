@@ -110,9 +110,10 @@ class StudentViewSet(viewsets.ViewSet):
 
         try:
             # 1. Identity Gate
-            p_rec = Parent.objects.get(unique_code=code_in, phone_number=phone_in)
-            if p_rec.full_name.lower() != p_name or p_rec.linked_student.full_name.lower() != s_name:
-                return Response({"msg": "Identity Mismatch"}, status=401)
+            p_rec = Parent.objects.get(phone_number=phone_in)
+            student = p_rec.students.first() 
+            if not student or student.full_name.lower() != s_name:
+                return Response({"msg": "Identity Mismatch in National Registry"}, status=401)
             
             # 2. Secure PIN Verification
             if pin_in and p_rec.secure_pin.strip() == pin_in:

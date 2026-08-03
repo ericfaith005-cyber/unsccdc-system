@@ -469,15 +469,16 @@ from django.utils.safestring import mark_safe
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
 
-    list_display = ('photo_thumbnail', 'photo_preview', 'full_name_styled', 
-        'payment_code_styled', 'current_class', 'payment_code', 'get_sector', 'view_dossier_btn', 'status_badge',)
+    list_display = ('photo_thumbnail', 'full_name_styled', 'payment_code_styled', 'current_class', 'get_sector', 'status_badge')
     list_filter = ('school__sector', 'current_class', 'is_active')
     search_fields = ('full_name', 'account_number', 'payment_code')
     list_per_page = 25 
-    readonly_fields = ('account_number', 'photo_preview')
+    
+    # 🛡️ FIXED: Removed 'photo_preview' from here if it's causing issues on ADD
+    readonly_fields = ('account_number',) 
 
     def photo_thumbnail(self, obj):
-        if obj.photo:
+        if obj.pk and obj.photo: # 💎 The 'obj.pk' check is the LIFE SAVER
             return mark_safe(f'<img src="{obj.photo.url}" width="45" height="45" style="border-radius:50%; border: 2px solid #D4AF37; object-fit: cover;" />')
         return mark_safe('<div style="width:45px; height:45px; border-radius:50%; background:#222; display:flex; align-items:center; justify-content:center; color:#555;"><i class="fas fa-user"></i></div>')
     photo_thumbnail.short_description = "ID"
@@ -518,33 +519,30 @@ class StudentAdmin(admin.ModelAdmin):
         return obj.school.get_sector_display()
     get_sector.short_description = "Education Sector"
 
-    # 💎 2. THE FORM: Physically adding the Parent selector into the Student Profile
+    def get_sector(self, obj):
+        return obj.school.get_sector_display()
+    get_sector.short_description = "Sector"
+
+    # 💎 THE Hub Hub Hub Hub FIXED FIELDSETS
     fieldsets = (
         ('👤 STUDENT IDENTITY', {
             'fields': (
                 'photo',
                 'full_name', 
                 'gender',
-                'account_number', 
+                'age',
                 'school', 
                 'current_class', 
                 'stream',
-                'parent_link'  # 👈 THE Hub FIX: You can now select the Parent here!
+                'parent_link' 
             )
         }),
-        ('🎓 ACADEMIC STANDING', {
-            'fields': ('enrollment_status', 'academic_standing', 'payment_code')
+        ('🎓 ACADEMIC & FINANCE', {
+            # 🛡️ REMOVED THE GHOST FIELDS: 'enrollment_status' and 'academic_standing'
+            'fields': ('payment_code', 'level_category', 'initial_deposit', 'is_active')
         }),
-        
     )
 
-    # We keep the account number read-only so it's never accidentally changed
-    readonly_fields = ('account_number',)
-
-    def fee_status_badge(self, obj):
-        # A nice visual indicator for your presentation
-        return mark_safe('<span style="color: #00ff00; font-weight: bold;">● Active</span>')
-    fee_status_badge.short_description = "Status"
 
 def dossier_button(obj):
     # 💎 FIXED URL: Must start with /api/ to avoid 404
