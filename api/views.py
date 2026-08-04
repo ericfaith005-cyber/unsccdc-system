@@ -2956,13 +2956,20 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Times-Bold", 20); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-85, school.name.upper())
 
-        # SCHOOL LOGO (Follows School Name)
-        if school.logo and os.path.exists(school.logo.path):
-            p.drawImage(school.logo.path, width/2-30, height-155, width=60, height=60, mask='auto')
+         # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
+        if school.logo:
+            try:
+                # Path handles local and server storage automatically
+                p.drawImage(school.logo.path, width/2-35, height-130, width=70, height=70, mask='auto')
+            except:
+                p.setStrokeColor(gov_blue)
+                p.rect(width/2-25, height-115, 50, 50, stroke=1)
+                p.drawCentredString(width/2, height-95, "LOGO")
         else:
-            p.setStrokeColor(gov_blue); p.circle(width/2, height-125, 25, stroke=1)
-            p.setFont("Times-Bold", 8); p.drawCentredString(width/2, height-130, "LOGO")
-
+            p.setStrokeColor(gov_blue)
+            p.rect(width/2-25, height-115, 50, 50, stroke=1)
+            p.drawCentredString(width/2, height-95, "OFFICIAL")
+        
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
         p.drawCentredString(width/2, height-175, "OFFICIAL SCHOLASTIC PERFORMANCE RECORD")
         if student.photo:
@@ -2992,22 +2999,7 @@ def generate_national_report_pdf(request, student_id):
                             except Exception as e:
                                 print(f"Top-Left Photo Skip: {e}")
                             
-       # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
-        if school.logo:
-            try:
-                # Path handles local and server storage automatically
-                p.drawImage(school.logo.path, width/2-35, height-130, width=70, height=70, mask='auto')
-            except:
-                p.setStrokeColor(gov_blue)
-                p.rect(width/2-25, height-115, 50, 50, stroke=1)
-                p.drawCentredString(width/2, height-95, "LOGO")
-        else:
-            p.setStrokeColor(gov_blue)
-            p.rect(width/2-25, height-115, 50, 50, stroke=1)
-            p.drawCentredString(width/2, height-95, "OFFICIAL")
-
-        p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-160, school.name.upper())
+       
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
         p.drawCentredString(width/2, height-174, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
 
@@ -3039,11 +3031,11 @@ def generate_national_report_pdf(request, student_id):
         if has_aois:
             # 12-Column Modern Mode (NLSC Standard)
             headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD']
-            col_widths = [50, 25, 25, 30, 25, 25, 35, 35, 45, 35]
+            col_widths = [55, 25, 25, 30, 25, 25, 35, 35, 45, 35]
         else:
             # 8-Column Traditional Mode (AOIs GONE, Subject Name Wider)
-            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE']
-            col_widths = [160, 70, 70, 70, 70, 60]
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'REMARKS']
+            col_widths = [140, 60, 60, 60, 60, 50, 95]
 
         data_rows = [headers]
         for m in marks:
