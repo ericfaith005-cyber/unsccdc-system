@@ -1534,36 +1534,47 @@ def generate_national_report_pdf(request, student_id):
             auto_grade = calculate_uce_grade(m.eot_score) 
             data.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", auto_grade, 'STF', get_sub_remark(m.eot_score)])
         
-        # 🕵️ 6. ELASTIC COLUMN LOGIC
-        # Check if any mark has an AOI score > 0
-        has_aois = any(m.aoi_1 > 0 or m.aoi_2 > 0 for m in marks)
+        has_aois = any(
+            getattr(m, 'aoi_1', 0) > 0 or 
+            getattr(m, 'aoi_2', 0) > 0 or 
+            getattr(m, 'aoi_3', 0) > 0 or 
+            getattr(m, 'aoi_4', 0) > 0 
+            for m in marks
+        )
 
         if has_aois:
-            # 12-Column Modern Mode
+            # 12-Column Mode (Modern CBC)
             headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
             col_widths = [45, 20, 20, 25, 20, 20, 25, 25, 30, 25, 30, 160]
         else:
-            # 8-Column Traditional Mode (AOIs hidden, Subject name gets bigger)
+            # 8-Column Mode (Traditional - AOIs DISAPPEAR COMPLETELY)
             headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
             col_widths = [100, 55, 55, 55, 55, 45, 55, 120]
 
         data_rows = [headers]
         for m in marks:
-            # Auto-Grader
-            g = "E"
-            if m.eot_score >= 80: g = "A"
-            elif m.eot_score >= 70: g = "B"
-            elif m.eot_score >= 60: g = "C"
-            elif m.eot_score >= 50: g = "D"
-            
-            rem = "Exceptional" if m.eot_score >= 80 else "Good" if m.eot_score >= 50 else "Incomplete"
+            # Auto-Grader Logic
+            score = m.eot_score
+            g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
+            rem = "Excellent" if score >= 80 else "Good" if score >= 50 else "Needs Effort"
 
             if has_aois:
-                data_rows.append([m.subject.name[:4].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score}%", g, 'STF', rem])
+                # 💎 Row with AOIs
+                data_rows.append([
+                    m.subject.name[:4].upper(), 
+                    m.aoi_1, getattr(m, 'aoi_2', 0), m.mid_term, 
+                    getattr(m, 'aoi_3', 0), getattr(m, 'aoi_4', 0), 
+                    m.eot_score, m.project_work, f"{score}%", g, 'STF', rem
+                ])
             else:
-                data_rows.append([m.subject.name.upper(), m.mid_term, m.eot_score, m.project_work, f"{m.eot_score}%", g, 'STF', rem])
+                # 💎 Row WITHOUT AOIs (The 00s are physically removed!)
+                data_rows.append([
+                    m.subject.name.upper(), m.mid_term, m.eot_score, 
+                    m.project_work, f"{score}%", g, 'STF', rem
+                ])
 
-        table = Table(data, colWidths=[45, 25, 25, 25, 25, 25, 30, 25, 30, 25, 30, 150])
+        # Create Table with dynamic widths
+        table = Table(data_rows, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
             ('FONTSIZE', (0,0), (-1,-1), 7), ('ALIGN', (0,0), (-1,-1), 'CENTER'),

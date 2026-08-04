@@ -226,11 +226,17 @@ class SubjectAssignment(models.Model):
 class AcademicResult(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='marks')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    aoi_1 = models.FloatField(default=0); aoi_2 = models.FloatField(default=0)
-    aoi_3 = models.FloatField(default=0); aoi_4 = models.FloatField(default=0)
-    mid_term = models.FloatField(default=0); eot_score = models.FloatField(default=0)
+    aoi_1 = models.FloatField(default=0)
+    aoi_2 = models.FloatField(default=0) # 💎 NEWly added
+    aoi_3 = models.FloatField(default=0) # 💎 NEWly added
+    aoi_4 = models.FloatField(default=0) # 💎 NEWly added
+    mid_term = models.FloatField(default=0)
+    eot_score = models.FloatField(default=0)
     project_work = models.FloatField(default=0)
+    def __str__(self):
+        return f"{self.student.full_name} - {self.subject.name}"
 
+    
 class Transaction(models.Model):
     transaction_id = models.CharField(max_length=100, unique=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='transactions')
