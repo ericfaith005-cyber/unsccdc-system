@@ -2953,8 +2953,8 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         # SCHOOL NAME (Immediate after UNEB)
-        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-75, school.name.upper())
+        p.setFont("Times-Bold", 16); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-70, school.name.upper())
 
          # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
         if school.logo:
@@ -2964,11 +2964,11 @@ def generate_national_report_pdf(request, student_id):
             except:
                 p.setStrokeColor(gov_blue)
                 p.rect(width/2-25, height-115, 50, 50, stroke=1)
-                p.drawCentredString(width/2, height-95, "LOGO")
+                p.drawCentredString(width/2, height-120, "LOGO")
         else:
             p.setStrokeColor(gov_blue)
             p.rect(width/2-25, height-115, 50, 50, stroke=1)
-            p.drawCentredString(width/2, height-95, "OFFICIAL")
+            p.drawCentredString(width/2, height-120, "OFFICIAL")
         
         if student.photo:
                             try:
@@ -2999,7 +2999,7 @@ def generate_national_report_pdf(request, student_id):
                             
        
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-165, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
+        p.drawCentredString(width/2, height-170, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFillColor(colors.black)
@@ -3073,8 +3073,6 @@ def generate_national_report_pdf(request, student_id):
         table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
 
-        # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 400, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         grade_data = [
             ['Grade', 'Level', 'Description / Score Bracket'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery innovatively applied.'],
