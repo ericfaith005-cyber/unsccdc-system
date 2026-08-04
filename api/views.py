@@ -1374,14 +1374,15 @@ def generate_staff_dossier_pdf(request, staff_id):
         from django.http import HttpResponse
         return HttpResponse(f"Dossier Engine Error: {str(e)}", status=400)
 
+import os
 import datetime
 from django.db.models import Avg
+from django.http import HttpResponse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from .models import FeesTracker
 from reportlab.platypus import Table, TableStyle
-from .models import Student, AcademicResult
+from .models import Student, AcademicResult, FeesTracker, School
 
 def generate_national_report_pdf(request, student_id):
     """
@@ -1394,34 +1395,6 @@ def generate_national_report_pdf(request, student_id):
     off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
     ug_yellow = colors.HexColor("#FCDC04")  # National Gold
     ug_red = colors.HexColor("#D90000")     # National Red
-
-  
-    if student.photo:
-            try:
-                # 🕵️ Safety check for Render's ephemeral storage
-                if os.path.exists(student.photo.path):
-                    # 📍 TOP LEFT COORDINATES
-                    px, py = 45, height - 130 
-                    pw, ph = 70, 85 # Elegant Passport size
-                    
-                    # 1. Draw a subtle "Imperial Shadow" for 3D effect
-                    p.setFillColor(colors.HexColor("#D3D3D3"))
-                    p.rect(px + 1.5, py - 1.5, pw, ph, fill=1, stroke=0)
-                    
-                    # 2. Draw the actual student photo
-                    p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-                    
-                    # 3. Draw the Imperial Gold Frame (Matches the borders)
-                    p.setStrokeColor(rich_gold)
-                    p.setLineWidth(1.2)
-                    p.rect(px, py, pw, ph, stroke=1, fill=0)
-                    
-                    # 4. Tiny "Verified" watermark on the photo bottom
-                    p.setFillColor(colors.white)
-                    p.setFont("Helvetica-Bold", 5.5)
-                    p.drawString(px + 4, py + 4, "SECURE IDENTITY")
-            except Exception as e:
-                print(f"Top-Left Photo Skip: {e}")
 
     try:
         # 🔑 2. Hub Hub Hub Hub Hub Hub IDENTITY GATE
@@ -1528,6 +1501,34 @@ def generate_national_report_pdf(request, student_id):
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
         p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-58, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
+
+        if student.photo:
+                    try:
+                        # 🕵️ Safety check for Render's ephemeral storage
+                        if os.path.exists(student.photo.path):
+                            # 📍 TOP LEFT COORDINATES
+                            px, py = 45, height - 130 
+                            pw, ph = 70, 85 # Elegant Passport size
+                            
+                            # 1. Draw a subtle "Imperial Shadow" for 3D effect
+                            p.setFillColor(colors.HexColor("#D3D3D3"))
+                            p.rect(px + 1.5, py - 1.5, pw, ph, fill=1, stroke=0)
+                            
+                            # 2. Draw the actual student photo
+                            p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
+                            
+                            # 3. Draw the Imperial Gold Frame (Matches the borders)
+                            p.setStrokeColor(rich_gold)
+                            p.setLineWidth(1.2)
+                            p.rect(px, py, pw, ph, stroke=1, fill=0)
+                            
+                            # 4. Tiny "Verified" watermark on the photo bottom
+                            p.setFillColor(colors.white)
+                            p.setFont("Helvetica-Bold", 5.5)
+                            p.drawString(px + 4, py + 4, "SECURE IDENTITY")
+                    except Exception as e:
+                        print(f"Top-Left Photo Skip: {e}")
+        
         
        # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
         if school.logo:
@@ -2827,10 +2828,14 @@ def national_landing_page(request):
     # ... rest of your code ...
 
 import os
+import datetime
 from django.db.models import Avg
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
+from .models import Student, AcademicResult, FeesTracker, School
 
 # 💎 1. THE BULLETPROOF DRAWING HELPER
 def draw_report_card_layout(p, student):
@@ -2840,34 +2845,6 @@ def draw_report_card_layout(p, student):
     off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
     ug_yellow = colors.HexColor("#FCDC04")  # National Gold
     ug_red = colors.HexColor("#D90000")     # National Red
-
-
-    if student.photo:
-            try:
-                # 🕵️ Safety check for Render's ephemeral storage
-                if os.path.exists(student.photo.path):
-                    # 📍 TOP LEFT COORDINATES
-                    px, py = 45, height - 130 
-                    pw, ph = 70, 85 # Elegant Passport size
-                    
-                    # 1. Draw a subtle "Imperial Shadow" for 3D effect
-                    p.setFillColor(colors.HexColor("#D3D3D3"))
-                    p.rect(px + 1.5, py - 1.5, pw, ph, fill=1, stroke=0)
-                    
-                    # 2. Draw the actual student photo
-                    p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-                    
-                    # 3. Draw the Imperial Gold Frame (Matches the borders)
-                    p.setStrokeColor(rich_gold)
-                    p.setLineWidth(1.2)
-                    p.rect(px, py, pw, ph, stroke=1, fill=0)
-                    
-                    # 4. Tiny "Verified" watermark on the photo bottom
-                    p.setFillColor(colors.white)
-                    p.setFont("Helvetica-Bold", 5.5)
-                    p.drawString(px + 4, py + 4, "SECURE IDENTITY")
-            except Exception as e:
-                print(f"Top-Left Photo Skip: {e}")
 
     try:
         # 🔑 2. Hub Hub Hub Hub Hub Hub IDENTITY GATE
@@ -2925,7 +2902,7 @@ def draw_report_card_layout(p, student):
         p.setFont("Helvetica-Bold", 45); p.setFillColor(colors.lightgrey, alpha=0.03)
         p.translate(width/2, height/2); p.rotate(45); p.drawCentredString(0, 0, "UNSCCDC OFFICIAL RECORD")
         p.restoreState()
-
+        
         # 🎨 8. Hub Hub Hub Hub Hub Hub Hub Hub Hub INTERNAL Hub Hub Hub Hub Hub Hub Hub Hub AI LOGIC
         def calculate_uce_grade(score):
             if score >= 80: return "A"
@@ -2974,7 +2951,34 @@ def draw_report_card_layout(p, student):
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
         p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-58, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
-        
+
+        if student.photo:
+                            try:
+                                # 🕵️ Safety check for Render's ephemeral storage
+                                if os.path.exists(student.photo.path):
+                                    # 📍 TOP LEFT COORDINATES
+                                    px, py = 45, height - 130 
+                                    pw, ph = 70, 85 # Elegant Passport size
+                                    
+                                    # 1. Draw a subtle "Imperial Shadow" for 3D effect
+                                    p.setFillColor(colors.HexColor("#D3D3D3"))
+                                    p.rect(px + 1.5, py - 1.5, pw, ph, fill=1, stroke=0)
+                                    
+                                    # 2. Draw the actual student photo
+                                    p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
+                                    
+                                    # 3. Draw the Imperial Gold Frame (Matches the borders)
+                                    p.setStrokeColor(rich_gold)
+                                    p.setLineWidth(1.2)
+                                    p.rect(px, py, pw, ph, stroke=1, fill=0)
+                                    
+                                    # 4. Tiny "Verified" watermark on the photo bottom
+                                    p.setFillColor(colors.white)
+                                    p.setFont("Helvetica-Bold", 5.5)
+                                    p.drawString(px + 4, py + 4, "SECURE IDENTITY")
+                            except Exception as e:
+                                print(f"Top-Left Photo Skip: {e}")
+                            
        # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
         if school.logo:
             try:
@@ -2999,7 +3003,7 @@ def draw_report_card_layout(p, student):
         p.drawString(50, height-195, f"STUDENT NAME: {student.full_name.upper()}")
         p.drawString(50, height-210, f"NATIONAL ID: {student.account_number}")
         p.drawString(380, height-195, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(380, height-210, f"TERM: EOT | YEAR: 2026")
+        p.drawString(380, height-210, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
