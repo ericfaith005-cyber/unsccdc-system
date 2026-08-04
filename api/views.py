@@ -1495,7 +1495,7 @@ def generate_national_report_pdf(request, student_id):
             grade_data = [ ... ] # Your existing UCE data
 
         # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
-        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 18)
         p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-52, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
@@ -1543,7 +1543,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-185, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-160, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFillColor(colors.black)
@@ -1554,9 +1554,9 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
         
         # Class and Stream on the right side
-        p.drawString(380, height-100, f"LEVEL: {student.current_class}")
-        p.drawString(380, height-115, f"STREAM: {student.stream or 'NORTH'}")
-        p.drawString(380, height-210, f"TERM II: EOT | YEAR: 2026")
+        p.drawString(125, height-100, f"LEVEL: {student.current_class}")
+        p.drawString(125, height-115, f"STREAM: {student.stream or 'NORTH'}")
+        p.drawString(125, height-100, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
