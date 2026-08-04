@@ -2948,22 +2948,22 @@ def generate_national_report_pdf(request, student_id):
             grade_data = [ ... ] # Your existing UCE data
 
         # 🏛️ HEADER SECTION (Sequence: UNEB -> School Name -> School Logo)
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 14)
         p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         # SCHOOL NAME (Immediate after UNEB)
-        p.setFont("Times-Bold", 20); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-85, school.name.upper())
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-60, school.name.upper())
 
          # 🖼️ 5. DYNAMIC SCHOOL LOGO (Replaces the Seal)
         if school.logo:
             try:
                 # Path handles local and server storage automatically
-                p.drawImage(school.logo.path, width/2-35, height-130, width=70, height=70, mask='auto')
+                p.drawImage(school.logo.path, width/2-35, height-150, width=70, height=70, mask='auto')
             except:
                 p.setStrokeColor(gov_blue)
-                p.rect(width/2-25, height-115, 50, 50, stroke=1)
+                p.rect(width/2-25, height-115, 50, 40, stroke=1)
                 p.drawCentredString(width/2, height-95, "LOGO")
         else:
             p.setStrokeColor(gov_blue)
@@ -2977,7 +2977,7 @@ def generate_national_report_pdf(request, student_id):
                                 # 🕵️ Safety check for Render's ephemeral storage
                                 if os.path.exists(student.photo.path):
                                     # 📍 TOP LEFT COORDINATES
-                                    px, py = 45, height - 175
+                                    px, py = 45, height - 190
                                     pw, ph = 70, 85 # Elegant Passport size
                                     
                                     # 1. Draw a subtle "Imperial Shadow" for 3D effect
