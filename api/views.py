@@ -1504,7 +1504,7 @@ def generate_national_report_pdf(request, student_id):
                                 # 🕵️ Safety check for Render's ephemeral storage
                                 if os.path.exists(student.photo.path):
                                     # 📍 TOP LEFT COORDINATES
-                                    px, py = 45, height - 130 
+                                    px, py = 45, height - 150
                                     pw, ph = 70, 85 # Elegant Passport size
                                     
                                     # 1. Draw a subtle "Imperial Shadow" for 3D effect
@@ -1543,7 +1543,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-170, "NATIONAL EOT II SCHOLASTIC PERFORMANCE RECORDS")
+        p.drawCentredString(width/2, height-170, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFillColor(colors.black)
