@@ -1552,10 +1552,8 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(125, height-85, f"STUDENT NAME: {student.full_name.upper()}")
         p.drawString(125, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
         p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
-        
-        # Class and Stream on the right side
         p.drawString(125, height-120, f"LEVEL: {student.current_class}")
-        p.drawString(125, height-125, f"STREAM: {student.stream or 'NORTH'}")
+        p.drawString(125, height-115, f"STREAM: {student.stream or 'NORTH'}")
         p.drawString(125, height-130, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
