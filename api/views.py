@@ -1646,7 +1646,7 @@ def generate_national_report_pdf(request, student_id):
         # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
         p.setStrokeColor(colors.grey)
         p.setLineWidth(0.5)
-        p.rect(50, height - 635, width - 100, 60) # Top=height-575, Bottom=height-635
+        p.rect(50, height - 640, width - 100, 60) # Top=height-575, Bottom=height-635
 
         # A. Class Teacher Remarks
         p.setFillColor(colors.black)
@@ -1901,12 +1901,12 @@ def draw_single_report_page(p, student):
         table.wrapOn(p, width, height); table.drawOn(p, 40, height - 380)
 
         # 6. Treasury Bar
-        p.setFillColor(gov_blue); p.rect(45, height - 670, width - 90, 50, fill=1, stroke=0)
+        p.setFillColor(gov_blue); p.rect(45, height - 680, width - 90, 50, fill=1, stroke=0)
         p.setFillColor(colors.white); p.setFont("Times-Bold", 7)
         p.drawString(55, height - 635, "OUTSTANDING BALANCE")
         p.drawString(385, height - 635, "NATIONAL PRN")
         p.setFont("Times-Bold", 12); p.drawString(55, height - 655, f"UGX {fees_obj.fees_balance:,.0f}")
-        p.setFillColor(colors.red); p.drawString(385, height - 655, f"{student.payment_code}")
+        p.setFillColor(colors.red); p.drawString(385, height - 670, f"{student.payment_code}")
 
     except Exception as e:
         print(f"Error drawing page for {student.full_name}: {e}")
@@ -2949,8 +2949,8 @@ def draw_report_card_layout(p, student):
 
         # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
-        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
-        p.drawCentredString(width/2, height-58, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
+        p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-52, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         if student.photo:
                             try:
@@ -2983,7 +2983,7 @@ def draw_report_card_layout(p, student):
         if school.logo:
             try:
                 # Path handles local and server storage automatically
-                p.drawImage(school.logo.path, width/2-35, height-115, width=70, height=70, mask='auto')
+                p.drawImage(school.logo.path, width/2-35, height-130, width=70, height=70, mask='auto')
             except:
                 p.setStrokeColor(gov_blue)
                 p.rect(width/2-25, height-115, 50, 50, stroke=1)
@@ -2994,15 +2994,21 @@ def draw_report_card_layout(p, student):
             p.drawCentredString(width/2, height-95, "OFFICIAL")
 
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-135, school.name.upper())
+        p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-160, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-185, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, height-195, f"STUDENT NAME: {student.full_name.upper()}")
-        p.drawString(50, height-210, f"NATIONAL ID: {student.account_number}")
-        p.drawString(380, height-195, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
+        p.setFillColor(colors.black)
+        # Start text at x=125 (to the right of the photo)
+        p.setFont("Times-Bold", 9)
+        p.drawString(125, height-85, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(125, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
+        
+        # Class and Stream on the right side
+        p.drawString(380, height-100, f"LEVEL: {student.current_class}")
+        p.drawString(380, height-115, f"STREAM: {student.stream or 'NORTH'}")
         p.drawString(380, height-210, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
@@ -3067,7 +3073,7 @@ def draw_report_card_layout(p, student):
         table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
         # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 375, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 580, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         grade_data = [
             ['Grade', 'Level', 'Description / Score Bracket'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery innovatively applied.'],
@@ -3199,11 +3205,11 @@ def draw_report_card_layout(p, student):
         # Left Signature
         p.line(50, height - 785, 200, height - 785)
         p.setFont("Helvetica-Bold", 7)
-        p.drawCentredString(125, height - 797, "Head Teacher Signature")
+        p.drawCentredString(125, height - 810, "Head Teacher Signature")
 
         # Right Signature
         p.line(width - 200, height - 785, width - 50, height - 785)
-        p.drawCentredString(width - 125, height - 797, "National Hub Registrar")
+        p.drawCentredString(width - 125, height - 810, "National Hub Registrar")
         
         # 🛡️ THE Hub Hub Hub Hub SOVEREIGN STAMP (Centered perfectly)
         p.setStrokeColor(colors.HexColor("#008080")) # Institutional Teal
