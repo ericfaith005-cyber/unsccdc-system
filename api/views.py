@@ -1395,10 +1395,8 @@ def generate_national_report_pdf(request, student_id):
     ug_yellow = colors.HexColor("#FCDC04")  # National Gold
     ug_red = colors.HexColor("#D90000")     # National Red
 
-    # =============================================================
-        # 📸 --- SECTION 6.5: TOP-LEFT BIOMETRIC IDENTITY ---
-        # =============================================================
-        if student.photo:
+  
+    if student.photo:
             try:
                 # 🕵️ Safety check for Render's ephemeral storage
                 if os.path.exists(student.photo.path):
@@ -2842,6 +2840,34 @@ def draw_report_card_layout(p, student):
     off_white = colors.HexColor("#FDFDF5")  # Institutional Parchment
     ug_yellow = colors.HexColor("#FCDC04")  # National Gold
     ug_red = colors.HexColor("#D90000")     # National Red
+
+
+    if student.photo:
+            try:
+                # 🕵️ Safety check for Render's ephemeral storage
+                if os.path.exists(student.photo.path):
+                    # 📍 TOP LEFT COORDINATES
+                    px, py = 45, height - 130 
+                    pw, ph = 70, 85 # Elegant Passport size
+                    
+                    # 1. Draw a subtle "Imperial Shadow" for 3D effect
+                    p.setFillColor(colors.HexColor("#D3D3D3"))
+                    p.rect(px + 1.5, py - 1.5, pw, ph, fill=1, stroke=0)
+                    
+                    # 2. Draw the actual student photo
+                    p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
+                    
+                    # 3. Draw the Imperial Gold Frame (Matches the borders)
+                    p.setStrokeColor(rich_gold)
+                    p.setLineWidth(1.2)
+                    p.rect(px, py, pw, ph, stroke=1, fill=0)
+                    
+                    # 4. Tiny "Verified" watermark on the photo bottom
+                    p.setFillColor(colors.white)
+                    p.setFont("Helvetica-Bold", 5.5)
+                    p.drawString(px + 4, py + 4, "SECURE IDENTITY")
+            except Exception as e:
+                print(f"Top-Left Photo Skip: {e}")
 
     try:
         # 🔑 2. Hub Hub Hub Hub Hub Hub IDENTITY GATE
