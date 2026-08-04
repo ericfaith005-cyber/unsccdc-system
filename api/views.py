@@ -2960,11 +2960,11 @@ def generate_national_report_pdf(request, student_id):
         if school.logo:
             try:
                 # Path handles local and server storage automatically
-                p.drawImage(school.logo.path, width/2-35, height-150, width=70, height=70, mask='auto')
+                p.drawImage(school.logo.path, width/2-35, height-140, width=70, height=70, mask='auto')
             except:
                 p.setStrokeColor(gov_blue)
                 p.rect(width/2-25, height-115, 50, 50, stroke=1)
-                p.drawCentredString(width/2, height-120, "LOGO")
+                p.drawCentredString(width/2, height-140, "LOGO")
         else:
             p.setStrokeColor(gov_blue)
             p.rect(width/2-25, height-115, 50, 50, stroke=1)
@@ -2975,7 +2975,7 @@ def generate_national_report_pdf(request, student_id):
                                 # 🕵️ Safety check for Render's ephemeral storage
                                 if os.path.exists(student.photo.path):
                                     # 📍 TOP LEFT COORDINATES
-                                    px, py = 45, height - 200
+                                    px, py = 45, height - 170
                                     pw, ph = 70, 85 # Elegant Passport size
                                     
                                     # 1. Draw a subtle "Imperial Shadow" for 3D effect
@@ -3005,11 +3005,11 @@ def generate_national_report_pdf(request, student_id):
         p.setFillColor(colors.black)
         # Start text at x=125 (to the right of the photo)
         p.setFont("Times-Bold", 9)
-        p.drawString(125, height-85, f"STUDENT NAME: {student.full_name.upper()}")
-        p.drawString(125, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
-        p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
-        p.drawString(125, height-130, f"LEVEL: {student.current_class}")
-        p.drawString(125, height-145, f"TERM II: EOT | YEAR: 2026")
+        p.drawString(125, height-100, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(125, height-115, f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(125, height-125, f"ACCOUNT ID: {student.account_number}")
+        p.drawString(125, height-145, f"LEVEL: {student.current_class}")
+        p.drawString(125, height-155, f"TERM II: EOT | YEAR: 2026")
 
       # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
