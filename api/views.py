@@ -1495,7 +1495,7 @@ def generate_national_report_pdf(request, student_id):
             grade_data = [ ... ] # Your existing UCE data
 
         # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
-        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 18)
+        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 14)
         p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-52, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
@@ -1543,7 +1543,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-160, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-170, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFillColor(colors.black)
@@ -1554,9 +1554,9 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
         
         # Class and Stream on the right side
-        p.drawString(125, height-100, f"LEVEL: {student.current_class}")
-        p.drawString(125, height-115, f"STREAM: {student.stream or 'NORTH'}")
-        p.drawString(125, height-100, f"TERM II: EOT | YEAR: 2026")
+        p.drawString(125, height-120, f"LEVEL: {student.current_class}")
+        p.drawString(125, height-125, f"STREAM: {student.stream or 'NORTH'}")
+        p.drawString(125, height-130, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
@@ -1620,7 +1620,7 @@ def generate_national_report_pdf(request, student_id):
         table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
         # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 580, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 440, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         grade_data = [
             ['Grade', 'Level', 'Description / Score Bracket'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery innovatively applied.'],
@@ -1631,7 +1631,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 470)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 460)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
