@@ -644,23 +644,27 @@ class PayrollCommand(StaffSalary):
         verbose_name_plural = "NATIONAL STAFF PAYROLL"
 
 class AcademicResult(models.Model):
-    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='marks')
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
-    
-    # 📝 THE Hub Hub Hub Hub MARK FIELDS
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='marks')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     aoi_1 = models.FloatField(default=0)
-    aoi_1_max = models.IntegerField(default=10) # 💎 e.g., Out of 10
-    
+    aoi_2 = models.FloatField(default=0) # 💎 NEWly added
+    aoi_3 = models.FloatField(default=0) # 💎 NEWly added
+    aoi_4 = models.FloatField(default=0) # 💎 NEWly added
     mid_term = models.FloatField(default=0)
-    mid_max = models.IntegerField(default=100) # 💎 e.g., Out of 100
-    
     eot_score = models.FloatField(default=0)
-    eot_max = models.IntegerField(default=100) # 💎 e.g., Out of 100
-    
     project_work = models.FloatField(default=0)
-    project_max = models.IntegerField(default=20) # 💎 e.g., Out of 20
 
-    # 🤖 AUTO-PERCENTAGE FORMULA
+    aoi_1_max = models.IntegerField(default=10)
+    aoi_2_max = models.IntegerField(default=10)
+    aoi_3_max = models.IntegerField(default=10)
+    aoi_4_max = models.IntegerField(default=10)
+    mid_max = models.IntegerField(default=100)
+    eot_max = models.IntegerField(default=100)
+    project_max = models.IntegerField(default=20)
+    
+    def __str__(self):
+        return f"{self.student.full_name} - {self.subject.name}"
+
     @property
     def total_percentage(self):
         # Weighted calculation or simple average? Let's do simple average for now
