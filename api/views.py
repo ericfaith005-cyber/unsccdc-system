@@ -3131,8 +3131,13 @@ def secretary_marks_entry(request):
         # 5. 🚩 AUDIT: Missing marks calculation
         audit_data = []
         for s in students:
-            # Check how many subjects have a score for the selected field_type
-            completed = AcademicResult.objects.filter(student=s).exclude(**{f"{field_type}": 0}).count()
+            # We check the specific field_type being entered
+            # We use a filter that works even if the field is 0
+            completed = AcademicResult.objects.filter(
+                student=s, 
+                subject__in=subjects
+            ).exclude(**{f"{field_type}": 0}).count()
+            
             missing = subjects.count() - completed
             audit_data.append({
                 'student': s,

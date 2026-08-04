@@ -233,6 +233,15 @@ class AcademicResult(models.Model):
     mid_term = models.FloatField(default=0)
     eot_score = models.FloatField(default=0)
     project_work = models.FloatField(default=0)
+
+    aoi_1_max = models.IntegerField(default=10)
+    aoi_2_max = models.IntegerField(default=10)
+    aoi_3_max = models.IntegerField(default=10)
+    aoi_4_max = models.IntegerField(default=10)
+    mid_max = models.IntegerField(default=100)
+    eot_max = models.IntegerField(default=100)
+    project_max = models.IntegerField(default=20)
+    
     def __str__(self):
         return f"{self.student.full_name} - {self.subject.name}"
 
