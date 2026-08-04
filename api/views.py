@@ -1614,7 +1614,7 @@ def generate_national_report_pdf(request, student_id):
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
             ('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
+        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 300)
 
         # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 400, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
