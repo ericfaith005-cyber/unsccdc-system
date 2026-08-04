@@ -1543,7 +1543,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-170, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-170, "NATIONAL EOT II SCHOLASTIC PERFORMANCE RECORDS")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
         p.setFillColor(colors.black)
@@ -1553,8 +1553,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(125, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
         p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
         p.drawString(125, height-130, f"LEVEL: {student.current_class}")
-        p.drawString(125, height-140, f"STREAM: {student.stream or 'NORTH'}")
-        p.drawString(125, height-170, f"TERM II: EOT | YEAR: 2026")
+        p.drawString(125, height-145, f"TERM II: EOT | YEAR: 2026")
 
         # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
