@@ -2837,8 +2837,8 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from .models import Student, AcademicResult, FeesTracker, School
 
-# 💎 1. THE BULLETPROOF DRAWING HELPER
-def draw_report_card_layout(p, student):
+def generate_national_report_pdf(request, student_id):
+
     
     gov_blue = colors.HexColor("#002366")   # Royal Navy (Authority)
     rich_gold = colors.HexColor("#D4AF37")  # Champagne Gold (Prestige)
@@ -2947,17 +2947,30 @@ def draw_report_card_layout(p, student):
             grade_title = "SECONDARY (UCE) COMPETENCY STANDARDS"
             grade_data = [ ... ] # Your existing UCE data
 
-        # 🏛️ 9. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub OFFICIAL Hub Hub Hub Hub Hub Hub Hub Hub Hub HEADER
-        p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 10)
+        # 🏛️ HEADER SECTION (Sequence: UNEB -> School Name -> School Logo)
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
         p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
-        p.drawCentredString(width/2, height-52, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
+        p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
+        # SCHOOL NAME (Immediate after UNEB)
+        p.setFont("Times-Bold", 20); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-85, school.name.upper())
+
+        # SCHOOL LOGO (Follows School Name)
+        if school.logo and os.path.exists(school.logo.path):
+            p.drawImage(school.logo.path, width/2-30, height-155, width=60, height=60, mask='auto')
+        else:
+            p.setStrokeColor(gov_blue); p.circle(width/2, height-125, 25, stroke=1)
+            p.setFont("Times-Bold", 8); p.drawCentredString(width/2, height-130, "LOGO")
+
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
+        p.drawCentredString(width/2, height-175, "OFFICIAL SCHOLASTIC PERFORMANCE RECORD")
         if student.photo:
                             try:
                                 # 🕵️ Safety check for Render's ephemeral storage
                                 if os.path.exists(student.photo.path):
                                     # 📍 TOP LEFT COORDINATES
-                                    px, py = 45, height - 130 
+                                    px, py = 45, height - 155
                                     pw, ph = 70, 85 # Elegant Passport size
                                     
                                     # 1. Draw a subtle "Imperial Shadow" for 3D effect
@@ -2996,16 +3009,19 @@ def draw_report_card_layout(p, student):
         p.setFont("Helvetica-Bold", 18); p.setFillColor(gov_blue)
         p.drawCentredString(width/2, height-160, school.name.upper())
         p.setFillColor(colors.black); p.setFont("Helvetica-Bold", 11)
-        p.drawCentredString(width/2, height-185, "NATIONAL SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height-174, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
 
         # 👤 10. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub STUDENT Hub Hub Hub Hub Hub Hub Hub Hub IDENTITY
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(50, height-195, f"STUDENT NAME: {student.full_name.upper()}")
-        p.drawString(50, height-210, f"NATIONAL ID: {student.account_number}")
-        p.drawString(380, height-195, f"CLASS: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(380, height-210, f"TERM II: EOT | YEAR: 2026")
+        p.setFillColor(colors.black)
+        # Start text at x=125 (to the right of the photo)
+        p.setFont("Times-Bold", 9)
+        p.drawString(125, height-85, f"STUDENT NAME: {student.full_name.upper()}")
+        p.drawString(125, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(125, height-115, f"ACCOUNT ID: {student.account_number}")
+        p.drawString(125, height-130, f"LEVEL: {student.current_class}")
+        p.drawString(125, height-145, f"TERM II: EOT | YEAR: 2026")
 
-        # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
+      # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
             formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
@@ -3066,8 +3082,9 @@ def draw_report_card_layout(p, student):
         ]))
         table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
+
         # 📚 12. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UCE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub COMPETENCY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 580, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 400, "GRADE COMPETENCY LEVEL & DESCRIPTION (UCE STANDARDS):")
         grade_data = [
             ['Grade', 'Level', 'Description / Score Bracket'],
             ['A', 'Exceptional', '80% - 100%. Extraordinary mastery innovatively applied.'],
@@ -3078,7 +3095,7 @@ def draw_report_card_layout(p, student):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 470)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 460)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
