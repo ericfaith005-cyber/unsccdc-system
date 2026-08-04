@@ -2931,13 +2931,13 @@ def draw_report_card_layout(p, student):
         )
 
         if has_aois:
-            # 12-Column Mode (Modern CBC)
-            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
-            col_widths = [45, 20, 20, 25, 20, 20, 25, 25, 30, 25, 30, 160]
+            # 12-Column Modern Mode (NLSC Standard)
+            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD']
+            col_widths = [50, 25, 25, 30, 25, 25, 35, 35, 45, 35]
         else:
-            # 8-Column Mode (Traditional - AOIs DISAPPEAR COMPLETELY)
-            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
-            col_widths = [100, 55, 55, 55, 55, 45, 55, 120]
+            # 8-Column Traditional Mode (AOIs GONE, Subject Name Wider)
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE']
+            col_widths = [160, 70, 70, 70, 70, 60]
 
         data_rows = [headers]
         for m in marks:
@@ -2947,21 +2947,26 @@ def draw_report_card_layout(p, student):
             rem = "Excellent" if score >= 80 else "Good" if score >= 50 else "Needs Effort"
 
             if has_aois:
-                # 💎 Row with AOIs
+                # 💎 Row WITH AOIs (Using getattr for safety)
                 data_rows.append([
                     m.subject.name[:4].upper(), 
-                    m.aoi_1, getattr(m, 'aoi_2', 0), m.mid_term, 
-                    getattr(m, 'aoi_3', 0), getattr(m, 'aoi_4', 0), 
-                    m.eot_score, m.project_work, f"{score}%", g, 'STF', rem
+                    m.aoi_1, 
+                    getattr(m, 'aoi_2', 0), 
+                    m.mid_term, 
+                    getattr(m, 'aoi_3', 0), 
+                    getattr(m, 'aoi_4', 0), 
+                    m.eot_score, 
+                    m.project_work, 
+                    f"{m.eot_score}%", g
                 ])
             else:
-                # 💎 Row WITHOUT AOIs (The 00s are physically removed!)
+                # 💎 Row WITHOUT AOIs - clean and professional
                 data_rows.append([
                     m.subject.name.upper(), m.mid_term, m.eot_score, 
-                    m.project_work, f"{score}%", g, 'STF', rem
+                    m.project_work, f"{m.eot_score}%", g
                 ])
 
-        # Create Table with dynamic widths
+        # Create the table with the dynamic widths
         table = Table(data_rows, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
