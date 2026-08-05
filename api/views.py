@@ -2952,47 +2952,48 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-40, "THE REPUBLIC OF UGANDA")
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
-        # SCHOOL NAME (Immediate after UNEB)
-        p.setFont("Times-Bold", 16); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-70, school.name.upper())
-
-        p.setStrokeColor(rich_gold); p.setLineWidth(0.5)
-        p.line(50, height-60, width-50, height-60) # Top Divider
-
-        lx, ly, lw, lh = 320, height - 135, 75, 75
+        
+        lx, ly, lw, lh = 45, height - 150, 75, 75
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
-        
-        # School Details (Right of the logo)
+        else:
+            p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
+            p.setFont("Times-Bold", 8); p.drawCentredString(lx+(lw/2), ly+30, "LOGO")
+
+        # School Info (Right of Logo, still on the left side of page)
         p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
-        p.drawString(lx + 85, height - 80, school.name.upper())
+        p.drawString(lx + 85, height - 85, school.name.upper())
         
         p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-        # We use getattr to prevent crashes if fields are empty
-        p.drawString(lx + 85, height - 95, f"TEL: {getattr(school, 'phone', '+256 000 000')}")
-        p.drawString(lx + 85, height - 110, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
+        p.drawString(lx + 85, height - 100, f"TEL: {getattr(school, 'phone', '+256 000 000')}")
+        p.drawString(lx + 85, height - 112, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
         
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
         p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
+
+         px, py, pw, ph = width - 125, height - 180, 80, 100
         if student.photo and os.path.exists(student.photo.path):
-            # Size: 85x105 (Bigger and clearer)
-            px, py, pw, ph = 45, height - 165, 85, 105
             p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
             p.rect(px, py, pw, ph, stroke=1) # Frame
             p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
             p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
             p.drawCentredString(px + (pw/2), py - 10, "STUDENT ID")
 
-        # 👤 9. STUDENT INFO (Center-Left)
+        # Student Text Info (Left of the Photo)
         p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-        start_x = 140
-        p.drawString(start_x, height-80, f"NAME: {student.full_name.upper()}")
-        p.drawString(start_x, height-95, f"NATIONAL PRN: {student.payment_code or '---'}")
-        p.drawString(start_x, height-110, f"ACCOUNT ID: {student.account_number}")
-        p.drawString(start_x, height-125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(start_x, height-140, f"TERM: TERM II | YEAR: 2026")        
-       
+        # We start this text around the middle of the page (x=285)
+        sx = 285 
+        p.drawString(sx, height-85, f"NAME: {student.full_name.upper()}")
+        p.drawString(sx, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(sx, height-115, f"SYSTEM ID: {student.account_number}")
+        p.drawString(sx, height-130, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+        p.drawString(sx, height-145, f"ACADEMIC YEAR: 2026")
+
+        # 📊 10. SECTION TITLE (RE-ALIGNED)
+        p.setStrokeColor(rich_gold); p.setLineWidth(1)
+        p.line(45, height-195, width-45, height-195) # Middle Divider
+        
         # Section Title
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
         p.drawCentredString(width/2, height-185, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
@@ -3056,7 +3057,7 @@ def generate_national_report_pdf(request, student_id):
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
             ('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 420)
+        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 290)
 
 
         grade_data = [
@@ -3072,7 +3073,7 @@ def generate_national_report_pdf(request, student_id):
         g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 460)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 565, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
         uace_data = [
             ['A (6pts)', 'B (5pts)', 'C (4pts)', 'D (3pts)', 'E (2pts)', 'O (1pt)', 'F (0pts)'],
             ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']
