@@ -93,10 +93,6 @@ class School(models.Model):
     # 💎 BANKING & API CREDENTIALS 💎
     school_code = models.CharField(max_length=100, blank=True)
     api_password = models.CharField(max_length=255, blank=True)
-    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
-    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
-    term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
-    next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
     total_revenue_collected = models.BigIntegerField(default=0)
     total_commission_earned = models.BigIntegerField(default=0)
     is_verified = models.BooleanField(default=True)
