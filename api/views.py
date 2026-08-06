@@ -3205,23 +3205,38 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Helvetica-Bold", 7)
         p.drawCentredString(125, height - 810, "Head Teacher Signature")
 
-        # Right Signature
-        p.line(width - 200, height - 785, width - 50, height - 785)
-        p.drawCentredString(width - 125, height - 810, "National Hub Registrar")
-
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
-        p.drawString(50, height - 670, "OFFICIAL STATUS & CALENDAR:")
-        
-        p.setFont("Times-Roman", 8)
-        p.drawString(60, height - 685, "• Authenticated copy of the National Student Registry.")
-        
-        # 📅 THE TERM DATES
-        p.setFont("Times-Bold", 9); p.setFillColor(gov_blue)
         term_end = getattr(school, 'term_end_date', 'To be announced')
         term_start = getattr(school, 'next_term_start', 'To be announced')
-        
-        p.drawString(60, height - 705, f"THIS TERM ENDED ON:  {term_end}")
-        p.drawString(60, height - 720, f"NEXT TERM BEGINS ON: {term_start}")
+
+        calendar_data = [
+            ['OFFICIAL STATUS & CALENDAR', 'DATE / VALUE'],
+            ['REGISTRY STATUS:', '✅ AUTHENTICATED'],
+            ['THIS TERM ENDED ON:', term_end.upper()],
+            ['NEXT TERM BEGINS ON:', term_start.upper()],
+        ]
+
+        # Define table width and position
+        cal_table = Table(calendar_data, colWidths=[140, 110])
+        cal_table.setStyle(TableStyle([
+            # Header Styling
+            ('BACKGROUND', (0,0), (-1,0), gov_blue),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,0), 'Times-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 8),
+            # Body Styling
+            ('FONTNAME', (0,1), (-1,-1), 'Times-Roman'),
+            ('FONTSIZE', (0,1), (-1,-1), 8),
+            ('TEXTCOLOR', (0,1), (-1,-1), colors.black),
+            ('BACKGROUND', (0,1), (-1,-1), colors.white),
+            # Grid & Alignment
+            ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ALIGN', (1,1), (1,-1), 'CENTER'), # Center the dates
+        ]))
+
+        # 💎 DRAW THE CALENDAR TABLE (Right Aligned to margin)
+        cal_table.wrapOn(p, width, height)
+        cal_table.drawOn(p, width - 295, height - 820)
         
         # 🛡️ THE Hub Hub Hub Hub SOVEREIGN STAMP (Centered perfectly)
         p.setStrokeColor(colors.HexColor("#008080")) # Institutional Teal
