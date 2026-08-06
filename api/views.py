@@ -3082,7 +3082,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 45, height - 475)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 475)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
@@ -3092,7 +3092,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         u_table = Table(uace_data, colWidths=[68, 68, 68, 68, 68, 68, 68])
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-        u_table.wrapOn(p, width, height); u_table.drawOn(p, 45, height - 540)
+        u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 540)
 
         # =============================================================
         # 💎 --- SECTION 12: Hub Hub Hub OFFICIAL Hub Hub Hub ADMINISTRATIVE Hub Hub Hub REMARKS ---
@@ -3236,18 +3236,8 @@ def generate_national_report_pdf(request, student_id):
 
         # 💎 DRAW THE CALENDAR TABLE (Right Aligned to margin)
         cal_table.wrapOn(p, width, height)
-        cal_table.drawOn(p, width - 295, height - 820)
+        cal_table.drawOn(p, width - 295, height - 818)
         
-        p.setStrokeColor(colors.teal)
-        p.setLineWidth(1)
-        p.circle(width/2 - 15, height - 785, 32, stroke=1, fill=0)
-        p.setFont("Times-Bold", 7)
-        p.drawCentredString(width/2 - 15, height - 780, "UNSCCDC")
-        p.setFont("Times-Bold", 6)
-        p.drawCentredString(width/2 - 15, height - 800, "VERIFIED")
-        p.setFont("Helvetica-Bold", 7)
-        p.drawCentredString(width/2, height - 810, datetime.date.today().strftime("%d-%b-%Y"))
-
         p.showPage(); p.save()
         return response
     except Exception as e:
