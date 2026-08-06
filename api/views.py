@@ -3056,7 +3056,7 @@ def generate_national_report_pdf(request, student_id):
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
             ('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 330)
+        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
 
 
         grade_data = [
