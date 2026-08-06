@@ -2971,30 +2971,34 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
         p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
-        px, py, pw, ph = 465, height - 160, 85, 105 
+        block_start_x = 330 
+        px, py, pw, ph = block_start_x, height - 165, 80, 100 # Photo size
+
+        # 1. DRAW THE PHOTO (Left side of the block)
         if student.photo and os.path.exists(student.photo.path):
             p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
-            p.rect(px, py, pw, ph, stroke=1) # Outer Frame
+            p.rect(px, py, pw, ph, stroke=1) # Photo Frame
             p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
             p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
-            p.drawCentredString(px + (pw/2), py - 10, "SECURE ID PHOTO")
+            p.drawCentredString(px + (pw/2), py - 10, "SECURE ID")
 
-        # 2. STUDENT DETAILS (Aligned to the left of the photo)
-        # We start this text at x=310 so it utilizes the center-right space
+        # 2. DRAW THE INFORMATION (Right side of the photo, extending to the border)
         p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
-        sx = 300 
-        p.drawString(sx, height - 80, f"NAME: {student.full_name.upper()}")
-        p.drawString(sx, height - 95, f"NATIONAL PRN: {student.payment_code or '---'}")
-        p.drawString(sx, height - 110, f"ACCOUNT ID: {student.account_number}")
-        p.drawString(sx, height - 125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(sx, height - 140, f"ACADEMIC YEAR: 2026")
+        # Text starts 90 units to the right of the photo start
+        tx = px + 90 
+        p.drawString(tx, height - 80,  f"NAME: {student.full_name.upper()}")
+        p.drawString(tx, height - 95,  f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(tx, height - 110, f"ACCOUNT ID: {student.account_number}")
+        p.drawString(tx, height - 125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+        p.drawString(tx, height - 140, f"ACADEMIC YEAR: 2026")
+        p.drawString(tx, height - 155, f"TERM: TERM II : EOT")
 
-        # 📏 HEADER DIVIDER (Edge to Edge)
+        # 📏 10. SECTION DIVIDER & TITLE (RE-CENTERED)
         p.setStrokeColor(rich_gold); p.setLineWidth(1.2)
-        p.line(45, height - 210, width - 45, height - 210) 
+        p.line(45, height - 205, width - 45, height - 205) # Edge-to-edge line
         
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
-        p.drawCentredString(width/2, height - 228, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
+        p.drawCentredString(width/2, height - 222, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
 
       # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
@@ -3062,7 +3066,7 @@ def generate_national_report_pdf(request, student_id):
             ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 357)
+        table.wrapOn(p, width, height); table.drawOn(p, 45, height - 357)
 
 
         grade_data = [
