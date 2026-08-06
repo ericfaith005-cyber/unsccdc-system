@@ -2971,31 +2971,35 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
         p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
-        px, py, pw, ph = width - 125, height - 180, 80, 100
+        px, py, pw, ph = 240, height - 160, 90, 110 # Increased size
         if student.photo and os.path.exists(student.photo.path):
-            p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
-            p.rect(px, py, pw, ph, stroke=1) # Frame
+            p.setStrokeColor(gov_blue); p.setLineWidth(2)
+            p.rect(px, py, pw, ph, stroke=1) # Heavy Frame
             p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
             p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
-            p.drawCentredString(px + (pw/2), py - 10, "STUDENT ID")
+            p.drawCentredString(px + (pw/2), py - 10, "NATIONAL ID PHOTO")
 
-        # Student Text Info (Left of the Photo)
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-        # We start this text around the middle of the page (x=285)
-        sx = 285 
-        p.drawString(sx, height-85, f"NAME: {student.full_name.upper()}")
-        p.drawString(sx, height-100, f"NATIONAL PRN: {student.payment_code or '---'}")
-        p.drawString(sx, height-115, f"SYSTEM ID: {student.account_number}")
-        p.drawString(sx, height-130, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(sx, height-145, f"ACADEMIC YEAR: 2026")
+        # =============================================================
+        # 👤 10. STUDENT REGISTRY DETAILS (RIGHT OF PHOTO)
+        # =============================================================
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        sx = px + 105 # Start text exactly to the right of the photo
+        p.drawString(sx, height - 80, f"NAME: {student.full_name.upper()}")
+        p.drawString(sx, height - 95, f"PRN: {student.payment_code or '---'}")
+        p.drawString(sx, height - 110, f"ACC ID: {student.account_number}")
+        p.drawString(sx, height - 125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+        p.drawString(sx, height - 140, f"YEAR: 2026")
 
         # 📊 10. SECTION TITLE (RE-ALIGNED)
         p.setStrokeColor(rich_gold); p.setLineWidth(1)
         p.line(45, height-195, width-45, height-195) # Middle Divider
+
+        p.setStrokeColor(rich_gold); p.setLineWidth(1)
+        p.line(45, height - 210, width - 45, height - 210) 
         
         # Section Title
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
-        p.drawCentredString(width/2, height-185, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
+        p.drawCentredString(width/2, height-170, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
 
       # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
@@ -3013,13 +3017,24 @@ def generate_national_report_pdf(request, student_id):
         )
 
         if has_aois:
-            # 12-Column Modern Mode (NLSC Standard)
-            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD']
-            col_widths = [55, 25, 25, 30, 25, 25, 35, 35, 45, 35]
+            # 13-Column Mode (Including Teacher & Remark)
+            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
+            col_widths = [45, 18, 18, 22, 18, 18, 22, 22, 30, 25, 35, 130]
         else:
-            # 8-Column Traditional Mode (AOIs GONE, Subject Name Wider)
-            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'REMARKS']
-            col_widths = [140, 60, 60, 60, 60, 50, 95]
+            # 8-Column Traditional Mode (Wider for Teacher Name)
+            headers = ['SUBJECT NAME', 'MID', 'EOT', 'PROJ', 'AVG', 'GRD', 'TEACHER', 'REMARKS']
+            col_widths = [110, 45, 45, 45, 45, 35, 60, 110]
+        
+        data_rows = [headers]
+        for m in marks:
+            # 🤖 AI REMARK ENGINE
+            score = m.eot_score
+            if score >= 90: rem = "Exceptional"
+            elif score >= 80: rem = "Excellent"
+            elif score >= 70: rem = "Very Good"
+            elif score >= 60: rem = "Good Progress"
+            elif score >= 50: rem = "Fair"
+            else: rem = "Support Req."
 
         data_rows = [headers]
         for m in marks:
@@ -3028,35 +3043,30 @@ def generate_national_report_pdf(request, student_id):
             g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
             rem = "Excellent" if score >= 80 else "Good" if score >= 50 else "Needs Effort"
 
+            teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
+            t_name = teacher_obj.full_name.split()[-1] if teacher_obj else "STAFF"
+
             if has_aois:
-                # 💎 Row WITH AOIs (Using getattr for safety)
                 data_rows.append([
-                    m.subject.name[:4].upper(), 
-                    m.aoi_1, 
-                    getattr(m, 'aoi_2', 0), 
-                    m.mid_term, 
-                    getattr(m, 'aoi_3', 0), 
-                    getattr(m, 'aoi_4', 0), 
-                    m.eot_score, 
-                    m.project_work, 
-                    f"{m.eot_score}%", g
+                    m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
+                    m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
+                    f"{score}%", calculate_uce_grade(score), t_name, rem
                 ])
             else:
-                # 💎 Row WITHOUT AOIs - clean and professional
                 data_rows.append([
                     m.subject.name.upper(), m.mid_term, m.eot_score, 
-                    m.project_work, f"{m.eot_score}%", g
+                    m.project_work, f"{score}%", calculate_uce_grade(score), t_name, rem
                 ])
 
         # Create the table with the dynamic widths
         table = Table(data_rows, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTSIZE', (0,0), (-1,-1), 7), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 7),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
-            ('GRID', (0,0), (-1,-1), 0.1, colors.grey), ('LINEBELOW', (0,0), (-1,0), 2, rich_gold),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 350)
+        table.wrapOn(p, width, height); table.drawOn(p, 30, height - 357)
 
 
         grade_data = [
