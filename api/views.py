@@ -2971,35 +2971,30 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
         p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
-        px, py, pw, ph = 240, height - 160, 90, 110 # Increased size
+        px, py, pw, ph = 465, height - 160, 85, 105 
         if student.photo and os.path.exists(student.photo.path):
-            p.setStrokeColor(gov_blue); p.setLineWidth(2)
-            p.rect(px, py, pw, ph, stroke=1) # Heavy Frame
+            p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
+            p.rect(px, py, pw, ph, stroke=1) # Outer Frame
             p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
             p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
-            p.drawCentredString(px + (pw/2), py - 10, "NATIONAL ID PHOTO")
+            p.drawCentredString(px + (pw/2), py - 10, "SECURE ID PHOTO")
 
-        # =============================================================
-        # 👤 10. STUDENT REGISTRY DETAILS (RIGHT OF PHOTO)
-        # =============================================================
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-        sx = px + 105 # Start text exactly to the right of the photo
+        # 2. STUDENT DETAILS (Aligned to the left of the photo)
+        # We start this text at x=310 so it utilizes the center-right space
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
+        sx = 300 
         p.drawString(sx, height - 80, f"NAME: {student.full_name.upper()}")
-        p.drawString(sx, height - 95, f"PRN: {student.payment_code or '---'}")
-        p.drawString(sx, height - 110, f"ACC ID: {student.account_number}")
+        p.drawString(sx, height - 95, f"NATIONAL PRN: {student.payment_code or '---'}")
+        p.drawString(sx, height - 110, f"ACCOUNT ID: {student.account_number}")
         p.drawString(sx, height - 125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-        p.drawString(sx, height - 140, f"YEAR: 2026")
+        p.drawString(sx, height - 140, f"ACADEMIC YEAR: 2026")
 
-        # 📊 10. SECTION TITLE (RE-ALIGNED)
-        p.setStrokeColor(rich_gold); p.setLineWidth(1)
-        p.line(45, height-195, width-45, height-195) # Middle Divider
-
-        p.setStrokeColor(rich_gold); p.setLineWidth(1)
+        # 📏 HEADER DIVIDER (Edge to Edge)
+        p.setStrokeColor(rich_gold); p.setLineWidth(1.2)
         p.line(45, height - 210, width - 45, height - 210) 
         
-        # Section Title
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
-        p.drawCentredString(width/2, height-170, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORDS")
+        p.drawCentredString(width/2, height - 228, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
 
       # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
@@ -3017,13 +3012,14 @@ def generate_national_report_pdf(request, student_id):
         )
 
         if has_aois:
-            # 13-Column Mode (Including Teacher & Remark)
+            # 12-Column Total Width = 510pts
             headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
-            col_widths = [45, 18, 18, 22, 18, 18, 22, 22, 30, 25, 35, 130]
+            col_widths = [60, 22, 22, 28, 22, 22, 28, 28, 40, 30, 45, 156] 
         else:
-            # 8-Column Traditional Mode (Wider for Teacher Name)
-            headers = ['SUBJECT NAME', 'MID', 'EOT', 'PROJ', 'AVG', 'GRD', 'TEACHER', 'REMARKS']
-            col_widths = [110, 45, 45, 45, 45, 35, 60, 110]
+            # 8-Column Total Width = 510pts
+            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
+            # Increased widths to touch the margins
+            col_widths = [140, 50, 50, 50, 50, 45, 60, 60]
         
         data_rows = [headers]
         for m in marks:
@@ -3079,7 +3075,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 475)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 45, height - 475)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
