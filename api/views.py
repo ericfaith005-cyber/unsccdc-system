@@ -2953,7 +2953,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         
-        lx, ly, lw, lh = 45, height - 155, 75, 75
+        lx, ly, lw, lh = 45, height - 150, 70, 70
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
         else:
@@ -2961,7 +2961,7 @@ def generate_national_report_pdf(request, student_id):
             p.setFont("Times-Bold", 8); p.drawCentredString(lx+(lw/2), ly+30, "LOGO")
 
         # School Info (Immediately right of the logo)
-        p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
+        p.setFillColor(gov_blue); p.setFont("Times-Bold", 10)
         p.drawString(lx + 85, height - 85, school.name.upper())
         
         p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
@@ -3092,7 +3092,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         u_table = Table(uace_data, colWidths=[68, 68, 68, 68, 68, 68, 68])
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-        u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 540)
+        u_table.wrapOn(p, width, height); u_table.drawOn(p, 45, height - 540)
 
         # =============================================================
         # 💎 --- SECTION 12: Hub Hub Hub OFFICIAL Hub Hub Hub ADMINISTRATIVE Hub Hub Hub REMARKS ---
@@ -3238,15 +3238,15 @@ def generate_national_report_pdf(request, student_id):
         cal_table.wrapOn(p, width, height)
         cal_table.drawOn(p, width - 295, height - 820)
         
-        # 🛡️ THE Hub Hub Hub Hub SOVEREIGN STAMP (Centered perfectly)
-        p.setStrokeColor(colors.HexColor("#008080")) # Institutional Teal
-        p.circle(width/2, height - 780, 32, stroke=1, fill=0)
-        p.setFont("Helvetica-Bold", 8)
-        p.drawCentredString(width/2, height - 775, "UNSCCDC")
-        p.setFont("Helvetica", 6)
-        p.drawCentredString(width/2, height - 785, "VERIFIED")
+        p.setStrokeColor(colors.teal)
+        p.setLineWidth(1)
+        p.circle(width/2 - 15, height - 785, 32, stroke=1, fill=0)
+        p.setFont("Times-Bold", 7)
+        p.drawCentredString(width/2 - 15, height - 780, "UNSCCDC")
+        p.setFont("Times-Bold", 6)
+        p.drawCentredString(width/2 - 15, height - 800, "VERIFIED")
         p.setFont("Helvetica-Bold", 7)
-        p.drawCentredString(width/2, height - 795, datetime.date.today().strftime("%d-%b-%Y"))
+        p.drawCentredString(width/2, height - 810, datetime.date.today().strftime("%d-%b-%Y"))
 
         p.showPage(); p.save()
         return response
