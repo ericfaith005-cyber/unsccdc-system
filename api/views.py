@@ -2953,23 +2953,26 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         
-        lx, ly, lw, lh = 45, height - 150, 75, 75
+        lx, ly, lw, lh = 45, height - 155, 75, 75
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
         else:
             p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
             p.setFont("Times-Bold", 8); p.drawCentredString(lx+(lw/2), ly+30, "LOGO")
 
-        # School Info (Right of Logo, still on the left side of page)
+        # School Info (Immediately right of the logo)
         p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
         p.drawString(lx + 85, height - 85, school.name.upper())
         
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-        p.drawString(lx + 85, height - 100, f"TEL: {getattr(school, 'phone', '+256 000 000')}")
-        p.drawString(lx + 85, height - 112, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
+        # 📞 ADDING THE THREE NUMBERS (Phone 1, Phone 2, and Official Email)
+        p.drawString(lx + 85, height - 100, f"TEL 1: {getattr(school, 'phone', '+256 700 000000')}")
+        p.drawString(lx + 85, height - 112, f"TEL 2: {getattr(school, 'phone2', '+256 770 000000')}")
+        p.drawString(lx + 85, height - 124, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
         
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
-        p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+        p.drawString(lx + 85, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+
 
         block_start_x = 330 
         px, py, pw, ph = block_start_x, height - 165, 80, 100 # Photo size
@@ -3205,6 +3208,20 @@ def generate_national_report_pdf(request, student_id):
         # Right Signature
         p.line(width - 200, height - 785, width - 50, height - 785)
         p.drawCentredString(width - 125, height - 810, "National Hub Registrar")
+
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
+        p.drawString(50, height - 670, "OFFICIAL STATUS & CALENDAR:")
+        
+        p.setFont("Times-Roman", 8)
+        p.drawString(60, height - 685, "• Authenticated copy of the National Student Registry.")
+        
+        # 📅 THE TERM DATES
+        p.setFont("Times-Bold", 9); p.setFillColor(gov_blue)
+        term_end = getattr(school, 'term_end_date', 'To be announced')
+        term_start = getattr(school, 'next_term_start', 'To be announced')
+        
+        p.drawString(60, height - 705, f"THIS TERM ENDED ON:  {term_end}")
+        p.drawString(60, height - 720, f"NEXT TERM BEGINS ON: {term_start}")
         
         # 🛡️ THE Hub Hub Hub Hub SOVEREIGN STAMP (Centered perfectly)
         p.setStrokeColor(colors.HexColor("#008080")) # Institutional Teal
