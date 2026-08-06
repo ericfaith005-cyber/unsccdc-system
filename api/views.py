@@ -2971,8 +2971,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
         p.drawString(lx + 85, height - 125, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
-
-         px, py, pw, ph = width - 125, height - 180, 80, 100
+        px, py, pw, ph = width - 125, height - 180, 80, 100
         if student.photo and os.path.exists(student.photo.path):
             p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
             p.rect(px, py, pw, ph, stroke=1) # Frame
