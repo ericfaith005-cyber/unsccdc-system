@@ -118,9 +118,11 @@
 
         <span style="font-weight: bold; margin-left: 20px;">Step 2: Select Subject</span>
         <select name="subject" onchange="this.form.submit()">
-            {% for s in subjects %}
-                <option value="{{ s.id }}" {% if sel_sub == s.id %}selected{% endif %}>{{ s.name|upper }}</option>
-            {% endfor %}
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if sel_sub == s.id %}selected{% endif %}>
+            {{ s.name|upper }} ({{ s.code }})
+        </option>
+        {% endfor %}
         </select>
     </form>
 

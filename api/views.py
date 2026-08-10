@@ -3719,36 +3719,40 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     p.setFont("Times-Roman", 6); p.setFillColor(colors.grey)
     p.drawString(45, base_y - 402, f"System Authenticated on: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
-    
+
 @login_required
 def keb_mock_portal_view(request):
     try:
         school = getattr(request.user, 'school', None) or School.objects.first()
         
-        # 🧠 Get Classes and Subjects
+        # 🧠 Get Classes
         sector_map = {
             'PRIMARY': ['P.6', 'P.7'],
-            'SECONDARY': ['S.4', 'S.6'], # KEB is usually for candidates
+            'SECONDARY': ['S.4', 'S.6'],
         }
         classes = sector_map.get(school.sector, ['S.4', 'S.6'])
-        subjects = Subject.objects.filter(category='CORE') | Subject.objects.filter(category='VOCATIONAL')
+
+        # 💎 THE Hub Hub Hub NAME ALIGNMENT FIX
+        # We use 'combination_category' as suggested by the error log
+        subjects = Subject.objects.all().order_by('name')
 
         # 🔎 Filter Logic
         sel_class = request.GET.get('class', classes[0])
-        sel_sub = request.GET.get('subject', subjects.first().id if subjects.exists() else None)
+        # Default to first subject if none selected
+        first_sub = subjects.first().id if subjects.exists() else None
+        sel_sub = request.GET.get('subject', first_sub)
         
-        # ⚡ Fetch Students and their KEB Marks
+        # ⚡ Fetch Students 
         students = Student.objects.filter(school=school, current_class=sel_class).order_by('full_name')
         
-        # 📊 Audit Data (Who has marks for this subject?)
+        # 📊 Audit Data (Linking results to students)
         audit = []
         for s in students:
-            res = KEBMockResult.objects.filter(student=s, subject_id=sel_sub).first()
+            res = KEBMockResult.objects.filter(student=s, subject_id=sel_sub).first() if sel_sub else None
             audit.append({
                 'student': s,
-                'score': res.score if res else None,
-                'grade': res.grade if res else '--',
-                'id': s.id
+                'score': res.score if res else "",
+                'grade': res.grade if res else "--",
             })
 
         context = {
@@ -3756,15 +3760,15 @@ def keb_mock_portal_view(request):
             'classes': classes,
             'subjects': subjects,
             'sel_class': sel_class,
-            'sel_sub': int(sel_sub) if sel_sub else None,
+            'sel_sub': int(sel_sub) if sel_sub and str(sel_sub).isdigit() else None,
             'audit': audit,
             'total_students': students.count(),
             'title': "KEB MOCKS COMMAND"
         }
         return render(request, 'admin/keb_mock_portal.html', context)
     except Exception as e:
-        return HttpResponse(f"KEB Portal Error: {str(e)}")
-
+        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>KEB Portal Engine Error</h1><p>{str(e)}</p></body>")
+    
 @login_required
 @transaction.atomic
 def save_keb_marks(request):
