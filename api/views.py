@@ -2977,15 +2977,31 @@ def generate_national_report_pdf(request, student_id):
 
 
         block_start_x = 330 
-        px, py, pw, ph = block_start_x, height - 165, 80, 100 # Photo size
+        # =============================================================
+        # 📸 9. STUDENT BIOMETRIC IDENTITY (WITH HUMAN SHADOW FALLBACK)
+        # =============================================================
+        # Coordinates: px = width - 125, py = base_y - 180, pw = 80, ph = 100
+        px, py, pw, ph = width - 125, base_y - 180, 80, 100
+        
+        # 🛡️ Draw the Frame first
+        p.setStrokeColor(gov_blue)
+        p.setLineWidth(1.5)
+        p.rect(px, py, pw, ph, stroke=1)
 
-        # 1. DRAW THE PHOTO (Left side of the block)
         if student.photo and os.path.exists(student.photo.path):
-            p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
-            p.rect(px, py, pw, ph, stroke=1) # Photo Frame
-            p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-            p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
-            p.drawCentredString(px + (pw/2), py - 10, "SECURE ID")
+            # ✅ CASE A: PHOTO EXISTS - Draw the real face
+            try:
+                p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
+                p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
+                p.drawCentredString(px + (pw/2), py - 10, "VERIFIED PHOTO")
+            except:
+                # Secondary fallback if file is corrupted
+                draw_human_shadow(p, px, py, pw, ph)
+        else:
+            # 👤 CASE B: NO PHOTO - Draw the Imperial Human Shadow
+            draw_human_shadow(p, px, py, pw, ph)
+            p.setFillColor(colors.grey); p.setFont("Times-Bold", 6.5)
+            p.drawCentredString(px + (pw/2), py - 10, "PHOTO REQUIRED")
 
         # 2. DRAW THE INFORMATION (Right side of the photo, extending to the border)
         p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
@@ -3244,6 +3260,26 @@ def generate_national_report_pdf(request, student_id):
         return response
     except Exception as e:
         return HttpResponse(f"Hub Printing Error: {str(e)}", status=400)
+
+def draw_human_shadow(canvas_obj, x, y, width, height):
+    """🛡️ THE Hub Hub Hub Hub Hub Hub Hub VECTOR SILHOUETTE ENGINE"""
+    canvas_obj.saveState()
+    
+    # Set the shadow color (Light Grey/Obsidian tint)
+    shadow_color = colors.HexColor("#DCDCDC")
+    canvas_obj.setFillColor(shadow_color)
+    
+    # 1. Draw the Head (Circle)
+    head_radius = 16
+    canvas_obj.circle(x + width/2, y + height - 35, head_radius, fill=1, stroke=0)
+    
+    # 2. Draw the Shoulders/Body (Rounded Rectangle)
+    # This creates the 'Human Shape' look
+    body_width = width - 20
+    body_height = 40
+    canvas_obj.roundRect(x + 10, y + 15, body_width, body_height, 12, fill=1, stroke=0)
+    
+    canvas_obj.restoreState()
 
     
 @login_required
