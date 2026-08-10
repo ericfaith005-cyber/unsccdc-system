@@ -62,7 +62,7 @@ class School(models.Model):
                 img.thumbnail(output_size, Image.LANCZOS)
                 img.save(self.logo.path, quality=95)
 
-    # 💎 THE BRAIN: Automatically decides the National Grading Scale
+    # THE BRAIN: Automatically decides the National Grading Scale
     @property
     def grading_standard(self):
         if self.school_type == 'PRI': return "UNEB - PLE Standard"
@@ -75,8 +75,12 @@ class School(models.Model):
     district = models.CharField(max_length=100, default="Kampala")
     school_motto = models.CharField(max_length=255)
     school_account_id = models.CharField(max_length=100, unique=True, editable=False)
+    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
+    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
+    term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
+    next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
     
-    # 💎 PRESTIGE REGISTRY DATA 💎
+    # PRESTIGE REGISTRY DATA 
     uneb_center_number = models.CharField(max_length=20, default="U0000")
     school_type = models.CharField(max_length=100, default="Secondary / Boarding")
     rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
@@ -84,13 +88,13 @@ class School(models.Model):
     vision = models.TextField(default="A lead institution of excellence.")
     core_values = models.TextField(default="Integrity, Excellence, Discipline")
     
-    # 💎 USSD SETTINGS 💎
+    # USSD SETTINGS
     ussd_instructions = models.TextField(
         default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
         help_text="Provide step-by-step dialing instructions for the Parent App"
     )
 
-    # 💎 BANKING & API CREDENTIALS 💎
+    # BANKING & API CREDENTIALS 
     school_code = models.CharField(max_length=100, blank=True)
     api_password = models.CharField(max_length=255, blank=True)
     total_revenue_collected = models.BigIntegerField(default=0)
@@ -107,7 +111,7 @@ class School(models.Model):
     def __str__(self): return self.name
 
 
-# --- 🏛️ SURGERY: NATIONAL CURRICULUM REGISTRY ---
+# NATIONAL CURRICULUM REGISTRY 
 
 class Subject(models.Model):
     LEVEL_CHOICES = [
@@ -122,7 +126,7 @@ class Subject(models.Model):
     level = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='UCE')
     is_core = models.BooleanField(default=True, help_text="Is this a compulsory subject?")
     
-    # 💎 FOR A-LEVEL COMBINATIONS
+    # FOR A-LEVEL COMBINATIONS
     combination_category = models.CharField(
         max_length=50, 
         blank=True, 
@@ -165,9 +169,9 @@ class Student(models.Model):
     is_active = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        # 1. 🤖 GENERATE SYSTEM ID (Do this BEFORE saving)
+    
         if not self.account_number:
-            # 💎 Ensure random and string are imported at the top!
+
             rand = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
             self.account_number = f"UNS-{rand}"
         
