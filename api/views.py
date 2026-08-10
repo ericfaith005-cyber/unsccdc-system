@@ -2981,7 +2981,7 @@ def generate_national_report_pdf(request, student_id):
         # 📸 9. STUDENT BIOMETRIC IDENTITY (WITH HUMAN SHADOW FALLBACK)
         # =============================================================
         # Coordinates: px = width - 125, py = base_y - 180, pw = 80, ph = 100
-        px, py, pw, ph = width - 125, base_y - 180, 80, 100
+        px, py, pw, ph = width - 125, height - 180, 80, 100
         
         # 🛡️ Draw the Frame first
         p.setStrokeColor(gov_blue)
