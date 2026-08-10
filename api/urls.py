@@ -68,5 +68,7 @@ urlpatterns = [
     path('sms-hub/', views.sms_broadcast_view, name='sms_hub'),
     path('payroll-hub/', views.staff_payroll_view, name='payroll_hub'),
     path('keb-passlip/<str:student_id>/', views.generate_keb_passlip, name='keb_passlip'),
+    path('keb-portal/', views.keb_mock_portal_view, name='keb_portal'),
+    path('save-keb-marks/', views.save_keb_marks, name='save_keb_marks'),
     path('secretary-entry/', views.secretary_marks_entry, name='secretary_entry'),
 ]

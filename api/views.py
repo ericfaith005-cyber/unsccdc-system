@@ -2295,6 +2295,7 @@ def operations_hub_view(request):
         ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
         ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
+        ("KEB Mock Center", "fa-file-signature", "#2196F3", "/api/keb-portal/", "Candidate Passlips"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
         ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
@@ -3547,157 +3548,279 @@ import os
 import datetime
 from django.db.models import Avg
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from .models import Student, KEBMockResult, School, Staff
 
+@login_required
 def generate_keb_passlip(request, student_id):
+    """
+    🏛️ THE NATIONAL KEB PASSLIP ENGINE
+    Generates a high-prestige, dual-slip A4 document.
+    """
     try:
         student = Student.objects.get(account_number=student_id)
         school = student.school
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="KEB_MOCK_{student.full_name}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="KEB_PASSLIP_{student.full_name}.pdf"'
         
+        # Initialize Canvas
         p = canvas.Canvas(response, pagesize=A4)
-        width, height = A4 # 595 x 842
+        width, height = A4 # 595.27 x 841.89
 
-        # 💎 DRAW TWO IDENTICAL SLIPS ON ONE A4 PAGE
-        # Slip 1 (Top Half)
-        draw_keb_slip(p, student, school, 0)
+        # 💎 DRAW TWO IDENTICAL SLIPS
+        # Slip 1: Top Half
+        draw_keb_slip_layout(p, student, school, 0)
         
         # ✂️ Central Cutting Guide
-        p.setDash(4, 4)
+        p.setDash(3, 3)
         p.setStrokeColor(colors.grey)
         p.line(0, height/2, width, height/2)
-        p.setDash() # Reset dash
+        p.setDash() # Reset
 
-        # Slip 2 (Bottom Half)
-        draw_keb_slip(p, student, school, height/2)
+        # Slip 2: Bottom Half
+        draw_keb_slip_layout(p, student, school, height/2)
 
         p.save()
         return response
     except Exception as e:
-        return HttpResponse(f"KEB Engine Error: {str(e)}", status=400)
+        return HttpResponse(f"KEB Printing Error: {str(e)}", status=400)
 
-def draw_keb_slip(p, student, school, y_offset):
+def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
-    base_y = height - y_offset # Starting point for this slip
+    base_y = height - y_offset # The ceiling for this slip
     
-    # 🎨 NATIONAL Hub Hub Hub PALETTE
-    gov_blue = colors.HexColor("#002366")
-    rich_gold = colors.HexColor("#D4AF37")
-    ug_yellow = colors.HexColor("#FCDC04")
-    ug_red = colors.HexColor("#D90000")
-    off_white = colors.HexColor("#FFFFFF")
+    # 🎨 IMPERIAL GOLD PALETTE
+    gold_bg = colors.HexColor("#FFF9E6")    # Light Gold Silk Background
+    imperial_gold = colors.HexColor("#D4AF37") # Deep Gold
+    gov_blue = colors.HexColor("#002366")    # Royal Navy
+    ug_red = colors.HexColor("#D90000")       # National Red
 
-    # 1. 🖌️ SLIP BORDERS & BACKGROUND
-    p.setFillColor(off_white)
-    p.rect(15, base_y - 405, width - 30, 390, fill=1, stroke=0)
+    # 1. 🖌️ PAINT THE Hub Hub Hub FLOOR (Gold Theme)
+    p.setFillColor(gold_bg)
+    p.rect(10, base_y - 410, width - 20, 400, fill=1, stroke=0)
     
-    # Triple Border for National Authority
-    p.setLineWidth(3); p.setStrokeColor(gov_blue); p.rect(20, base_y - 400, width - 40, 380, stroke=1)
-    p.setLineWidth(0.7); p.setStrokeColor(ug_yellow); p.rect(24, base_y - 396, width - 48, 372, stroke=1)
-    p.setStrokeColor(ug_red); p.rect(25, base_y - 395, width - 50, 370, stroke=1)
+    # Triple-Guard National Borders
+    p.setLineWidth(3); p.setStrokeColor(gov_blue); p.rect(15, base_y - 405, width - 30, 390, stroke=1)
+    p.setLineWidth(1); p.setStrokeColor(imperial_gold); p.rect(20, base_y - 400, width - 40, 380, stroke=1)
 
     # 2. 🌌 SOVEREIGN WATERMARK
     p.saveState()
-    p.setFont("Times-Bold", 40)
-    p.setFillColor(colors.lightgrey, alpha=0.03)
+    p.setFont("Times-Bold", 45)
+    p.setFillColor(colors.HexColor("#D4AF37"), alpha=0.05) # Ghost Gold
     p.translate(width/2, base_y - 200)
-    p.rotate(45)
-    p.drawCentredString(0, 0, "KEB MOCK OFFICIAL")
+    p.rotate(35)
+    p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
     p.restoreState()
 
-    # 3. 🏛️ KEB TOP HEADERS
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+    # 3. 🏛️ NATIONAL HEADERS
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     p.drawCentredString(width/2, base_y - 35, "THE REPUBLIC OF UGANDA")
-    p.setFont("Times-Bold", 14)
+    p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
     p.drawCentredString(width/2, base_y - 55, "KYADONDO EXAMINATIONS BOARD (KEB)")
     
-    p.setStrokeColor(rich_gold); p.setLineWidth(0.5)
-    p.line(50, base_y - 65, width - 50, base_y - 65)
+    p.setStrokeColor(imperial_gold); p.setLineWidth(0.8)
+    p.line(45, base_y - 65, width - 45, base_y - 65)
 
-    # 4. 🖼️ LEFT: SCHOOL BRANDING
-    lx, ly = 45, base_y - 145
+    # 4. 🏢 SCHOOL IDENTITY (LEFT)
+    lx, ly = 45, base_y - 150
     if school.logo and os.path.exists(school.logo.path):
-        p.drawImage(school.logo.path, lx, ly, width=70, height=70, mask='auto')
+        p.drawImage(school.logo.path, lx, ly, width=75, height=75, mask='auto')
     
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(lx + 80, base_y - 95, school.name.upper())
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
+    p.drawString(lx + 85, base_y - 90, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(lx + 80, base_y - 108, f"TEL: {getattr(school, 'phone', '---')}")
-    p.drawString(lx + 80, base_y - 118, f"EMAIL: {getattr(school, 'email', '---')}")
-    p.setFont("Times-Italic", 7)
-    p.drawString(lx + 80, base_y - 128, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+    p.drawString(lx + 85, base_y - 105, f"TEL: {getattr(school, 'phone', '---')}")
+    p.drawString(lx + 85, base_y - 118, f"EMAIL: {getattr(school, 'email', '---')}")
+    p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
+    p.drawString(lx + 85, base_y - 132, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
-    # 5. 📸 MIDDLE: LARGE BIOMETRIC PHOTO
-    px, py, pw, ph = 300, base_y - 150, 75, 95
+    # 5. 📸 STUDENT BIOMETRIC (CENTER-RIGHT) - LARGER
+    px, py, pw, ph = 330, base_y - 165, 80, 100
     if student.photo and os.path.exists(student.photo.path):
         p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-    else:
-        p.rect(px, py, pw, ph, stroke=1)
-        p.drawCentredString(px+pw/2, py+40, "PHOTO")
+        p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
+        p.drawCentredString(px + (pw/2), py - 10, "VERIFIED IDENTITY")
 
-    # 6. 👤 RIGHT: NATIONAL REGISTRY DETAILS
-    sx = 385
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(sx, base_y - 95,  f"NAME: {student.full_name.upper()}")
-    p.drawString(sx, base_y - 108, f"PRN: {student.payment_code or '---'}")
-    p.drawString(sx, base_y - 121, f"ID: {student.account_number}")
-    p.drawString(sx, base_y - 134, f"LEVEL: {student.current_class}")
-    p.drawString(sx, base_y - 147, f"YEAR: 2026")
+    # 6. 👤 STUDENT REGISTRY (FAR RIGHT)
+    sx = px + 90
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
+    p.drawString(sx, base_y - 90,  f"NAME: {student.full_name.upper()}")
+    p.drawString(sx, base_y - 105, f"NATIONAL PRN: {student.payment_code or '---'}")
+    p.drawString(sx, base_y - 120, f"SYSTEM ID: {student.account_number}")
+    p.drawString(sx, base_y - 135, f"LEVEL: {student.current_class}")
+    p.drawString(sx, base_y - 150, f"MOCK YEAR: 2026")
 
-    p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
-    p.drawCentredString(width/2, base_y - 175, "NATIONAL MOCK EXAMINATION PERFORMANCE RECORD")
-
-    # 7. 📊 THE Hub Hub Hub ELASTIC MARKS TABLE
-    # Fetch results from the specific KEB model
+    # 7. 📊 THE ELASTIC RESULTS MATRIX (NEW CURRICULUM)
     results_qs = KEBMockResult.objects.filter(student=student)
-    
-    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'INTERPRETATION', 'TEACHER']
-    col_widths = [160, 60, 60, 160, 70] # Total 510
+    # Check if A-Level (S5, S6)
+    c_name = str(student.current_class).upper()
+    is_a_level = any(x in c_name for x in ["S.5", "S5", "S.6", "S6"])
+
+    headers = ['SUBJECT NAME', 'SCORE (%)', 'GRADE', 'INTERPRETATION', 'TEACHER']
+    col_widths = [140, 60, 60, 170, 80]
 
     data_rows = [headers]
     for r in results_qs:
         score = r.score
-        # New Curriculum Interpretation
-        interp = "Exceptional Mastery" if score >= 80 else "Satisfactory" if score >= 60 else "Basic Level"
+        grade = r.grade
         
-        # Teacher Lookup
-        teacher = Staff.objects.filter(subjects=r.subject, school=school).first()
-        t_init = teacher.full_name.split()[-1] if teacher else "KEB"
+        # 🤖 Hub Hub Hub Hub Hub GRADING LOGIC
+        if is_a_level:
+            interp = f"PRINCIPAL PASS ({r.points} PTS)" if r.points > 1 else "SUBSIDIARY" if grade == "O" else "FAIL"
+        else:
+            # O-Level New Curriculum
+            interp = "EXCEPTIONAL" if grade == "A" else "OUTSTANDING" if grade == "B" else "SATISFACTORY" if grade == "C" else "BASIC" if grade == "D" else "ELEMENTARY"
 
-        data_rows.append([r.subject.name.upper(), f"{score:g}%", r.grade, interp, t_init])
+        # Teacher Initials
+        teacher = Staff.objects.filter(subjects=r.subject, school=school).first()
+        t_name = teacher.full_name.split()[-1] if teacher else "KEB"
+
+        data_rows.append([r.subject.name.upper(), f"{score:g}", grade, interp, t_name])
 
     if len(data_rows) == 1:
-        data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
+        data_rows.append(["NO MOCK RECORDS FOUND", "-", "-", "-", "-"])
 
     table = Table(data_rows, colWidths=col_widths)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.whitesmoke, colors.white]),
+        ('BACKGROUND', (0,0), (-1,0), gov_blue),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.2, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+        ('LINEBELOW', (0,0), (-1,0), 1.5, imperial_gold),
     ]))
     table.wrapOn(p, width, height)
-    table.drawOn(p, 45, base_y - 320)
+    table.drawOn(p, 45, base_y - 325)
 
-    # 8. ✍️ FOOTER: KEB AUTHORIZATION
-    p.setStrokeColor(gov_blue); p.line(45, base_y - 365, 200, base_y - 365)
+    # 8. ✍️ FOOTER: Hub Hub Hub AUTHORIZATION
+    p.setStrokeColor(gov_blue); p.setLineWidth(1)
+    p.line(45, base_y - 375, 220, base_y - 375)
     p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 378, "EXAMINATIONS SECRETARY")
+    p.drawString(45, base_y - 388, "EXAMINATIONS SECRETARY (KEB)")
     
-    # 🛡️ THE Hub Hub Hub KEB VERIFIED STAMP
-    p.setStrokeColor(colors.teal); p.setLineWidth(1)
-    p.circle(width-80, base_y - 355, 30, stroke=1, fill=0)
+    # 🛡️ THE Hub Hub Hub KEB SEAL (Bottom Right)
+    p.setStrokeColor(colors.teal); p.setLineWidth(1.2)
+    p.circle(width - 80, base_y - 370, 30, stroke=1, fill=0)
     p.setFont("Times-Bold", 7)
-    p.drawCentredString(width-80, base_y - 350, "KEB")
-    p.drawCentredString(width-80, base_y - 360, "VERIFIED")
+    p.drawCentredString(width - 80, base_y - 365, "KEB")
+    p.drawCentredString(width - 80, base_y - 375, "MOCK 2026")
+    p.drawCentredString(width - 80, base_y - 385, "VERIFIED")
+
+    p.setFont("Times-Roman", 6); p.setFillColor(colors.grey)
+    p.drawString(45, base_y - 402, f"System Authenticated on: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
     
-    p.setFont("Times-Roman", 6)
-    p.drawString(45, base_y - 395, f"Generated on: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
+@login_required
+def keb_mock_portal_view(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        
+        # 🧠 Get Classes and Subjects
+        sector_map = {
+            'PRIMARY': ['P.6', 'P.7'],
+            'SECONDARY': ['S.4', 'S.6'], # KEB is usually for candidates
+        }
+        classes = sector_map.get(school.sector, ['S.4', 'S.6'])
+        subjects = Subject.objects.filter(category='CORE') | Subject.objects.filter(category='VOCATIONAL')
+
+        # 🔎 Filter Logic
+        sel_class = request.GET.get('class', classes[0])
+        sel_sub = request.GET.get('subject', subjects.first().id if subjects.exists() else None)
+        
+        # ⚡ Fetch Students and their KEB Marks
+        students = Student.objects.filter(school=school, current_class=sel_class).order_by('full_name')
+        
+        # 📊 Audit Data (Who has marks for this subject?)
+        audit = []
+        for s in students:
+            res = KEBMockResult.objects.filter(student=s, subject_id=sel_sub).first()
+            audit.append({
+                'student': s,
+                'score': res.score if res else None,
+                'grade': res.grade if res else '--',
+                'id': s.id
+            })
+
+        context = {
+            'school': school,
+            'classes': classes,
+            'subjects': subjects,
+            'sel_class': sel_class,
+            'sel_sub': int(sel_sub) if sel_sub else None,
+            'audit': audit,
+            'total_students': students.count(),
+            'title': "KEB MOCKS COMMAND"
+        }
+        return render(request, 'admin/keb_mock_portal.html', context)
+    except Exception as e:
+        return HttpResponse(f"KEB Portal Error: {str(e)}")
+
+@login_required
+@transaction.atomic
+def save_keb_marks(request):
+    """🛡️ THE Hub Hub Hub Hub Hub NATIONAL GRADING ENGINE (UCE & UACE)"""
+    if request.method == "POST":
+        subject_id = request.POST.get('subject_id')
+        class_name = request.POST.get('class_name').upper()
+        
+        # 🕵️ Determine the Level (O-Level vs A-Level)
+        is_a_level = any(x in class_name for x in ["S.5", "S5", "S.6", "S6"])
+
+        for key, value in request.POST.items():
+            if key.startswith('score_') and value != "":
+                student_id = key.replace('score_', '')
+                student = get_object_or_404(Student, id=student_id)
+                subject = get_object_or_404(Subject, id=subject_id)
+                
+                score = float(value)
+                grade = "E"
+                points = 0
+
+                # 📊 1. NEW CURRICULUM UCE (O-LEVEL) GRADING
+                if not is_a_level:
+                    if score >= 80: grade = "A"
+                    elif score >= 70: grade = "B"
+                    elif score >= 60: grade = "C"
+                    elif score >= 50: grade = "D"
+                    else: grade = "E"
+                    points = 0 # Points usually aren't used for O-level aggregates in new curriculum
+
+                # 🎓 2. UACE (A-LEVEL) PRINCIPAL PASS SCALES
+                else:
+                    if score >= 80: 
+                        grade = "A"; points = 6
+                    elif score >= 70: 
+                        grade = "B"; points = 5
+                    elif score >= 60: 
+                        grade = "C"; points = 4
+                    elif score >= 50: 
+                        grade = "D"; points = 3
+                    elif score >= 40: 
+                        grade = "E"; points = 2
+                    elif score >= 35: 
+                        grade = "O"; points = 1
+                    else: 
+                        grade = "F"; points = 0
+
+                # 💾 SAVE TO THE KEB REGISTRY
+                KEBMockResult.objects.update_or_create(
+                    student=student,
+                    subject=subject,
+                    defaults={
+                        'score': score, 
+                        'grade': grade,
+                        'points': points # 💎 Automatically stored for A-level rankings
+                    }
+                )
+        
+        return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=synced')
