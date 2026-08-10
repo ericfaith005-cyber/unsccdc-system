@@ -918,3 +918,13 @@ from .models import PayrollCommand
 class PayrollCommandAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         return redirect('/api/payroll-hub/')
+
+@admin.register(KEBMockResult)
+class KEBMockAdmin(admin.ModelAdmin):
+    list_display = ('student', 'subject', 'grade', 'points')
+    list_filter = ('student__school', 'subject')
+
+@admin.register(KEBMockPortal)
+class KEBMockPortalAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/registry/') # Use the registry explorer to pick students

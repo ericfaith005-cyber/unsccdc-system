@@ -67,5 +67,6 @@ urlpatterns = [
     path('uneb-gateway/', views.uneb_dit_gateway, name='uneb_gateway'),
     path('sms-hub/', views.sms_broadcast_view, name='sms_hub'),
     path('payroll-hub/', views.staff_payroll_view, name='payroll_hub'),
+    path('keb-passlip/<str:student_id>/', views.generate_keb_passlip, name='keb_passlip'),
     path('secretary-entry/', views.secretary_marks_entry, name='secretary_entry'),
 ]

@@ -2296,6 +2296,7 @@ def operations_hub_view(request):
         ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
+        ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
         ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
@@ -3541,3 +3542,162 @@ def secretary_marks_entry(request):
         })
     except Exception as e:
         return HttpResponse(f"Registry Error: {str(e)}")
+
+import os
+import datetime
+from django.db.models import Avg
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+from .models import Student, KEBMockResult, School, Staff
+
+def generate_keb_passlip(request, student_id):
+    try:
+        student = Student.objects.get(account_number=student_id)
+        school = student.school
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="KEB_MOCK_{student.full_name}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4 # 595 x 842
+
+        # 💎 DRAW TWO IDENTICAL SLIPS ON ONE A4 PAGE
+        # Slip 1 (Top Half)
+        draw_keb_slip(p, student, school, 0)
+        
+        # ✂️ Central Cutting Guide
+        p.setDash(4, 4)
+        p.setStrokeColor(colors.grey)
+        p.line(0, height/2, width, height/2)
+        p.setDash() # Reset dash
+
+        # Slip 2 (Bottom Half)
+        draw_keb_slip(p, student, school, height/2)
+
+        p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"KEB Engine Error: {str(e)}", status=400)
+
+def draw_keb_slip(p, student, school, y_offset):
+    width, height = A4
+    base_y = height - y_offset # Starting point for this slip
+    
+    # 🎨 NATIONAL Hub Hub Hub PALETTE
+    gov_blue = colors.HexColor("#002366")
+    rich_gold = colors.HexColor("#D4AF37")
+    ug_yellow = colors.HexColor("#FCDC04")
+    ug_red = colors.HexColor("#D90000")
+    off_white = colors.HexColor("#FFFFFF")
+
+    # 1. 🖌️ SLIP BORDERS & BACKGROUND
+    p.setFillColor(off_white)
+    p.rect(15, base_y - 405, width - 30, 390, fill=1, stroke=0)
+    
+    # Triple Border for National Authority
+    p.setLineWidth(3); p.setStrokeColor(gov_blue); p.rect(20, base_y - 400, width - 40, 380, stroke=1)
+    p.setLineWidth(0.7); p.setStrokeColor(ug_yellow); p.rect(24, base_y - 396, width - 48, 372, stroke=1)
+    p.setStrokeColor(ug_red); p.rect(25, base_y - 395, width - 50, 370, stroke=1)
+
+    # 2. 🌌 SOVEREIGN WATERMARK
+    p.saveState()
+    p.setFont("Times-Bold", 40)
+    p.setFillColor(colors.lightgrey, alpha=0.03)
+    p.translate(width/2, base_y - 200)
+    p.rotate(45)
+    p.drawCentredString(0, 0, "KEB MOCK OFFICIAL")
+    p.restoreState()
+
+    # 3. 🏛️ KEB TOP HEADERS
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+    p.drawCentredString(width/2, base_y - 35, "THE REPUBLIC OF UGANDA")
+    p.setFont("Times-Bold", 14)
+    p.drawCentredString(width/2, base_y - 55, "KYADONDO EXAMINATIONS BOARD (KEB)")
+    
+    p.setStrokeColor(rich_gold); p.setLineWidth(0.5)
+    p.line(50, base_y - 65, width - 50, base_y - 65)
+
+    # 4. 🖼️ LEFT: SCHOOL BRANDING
+    lx, ly = 45, base_y - 145
+    if school.logo and os.path.exists(school.logo.path):
+        p.drawImage(school.logo.path, lx, ly, width=70, height=70, mask='auto')
+    
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
+    p.drawString(lx + 80, base_y - 95, school.name.upper())
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
+    p.drawString(lx + 80, base_y - 108, f"TEL: {getattr(school, 'phone', '---')}")
+    p.drawString(lx + 80, base_y - 118, f"EMAIL: {getattr(school, 'email', '---')}")
+    p.setFont("Times-Italic", 7)
+    p.drawString(lx + 80, base_y - 128, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+
+    # 5. 📸 MIDDLE: LARGE BIOMETRIC PHOTO
+    px, py, pw, ph = 300, base_y - 150, 75, 95
+    if student.photo and os.path.exists(student.photo.path):
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
+        p.rect(px, py, pw, ph, stroke=1)
+        p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
+    else:
+        p.rect(px, py, pw, ph, stroke=1)
+        p.drawCentredString(px+pw/2, py+40, "PHOTO")
+
+    # 6. 👤 RIGHT: NATIONAL REGISTRY DETAILS
+    sx = 385
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+    p.drawString(sx, base_y - 95,  f"NAME: {student.full_name.upper()}")
+    p.drawString(sx, base_y - 108, f"PRN: {student.payment_code or '---'}")
+    p.drawString(sx, base_y - 121, f"ID: {student.account_number}")
+    p.drawString(sx, base_y - 134, f"LEVEL: {student.current_class}")
+    p.drawString(sx, base_y - 147, f"YEAR: 2026")
+
+    p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
+    p.drawCentredString(width/2, base_y - 175, "NATIONAL MOCK EXAMINATION PERFORMANCE RECORD")
+
+    # 7. 📊 THE Hub Hub Hub ELASTIC MARKS TABLE
+    # Fetch results from the specific KEB model
+    results_qs = KEBMockResult.objects.filter(student=student)
+    
+    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'INTERPRETATION', 'TEACHER']
+    col_widths = [160, 60, 60, 160, 70] # Total 510
+
+    data_rows = [headers]
+    for r in results_qs:
+        score = r.score
+        # New Curriculum Interpretation
+        interp = "Exceptional Mastery" if score >= 80 else "Satisfactory" if score >= 60 else "Basic Level"
+        
+        # Teacher Lookup
+        teacher = Staff.objects.filter(subjects=r.subject, school=school).first()
+        t_init = teacher.full_name.split()[-1] if teacher else "KEB"
+
+        data_rows.append([r.subject.name.upper(), f"{score:g}%", r.grade, interp, t_init])
+
+    if len(data_rows) == 1:
+        data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
+
+    table = Table(data_rows, colWidths=col_widths)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.whitesmoke, colors.white]),
+    ]))
+    table.wrapOn(p, width, height)
+    table.drawOn(p, 45, base_y - 320)
+
+    # 8. ✍️ FOOTER: KEB AUTHORIZATION
+    p.setStrokeColor(gov_blue); p.line(45, base_y - 365, 200, base_y - 365)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
+    p.drawString(45, base_y - 378, "EXAMINATIONS SECRETARY")
+    
+    # 🛡️ THE Hub Hub Hub KEB VERIFIED STAMP
+    p.setStrokeColor(colors.teal); p.setLineWidth(1)
+    p.circle(width-80, base_y - 355, 30, stroke=1, fill=0)
+    p.setFont("Times-Bold", 7)
+    p.drawCentredString(width-80, base_y - 350, "KEB")
+    p.drawCentredString(width-80, base_y - 360, "VERIFIED")
+    
+    p.setFont("Times-Roman", 6)
+    p.drawString(45, base_y - 395, f"Generated on: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")

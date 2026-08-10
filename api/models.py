@@ -673,3 +673,21 @@ class AcademicResult(models.Model):
     def total_percentage(self):
         # Weighted calculation or simple average? Let's do simple average for now
         return ((self.eot_score / self.eot_max) * 100) if self.eot_max > 0 else 0
+
+class KEBMockResult(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='keb_results')
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    score = models.FloatField(default=0)
+    grade = models.CharField(max_length=5, blank=True) # D1, C3, A, etc.
+    points = models.IntegerField(default=0) # For UACE (6, 5, 4...)
+    
+    class Meta:
+        verbose_name = "KEB MOCK RESULT"
+        verbose_name_plural = "KEB MOCK RESULTS"
+
+# 💎 THE PROXY TAB FOR THE HUB
+class KEBMockPortal(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "KEB MOCKS CENTER"
+        verbose_name_plural = "KEB MOCKS CENTER"
