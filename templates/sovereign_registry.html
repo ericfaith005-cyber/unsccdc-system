@@ -144,6 +144,7 @@
                                 onclick="openPreview('{{ s.photo.url }}', '{{ s.full_name|upper }}')"
                                 onerror="this.src='https://via.placeholder.com/150';">
                         {% else %}
+                            <!-- Show the Human Shadow if photo is missing -->
                             <div class="student-avatar" style="background: #eee; display:flex; align-items:center; justify-content:center;">
                                 <i class="fas fa-user" style="color:#ccc"></i>
                             </div>
