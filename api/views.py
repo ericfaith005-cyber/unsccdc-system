@@ -2938,6 +2938,22 @@ def generate_national_report_pdf(request, student_id):
             if score >= 35: return 1, "O"
             return 0, "F"
         
+        def get_uace_final_metrics(score, subject_name):
+            sub = subject_name.upper()
+            # 1. Subsidiaries (GP, Sub-Math, Sub-ICT) -> Max 1 Point
+            if any(x in sub for x in ["GENERAL PAPER", "GP", "SUB", "SUBSIDIARY"]):
+                if score >= 40: return "O", 1, "Pass"
+                else: return "F", 0, "Fail"
+            
+            # 2. Principal Subjects -> Max 6 Points
+            if score >= 80: return "A", 6, "Principal Distinction"
+            if score >= 70: return "B", 5, "Principal Very Good"
+            if score >= 60: return "C", 4, "Principal Good"
+            if score >= 50: return "D", 3, "Principal Satisfactory"
+            if score >= 40: return "E", 2, "Principal Pass"
+            if score >= 35: return "O", 1, "Subsidiary Pass"
+            return "F", 0, "Failing Grade"
+        
         def get_sub_remark(score):
             if score >= 90: return "Exceptional mastery."
             if score >= 80: return "Excellent. Maintain focus."
@@ -3067,14 +3083,22 @@ def generate_national_report_pdf(request, student_id):
         )
 
         if is_a_level:
-            headers = ['SUBJECT NAME', 'MID', 'EOT', 'AVG', 'GRADE', 'POINTS', 'REMARKS']
-            col_widths = [140, 50, 50, 50, 50, 50, 120]
+            # 🏆 A-LEVEL COLUMNS (Separated Grade and Points)
+            headers = ['SUBJECT NAME', 'MID', 'EOT', 'AVG', 'GRD', 'PTS', 'TCH', 'REMARKS']
+            col_widths = [115, 35, 35, 40, 35, 35, 50, 165] # Total 510
         else:
-            # 8-Column Total Width = 510pts
-            headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
-            # Increased widths to touch the margins
-            col_widths = [140, 50, 50, 50, 50, 45, 60, 60]
-        
+            # 📚 O-LEVEL COLUMNS (Your existing logic)
+            has_aois = any(getattr(m, 'aoi_1', 0) > 0 for m in marks)
+            if has_aois:
+                headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
+                col_widths = [45, 18, 18, 22, 18, 18, 22, 22, 30, 25, 35, 237]
+            else:
+                headers = ['SUBJECT NAME', 'MID', 'EOT', 'PROJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
+                col_widths = [115, 45, 45, 45, 45, 35, 50, 130]
+
+        data_rows = [headers]
+        total_uace_points = 0
+
         data_rows = [headers]
         for m in marks:
             # 🤖 AI REMARK ENGINE
@@ -3089,9 +3113,29 @@ def generate_national_report_pdf(request, student_id):
         data_rows = [headers]
         for m in marks:
             if is_a_level:
-                pts, grd = calculate_uace_points(m.eot_score, m.subject.name)
-                total_points += pts
-                data_rows.append([m.subject.name.upper(), m.mid_term, m.eot_score, f"{m.eot_score}%", grd, pts, "Achieved"])
+                # 💎 EXECUTE SEPARATED A-LEVEL LOGIC
+                grd, pts, interp = get_uace_final_metrics(m.eot_score, m.subject.name)
+                total_uace_points += pts # Add to total weight
+                
+                data_rows.append([
+                    m.subject.name.upper(), 
+                    f"{m.mid_term:g}", 
+                    f"{m.eot_score:g}", 
+                    f"{m.eot_score:g}%", 
+                    grd, 
+                    pts, 
+                    t_init, 
+                    interp
+                ])
+            else:
+                # 💎 O-LEVEL ROW (Standard)
+                g = "A" if m.eot_score >= 80 else "B" if m.eot_score >= 70 else "C" if m.eot_score >= 60 else "D" if m.eot_score >= 50 else "E"
+                rem = "Exceptional" if m.eot_score >= 80 else "Good" if m.eot_score >= 50 else "Support Req."
+                
+                if has_aois:
+                    data_rows.append([m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score:g}%", g, t_init, rem])
+                else:
+                    data_rows.append([m.subject.name.upper(), f"{m.mid_term:g}", f"{m.eot_score:g}", f"{m.project_work:g}", f"{m.eot_score:g}%", g, t_init, rem])
 
         data_rows = [headers]
         for m in marks:
@@ -3123,7 +3167,8 @@ def generate_national_report_pdf(request, student_id):
             ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
         ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 45, height - 357)
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 45, height - 280) # 💎 RE-ALIGNED TABLE START
 
 
         grade_data = [
