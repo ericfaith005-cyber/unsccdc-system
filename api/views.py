@@ -2914,6 +2914,29 @@ def generate_national_report_pdf(request, student_id):
             if score >= 60: return "C"
             if score >= 50: return "D"
             return "E"
+
+        # =============================================================
+        # 🎓 A-LEVEL (UACE) DETECTION & SCORING LOGIC
+        # =============================================================
+        c_name = str(student.current_class).upper()
+        is_a_level = any(x in c_name for x in ["S.5", "S5", "S.6", "S6"])
+        
+        total_points = 0
+        
+        def calculate_uace_points(score, sub_name):
+            s_name = sub_name.upper()
+            # Subsidiaries (GP, Sub-Math, Sub-ICT) only give 1 point or 0
+            if "GENERAL PAPER" in s_name or "SUB" in s_name or "SUBSIDIARY" in s_name:
+                return (1 if score >= 40 else 0), ("O" if score >= 40 else "F")
+            
+            # Principal Subjects (A-E)
+            if score >= 80: return 6, "A"
+            if score >= 70: return 5, "B"
+            if score >= 60: return 4, "C"
+            if score >= 50: return 3, "D"
+            if score >= 40: return 2, "E"
+            if score >= 35: return 1, "O"
+            return 0, "F"
         
         def get_sub_remark(score):
             if score >= 90: return "Exceptional mastery."
@@ -2922,6 +2945,7 @@ def generate_national_report_pdf(request, student_id):
             if score >= 60: return "Good progress."
             if score >= 50: return "Basic competency."
             return "Requires support."
+            
 
         def get_teacher_comment(avg):
             if avg >= 80: return "Disciplined and hardworking. High leadership potential."
@@ -3042,10 +3066,9 @@ def generate_national_report_pdf(request, student_id):
             for m in marks
         )
 
-        if has_aois:
-            # 12-Column Total Width = 510pts
-            headers = ['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
-            col_widths = [60, 22, 22, 28, 22, 22, 28, 28, 40, 30, 45, 156] 
+        if is_a_level:
+            headers = ['SUBJECT NAME', 'MID', 'EOT', 'AVG', 'GRADE', 'POINTS', 'REMARKS']
+            col_widths = [140, 50, 50, 50, 50, 50, 120]
         else:
             # 8-Column Total Width = 510pts
             headers = ['SUBJECT NAME', 'MID TERM', 'EOT EXAM', 'PROJECT', 'AVERAGE', 'GRADE', 'TEACHER', 'REMARKS']
@@ -3062,6 +3085,13 @@ def generate_national_report_pdf(request, student_id):
             elif score >= 60: rem = "Good Progress"
             elif score >= 50: rem = "Fair"
             else: rem = "Support Req."
+        
+        data_rows = [headers]
+        for m in marks:
+            if is_a_level:
+                pts, grd = calculate_uace_points(m.eot_score, m.subject.name)
+                total_points += pts
+                data_rows.append([m.subject.name.upper(), m.mid_term, m.eot_score, f"{m.eot_score}%", grd, pts, "Achieved"])
 
         data_rows = [headers]
         for m in marks:
