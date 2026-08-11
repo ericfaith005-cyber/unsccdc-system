@@ -3174,29 +3174,29 @@ def generate_national_report_pdf(request, student_id):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 475)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 50, height - 480)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
-        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 495, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
+        p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 500, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
         uace_data = [
             ['A (6pts)', 'B (5pts)', 'C (4pts)', 'D (3pts)', 'E (2pts)', 'O (1pt)', 'F (0pts)'],
             ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']
         ]
         u_table = Table(uace_data, colWidths=[68, 68, 68, 68, 68, 68, 68])
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-        u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 540)
+        u_table.wrapOn(p, width, height); u_table.drawOn(p, 50, height - 545)
 
         # =============================================================
         # 💎 --- SECTION 12: Hub Hub Hub OFFICIAL Hub Hub Hub ADMINISTRATIVE Hub Hub Hub REMARKS ---
         # =============================================================
         p.setFont("Helvetica-Bold", 8)
         p.setFillColor(gov_blue)
-        p.drawString(50, height - 565, "OFFICIAL ADMINISTRATIVE REMARKS:")
+        p.drawString(50, height - 570, "OFFICIAL ADMINISTRATIVE REMARKS:")
 
         # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
         p.setStrokeColor(colors.grey)
         p.setLineWidth(0.5)
-        p.rect(50, height - 635, width - 100, 60) # Top=height-575, Bottom=height-635
+        p.rect(50, height - 640, width - 100, 60) # Top=height-575, Bottom=height-635
 
         # A. Class Teacher Remarks
         p.setFillColor(colors.black)
