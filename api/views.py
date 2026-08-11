@@ -3191,7 +3191,7 @@ def generate_national_report_pdf(request, student_id):
         # =============================================================
         p.setFont("Helvetica-Bold", 8)
         p.setFillColor(gov_blue)
-        p.drawString(50, height - 575, "OFFICIAL ADMINISTRATIVE REMARKS:")
+        p.drawString(50, height - 578, "OFFICIAL ADMINISTRATIVE REMARKS:")
 
         # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
         p.setStrokeColor(colors.grey)
@@ -3201,17 +3201,17 @@ def generate_national_report_pdf(request, student_id):
         # A. Class Teacher Remarks
         p.setFillColor(colors.black)
         p.setFont("Helvetica-Bold", 7.5)
-        p.drawString(60, height - 595, "CLASS TEACHER:")
+        p.drawString(60, height - 600, "CLASS TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
         class_remark = get_teacher_comment(overall_avg)
-        p.drawString(135, height - 595, f'"{class_remark}"')
+        p.drawString(135, height - 600, f'"{class_remark}"')
 
         # B. Headteacher Remarks
         p.setFont("Helvetica-Bold", 7.5)
-        p.drawString(60, height - 620, "HEAD TEACHER:")
+        p.drawString(60, height - 625, "HEAD TEACHER:")
         p.setFont("Helvetica-Oblique", 7.5)
         ht_remark = "Exceptional discipline. Highly recommended for National progressive placement." if overall_avg >= 75 else "Steady progress observed. Needs consistent focus in project-based assessments."
-        p.drawString(135, height - 620, f'"{ht_remark}"')
+        p.drawString(135, height - 625, f'"{ht_remark}"')
 
         # =============================================================
         # 📜 --- SECTION 13: Hub Hub Hub CERTIFICATION Hub Hub Hub Hub Hub & Hub Hub Hub Hub Hub RANKING Hub Hub Hub ---
