@@ -3096,50 +3096,43 @@ def generate_national_report_pdf(request, student_id):
                 headers = ['SUBJECT NAME', 'MID', 'EOT', 'PROJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
                 col_widths = [115, 45, 45, 45, 45, 35, 50, 130]
 
+        # =============================================================
+        # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
+        # =============================================================
+        # This replaces ALL those contradictory loops with one perfect engine.
+        
         data_rows = [headers]
         total_uace_points = 0
-
-        data_rows = [headers]
+        
         for m in marks:
-            # 🤖 AI REMARK ENGINE
+            # 🛡️ STEP A: INITIALIZE EVERYTHING AT THE START OF THE ROW
+            # This ensures no "UnboundLocalError" can ever happen.
+            t_init = "STF" 
+            rem = "Achieved"
             score = m.eot_score
+            
+            # 🔎 STEP B: TEACHER LOOKUP
+            try:
+                teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
+                if teacher_obj and teacher_obj.full_name:
+                    t_init = teacher_obj.full_name.split()[-1].upper()
+            except:
+                pass
+
+            # 🤖 STEP C: AUTOMATIC REMARK ENGINE
             if score >= 90: rem = "Exceptional"
             elif score >= 80: rem = "Excellent"
             elif score >= 70: rem = "Very Good"
             elif score >= 60: rem = "Good Progress"
             elif score >= 50: rem = "Fair"
             else: rem = "Support Req."
-        
-        # =============================================================
-        # 📊 11. DYNAMIC DATA MATRIX (THE INDESTRUCTIBLE LOOP)
-        # =============================================================
-        data_rows = [headers]
-        total_uace_points = 0
-        
-        for m in marks:
-            # 🛡️ STEP A: THE SOVEREIGN DEFAULT (This prevents the error!)
-            # We initialize t_init at the very top of the loop for EVERY row.
-            t_init = "STF" 
-            
-            # 🔎 STEP B: ATTEMPT TEACHER LOOKUP
-            try:
-                # Find the staff member assigned to this subject at this school
-                teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
-                if teacher_obj and teacher_obj.full_name:
-                    # Capture the last name and make it professional
-                    t_init = teacher_obj.full_name.split()[-1].upper()
-            except:
-                t_init = "STF" # Safety fallback if database query fails
 
-            # 🤖 STEP C: GRADING & REMARKS
-            score = m.eot_score
-            
+            # 🚀 STEP D: DATA ALIGNMENT (A-Level vs O-Level)
             if is_a_level:
-                # --- A-LEVEL EXECUTION ---
-                grd, pts, interp = get_uace_final_metrics(score, m.subject.name)
+                # --- UACE (A-LEVEL) LOGIC ---
+                grd, pts, uace_interp = get_uace_final_metrics(score, m.subject.name)
                 total_uace_points += pts
                 
-                # 💎 't_init' is guaranteed to have a value here
                 data_rows.append([
                     m.subject.name.upper(), 
                     f"{m.mid_term:g}", 
@@ -3148,53 +3141,11 @@ def generate_national_report_pdf(request, student_id):
                     grd, 
                     pts, 
                     t_init, 
-                    interp
+                    uace_interp # A-level uses specific board interpretation
                 ])
             else:
-                # --- O-LEVEL EXECUTION (New Curriculum) ---
-                g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
-                rem = "Exceptional" if score >= 80 else "Good" if score >= 50 else "Support Req."
-                
-                if has_aois:
-                    # 💎 't_init' is guaranteed to have a value here
-                    data_rows.append([
-                        m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
-                        m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
-                        f"{score:g}%", g, t_init, rem
-                    ])
-                else:
-                    # 💎 't_init' is guaranteed to have a value here
-                    data_rows.append([
-                        m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
-                        f"{m.project_work:g}", f"{score:g}%", g, t_init, rem
-                    ])
-                
-        data_rows = [headers]
-        
-        for m in marks:
-            # 💎 THE Hub Hub Hub TOP DEFINITION (Sovereign Guard)
-            # We define t_init here so it is ALWAYS available to the 'append' command
-            t_init = "STAFF" 
-            
-            # Now we try to find the real name
-            teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
-            if teacher_obj and teacher_obj.full_name:
-                t_init = teacher_obj.full_name.split()[-1].upper()
-
-            score = m.eot_score
-            
-            if is_a_level:
-                # --- A-LEVEL EXECUTION ---
-                grd, pts, interp = get_uace_final_metrics(score, m.subject.name)
-                total_uace_points += pts
-                data_rows.append([
-                    m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
-                    f"{score:g}%", grd, pts, t_init, interp
-                ])
-            else:
-                # --- O-LEVEL EXECUTION ---
-                g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
-                rem = "Exceptional" if score >= 80 else "Good" if score >= 50 else "Support Req."
+                # --- UCE (O-LEVEL) LOGIC ---
+                g = calculate_uce_grade(score) # Uses the function we defined above
                 
                 if has_aois:
                     data_rows.append([
