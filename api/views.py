@@ -3110,8 +3110,7 @@ def generate_national_report_pdf(request, student_id):
             t_init = "STF" 
             rem = "Achieved"
             score = m.eot_score
-            
-            # 🔎 STEP B: TEACHER LOOKUP
+        
             try:
                 teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
                 if teacher_obj and teacher_obj.full_name:
@@ -3159,7 +3158,7 @@ def generate_national_report_pdf(request, student_id):
                         f"{m.project_work:g}", f"{score:g}%", g, t_init, rem
                     ])
 
-        # Create the table with the dynamic widths
+       
         table = Table(data_rows, colWidths=col_widths)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
