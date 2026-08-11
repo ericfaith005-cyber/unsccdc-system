@@ -3067,7 +3067,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
         p.drawCentredString(width/2, height - 222, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
 
-      # 📊 11. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub DATA Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MATRIX
+     
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
             formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
@@ -3095,18 +3095,12 @@ def generate_national_report_pdf(request, student_id):
             else:
                 headers = ['SUBJECT NAME', 'MID', 'EOT', 'PROJ', 'AVG', 'GRD', 'TCH', 'REMARKS']
                 col_widths = [115, 45, 45, 45, 45, 35, 50, 130]
-
-        # =============================================================
-        # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
-        # =============================================================
-        # This replaces ALL those contradictory loops with one perfect engine.
         
         data_rows = [headers]
         total_uace_points = 0
         
         for m in marks:
-            # 🛡️ STEP A: INITIALIZE EVERYTHING AT THE START OF THE ROW
-            # This ensures no "UnboundLocalError" can ever happen.
+            
             t_init = "STF" 
             rem = "Achieved"
             score = m.eot_score
