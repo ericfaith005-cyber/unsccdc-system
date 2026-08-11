@@ -3150,6 +3150,7 @@ def generate_national_report_pdf(request, student_id):
             score = m.eot_score
             g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
             rem = "Excellent" if score >= 80 else "Good" if score >= 50 else "Needs Effort"
+            t_init = "STAFF" 
 
             teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
             t_name = teacher_obj.full_name.split()[-1] if teacher_obj else "STAFF"
