@@ -2838,6 +2838,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from .models import Student, AcademicResult, FeesTracker, School
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph
 
 def generate_national_report_pdf(request, student_id):
 
@@ -2955,7 +2957,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         
-        lx, ly, lw, lh = 45, height - 150, 70, 70
+        lx, ly, lw, lh = 45, height - 140, 70, 70
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
         else:
@@ -2976,12 +2978,12 @@ def generate_national_report_pdf(request, student_id):
         p.drawString(lx + 85, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
 
-        block_start_x = 330 
+        
         # =============================================================
         # 📸 9. STUDENT BIOMETRIC IDENTITY (WITH HUMAN SHADOW FALLBACK)
         # =============================================================
         # Coordinates: px = width - 125, py = base_y - 180, pw = 80, ph = 100
-        px, py, pw, ph = width - 125, height - 180, 80, 100
+        px, py, pw, ph = 310, height - 165, 80, 100 
         
         # 🛡️ Draw the Frame first
         p.setStrokeColor(gov_blue)
@@ -3002,12 +3004,16 @@ def generate_national_report_pdf(request, student_id):
             draw_human_shadow(p, px, py, pw, ph)
             p.setFillColor(colors.grey); p.setFont("Times-Bold", 6.5)
             p.drawCentredString(px + (pw/2), py - 10, "PHOTO REQUIRED")
+        
+        name_style = ParagraphStyle('NameStyle', fontName='Times-Bold', fontSize=9, leading=10)
 
         # 2. DRAW THE INFORMATION (Right side of the photo, extending to the border)
         p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
         # Text starts 90 units to the right of the photo start
         tx = px + 90 
-        p.drawString(tx, height - 80,  f"NAME: {student.full_name.upper()}")
+        name_para = Paragraph(f"NAME: {student.full_name.upper()}", name_style)
+        name_para.wrapOn(p, 150, 40) # Allow 150 units of width before wrapping
+        name_para.drawOn(p, 400, height - 85)
         p.drawString(tx, height - 95,  f"NATIONAL PRN: {student.payment_code or '---'}")
         p.drawString(tx, height - 110, f"ACCOUNT ID: {student.account_number}")
         p.drawString(tx, height - 125, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
