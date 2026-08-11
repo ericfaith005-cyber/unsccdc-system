@@ -3161,7 +3161,7 @@ def generate_national_report_pdf(request, student_id):
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
         ]))
         table.wrapOn(p, width, height)
-        table.drawOn(p, 45, height - 395) # 💎 RE-ALIGNED TABLE START
+        table.drawOn(p, 45, height - 400) # 💎 RE-ALIGNED TABLE START
 
 
         grade_data = [
@@ -3174,7 +3174,7 @@ def generate_national_report_pdf(request, student_id):
         ]
         g_table = Table(grade_data, colWidths=[40, 80, 360])
         g_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('BACKGROUND',(0,0),(-1,0),gov_blue),('TEXTCOLOR',(0,0),(-1,0),colors.white)]))
-        g_table.wrapOn(p, width, height); g_table.drawOn(p, 55, height - 485)
+        g_table.wrapOn(p, width, height); g_table.drawOn(p, 55, height - 495)
 
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 520, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
