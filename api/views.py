@@ -3442,7 +3442,7 @@ def uneb_dit_gateway(request):
             "name": "UNEB Results Portal",
             "url": "https://eresults.uneb.ac.ug/",
             "desc": "Access and download official school performance results.",
-            "color": "#2980b9" # Navy Blue
+            "color": "#2980b9"
         },
         {
             "name": "MoES Official Website",
