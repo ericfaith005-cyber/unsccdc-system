@@ -3128,15 +3128,22 @@ def generate_national_report_pdf(request, student_id):
                     interp
                 ])
             else:
-                # 💎 O-LEVEL ROW (Standard)
-                g = "A" if m.eot_score >= 80 else "B" if m.eot_score >= 70 else "C" if m.eot_score >= 60 else "D" if m.eot_score >= 50 else "E"
-                rem = "Exceptional" if m.eot_score >= 80 else "Good" if m.eot_score >= 50 else "Support Req."
+                # --- O-LEVEL LOGIC (New Curriculum) ---
+                g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
+                rem = "Exceptional" if score >= 80 else "Good" if score >= 50 else "Support Req."
                 
                 if has_aois:
-                    data_rows.append([m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, m.aoi_3, m.aoi_4, m.eot_score, m.project_work, f"{m.eot_score:g}%", g, t_init, rem])
+                    data_rows.append([
+                        m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
+                        m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
+                        f"{score:g}%", g, t_init, rem # 💎 NOW DEFINED
+                    ])
                 else:
-                    data_rows.append([m.subject.name.upper(), f"{m.mid_term:g}", f"{m.eot_score:g}", f"{m.project_work:g}", f"{m.eot_score:g}%", g, t_init, rem])
-
+                    data_rows.append([
+                        m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
+                        f"{m.project_work:g}", f"{score:g}%", g, t_init, rem # 💎 NOW DEFINED
+                    ])
+                
         data_rows = [headers]
         for m in marks:
             # Auto-Grader Logic
