@@ -3161,7 +3161,7 @@ def generate_national_report_pdf(request, student_id):
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [off_white, colors.white]),
         ]))
         table.wrapOn(p, width, height)
-        table.drawOn(p, 45, height - 350) # 💎 RE-ALIGNED TABLE START
+        table.drawOn(p, 45, height - 360) # 💎 RE-ALIGNED TABLE START
 
 
         grade_data = [
