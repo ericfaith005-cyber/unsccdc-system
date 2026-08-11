@@ -3110,38 +3110,63 @@ def generate_national_report_pdf(request, student_id):
             elif score >= 50: rem = "Fair"
             else: rem = "Support Req."
         
+        # =============================================================
+        # 📊 11. DYNAMIC DATA MATRIX (THE INDESTRUCTIBLE LOOP)
+        # =============================================================
         data_rows = [headers]
+        total_uace_points = 0
+        
         for m in marks:
+            # 🛡️ STEP A: THE SOVEREIGN DEFAULT (This prevents the error!)
+            # We initialize t_init at the very top of the loop for EVERY row.
+            t_init = "STF" 
+            
+            # 🔎 STEP B: ATTEMPT TEACHER LOOKUP
+            try:
+                # Find the staff member assigned to this subject at this school
+                teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
+                if teacher_obj and teacher_obj.full_name:
+                    # Capture the last name and make it professional
+                    t_init = teacher_obj.full_name.split()[-1].upper()
+            except:
+                t_init = "STF" # Safety fallback if database query fails
+
+            # 🤖 STEP C: GRADING & REMARKS
+            score = m.eot_score
+            
             if is_a_level:
-                # 💎 EXECUTE SEPARATED A-LEVEL LOGIC
-                grd, pts, interp = get_uace_final_metrics(m.eot_score, m.subject.name)
-                total_uace_points += pts # Add to total weight
+                # --- A-LEVEL EXECUTION ---
+                grd, pts, interp = get_uace_final_metrics(score, m.subject.name)
+                total_uace_points += pts
                 
+                # 💎 't_init' is guaranteed to have a value here
                 data_rows.append([
                     m.subject.name.upper(), 
                     f"{m.mid_term:g}", 
-                    f"{m.eot_score:g}", 
-                    f"{m.eot_score:g}%", 
+                    f"{score:g}", 
+                    f"{score:g}%", 
                     grd, 
                     pts, 
                     t_init, 
                     interp
                 ])
             else:
-                # --- O-LEVEL LOGIC (New Curriculum) ---
+                # --- O-LEVEL EXECUTION (New Curriculum) ---
                 g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
                 rem = "Exceptional" if score >= 80 else "Good" if score >= 50 else "Support Req."
                 
                 if has_aois:
+                    # 💎 't_init' is guaranteed to have a value here
                     data_rows.append([
                         m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
                         m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
-                        f"{score:g}%", g, t_init, rem # 💎 NOW DEFINED
+                        f"{score:g}%", g, t_init, rem
                     ])
                 else:
+                    # 💎 't_init' is guaranteed to have a value here
                     data_rows.append([
                         m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
-                        f"{m.project_work:g}", f"{score:g}%", g, t_init, rem # 💎 NOW DEFINED
+                        f"{m.project_work:g}", f"{score:g}%", g, t_init, rem
                     ])
                 
         data_rows = [headers]
