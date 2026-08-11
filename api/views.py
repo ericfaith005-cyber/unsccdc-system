@@ -3145,27 +3145,43 @@ def generate_national_report_pdf(request, student_id):
                     ])
                 
         data_rows = [headers]
+        
         for m in marks:
-            # Auto-Grader Logic
-            score = m.eot_score
-            g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
-            rem = "Excellent" if score >= 80 else "Good" if score >= 50 else "Needs Effort"
+            # 💎 THE Hub Hub Hub TOP DEFINITION (Sovereign Guard)
+            # We define t_init here so it is ALWAYS available to the 'append' command
             t_init = "STAFF" 
-
+            
+            # Now we try to find the real name
             teacher_obj = Staff.objects.filter(subjects=m.subject, school=school).first()
-            t_name = teacher_obj.full_name.split()[-1] if teacher_obj else "STAFF"
+            if teacher_obj and teacher_obj.full_name:
+                t_init = teacher_obj.full_name.split()[-1].upper()
 
-            if has_aois:
+            score = m.eot_score
+            
+            if is_a_level:
+                # --- A-LEVEL EXECUTION ---
+                grd, pts, interp = get_uace_final_metrics(score, m.subject.name)
+                total_uace_points += pts
                 data_rows.append([
-                    m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
-                    m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
-                    f"{score}%", calculate_uce_grade(score), t_name, rem
+                    m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
+                    f"{score:g}%", grd, pts, t_init, interp
                 ])
             else:
-                data_rows.append([
-                    m.subject.name.upper(), m.mid_term, m.eot_score, 
-                    m.project_work, f"{score}%", calculate_uce_grade(score), t_name, rem
-                ])
+                # --- O-LEVEL EXECUTION ---
+                g = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
+                rem = "Exceptional" if score >= 80 else "Good" if score >= 50 else "Support Req."
+                
+                if has_aois:
+                    data_rows.append([
+                        m.subject.name[:3].upper(), m.aoi_1, m.aoi_2, m.mid_term, 
+                        m.aoi_3, m.aoi_4, m.eot_score, m.project_work, 
+                        f"{score:g}%", g, t_init, rem
+                    ])
+                else:
+                    data_rows.append([
+                        m.subject.name.upper(), f"{m.mid_term:g}", f"{score:g}", 
+                        f"{m.project_work:g}", f"{score:g}%", g, t_init, rem
+                    ])
 
         # Create the table with the dynamic widths
         table = Table(data_rows, colWidths=col_widths)
