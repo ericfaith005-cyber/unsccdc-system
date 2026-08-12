@@ -2997,7 +2997,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         
-        lx, ly, lw, lh = 45, height - 140, 70, 70
+        lx, ly, lw, lh = 40, height - 140, 70, 70
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
         else:
@@ -3006,16 +3006,16 @@ def generate_national_report_pdf(request, student_id):
 
         # School Info (Immediately right of the logo)
         p.setFillColor(gov_blue); p.setFont("Times-Bold", 10)
-        p.drawString(lx + 85, height - 85, school.name.upper())
+        p.drawString(lx + 80, height - 85, school.name.upper())
         
         p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
         # 📞 ADDING THE THREE NUMBERS (Phone 1, Phone 2, and Official Email)
-        p.drawString(lx + 85, height - 100, f"TEL 1: {getattr(school, 'phone', '+256 700 000000')}")
-        p.drawString(lx + 85, height - 112, f"TEL 2: {getattr(school, 'phone2', '+256 770 000000')}")
-        p.drawString(lx + 85, height - 124, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
+        p.drawString(lx + 80, height - 100, f"TEL 1: {getattr(school, 'phone', '+256 700 000000')}")
+        p.drawString(lx + 80, height - 112, f"TEL 2: {getattr(school, 'phone2', '+256 770 000000')}")
+        p.drawString(lx + 80, height - 124, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
         
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
-        p.drawString(lx + 85, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+        p.drawString(lx + 80, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
 
         
@@ -3067,7 +3067,28 @@ def generate_national_report_pdf(request, student_id):
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
         p.drawCentredString(width/2, height - 222, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
 
-     
+        desc_style = ParagraphStyle('DescStyle', fontName='Times-Roman', fontSize=7.5, leading=9, alignment=1) # Center align
+        
+        if is_a_level:
+            # 🎓 HIGH-LEVEL A-LEVEL EXPLANATION
+            descriptor_text = (
+                "<b>UACE EVALUATION STANDARD:</b> This record evaluates the candidate based on the Uganda Advanced Certificate of Education "
+                "20-point weighting system. Performance is measured across three (3) Principal Subjects, General Paper, and a Subsidiary. "
+                "Calculated points determine eligibility for direct National University entry or Diploma-level professional advancement."
+            )
+        else:
+            # 📚 NEW CURRICULUM O-LEVEL EXPLANATION
+            descriptor_text = (
+                "<b>UCE COMPETENCY STANDARD:</b> This record reflects the New Lower Secondary Curriculum (NLSC) standards. "
+                "It measures learner achievement through Activities of Integration (AOI), Project-based learning, and Summative "
+                "assessments. Grades 1, 2, and 3 represent levels of competency mastery as mandated by UNEB."
+            )
+
+        # Draw the descriptor in the 'Dead Space'
+        desc_para = Paragraph(descriptor_text, desc_style)
+        desc_para.wrapOn(p, 500, 50)
+        desc_para.drawOn(p, 48, height - 255) # Positioned perfectly in the gap
+
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
             formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
