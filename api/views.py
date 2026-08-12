@@ -2939,20 +2939,22 @@ def generate_national_report_pdf(request, student_id):
             return 0, "F"
         
         def get_uace_final_metrics(score, subject_name):
+
             sub = subject_name.upper()
-            # 1. Subsidiaries (GP, Sub-Math, Sub-ICT) -> Max 1 Point
+            
+            # 1. Subsidiaries (GP, Sub-Math, Sub-ICT) still contribute to the profile
+            # but the 15-point total usually focuses on the 3 Principals.
             if any(x in sub for x in ["GENERAL PAPER", "GP", "SUB", "SUBSIDIARY"]):
                 if score >= 40: return "O", 1, "Pass"
                 else: return "F", 0, "Fail"
             
-            # 2. Principal Subjects -> Max 6 Points
-            if score >= 80: return "A", 6, "Principal Distinction"
-            if score >= 70: return "B", 5, "Principal Very Good"
-            if score >= 60: return "C", 4, "Principal Good"
-            if score >= 50: return "D", 3, "Principal Satisfactory"
-            if score >= 40: return "E", 2, "Principal Pass"
-            if score >= 35: return "O", 1, "Subsidiary Pass"
-            return "F", 0, "Failing Grade"
+            # 2. NEW 5-POINT PRINCIPAL SCALE (A=5 to E=1)
+            if score >= 80: return "A", 5, "Exceptional"
+            if score >= 70: return "B", 4, "Outstanding"
+            if score >= 60: return "C", 3, "Satisfactory"
+            if score >= 50: return "D", 2, "Basic"
+            if score >= 40: return "E", 1, "Elementary"
+            return "F", 0, "Unsatisfactory"
         
         def get_sub_remark(score):
             if score >= 90: return "Exceptional mastery."
@@ -3202,8 +3204,8 @@ def generate_national_report_pdf(request, student_id):
         # 🎓 13. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub UACE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub (A-LEVEL) Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub KEY
         p.setFont("Helvetica-Bold", 8); p.drawString(50, height - 528, "ADVANCED LEVEL (UACE) PRINCIPAL PASS SCALES:")
         uace_data = [
-            ['A (6pts)', 'B (5pts)', 'C (4pts)', 'D (3pts)', 'E (2pts)', 'O (1pt)', 'F (0pts)'],
-            ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']
+            ['A (5pts)', 'B (4pts)', 'C (3pts)', 'D (2pts)', 'E (1pts)', 'O (1pt)', 'F (0pts)'],
+            ['Excellent', 'Very Good', 'Good', 'Satisfactory', 'Basic', 'Sub. Pass', 'Fail']
         ]
         u_table = Table(uace_data, colWidths=[68, 68, 68, 68, 68, 68, 68])
         u_table.setStyle(TableStyle([('FONTSIZE',(0,0),(-1,-1),7),('GRID',(0,0),(-1,-1),0.1,colors.black),('ALIGN', (0,0), (-1,-1), 'CENTER')]))
