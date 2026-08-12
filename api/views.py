@@ -2997,7 +2997,7 @@ def generate_national_report_pdf(request, student_id):
         p.drawCentredString(width/2, height-55, "UGANDA NATIONAL EXAMINATIONS BOARD (UNEB)")
 
         
-        lx, ly, lw, lh = 40, height - 140, 70, 70
+        lx, ly, lw, lh = 35, height - 140, 70, 70
         if school.logo and os.path.exists(school.logo.path):
             p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
         else:
@@ -3006,16 +3006,16 @@ def generate_national_report_pdf(request, student_id):
 
         # School Info (Immediately right of the logo)
         p.setFillColor(gov_blue); p.setFont("Times-Bold", 10)
-        p.drawString(lx + 80, height - 85, school.name.upper())
+        p.drawString(lx + 70, height - 85, school.name.upper())
         
         p.setFillColor(colors.black); p.setFont("Times-Bold", 8.5)
         # 📞 ADDING THE THREE NUMBERS (Phone 1, Phone 2, and Official Email)
-        p.drawString(lx + 80, height - 100, f"TEL 1: {getattr(school, 'phone', '+256 700 000000')}")
-        p.drawString(lx + 80, height - 112, f"TEL 2: {getattr(school, 'phone2', '+256 770 000000')}")
-        p.drawString(lx + 80, height - 124, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
+        p.drawString(lx + 70, height - 100, f"TEL 1: {getattr(school, 'phone', '+256 709858960')}")
+        p.drawString(lx + 70, height - 112, f"TEL 2: {getattr(school, 'phone2', '+256 770 000000')}")
+        p.drawString(lx + 70, height - 124, f"EMAIL: {getattr(school, 'email', 'info@school.ug')}")
         
         p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
-        p.drawString(lx + 80, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+        p.drawString(lx + 70, height - 138, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
 
 
         
@@ -3023,7 +3023,7 @@ def generate_national_report_pdf(request, student_id):
         # 📸 9. STUDENT BIOMETRIC IDENTITY (WITH HUMAN SHADOW FALLBACK)
         # =============================================================
         # Coordinates: px = width - 125, py = base_y - 180, pw = 80, ph = 100
-        px, py, pw, ph = 310, height - 165, 80, 100 
+        px, py, pw, ph = 313, height - 165, 80, 100 
         
         # 🛡️ Draw the Frame first
         p.setStrokeColor(gov_blue)
@@ -3074,7 +3074,9 @@ def generate_national_report_pdf(request, student_id):
             descriptor_text = (
                 "<b>UACE EVALUATION STANDARD:</b> This record evaluates the candidate based on the Uganda Advanced Certificate of Education "
                 "20-point weighting system. Performance is measured across three (3) Principal Subjects, General Paper, and a Subsidiary. "
-                "Calculated points determine eligibility for direct National University entry or Diploma-level professional advancement."
+                "Your final grade for each subject is no longer determined by the final UNEB exam."
+                "80% of the grade comes from the End-of-Cycle (UNEB) Examination."
+                "20% of the grade comes from Continuous Assessment (CA) and a school-based project marks."
             )
         else:
             # 📚 NEW CURRICULUM O-LEVEL EXPLANATION
