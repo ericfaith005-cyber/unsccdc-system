@@ -3093,6 +3093,47 @@ def generate_national_report_pdf(request, student_id):
         desc_para.wrapOn(p, 500, 50)
         desc_para.drawOn(p, 48, height - 260) # Positioned perfectly in the gap
 
+        # =============================================================
+        # 📊 11.5 THE NATIONAL PERFORMANCE SUMMARY (ADVANCED TABLE)
+        # =============================================================
+        if is_a_level:
+            summary_title = "UACE PERFORMANCE SUMMARY"
+            summary_val = f"{total_uace_points} / 15"
+            summary_label = "TOTAL WEIGHT"
+        else:
+            summary_title = "UCE PERFORMANCE SUMMARY"
+            summary_val = f"{overall_avg:.1f}%"
+            summary_label = "OVERALL AVERAGE"
+
+        # 💎 Create a small, high-impact table
+        summary_data = [
+            [summary_title, ''],
+            [summary_label, summary_val]
+        ]
+        
+        s_table = Table(summary_data, colWidths=[160, 100])
+        s_table.setStyle(TableStyle([
+            # Title Row
+            ('SPAN', (0,0), (1,0)),
+            ('BACKGROUND', (0,0), (-1,0), rich_gold),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.black),
+            ('FONTNAME', (0,0), (-1,0), 'Times-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 9),
+            ('ALIGN', (0,0), (-1,0), 'CENTER'),
+            # Value Row
+            ('BACKGROUND', (0,1), (-1,1), gov_blue),
+            ('TEXTCOLOR', (0,1), (-1,1), colors.white),
+            ('FONTNAME', (0,1), (-1,1), 'Times-Bold'),
+            ('FONTSIZE', (0,1), (-1,1), 14),
+            ('ALIGN', (0,1), (-1,1), 'CENTER'),
+            # Outer Border
+            ('GRID', (0,0), (-1,-1), 1.5, gov_blue),
+        ]))
+
+        # 📍 Position it in the gap (centered horizontally)
+        s_table.wrapOn(p, width, height)
+        s_table.drawOn(p, width/2 - 130, height - 315) # Centered below the descriptor
+
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
             formatted_score = f"{m.eot_score:g} / {m.eot_max}" 
