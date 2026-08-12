@@ -2944,7 +2944,7 @@ def generate_national_report_pdf(request, student_id):
             
             # 1. Subsidiaries (GP, Sub-Math, Sub-ICT) still contribute to the profile
             # but the 15-point total usually focuses on the 3 Principals.
-            if any(x in sub for x in ["GENERAL PAPER", "GP", "SUB", "SUBSIDIARY"]):
+            if any(x in sub for x in ["GENERAL PAPER", "GP", "SUB", "SUBSIDIARY", "ICT", "ICT"]):
                 if score >= 40: return "O", 1, "Pass"
                 else: return "F", 0, "Fail"
             
@@ -3143,7 +3143,7 @@ def generate_national_report_pdf(request, student_id):
             elif score >= 70: rem = "Very Good"
             elif score >= 60: rem = "Good Progress"
             elif score >= 50: rem = "Fair"
-            else: rem = "Support Req."
+            else: rem = "Basic"
 
             # 🚀 STEP D: DATA ALIGNMENT (A-Level vs O-Level)
             if is_a_level:
@@ -3221,7 +3221,7 @@ def generate_national_report_pdf(request, student_id):
         # 🛡️ Draw a prestigious thin grey box for the remarks (Height Adjusted)
         p.setStrokeColor(colors.grey)
         p.setLineWidth(0.5)
-        p.rect(50, height - 645, width - 100, 60) # Top=height-575, Bottom=height-635
+        p.rect(50, height - 645, width - 100, 60) 
 
         # A. Class Teacher Remarks
         p.setFillColor(colors.black)
