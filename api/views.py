@@ -2860,6 +2860,18 @@ def generate_national_report_pdf(request, student_id):
         balance = fees.fees_balance
         marks = student.marks.all() 
         school = student.school
+        total_uace_points = 0 
+
+        for m in marks:
+            if is_a_level:
+                sub_upper = m.subject.name.upper()
+                # 🛡️ ONLY PRINCIPALS COUNT FOR THE 15-POINT TOTAL
+                if not any(x in sub_upper for x in ["GENERAL", "GP", "SUB", "SUBSIDIARY"]):
+                    if m.eot_score >= 80: total_uace_points += 5
+                    elif m.eot_score >= 70: total_uace_points += 4
+                    elif m.eot_score >= 60: total_uace_points += 3
+                    elif m.eot_score >= 50: total_uace_points += 2
+                    elif m.eot_score >= 40: total_uace_points += 1
 
         # 🧮 3. Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub RANKING ENGINE
         all_class_students = Student.objects.filter(current_class=student.current_class, school=school)
@@ -3164,18 +3176,7 @@ def generate_national_report_pdf(request, student_id):
         
         data_rows = [headers]
         total_uace_points = 0
-        
-        for m in marks:
-            sub_upper = m.subject.name.upper()
-            # 🛡️ ONLY PRINCIPALS COUNT FOR THE 15-POINT TOTAL
-            # We skip Subsidiaries (GP, Sub-Math, Sub-ICT) for the 15-point weight
-            if not any(x in sub_upper for x in ["GENERAL", "GP", "SUB", "SUBSIDIARY", "ICT", "ICT"]):
-                if m.eot_score >= 80: total_uace_points += 5
-                elif m.eot_score >= 70: total_uace_points += 4
-                elif m.eot_score >= 60: total_uace_points += 3
-                elif m.eot_score >= 50: total_uace_points += 2
-                elif m.eot_score >= 40: total_uace_points += 1
-
+    
         for m in marks:
             
             t_init = "STF" 
