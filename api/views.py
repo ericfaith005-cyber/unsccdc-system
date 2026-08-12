@@ -3067,7 +3067,7 @@ def generate_national_report_pdf(request, student_id):
         p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
         p.drawCentredString(width/2, height - 222, "NATIONAL TERMLY SCHOLASTIC PERFORMANCE RECORD")
 
-        desc_style = ParagraphStyle('DescStyle', fontName='Times-Roman', fontSize=7.5, leading=9, alignment=1) # Center align
+        desc_style = ParagraphStyle('DescStyle', fontName='Times-Roman', fontSize=9, leading=9, alignment=1) # Center align
         
         if is_a_level:
             # 🎓 HIGH-LEVEL A-LEVEL EXPLANATION
@@ -3089,7 +3089,7 @@ def generate_national_report_pdf(request, student_id):
         # Draw the descriptor in the 'Dead Space'
         desc_para = Paragraph(descriptor_text, desc_style)
         desc_para.wrapOn(p, 500, 50)
-        desc_para.drawOn(p, 48, height - 255) # Positioned perfectly in the gap
+        desc_para.drawOn(p, 48, height - 260) # Positioned perfectly in the gap
 
         data = [['SUB', 'A1', 'A2', 'MID', 'A3', 'A4', 'EOT', 'PRJ', 'AVG', 'GRD', 'TCH', 'REMARKS']]
         for m in marks:
