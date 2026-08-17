@@ -3804,7 +3804,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.line(45, base_y - 50, width - 45, base_y - 50)
 
     # 3. 📸 EXTREME TOP STUDENT PHOTO (Right of Republic/KEB)
-    px, py, pw, ph = width - 110, base_y - 125, 75, 90
+    px, py, pw, ph = width - 110, base_y - 135, 75, 90
     if student.photo and os.path.exists(student.photo.path):
         p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
@@ -3899,7 +3899,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.setStrokeColor(colors.teal); p.circle(seal_x + 25, seal_y + 35, 25, stroke=1)
 
     p.setFont("Times-Bold", 7); p.drawCentredString(seal_x + 25, seal_y + 5, "KEB VERIFIED")
-    p.setFont("Times-Roman", 6); p.drawString(45, base_y - 402, f"Digital Authentication: {datetime.datetime.now().strftime('%d/%m/%Y')}")
+    p.setFont("Times-Roman", 6); p.drawString(45, base_y - 408, f"Digital Authentication: {datetime.datetime.now().strftime('%d/%m/%Y')}")
 
 @login_required
 def keb_mock_portal_view(request):
