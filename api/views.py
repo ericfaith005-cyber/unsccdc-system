@@ -3898,8 +3898,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     else:
         p.setStrokeColor(colors.teal); p.circle(seal_x + 25, seal_y + 35, 25, stroke=1)
 
-    p.setFont("Times-Bold", 7); p.drawCentredString(seal_x + 25, seal_y + 5, "KEB VERIFIED")
-    p.setFont("Times-Roman", 6); p.drawString(45, base_y - 408, f"Digital Authentication: {datetime.datetime.now().strftime('%d/%m/%Y')}")
+    p.setFont("Times-Bold", 7); p.drawCentredString(seal_x + 25, seal_y + 8, "KEB VERIFIED")
+    p.setFont("Times-Roman", 6); p.drawString(45, base_y - 403, f"Digital Authentication: {datetime.datetime.now().strftime('%d/%m/%Y')}")
 
 @login_required
 def keb_mock_portal_view(request):
