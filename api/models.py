@@ -44,6 +44,7 @@ class School(models.Model):
     ]
     name = models.CharField(max_length=255)
     logo = models.ImageField(upload_to='logos/', null=True, blank=True)
+    keb_logo = models.ImageField(upload_to='logos/keb/', null=True, blank=True, verbose_name="Official KEB Logo")
     sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='SECONDARY')
     # ... rest of your fields
     school_type = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='SEC')

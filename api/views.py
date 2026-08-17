@@ -3779,131 +3779,125 @@ def generate_keb_passlip(request, student_id):
 
 def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
-    base_y = height - y_offset # The ceiling for this slip
+    base_y = height - y_offset 
     
-    # 🎨 IMPERIAL GOLD PALETTE
-    gold_bg = colors.HexColor("#FFF9E6")    # Light Gold Silk Background
-    imperial_gold = colors.HexColor("#D4AF37") # Deep Gold
-    gov_blue = colors.HexColor("#002366")    # Royal Navy
-    ug_red = colors.HexColor("#D90000")       # National Red
+    # 🎨 NATIONAL Hub Hub Hub PALETTE
+    gov_blue = colors.HexColor("#002366")
+    rich_gold = colors.HexColor("#D4AF37")
+    ug_red = colors.HexColor("#D90000")
+    off_white = colors.HexColor("#FFFFFF")
 
-    # 1. 🖌️ PAINT THE Hub Hub Hub FLOOR (Gold Theme)
-    p.setFillColor(gold_bg)
-    p.rect(10, base_y - 410, width - 20, 400, fill=1, stroke=0)
-    
-    # Triple-Guard National Borders
-    p.setLineWidth(3); p.setStrokeColor(gov_blue); p.rect(15, base_y - 405, width - 30, 390, stroke=1)
-    p.setLineWidth(1); p.setStrokeColor(imperial_gold); p.rect(20, base_y - 400, width - 40, 380, stroke=1)
+    # 1. 🖌️ BACKGROUND & TRIPLE BORDERS
+    p.setFillColor(off_white); p.rect(15, base_y - 405, width - 30, 390, fill=1, stroke=0)
+    p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(20, base_y - 400, width - 40, 380, stroke=1)
+    p.setLineWidth(0.5); p.setStrokeColor(rich_gold); p.rect(24, base_y - 396, width - 48, 372, stroke=1)
 
-    # 2. 🌌 SOVEREIGN WATERMARK
-    p.saveState()
-    p.setFont("Times-Bold", 45)
-    p.setFillColor(colors.HexColor("#D4AF37"), alpha=0.05) # Ghost Gold
-    p.translate(width/2, base_y - 200)
-    p.rotate(35)
-    p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
-    p.restoreState()
-
-    # 3. 🏛️ NATIONAL HEADERS
+    # 2. 🏛️ HEADERS (Removed Brackets)
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     p.drawCentredString(width/2, base_y - 35, "THE REPUBLIC OF UGANDA")
-    p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
-    p.drawCentredString(width/2, base_y - 55, "KYADONDO EXAMINATIONS BOARD (KEB)")
+    p.setFont("Times-Bold", 15); p.setFillColor(gov_blue)
+    p.drawCentredString(width/2, base_y - 55, "KYADONDO EXAMINATIONS BOARD") # 💎 Bracket removed!
     
-    p.setStrokeColor(imperial_gold); p.setLineWidth(0.8)
+    p.setStrokeColor(rich_gold); p.setLineWidth(0.5)
     p.line(45, base_y - 65, width - 45, base_y - 65)
 
-    # 4. 🏢 SCHOOL IDENTITY (LEFT)
-    lx, ly = 45, base_y - 150
-    if school.logo and os.path.exists(school.logo.path):
-        p.drawImage(school.logo.path, lx, ly, width=75, height=75, mask='auto')
-    
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
-    p.drawString(lx + 85, base_y - 90, school.name.upper())
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(lx + 85, base_y - 105, f"TEL: {getattr(school, 'phone', '---')}")
-    p.drawString(lx + 85, base_y - 118, f"EMAIL: {getattr(school, 'email', '---')}")
-    p.setFont("Times-Italic", 8); p.setFillColor(colors.grey)
-    p.drawString(lx + 85, base_y - 132, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+    # 3. 🖼️ LEFT: KEB OFFICIAL LOGO (AUTOMATIC)
+    # This now pulls from the new 'keb_logo' field in your school model
+    if school.keb_logo and os.path.exists(school.keb_logo.path):
+        p.drawImage(school.keb_logo.path, 45, base_y - 145, width=75, height=75, mask='auto')
+    else:
+        # Fallback if no KEB logo is uploaded
+        p.setStrokeColor(gov_blue); p.rect(45, base_y - 145, 75, 75, stroke=1)
+        p.setFont("Times-Bold", 7); p.drawCentredString(82, base_y - 110, "KEB LOGO")
 
-    # 5. 📸 STUDENT BIOMETRIC (CENTER-RIGHT) - LARGER
-    px, py, pw, ph = 330, base_y - 165, 80, 100
+    # 4. 🏢 SCHOOL INFORMATION (Next to KEB Logo)
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 10)
+    p.drawString(130, base_y - 85, school.name.upper())
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
+    p.drawString(130, base_y - 97, f"TEL: {getattr(school, 'phone', '---')}")
+    p.drawString(130, base_y - 107, f"EMAIL: {getattr(school, 'email', '---')}")
+    p.setFont("Times-Italic", 7)
+    p.drawString(130, base_y - 117, f"MOTTO: {getattr(school, 'school_motto', 'Excellence')}")
+
+    # 5. 📸 RIGHT: BIG STUDENT PHOTO (Spans Info Block)
+    # Positioned at the far right border
+    px, py, pw, ph = width - 130, base_y - 165, 85, 105
     if student.photo and os.path.exists(student.photo.path):
         p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-        p.setFillColor(gov_blue); p.setFont("Times-Bold", 7)
-        p.drawCentredString(px + (pw/2), py - 10, "VERIFIED IDENTITY")
+    else:
+        # 👤 Draw our Vector Silhouette if no photo
+        p.rect(px, py, pw, ph, stroke=1)
+        p.setFillColor(colors.HexColor("#DCDCDC"))
+        p.circle(px + pw/2, py + ph - 30, 18, fill=1) # Head
+        p.roundRect(px + 10, py + 10, pw - 20, 45, 10, fill=1) # Shoulders
 
-    # 6. 👤 STUDENT REGISTRY (FAR RIGHT)
-    sx = px + 90
+    # 6. 👤 STUDENT DATA (Aligned to the left of the Photo)
+    sx = width - 300 
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9.5)
-    p.drawString(sx, base_y - 90,  f"NAME: {student.full_name.upper()}")
-    p.drawString(sx, base_y - 105, f"NATIONAL PRN: {student.payment_code or '---'}")
-    p.drawString(sx, base_y - 120, f"SYSTEM ID: {student.account_number}")
-    p.drawString(sx, base_y - 135, f"LEVEL: {student.current_class}")
-    p.drawString(sx, base_y - 150, f"MOCK YEAR: 2026")
+    p.drawString(sx, base_y - 85,  f"NAME: {student.full_name.upper()}")
+    p.drawString(sx, base_y - 100, f"PRN: {student.payment_code or '---'}")
+    p.drawString(sx, base_y - 115, f"ID: {student.account_number}")
+    p.drawString(sx, base_y - 130, f"LEVEL: {student.current_class}")
+    p.drawString(sx, base_y - 145, f"YEAR: 2026")
 
-    # 7. 📊 THE ELASTIC RESULTS MATRIX (NEW CURRICULUM)
+    # 7. 📊 MARKS TABLE
     results_qs = KEBMockResult.objects.filter(student=student)
-    # Check if A-Level (S5, S6)
-    c_name = str(student.current_class).upper()
-    is_a_level = any(x in c_name for x in ["S.5", "S5", "S.6", "S6"])
+    is_a_level = any(x in str(student.current_class).upper() for x in ["S5", "S6"])
 
-    headers = ['SUBJECT NAME', 'SCORE (%)', 'GRADE', 'INTERPRETATION', 'TEACHER']
+    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'INTERPRETATION', 'TEACHER']
     col_widths = [140, 60, 60, 170, 80]
-
     data_rows = [headers]
+
     for r in results_qs:
-        score = r.score
-        grade = r.grade
-        
-        # 🤖 Hub Hub Hub Hub Hub GRADING LOGIC
+        interp = "Satisfactory"
         if is_a_level:
-            interp = f"PRINCIPAL PASS ({r.points} PTS)" if r.points > 1 else "SUBSIDIARY" if grade == "O" else "FAIL"
+            interp = f"Principal Pass ({r.points}pts)" if r.points > 1 else "Subsidiary"
         else:
-            # O-Level New Curriculum
-            interp = "EXCEPTIONAL" if grade == "A" else "OUTSTANDING" if grade == "B" else "SATISFACTORY" if grade == "C" else "BASIC" if grade == "D" else "ELEMENTARY"
-
-        # Teacher Initials
+            interp = "Exceptional" if r.grade == "A" else "Outstanding" if r.grade == "B" else "Basic"
+        
         teacher = Staff.objects.filter(subjects=r.subject, school=school).first()
-        t_name = teacher.full_name.split()[-1] if teacher else "KEB"
-
-        data_rows.append([r.subject.name.upper(), f"{score:g}", grade, interp, t_name])
-
-    if len(data_rows) == 1:
-        data_rows.append(["NO MOCK RECORDS FOUND", "-", "-", "-", "-"])
+        t_name = teacher.full_name.split()[-1].upper() if teacher else "KEB"
+        data_rows.append([r.subject.name.upper(), f"{r.score:g}%", r.grade, interp.upper(), t_name])
 
     table = Table(data_rows, colWidths=col_widths)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.2, colors.black),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
-        ('LINEBELOW', (0,0), (-1,0), 1.5, imperial_gold),
+        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.whitesmoke, colors.white]),
     ]))
     table.wrapOn(p, width, height)
-    table.drawOn(p, 45, base_y - 325)
+    table.drawOn(p, 45, base_y - 310)
 
-    # 8. ✍️ FOOTER: Hub Hub Hub AUTHORIZATION
-    p.setStrokeColor(gov_blue); p.setLineWidth(1)
-    p.line(45, base_y - 375, 220, base_y - 375)
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 388, "EXAMINATIONS SECRETARY (KEB)")
+    # 8. 📐 MINI GRADING KEY (2 ROWS)
+    p.setFont("Times-Bold", 7); p.setFillColor(colors.black)
+    p.drawString(45, base_y - 325, "NATIONAL GRADING KEY:")
     
-    # 🛡️ THE Hub Hub Hub KEB SEAL (Bottom Right)
-    p.setStrokeColor(colors.teal); p.setLineWidth(1.2)
-    p.circle(width - 80, base_y - 370, 30, stroke=1, fill=0)
-    p.setFont("Times-Bold", 7)
-    p.drawCentredString(width - 80, base_y - 365, "KEB")
-    p.drawCentredString(width - 80, base_y - 375, "MOCK 2026")
-    p.drawCentredString(width - 80, base_y - 385, "VERIFIED")
+    key_data = [
+        ['GRADE:', 'A (5pts)', 'B (4pts)', 'C (3pts)', 'D (2pts)', 'E (1pt)', 'O (1pt)', 'F (0pts)'],
+        ['LEVEL:', 'Exceptional', 'Outstanding', 'Satisfactory', 'Basic', 'Elementary', 'Subsidiary', 'Fail']
+    ]
+    k_table = Table(key_data, colWidths=[55, 65, 65, 65, 65, 65, 65, 60])
+    k_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+        ('FONTSIZE', (0,0), (-1,-1), 6),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+    ]))
+    k_table.wrapOn(p, width, height)
+    k_table.drawOn(p, 45, base_y - 355)
 
-    p.setFont("Times-Roman", 6); p.setFillColor(colors.grey)
-    p.drawString(45, base_y - 402, f"System Authenticated on: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M')}")
+    # 9. ✍️ FOOTER: AUTHORIZATION
+    p.setStrokeColor(gov_blue); p.line(45, base_y - 380, 200, base_y - 380)
+    p.drawString(45, base_y - 392, "EXAMINATIONS SECRETARY (KEB)")
+    
+    # 🛡️ STAMP
+    p.setStrokeColor(colors.teal); p.circle(width-80, base_y - 380, 22, stroke=1)
+    p.setFont("Times-Bold", 6); p.drawCentredString(width-80, base_y - 378, "KEB")
+    p.drawCentredString(width-80, base_y - 385, "VERIFIED")
 
 @login_required
 def keb_mock_portal_view(request):
