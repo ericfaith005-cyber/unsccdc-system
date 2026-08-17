@@ -3885,7 +3885,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     table.wrapOn(p, width, height)
     table.drawOn(p, 45, base_y - 340)
 
-    # 7. ✍️ FOOTER: SIGNATURE & KEB LOGO SEAL
+    
     p.setStrokeColor(gov_blue); p.line(45, base_y - 370, 200, base_y - 370)
     p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 382, "EXAMINATIONS SECRETARY")
@@ -3906,15 +3906,12 @@ def keb_mock_portal_view(request):
     try:
         school = getattr(request.user, 'school', None) or School.objects.first()
         
-        # 🧠 Get Classes
         sector_map = {
             'PRIMARY': ['P.6', 'P.7'],
             'SECONDARY': ['S.4', 'S.6'],
         }
         classes = sector_map.get(school.sector, ['S.4', 'S.6'])
 
-        # 💎 THE Hub Hub Hub NAME ALIGNMENT FIX
-        # We use 'combination_category' as suggested by the error log
         subjects = Subject.objects.all().order_by('name')
 
         # 🔎 Filter Logic
