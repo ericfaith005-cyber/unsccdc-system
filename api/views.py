@@ -3745,30 +3745,31 @@ from .models import Student, KEBMockResult, School, Staff
 @login_required
 def generate_keb_passlip(request, student_id):
     """
-    THE NATIONAL KEB PASSLIP GATEWAY
-    Generates two professional slips on a single A4 page.
+    🏛️ THE NATIONAL KEB PASSLIP ENGINE
+    Generates a high-prestige, dual-slip A4 document.
     """
     try:
         student = Student.objects.get(account_number=student_id)
         school = student.school
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="KEB_MOCK_{student.full_name}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="KEB_PASSLIP_{student.full_name}.pdf"'
         
+        # Initialize Canvas
         p = canvas.Canvas(response, pagesize=A4)
-        width, height = A4 # 595 x 842
+        width, height = A4 # 595.27 x 841.89
 
         # 💎 DRAW TWO IDENTICAL SLIPS
-        # Slip 1 (Top)
+        # Slip 1: Top Half
         draw_keb_slip_layout(p, student, school, 0)
         
-        # ✂️ Central Perforation Line
+        # ✂️ Central Cutting Guide
         p.setDash(3, 3)
         p.setStrokeColor(colors.grey)
         p.line(0, height/2, width, height/2)
-        p.setDash() 
+        p.setDash() # Reset
 
-        # Slip 2 (Bottom)
+        # Slip 2: Bottom Half
         draw_keb_slip_layout(p, student, school, height/2)
 
         p.save()
@@ -3914,7 +3915,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.drawImage(school.keb_logo.path, seal_x, seal_y + 10, width=50, height=50, mask='auto')
     
     p.setFont("Times-Bold", 7); p.drawCentredString(seal_x + 25, seal_y + 5, "KEB VERIFIED")
-    
 @login_required
 def keb_mock_portal_view(request):
     try:
