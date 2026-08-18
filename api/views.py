@@ -3788,6 +3788,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     gov_blue = colors.HexColor("#002366")    
     ug_red = colors.HexColor("#D90000")       
     off_white = colors.HexColor("#FFFFFF")
+    success_green = colors.HexColor("#006400") 
 
     # 1. 🖌️ BACKGROUND & TRIPLE BORDERS
     p.setFillColor(gold_bg)
@@ -3849,7 +3850,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     avg = total_score / count if count > 0 else 0
     
     # Draw the Ranking Box
-    p.setStrokeColor(gov_blue); p.setFillColor(gov_blue); p.rect(sx, base_y - 150, 220, 22, fill=1)
+    p.setFillColor(success_green); p.rect(40, base_y - 160, 260, 22, fill=1, stroke=0)
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     
     if is_a_level:
@@ -3891,17 +3892,21 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 382, "EXAMINATIONS SECRETARY")
 
-    # 🛡️ THE Hub Hub Hub KEB LOGO IN THE SEAL (BOTTOM RIGHT)
-    seal_x, seal_y = width - 90, base_y - 390
+     seal_x, seal_y = width - 95, base_y - 405
     if school.keb_logo and os.path.exists(school.keb_logo.path):
-        # We put the actual logo inside the verification area
-        p.drawImage(school.keb_logo.path, seal_x, seal_y + 10, width=50, height=50, mask='auto')
+        # The logo is now lower on the page
+        p.drawImage(school.keb_logo.path, seal_x, seal_y + 8, width=45, height=45, mask='auto')
     else:
-        p.setStrokeColor(colors.teal); p.circle(seal_x + 25, seal_y + 40, 30, stroke=1)
+        p.setStrokeColor(colors.teal); p.circle(seal_x + 25, seal_y + 30, 22, stroke=1)
 
-    p.setFont("Times-Bold", 7); p.drawCentredString(seal_x + 25, seal_y + 14, "KEB VERIFIED")
-    p.setFont("Times-Roman", 6); p.drawString(45, base_y - 403, f"Digital Authentication: {datetime.datetime.now().strftime('%d/%m/%Y')}")
-
+    # Label pushed to the absolute edge
+    p.setFont("Times-Bold", 6.5)
+    p.drawCentredString(seal_x + 22, seal_y, "KEB VERIFIED")
+    
+    # 📄 Digital Timestamp at the very bottom
+    p.setFont("Times-Roman", 5.5); p.setFillColor(colors.grey)
+    p.drawString(45, base_y - 405, f"Security Hash: {datetime.datetime.now().strftime('%d%m%Y%H%M%S')}")
+    
 @login_required
 def keb_mock_portal_view(request):
     try:
