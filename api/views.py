@@ -3968,7 +3968,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
     # KEB Logo in Seal position
-    seal_x, seal_y = width - 170, base_y - 415
+    seal_x, seal_y = width - 185, base_y - 405
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # Increased size to 65x65
         p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=35, mask='auto')
