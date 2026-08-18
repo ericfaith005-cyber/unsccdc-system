@@ -3865,27 +3865,79 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(sx + 10, base_y - 143, rank_text)
 
     # 6. 📊 THE MARKS TABLE (Aligned to fit)
-    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'INTERPRETATION', 'TEACHER']
-    col_widths = [140, 60, 60, 170, 80]
+    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'PERFORMANCE GRAPH (OUT OF 100)', 'INTERPRETATION']
+    
+    # Precisely calculated widths to hit the margins (Total 510)
+    col_widths = [130, 50, 50, 130, 150] 
     data_rows = [headers]
 
     for r in results_qs:
-        teacher = Staff.objects.filter(subjects=r.subject, school=school).first()
-        t_name = teacher.full_name.split()[-1].upper() if teacher else "KEB"
-        interp = "Exceptional" if r.score >= 80 else "Satisfactory" if r.score >= 50 else "Basic"
-        data_rows.append([r.subject.name.upper(), f"{r.score:g}%", r.grade, interp.upper(), t_name])
+        score = r.score
+        grade = r.grade
+        
+        # 💎 10-POINT INTERPRETATIONS
+        if score >= 90: interp = "EXCEPTIONAL"
+        elif score >= 80: interp = "ADVANCED"
+        elif score >= 70: interp = "STRONG"
+        elif score >= 60: interp = "SATISFACTORY"
+        elif score >= 50: interp = "BASIC"
+        elif score >= 40: interp = "ELEMENTARY"
+        else: interp = "UNSATISFACTORY"
 
-    if len(data_rows) == 1: data_rows.append(["NO RECORDS", "-", "-", "-", "-"])
+        # We leave the "Graph" column empty in the text array 
+        # so we can draw the physical bars on top of it later.
+        data_rows.append([r.subject.name.upper(), f"{score:g}%", grade, "", interp])
 
+    if len(data_rows) == 1: 
+        data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
+
+    # 1. DRAW THE TEXT TABLE
+    table_y_position = base_y - 325 # Store this for the graph alignment
     table = Table(data_rows, colWidths=col_widths)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (-1,0), gov_blue),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+        ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.1, colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     table.wrapOn(p, width, height)
-    table.drawOn(p, 45, base_y - 340)
+    table.drawOn(p, 45, table_y_position)
+
+    # =============================================================
+    # 📈 6.5 THE Hub Hub Hub Hub Hub VECTOR GRAPH ENGINE
+    # =============================================================
+    # This draws the physical bars inside the 'PERFORMANCE GRAPH' column
+    row_height = 23.5 # Adjusted to match the table's default row height
+    
+    # Start drawing from the first data row (below header)
+    # The X coordinate is: Left Margin (45) + Subject(130) + Score(50) + Grade(50) = 275
+    graph_x_start = 275 + 15 # Padding inside the cell
+    
+    for i, r in enumerate(results_qs):
+        current_row_y = (base_y - 325) + (len(data_rows) - i - 2) * row_height + 7
+        
+        # A. Draw the Background Track (Grey)
+        p.setFillColor(colors.HexColor("#EEEEEE"))
+        p.roundRect(graph_x_start, current_row_y, 100, 6, 3, fill=1, stroke=0)
+        
+        # B. Determine Bar Color based on performance
+        bar_color = ug_red # Default Fail
+        if r.score >= 80: bar_color = colors.HexColor("#006400") # Success Green
+        elif r.score >= 50: bar_color = rich_gold # Satisfactory Gold
+        
+        # C. Draw the Active Progress Bar (The Statistics)
+        # Length is tied to the score (e.g., 85% = 85 units wide)
+        bar_width = max(2, r.score) # Minimum 2 pixels for visibility
+        p.setFillColor(bar_color)
+        p.roundRect(graph_x_start, current_row_y, bar_width, 6, 3, fill=1, stroke=0)
+        
+        # D. Add a tiny white dot at the end for "HD" look
+        p.setFillColor(colors.white)
+        p.circle(graph_x_start + bar_width - 2, current_row_y + 3, 1, fill=1, stroke=0)
 
     
     p.setStrokeColor(gov_blue); p.line(45, base_y - 370, 200, base_y - 370)
