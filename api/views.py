@@ -3821,7 +3821,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
 
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
-    lx, ly, lw, lh = 45, base_y - 135, 70, 70
+    lx, ly, lw, lh = 45, base_y - 130, 70, 70
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
     else:
@@ -3894,7 +3894,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
     # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 290
+    table_y = base_y - 305
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -3918,7 +3918,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
-    p.drawString(45, base_y - 305, "KEB EVALUATION STANDARDS:")
+    p.drawString(45, base_y - 315, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],
@@ -3927,14 +3927,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],
                     ['UCE:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']]
 
-    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=13) # Reduced to 13
+    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=18) # Reduced to 18
     k_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6),
         ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
     ]))
     k_table.wrapOn(p, width, height)
-    k_table.drawOn(p, 45, base_y - 335)
+    k_table.drawOn(p, 45, base_y - 345)
 
     # =============================================================
     # ✍️ 7. FOOTER: LOWERED KEB SEAL
@@ -3949,7 +3949,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.drawImage(school.keb_logo.path, seal_x, seal_y, width=65, height=65, mask='auto')
     
     # 💎 TEXT TO THE RIGHT OF LOGO
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 10)
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 8)
     p.drawString(seal_x + 75, seal_y + 35, "KEB VERIFIED")
     p.setFont("Times-Bold", 6); p.setFillColor(colors.black)
     p.drawString(seal_x + 75, seal_y + 25, "KEB MOCKS")
