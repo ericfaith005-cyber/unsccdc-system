@@ -3986,7 +3986,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     p.setFont("Times-Bold", 7)
     p.setFillColor(colors.black)
-    p.drawString(seal_x + 60, seal_y + 22, "NATIONAL MOCK")
+    p.drawString(seal_x + 60, seal_y + 22, "KEB MOCK")
     p.drawString(seal_x + 60, seal_y + 12, "REGISTRY 2026")
     
     # Bottom Timestamp
