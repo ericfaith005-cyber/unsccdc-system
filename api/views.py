@@ -3870,7 +3870,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
         
-    bar_y = base_y - 135
+    bar_y = base_y - 140
     bar_height = 22
     full_width = width - 90  # Calculates the span from left margin to right
     split_point = 150       # Width of the Gold Grade section
@@ -3968,10 +3968,10 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
     # KEB Logo in Seal position
-    seal_x, seal_y = width - 140, base_y - 410
+    seal_x, seal_y = width - 170, base_y - 415
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # Increased size to 65x65
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=45, mask='auto')
+        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=35, mask='auto')
     
     # 💎 TEXT TO THE RIGHT OF LOGO
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 8)
