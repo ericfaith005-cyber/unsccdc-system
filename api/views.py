@@ -3892,7 +3892,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 382, "EXAMINATIONS SECRETARY")
 
-     seal_x, seal_y = width - 95, base_y - 405
+    seal_x, seal_y = width - 95, base_y - 405
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # The logo is now lower on the page
         p.drawImage(school.keb_logo.path, seal_x, seal_y + 8, width=45, height=45, mask='auto')
