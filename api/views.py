@@ -3917,7 +3917,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(graph_x, bar_y, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
     
-     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
     p.drawString(45, base_y - 305, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
