@@ -3952,7 +3952,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],
                     ['ACHIEVEMENT LEVEL:', 'Exceptional', 'Outstanding', 'Satisfactory', 'Basic', 'Elementary']]
 
-    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=18) # Reduced to 18
+    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=15) # Reduced to 18
     k_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6),
         ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -3972,7 +3972,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # 💎 DRAW THE TELESCOPE LOGO (Larger & Proportional 55x55)
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=40, mask='auto')
+        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=35, height=40, mask='auto')
     else:
         # Fallback if no logo
         p.setStrokeColor(colors.teal)
