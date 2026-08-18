@@ -3821,25 +3821,30 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
-    all_grades = [r.grade for r in results_qs if r.grade]
+        all_grades = [r.grade for r in results_qs if r.grade]
         
-    if all_grades:
-        most_frequent_grade = Counter(all_grades).most_common(1)[0][0]
-    else:
-        most_frequent_grade = "N/A"
+        if all_grades:
+            # This finds the grade that appeared most often
+            most_frequent_grade = Counter(all_grades).most_common(1)[0][0]
+        else:
+            most_frequent_grade = "N/A"
 
-    bx = width - 100
-    by = base_y - 128 # Positioned perfectly under the frame
-    bw = 55 # Matches photo width
+        # Step B: Draw the Star Badge
+        # Position: Directly under the photo (px=width-100, py=base_y-115)
+        bx = width - 100
+        by = base_y - 128 # Positioned perfectly under the frame
+        bw = 55 # Matches photo width
 
-    p.setFillColor(gov_blue)
-    p.roundRect(bx, by, bw, 12, 3, fill=1, stroke=0)
-    
-    p.setFillColor(rich_gold)
-    p.setFont("Times-Bold", 8)
+        # Draw a small prestigious background for the grade
+        p.setFillColor(gov_blue)
+        p.roundRect(bx, by, bw, 12, 3, fill=1, stroke=0)
+        
+        # Draw the Stars and Grade
+        p.setFillColor(rich_gold)
+        p.setFont("Times-Bold", 8)
         # 💎 THE DESIGN: ★★★ GRADE ★★★
-    star_text = f"★★★ {most_frequent_grade} ★★★"
-    p.drawCentredString(bx + (bw/2), by + 3, star_text)
+        star_text = f"★★★ {most_frequent_grade} ★★★"
+        p.drawCentredString(bx + (bw/2), by + 3, star_text)
 
     
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
