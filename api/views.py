@@ -3802,7 +3802,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     p.drawCentredString(width/2, base_y - 25, "THE REPUBLIC OF UGANDA")
     p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
-    p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD")
+    p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD (KEB)")
     
     p.setStrokeColor(imperial_gold); p.setLineWidth(0.8)
     p.line(45, base_y - 50, width - 45, base_y - 50)
@@ -3821,14 +3821,21 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
 
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
-    # We remove PRN and ID as requested
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    sx = 45
-    p.drawString(sx, base_y - 75, f"STUDENT: {student.full_name.upper()}")
-    p.setFont("Times-Bold", 9)
-    p.drawString(sx, base_y - 90, f"SCHOOL: {school.name.upper()}")
-    p.drawString(sx, base_y - 105, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(sx, base_y - 120, f"YEAR: 2026")
+    lx, ly, lw, lh = 45, base_y - 135, 70, 70
+    if school.logo and os.path.exists(school.logo.path):
+        p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
+    else:
+        p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
+
+    # Combined School & Student Info starting to the right of the logo (x=125)
+    ix = 125
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
+    p.drawString(ix, base_y - 75, school.name.upper())
+    
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
+    p.drawString(ix, base_y - 90, f"STUDENT: {student.full_name.upper()}")
+    p.drawString(ix, base_y - 105, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(ix, base_y - 120, f"YEAR: 2026")
 
     # 🧮 5. NATIONAL RANKING LOGIC (The "Result 1, 2, 3" or "Points")
     results_qs = KEBMockResult.objects.filter(student=student)
@@ -3851,33 +3858,29 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     avg = total_score / count if count > 0 else 0
     
-    # Draw the Ranking Box
-    p.setFillColor(success_green); p.rect(40, base_y - 160, 260, 22, fill=1, stroke=0)
+    results_qs = KEBMockResult.objects.filter(student=student)
+    c_name = str(student.current_class).upper()
+    is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "A-LEVEL"])
+    
+    total_uace_points = sum(r.points for r in results_qs if r.points)
+    all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
+    
+    p.setFillColor(success_green); p.rect(45, base_y - 165, 260, 22, fill=1, stroke=0)
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     
     if is_a_level:
-        rank_text = f"SYSTEM UNEB RANKING: {total_uace_points} POINTS / 15"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
     else:
-        # O-Level Result Logic
-        res_tier = "RESULT 3 (BASIC)"
-        if avg >= 75: res_tier = "RESULT 1 (EXCELLENT)"
-        elif avg >= 55: res_tier = "RESULT 2 (SATISFACTORY)"
-        rank_text = f"SYSTEM UNEB RANKING: {res_tier}"
-    
-    p.drawString(sx + 10, base_y - 143, rank_text)
+        res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
+        rank_text = f"KEB RANKING: {res_tier}"
+    p.drawString(55, base_y - 158, rank_text)
 
-    # 6. 📊 THE MARKS TABLE (Aligned to fit)
-    headers = ['SUBJECT NAME', 'SCORE', 'GRADE', 'PERFORMANCE GRAPH (OUT OF 100)', 'INTERPRETATION']
-    
-    # Precisely calculated widths to hit the margins (Total 510)
-    col_widths = [130, 50, 50, 130, 150] 
+    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH (100%)', 'INTERPRETATION']
+    col_widths = [140, 50, 40, 130, 150] 
     data_rows = [headers]
 
     for r in results_qs:
         score = r.score
-        grade = r.grade
-        
-        # 💎 10-POINT INTERPRETATIONS
         if score >= 90: interp = "EXCEPTIONAL"
         elif score >= 80: interp = "ADVANCED"
         elif score >= 70: interp = "STRONG"
@@ -3885,81 +3888,78 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         elif score >= 50: interp = "BASIC"
         elif score >= 40: interp = "ELEMENTARY"
         else: interp = "UNSATISFACTORY"
+        data_rows.append([r.subject.name.upper(), f"{score:g}%", r.grade, "", interp])
 
-        # We leave the "Graph" column empty in the text array 
-        # so we can draw the physical bars on top of it later.
-        data_rows.append([r.subject.name.upper(), f"{score:g}%", grade, "", interp])
+    if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
-    if len(data_rows) == 1: 
-        data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
-
-    # 1. DRAW THE TEXT TABLE
-    table_y_position = base_y - 325 # Store this for the graph alignment
-    table = Table(data_rows, colWidths=col_widths)
+    table_y = base_y - 320
+    table = Table(data_rows, colWidths=col_widths, rowHeights=22)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
-        ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.1, colors.black),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
     ]))
     table.wrapOn(p, width, height)
-    table.drawOn(p, 45, table_y_position)
+    table.drawOn(p, 45, table_y)
 
-    # =============================================================
-    # 📈 6.5 THE Hub Hub Hub Hub Hub VECTOR GRAPH ENGINE
-    # =============================================================
-    # This draws the physical bars inside the 'PERFORMANCE GRAPH' column
-    row_height = 23.5 # Adjusted to match the table's default row height
-    
-    # Start drawing from the first data row (below header)
-    # The X coordinate is: Left Margin (45) + Subject(130) + Score(50) + Grade(50) = 275
-    graph_x_start = 275 + 15 # Padding inside the cell
-    
+    # 📈 5.5 DRAWING THE SYNCHRONIZED BARS
+    graph_x = 45 + 140 + 50 + 40 + 15 # Start of the 4th column + padding
     for i, r in enumerate(results_qs):
-        current_row_y = (base_y - 325) + (len(data_rows) - i - 2) * row_height + 7
+        # Calculate Y for each row precisely (22 is row height)
+        # We go from top to bottom
+        bar_y = (table_y + (len(data_rows) - i - 2) * 22) + 8
         
-        # A. Draw the Background Track (Grey)
-        p.setFillColor(colors.HexColor("#EEEEEE"))
-        p.roundRect(graph_x_start, current_row_y, 100, 6, 3, fill=1, stroke=0)
+        p.setFillColor(colors.HexColor("#E0E0E0")) # Track
+        p.roundRect(graph_x, bar_y, 100, 6, 3, fill=1, stroke=0)
         
-        # B. Determine Bar Color based on performance
-        bar_color = ug_red # Default Fail
-        if r.score >= 80: bar_color = colors.HexColor("#006400") # Success Green
-        elif r.score >= 50: bar_color = rich_gold # Satisfactory Gold
+        # Color Logic
+        bc = ug_red
+        if r.score >= 80: bc = success_green
+        elif r.score >= 50: bc = rich_gold
         
-        # C. Draw the Active Progress Bar (The Statistics)
-        # Length is tied to the score (e.g., 85% = 85 units wide)
-        bar_width = max(2, r.score) # Minimum 2 pixels for visibility
-        p.setFillColor(bar_color)
-        p.roundRect(graph_x_start, current_row_y, bar_width, 6, 3, fill=1, stroke=0)
-        
-        # D. Add a tiny white dot at the end for "HD" look
-        p.setFillColor(colors.white)
-        p.circle(graph_x_start + bar_width - 2, current_row_y + 3, 1, fill=1, stroke=0)
+        p.setFillColor(bc)
+        p.roundRect(graph_x, bar_y, max(2, r.score), 6, 3, fill=1, stroke=0)
 
     
-    p.setStrokeColor(gov_blue); p.line(45, base_y - 370, 200, base_y - 370)
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 382, "EXAMINATIONS SECRETARY")
+     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
+    p.drawString(45, base_y - 332, "KEB EVALUATION STANDARDS:")
 
-    seal_x, seal_y = width - 95, base_y - 405
-    if school.keb_logo and os.path.exists(school.keb_logo.path):
-        # The logo is now lower on the page
-        p.drawImage(school.keb_logo.path, seal_x, seal_y + 8, width=45, height=45, mask='auto')
+    if is_a_level:
+        # UACE TABLE
+        key_data = [
+            ['GRADE:', 'A (5pts)', 'B (4pts)', 'C (3pts)', 'D (2pts)', 'E (1pt)', 'O (1pt)', 'F (0pts)'],
+            ['UACE:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']
+        ]
     else:
-        p.setStrokeColor(colors.teal); p.circle(seal_x + 25, seal_y + 30, 22, stroke=1)
+        # UCE TABLE
+        key_data = [
+            ['GRADE:', 'A', 'B', 'C', 'D', 'E'],
+            ['UCE:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']
+        ]
 
-    # Label pushed to the absolute edge
-    p.setFont("Times-Bold", 6.5)
-    p.drawCentredString(seal_x + 22, seal_y, "KEB VERIFIED")
+    k_table = Table(key_data, colWidths=63 if is_a_level else 85)
+    k_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6.5),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
+    ]))
+    k_table.wrapOn(p, width, height)
+    k_table.drawOn(p, 45, base_y - 365)
+
+    # =============================================================
+    # ✍️ 7. FOOTER: LOWERED KEB SEAL
+    # =============================================================
+    p.setStrokeColor(gov_blue); p.line(45, base_y - 388, 200, base_y - 388)
+    p.drawString(45, base_y - 398, "KEB EXAMINATIONS SECRETARY")
     
-    # 📄 Digital Timestamp at the very bottom
-    p.setFont("Times-Roman", 5.5); p.setFillColor(colors.grey)
-    p.drawString(45, base_y - 405, f"Security Hash: {datetime.datetime.now().strftime('%d%m%Y%H%M%S')}")
+    # KEB Logo in Seal position
+    seal_x, seal_y = width - 95, base_y - 410
+    if school.keb_logo and os.path.exists(school.keb_logo.path):
+        p.drawImage(school.keb_logo.path, seal_x, seal_y + 15, width=45, height=45, mask='auto')
+    
+    p.setFont("Times-Bold", 6); p.drawCentredString(seal_x + 25, seal_y + 5, "KEB VERIFIED")
     
 @login_required
 def keb_mock_portal_view(request):
