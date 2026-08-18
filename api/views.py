@@ -3805,11 +3805,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
     p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD (KEB)")
     
-    p.setStrokeColor(imperial_gold); p.setLineWidth(0.8)
-    p.line(45, base_y - 50, width - 45, base_y - 50)
-
     # 3. 📸 EXTREME TOP STUDENT PHOTO (Right of Republic/KEB)
-    px, py, pw, ph = width - 110, base_y - 140, 75, 90
+    px, py, pw, ph = width - 110, base_y - 120, 75, 90
     if student.photo and os.path.exists(student.photo.path):
         p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
@@ -3823,7 +3820,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
-    lx, ly, lw, lh = 45, base_y - 130, 70, 70
+    lx, ly, lw, lh = 45, base_y - 120, 70, 70
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
     else:
@@ -3832,12 +3829,12 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # Combined School & Student Info starting to the right of the logo (x=125)
     ix = 125
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(ix, base_y - 75, school.name.upper())
+    p.drawString(ix, base_y - 60, school.name.upper())
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(ix, base_y - 90, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(ix, base_y - 105, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(ix, base_y - 120, f"YEAR: 2026")
+    p.drawString(ix, base_y - 80, f"STUDENT: {student.full_name.upper()}")
+    p.drawString(ix, base_y - 95, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(ix, base_y - 110, f"YEAR: 2026")
 
     # 🧮 5. NATIONAL RANKING LOGIC (The "Result 1, 2, 3" or "Points")
     results_qs = KEBMockResult.objects.filter(student=student)
@@ -3873,7 +3870,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
         
-    bar_y = base_y - 165
+    bar_y = base_y - 140
     bar_height = 22
     full_width = width - 90  # Calculates the span from left margin to right
     split_point = 150       # Width of the Gold Grade section
@@ -3896,10 +3893,10 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFont("Times-Bold", 9)
         
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 15 POINTS"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
     else:
         res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
-        rank_text = f"NATIONAL RANKING: {res_tier}"
+        rank_text = f"KEB RANKING: {res_tier}"
     
         p.drawString(45 + split_point + 15, bar_y + 7, rank_text)
 
@@ -3946,7 +3943,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
-    p.drawString(45, base_y - 325, "KEB EVALUATION STANDARDS:")
+    p.drawString(45, base_y - 318, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],
