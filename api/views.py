@@ -3967,18 +3967,27 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setStrokeColor(gov_blue); p.line(45, base_y - 385, 200, base_y - 385)
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
-    # KEB Logo in Seal position
-    seal_x, seal_y = width - 180, base_y - 412
+    seal_x = width - 190 
+    seal_y = base_y - 395
+
     if school.keb_logo and os.path.exists(school.keb_logo.path):
-        # Increased size to 65x65
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=35, mask='auto')
+        # 💎 DRAW THE TELESCOPE LOGO (Larger & Proportional 55x55)
+        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=55, height=55, mask='auto')
+    else:
+        # Fallback if no logo
+        p.setStrokeColor(colors.teal)
+        p.circle(seal_x + 25, seal_y + 25, 25, stroke=1)
+
+    # 💎 TEXT ATTACHED TO THE RIGHT OF THE LOGO
+    # We position the text exactly 60 units from the start of the logo
+    p.setFillColor(gov_blue)
+    p.setFont("Times-Bold", 10)
+    p.drawString(seal_x + 60, seal_y + 35, "KEB VERIFIED")
     
-    # 💎 TEXT TO THE RIGHT OF LOGO
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 8)
-    p.drawString(seal_x + 75, seal_y + 35, "KEB VERIFIED")
-    p.setFont("Times-Bold", 6); p.setFillColor(colors.black)
-    p.drawString(seal_x + 75, seal_y + 25, "KEB MOCKS")
-    p.drawString(seal_x + 75, seal_y + 15, "REGISTRY 2026")
+    p.setFont("Times-Bold", 7)
+    p.setFillColor(colors.black)
+    p.drawString(seal_x + 60, seal_y + 22, "NATIONAL MOCK")
+    p.drawString(seal_x + 60, seal_y + 12, "REGISTRY 2026")
     
     # Bottom Timestamp
     p.setFont("Times-Roman", 5); p.setFillColor(colors.grey)
