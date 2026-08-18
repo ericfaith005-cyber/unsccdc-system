@@ -3821,19 +3821,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
-        from collections import Counter
-        all_grades = [r.grade for r in results_qs if r.grade]
-        if all_grades:
-            most_frequent_grade = Counter(all_grades).most_common(1)[0][0]
-        else:
-            most_frequent_grade = "N/A"
-
-        # Draw Badge Box under Photo
-        p.setFillColor(gov_blue)
-        p.roundRect(px, py - 14, pw, 12, 3, fill=1, stroke=0)
-        p.setFillColor(rich_gold); p.setFont("Times-Bold", 8)
-        p.drawCentredString(px + (pw/2), py - 11, f"★★★ {most_frequent_grade} ★★★")
-        # 💎 --- END STAR BADGE LOGIC ---
     
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
     lx, ly, lw, lh = 45, base_y - 130, 70, 70
@@ -3880,15 +3867,45 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
     
-    p.setFillColor(success_green); p.rect(45, base_y - 145, 260, 18, fill=1, stroke=0)
-    p.setFillColor(colors.white); p.setFont("Times-Bold", 8.5)
-    
-    if is_a_level:
-        rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
-    else:
-        res_tier = "RESULT 3" if all_fails else "RESULT 1"
-        rank_text = f"KEB RANKING: {res_tier} (COMPETENCY VERIFIED)"
-    p.drawString(55, base_y - 139, rank_text)
+    from collections import Counter
+    all_grades = [r.grade for r in results_qs if r.grade]
+    most_frequent_grade = Counter(all_grades).most_common(1)[0][0] if all_grades else "N/A"
+
+    total_uace_points = sum(r.points for r in results_qs if r.points)
+    all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
+        
+        # Step C: Draw the Unified Bar (Two Colors, One Row)
+        bar_y = base_y - 165
+        bar_height = 22
+        full_width = width - 90 # From x=45 to x=550
+        split_point = 150 # Where the Grade ends and Ranking begins
+
+        # 1. Draw the GRADE Section (Left side of the bar - Imperial Gold)
+        p.setFillColor(rich_gold)
+        p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
+        
+        # 2. Draw the RANKING Section (Right side of the bar - Emerald Green)
+        p.setFillColor(success_green)
+        p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
+
+        # 3. Insert the Text for GRADE (Black text for contrast on Gold)
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        # ★★★ GRADE ★★★
+        p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ {most_frequent_grade} ★★★")
+
+        # 4. Insert the Text for RANKING (White text for contrast on Green)
+        p.setFillColor(colors.white)
+        p.setFont("Times-Bold", 9)
+        
+        if is_a_level:
+            rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 15 POINTS"
+        else:
+            res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
+            rank_text = f"NATIONAL RANKING: {res_tier} (COMPETENCY VERIFIED)"
+        
+        # Position this on the right half
+        p.drawString(45 + split_point + 15, bar_y + 7, rank_text)
 
 
     headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
