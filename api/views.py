@@ -3785,7 +3785,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 🎨 IMPERIAL GOLD & NAVY PALETTE
     gold_bg = colors.HexColor("#FFF9E6")    # Light Gold Silk
     imperial_gold = colors.HexColor("#D4AF37") 
-    gov_blue = colors.HexColor("#002366")    
+    rich_gold = colors.HexColor("#D4AF37")     # 💎 THE MISSING GOLD!
+    gov_blue = colors.HexColor("#002366") 
+    ug_yellow = colors.HexColor("#FCDC04")     # National Yellow   
     ug_red = colors.HexColor("#D90000")       
     off_white = colors.HexColor("#FFFFFF")
     success_green = colors.HexColor("#006400") 
