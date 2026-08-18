@@ -3968,11 +3968,11 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
     seal_x = width - 190 
-    seal_y = base_y - 395
+    seal_y = base_y - 405
 
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # 💎 DRAW THE TELESCOPE LOGO (Larger & Proportional 55x55)
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=55, height=55, mask='auto')
+        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=50, height=50, mask='auto')
     else:
         # Fallback if no logo
         p.setStrokeColor(colors.teal)
