@@ -3829,7 +3829,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # Combined School & Student Info starting to the right of the logo (x=125)
     ix = 125
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(ix, base_y - 70, school.name.upper())
+    p.drawString(ix, base_y - 65, school.name.upper())
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
     p.drawString(ix, base_y - 80, f"STUDENT: {student.full_name.upper()}")
@@ -3870,7 +3870,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
         
-    bar_y = base_y - 145
+    bar_y = base_y - 135
     bar_height = 22
     full_width = width - 90  # Calculates the span from left margin to right
     split_point = 150       # Width of the Gold Grade section
@@ -3886,7 +3886,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         # 3. Insert the Text for GRADE (Black ink on Gold)
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE {most_frequent_grade} ★★★")
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {most_frequent_grade} ★★★")
 
         # 4. Insert the Text for RANKING (White ink on Green)
     p.setFillColor(colors.white)
@@ -3919,7 +3919,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
     # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 310
+    table_y = base_y - 305
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -3943,7 +3943,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
-    p.drawString(45, base_y - 325, "KEB EVALUATION STANDARDS:")
+    p.drawString(45, base_y - 330, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],
@@ -3965,13 +3965,13 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # ✍️ 7. FOOTER: LOWERED KEB SEAL
     # =============================================================
     p.setStrokeColor(gov_blue); p.line(45, base_y - 385, 200, base_y - 385)
-    p.drawString(45, base_y - 395, "KEB EXAMINATIONS SECRETARY")
+    p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
     # KEB Logo in Seal position
     seal_x, seal_y = width - 160, base_y - 415
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # Increased size to 65x65
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=65, height=65, mask='auto')
+        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=45, height=45, mask='auto')
     
     # 💎 TEXT TO THE RIGHT OF LOGO
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 8)
