@@ -3894,7 +3894,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
     # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 305
+    table_y = base_y - 303
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -3918,7 +3918,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
-    p.drawString(45, base_y - 315, "KEB EVALUATION STANDARDS:")
+    p.drawString(45, base_y - 325, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],
@@ -3943,7 +3943,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS SECRETARY")
     
     # KEB Logo in Seal position
-    seal_x, seal_y = width - 160, base_y - 400
+    seal_x, seal_y = width - 160, base_y - 415
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         # Increased size to 65x65
         p.drawImage(school.keb_logo.path, seal_x, seal_y, width=65, height=65, mask='auto')
@@ -3957,7 +3957,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     # Bottom Timestamp
     p.setFont("Times-Roman", 5); p.setFillColor(colors.grey)
-    p.drawString(45, base_y - 408, f"Digital Authentication Hash: {datetime.datetime.now().strftime('%d%m%Y%H%M%S')}")
+    p.drawString(45, base_y - 405, f"Digital Authentication Hash: {datetime.datetime.now().strftime('%d%m%Y%H%M%S')}")
 
 @login_required
 def keb_mock_portal_view(request):
