@@ -3741,6 +3741,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 from .models import Student, KEBMockResult, School, Staff
+from collections import Counter
 
 @login_required
 def generate_keb_passlip(request, student_id):
@@ -3820,6 +3821,31 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
 
+    all_grades = [r.grade for r in results_qs if r.grade]
+        
+        if all_grades:
+            # This finds the grade that appeared most often
+            most_frequent_grade = Counter(all_grades).most_common(1)[0][0]
+        else:
+            most_frequent_grade = "N/A"
+
+        # Step B: Draw the Star Badge
+        # Position: Directly under the photo (px=width-100, py=base_y-115)
+        bx = width - 100
+        by = base_y - 128 # Positioned perfectly under the frame
+        bw = 55 # Matches photo width
+
+        # Draw a small prestigious background for the grade
+        p.setFillColor(gov_blue)
+        p.roundRect(bx, by, bw, 12, 3, fill=1, stroke=0)
+        
+        # Draw the Stars and Grade
+        p.setFillColor(rich_gold)
+        p.setFont("Times-Bold", 8)
+        # 💎 THE DESIGN: ★★★ GRADE ★★★
+        star_text = f"★★★ {most_frequent_grade} ★★★"
+        p.drawCentredString(bx + (bw/2), by + 3, star_text)
+
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
     lx, ly, lw, lh = 45, base_y - 130, 70, 70
     if school.logo and os.path.exists(school.logo.path):
@@ -3883,8 +3909,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     for r in results_qs:
         score = r.score
         if score >= 90: interp = "EXCEPTIONAL"
-        elif score >= 80: interp = "ADVANCED"
-        elif score >= 70: interp = "STRONG"
+        elif score >= 80: interp = "OUTSTANDING"
+        elif score >= 70: interp = "GOOD"
         elif score >= 60: interp = "SATISFACTORY"
         elif score >= 50: interp = "BASIC"
         elif score >= 40: interp = "ELEMENTARY"
@@ -3925,7 +3951,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
                     ['LEVEL:', 'Exc', 'V.G', 'Good', 'Sat', 'Fair', 'Sub', 'Fail']]
     else:
         key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],
-                    ['UCE:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']]
+                    ['ACHIEVEMENT LEVEL:', 'Exceptional', 'Outstanding', 'Satisfactory', 'Basic', 'Elementary']]
 
     k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=18) # Reduced to 18
     k_table.setStyle(TableStyle([
@@ -3934,7 +3960,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         ('BACKGROUND', (0,0), (0,-1), colors.lightgrey),
     ]))
     k_table.wrapOn(p, width, height)
-    k_table.drawOn(p, 45, base_y - 345)
+    k_table.drawOn(p, 45, base_y - 355)
 
     # =============================================================
     # ✍️ 7. FOOTER: LOWERED KEB SEAL
