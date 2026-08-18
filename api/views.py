@@ -3867,44 +3867,40 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
     
-    from collections import Counter
     all_grades = [r.grade for r in results_qs if r.grade]
     most_frequent_grade = Counter(all_grades).most_common(1)[0][0] if all_grades else "N/A"
 
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
         
-        # Step C: Draw the Unified Bar (Two Colors, One Row)
-        bar_y = base_y - 165
-        bar_height = 22
-        full_width = width - 90 # From x=45 to x=550
-        split_point = 150 # Where the Grade ends and Ranking begins
+    bar_y = base_y - 165
+    bar_height = 22
+    full_width = width - 90  # Calculates the span from left margin to right
+    split_point = 150       # Width of the Gold Grade section
 
-        # 1. Draw the GRADE Section (Left side of the bar - Imperial Gold)
-        p.setFillColor(rich_gold)
-        p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
+        # 1. Paint the GRADE Section (Imperial Gold)
+    p.setFillColor(rich_gold)
+    p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
         
-        # 2. Draw the RANKING Section (Right side of the bar - Emerald Green)
-        p.setFillColor(success_green)
-        p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
+        # 2. Paint the RANKING Section (Emerald Green)
+    p.setFillColor(success_green)
+    p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
 
-        # 3. Insert the Text for GRADE (Black text for contrast on Gold)
-        p.setFillColor(colors.black)
-        p.setFont("Times-Bold", 10)
-        # ★★★ GRADE ★★★
-        p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ {most_frequent_grade} ★★★")
+        # 3. Insert the Text for GRADE (Black ink on Gold)
+    p.setFillColor(colors.black)
+    p.setFont("Times-Bold", 10)
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ {most_frequent_grade} ★★★")
 
-        # 4. Insert the Text for RANKING (White text for contrast on Green)
-        p.setFillColor(colors.white)
-        p.setFont("Times-Bold", 9)
+        # 4. Insert the Text for RANKING (White ink on Green)
+    p.setFillColor(colors.white)
+    p.setFont("Times-Bold", 9)
         
-        if is_a_level:
-            rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 15 POINTS"
-        else:
-            res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
-            rank_text = f"NATIONAL RANKING: {res_tier} (COMPETENCY VERIFIED)"
-        
-        # Position this on the right half
+    if is_a_level:
+        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 15 POINTS"
+    else:
+        res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
+        rank_text = f"NATIONAL RANKING: {res_tier}"
+    
         p.drawString(45 + split_point + 15, bar_y + 7, rank_text)
 
 
