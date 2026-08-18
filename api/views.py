@@ -3808,14 +3808,19 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setStrokeColor(imperial_gold); p.setLineWidth(0.8)
     p.line(45, base_y - 50, width - 45, base_y - 50)
 
-    # 📸 6. STUDENT PHOTO & ⭐ SOVEREIGN MERIT BADGE
-    px, py, pw, ph = width - 110, base_y - 130, 65, 80
+    # 3. 📸 EXTREME TOP STUDENT PHOTO (Right of Republic/KEB)
+    px, py, pw, ph = width - 110, base_y - 140, 75, 90
     if student.photo and os.path.exists(student.photo.path):
-        p.setStrokeColor(gov_blue); p.setLineWidth(1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-        
-        # 💎 --- START STAR BADGE LOGIC ---
+    else:
+        # 👤 Draw the Vector Silhouette
+        p.setStrokeColor(colors.grey); p.rect(px, py, pw, ph, stroke=1)
+        p.setFillColor(colors.HexColor("#DCDCDC"))
+        p.circle(px + pw/2, py + ph - 25, 15, fill=1)
+        p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
+    
         from collections import Counter
         all_grades = [r.grade for r in results_qs if r.grade]
         if all_grades:
@@ -3828,7 +3833,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px, py - 14, pw, 12, 3, fill=1, stroke=0)
         p.setFillColor(rich_gold); p.setFont("Times-Bold", 8)
         p.drawCentredString(px + (pw/2), py - 11, f"★★★ {most_frequent_grade} ★★★")
-
+        # 💎 --- END STAR BADGE LOGIC ---
     
     # 4. 👤 STUDENT & SCHOOL IDENTITY (CLEANED)
     lx, ly, lw, lh = 45, base_y - 130, 70, 70
