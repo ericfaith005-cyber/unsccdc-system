@@ -3823,7 +3823,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     all_grades = [r.grade for r in results_qs if r.grade]
         
-        if all_grades:
+    if all_grades:
             # This finds the grade that appeared most often
             most_frequent_grade = Counter(all_grades).most_common(1)[0][0]
         else:
