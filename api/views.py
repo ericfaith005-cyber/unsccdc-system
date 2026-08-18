@@ -3870,7 +3870,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = sum(r.points for r in results_qs if r.points)
     all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
         
-    bar_y = base_y - 135
+    bar_y = base_y - 145
     bar_height = 22
     full_width = width - 90  # Calculates the span from left margin to right
     split_point = 150       # Width of the Gold Grade section
@@ -3886,7 +3886,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         # 3. Insert the Text for GRADE (Black ink on Gold)
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"GRADE★★★ {most_frequent_grade} ★★★")
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE {most_frequent_grade} ★★★")
 
         # 4. Insert the Text for RANKING (White ink on Green)
     p.setFillColor(colors.white)
