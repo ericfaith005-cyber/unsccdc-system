@@ -3923,7 +3923,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             else:
                 rank_text = "RESULT 1 (Qualifies for the UCE certificate - National Standard)"
         
-        p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
+    p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
         # =============================================================
         # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
