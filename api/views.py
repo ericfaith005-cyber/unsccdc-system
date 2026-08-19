@@ -3867,17 +3867,16 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(ix, base_y - 110, f"YEAR: 2026")
 
     # 🧮 5. NATIONAL RANKING LOGIC (The "Result 1, 2, 3" or "Points")
-results_qs = KEBMockResult.objects.filter(student=student)
-        c_name = str(student.current_class).upper().replace(" ", "")
-        is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "ALEVEL", "A-LEVEL"])
+    results_qs = KEBMockResult.objects.filter(student=student)
+    c_name = str(student.current_class).upper().replace(" ", "")
+    is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "ALEVEL", "A-LEVEL"])
         
-        total_score_sum = 0
-        total_uace_points = 0
-        subject_count = results_qs.count()
-        all_fails = True # Default to true
+    total_score_sum = 0
+    total_uace_points = 0
+    subject_count = results_qs.count()
+    all_fails = True # Default to true
 
-        # --- THE Hub Hub MATH PULSE ---
-        for r in results_qs:
+    for r in results_qs:
             total_score_sum += r.score
             if r.score >= 40: all_fails = False # Law: If one subject is passed, they don't fail everything
             
@@ -3889,36 +3888,36 @@ results_qs = KEBMockResult.objects.filter(student=student)
                 elif r.score >= 50: total_uace_points += 2
                 elif r.score >= 40: total_uace_points += 1
 
-        final_average = total_score_sum / subject_count if subject_count > 0 else 0
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
 
         # =============================================================
         # ⭐ 6. THE SOVEREIGN MERIT & RANKING BAR (HIGH-PRESTIGE)
         # =============================================================
-        bar_y = base_y - 144
-        bar_height = 22
-        full_width = width - 90 
-        split_point = 160 
+    bar_y = base_y - 144
+    bar_height = 22
+    full_width = width - 90 
+    split_point = 160 
 
         # 1. Paint the GRADE Section (Imperial Gold)
-        p.setFillColor(rich_gold)
-        p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
+    p.setFillColor(rich_gold)
+    p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
         
         # 2. Paint the RANKING Section (Emerald Green)
-        p.setFillColor(success_green)
-        p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
+    p.setFillColor(success_green)
+    p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
 
         # 3. Insert Text for GRADE (Left side - Showing Average)
-        p.setFillColor(colors.black)
-        p.setFont("Times-Bold", 10)
-        p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_average:.1f}% ★★★")
+    p.setFillColor(colors.black)
+    p.setFont("Times-Bold", 10)
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_average:.1f}% ★★★")
 
         # 4. Insert Text for RANKING (Right side - National Status)
-        p.setFillColor(colors.white)
-        p.setFont("Times-Bold", 7.5) # Slightly smaller to fit your long official text
+    p.setFillColor(colors.white)
+    p.setFont("Times-Bold", 7.5) # Slightly smaller to fit your long official text
         
-        if is_a_level:
+    if is_a_level:
             rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
-        else:
+    else:
             if all_fails:
                 rank_text = "RESULT 2 (Incomplete compulsory subjects / Fails)"
             else:
@@ -3929,22 +3928,22 @@ results_qs = KEBMockResult.objects.filter(student=student)
         # =============================================================
         # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
         # =============================================================
-        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
-        col_widths = [140, 45, 35, 130, 160] 
-        data_rows = [headers]
+    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+    col_widths = [140, 45, 35, 130, 160] 
+    data_rows = [headers]
 
-        for r in results_qs:
-            row_score = r.score
+    for r in results_qs:
+        row_score = r.score
             # 💎 Individual Interpretation
-            if row_score >= 90: interp = "EXCEPTIONAL"
-            elif row_score >= 80: interp = "OUTSTANDING"
-            elif row_score >= 70: interp = "GOOD"
-            elif row_score >= 60: interp = "SATISFACTORY"
-            elif row_score >= 50: interp = "BASIC"
-            elif row_score >= 40: interp = "ELEMENTARY"
-            else: interp = "UNSATISFACTORY"
+        if row_score >= 90: interp = "EXCEPTIONAL"
+        elif row_score >= 80: interp = "OUTSTANDING"
+        elif row_score >= 70: interp = "GOOD"
+        elif row_score >= 60: interp = "SATISFACTORY"
+        elif row_score >= 50: interp = "BASIC"
+        elif row_score >= 40: interp = "ELEMENTARY"
+        else: interp = "UNSATISFACTORY"
             
-            data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
+        data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
 
         if not results_qs.exists():
             data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
