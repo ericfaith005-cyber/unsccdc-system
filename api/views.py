@@ -3928,43 +3928,50 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         # =============================================================
         # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
         # =============================================================
-    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
-    col_widths = [140, 45, 35, 130, 160] 
-    data_rows = [headers]
+     headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [140, 45, 35, 130, 160] 
+        data_rows = [headers]
+        
+        total_score_sum = 0
+        subject_count = results_qs.count()
 
-    for r in results_qs:
-        row_score = r.score
-            # 💎 Individual Interpretation
-        if row_score >= 90: interp = "EXCEPTIONAL"
-        elif row_score >= 80: interp = "OUTSTANDING"
-        elif row_score >= 70: interp = "GOOD"
-        elif row_score >= 60: interp = "SATISFACTORY"
-        elif row_score >= 50: interp = "BASIC"
-        elif row_score >= 40: interp = "ELEMENTARY"
-        else: interp = "UNSATISFACTORY"
+        # 1. LOOP ONLY THROUGH SUBJECTS
+        for m in results_qs:
+            row_score = m.score if m.score else 0
+            total_score_sum += row_score 
+
+            # Individual Interpretation
+            if row_score >= 90: interp = "EXCEPTIONAL"
+            elif row_score >= 80: interp = "OUTSTANDING"
+            elif row_score >= 70: interp = "GOOD"
+            elif row_score >= 60: interp = "SATISFACTORY"
+            elif row_score >= 50: interp = "BASIC"
+            elif row_score >= 40: interp = "ELEMENTARY"
+            else: interp = "UNSATISFACTORY"
             
-        data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
+            # Add ONLY the subject row here
+            data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
 
-        if not results_qs.exists():
-            data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
-
-        # --- 🧮 ADD THE GOLDEN SUMMARY ROW AT THE END ---
+        # 2. 🛑 THE loop HAS ENDED. NOW CALCULATE THE OVERALL VERDICT
+        final_average = total_score_sum / subject_count if subject_count > 0 else 0
+        
         if final_average >= 80: final_overall_grade = "A"
         elif final_average >= 70: final_overall_grade = "B"
         elif final_average >= 60: final_overall_grade = "C"
         elif final_average >= 50: final_overall_grade = "D"
         else: final_overall_grade = "E"
 
+        # 3. 💎 ADD THE SUMMARY ROW ONCE AT THE VERY END
         data_rows.append([
             'OVERALL NATIONAL RECORD SUMMARY', 
             f"{final_average:.1f}%", 
             final_overall_grade, 
-            "", # Graph column merged
+            "", 
             f"FINAL GRADE: {final_overall_grade}"
         ])
 
-        # 💎 DRAW THE TABLE
-        table_y = base_y - 320
+        # 4. DRAW THE TABLE
+        table_y = base_y - 290 # Lifted slightly to make room
         table = Table(data_rows, colWidths=col_widths, rowHeights=17)
         table.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), gov_blue), 
@@ -3976,24 +3983,27 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.whitesmoke]),
             
-            # 🛡️ THE Hub Hub Hub GOLDEN FOOTER (The Verdict)
+            # 🛡️ THE Hub Hub Hub GOLDEN FOOTER (ONLY FOR THE LAST ROW)
             ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
             ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-            ('SPAN', (3, -1), (4, -1)), # Merge Graph and Interpretation for final text
+            ('SPAN', (3, -1), (4, -1)), 
         ]))
         table.wrapOn(p, width, height)
         table.drawOn(p, 45, table_y)
-    # 📈 5.5 ALIGNED BARS (Recalculated for height 17)
-    graph_x = 45 + 140 + 45 + 35 + 15 
-    for i, r in enumerate(results_qs):
-        bar_y = (table_y + (len(data_rows) - i - 2) * 17) + 5.5
-        p.setFillColor(colors.HexColor("#E0E0E0")) 
-        p.roundRect(graph_x, bar_y, 100, 5, 2.5, fill=1, stroke=0)
-        bc = success_green if r.score >= 80 else rich_gold if r.score >= 50 else ug_red
-        p.setFillColor(bc)
-        p.roundRect(graph_x, bar_y, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
-    
+        # 📈 5. DRAW THE BARS (ONLY FOR SUBJECT ROWS, SKIP THE SUMMARY)
+        graph_x = 45 + 140 + 45 + 35 + 15 
+        for i, r in enumerate(results_qs):
+            # i is the index, we ensure we don't draw on the header or footer
+            bar_y = (table_y + (len(data_rows) - i - 2) * 17) + 5.5
+            
+            p.setFillColor(colors.HexColor("#E0E0E0")) # Track
+            p.roundRect(graph_x, bar_y, 100, 5, 2.5, fill=1, stroke=0)
+            
+            bc = success_green if r.score >= 80 else rich_gold if r.score >= 50 else ug_red
+            p.setFillColor(bc)
+            p.roundRect(graph_x, bar_y, max(2, r.score), 5, 2.5, fill=1, stroke=0)
+            
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
     p.drawString(45, base_y - 334, "KEB EVALUATION STANDARDS:")
 
