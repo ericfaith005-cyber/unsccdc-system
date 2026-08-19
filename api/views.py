@@ -3873,10 +3873,12 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     total_score = 0
     total_uace_points = 0
+    total_score_sum = 0 # 💎 Track sum for average
     count = results_qs.count()
 
     for r in results_qs:
         total_score += r.score
+        total_score_sum += score # 💎 Add to total
         if is_a_level:
             # Using the 5-point scale logic (A=5, B=4, C=3, D=2, E=1)
             if r.score >= 80: total_uace_points += 5
@@ -3916,7 +3918,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         # 3. Insert the Text for GRADE (Black ink on Gold)
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {most_frequent_grade} ★★★")
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_average:.1f}%  ★★★")
 
         # 4. Insert the Text for RANKING (White ink on Green)
     p.setFillColor(colors.white)
@@ -3925,15 +3927,32 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     if is_a_level:
         rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
     else:
-        res_tier = "RESULT 3 (BASIC)" if all_fails else "RESULT 1 (EXCELLENT)"
+        res_tier = "RESULT 2 (Does not qualify, often due to incomplete compulsory subjects)" if all_fails else "RESULT 1 (Qualifies for the UCE certificate, requiring at least a Grade D or higher in at least one subject)"
         rank_text = f"KEB RANKING: {res_tier}"
     
         p.drawString(45 + split_point + 15, bar_y + 7, rank_text)
+    
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+        
+        # 2. Map the average to the National Grade
+    if final_average >= 80: final_overall_grade = "A"
+    elif final_average >= 70: final_overall_grade = "B"
+    elif final_average >= 60: final_overall_grade = "C"
+    elif final_average >= 50: final_overall_grade = "D"
+    else: final_overall_grade = "E"
+    data_rows.append([
+            'OVERALL NATIONAL RECORD SUMMARY', 
+            f"{final_average:.1f}%", 
+            final_overall_grade, 
+            "", 
+            f"FINAL GRADE: {final_overall_grade}"
+        ])
 
 
     headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
     col_widths = [140, 45, 35, 130, 160] 
     data_rows = [headers]
+    total_score_sum = 0 # 💎 Track sum for average
 
     for r in results_qs:
         score = r.score
@@ -3945,19 +3964,25 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         elif score >= 40: interp = "ELEMENTARY"
         else: interp = "UNSATISFACTORY"
         data_rows.append([r.subject.name.upper(), f"{score:g}%", r.grade, "", interp])
+        
 
     if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
     # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 315
+    table_y = base_y - 320
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 7.5),
-        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
-    ]))
+            ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.whitesmoke]), # Skip last row
+            
+            # 🛡️ THE Hub Hub Hub Hub Hub SUMMARY ROW STYLING (GOLD & BOLD)
+            ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+            ('SPAN', (3, -1), (4, -1)), # Merge Graph and Interpretation columns
+        ]))
     table.wrapOn(p, width, height)
     table.drawOn(p, 45, table_y)
 
