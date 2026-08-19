@@ -3867,125 +3867,123 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(ix, base_y - 110, f"YEAR: 2026")
 
     # 🧮 5. NATIONAL RANKING LOGIC (The "Result 1, 2, 3" or "Points")
-    results_qs = KEBMockResult.objects.filter(student=student)
-    c_name = str(student.current_class).upper()
-    is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6"])
-    
-    total_score = 0
-    total_uace_points = 0
-    total_score_sum = 0 # 💎 Track sum for average
-    count = results_qs.count()
-
-    for r in results_qs:
-        total_score += r.score
-        total_score_sum += score # 💎 Add to total
-        if is_a_level:
-            # Using the 5-point scale logic (A=5, B=4, C=3, D=2, E=1)
-            if r.score >= 80: total_uace_points += 5
-            elif r.score >= 70: total_uace_points += 4
-            elif r.score >= 60: total_uace_points += 3
-            elif r.score >= 50: total_uace_points += 2
-            elif r.score >= 40: total_uace_points += 1
-
-    avg = total_score / count if count > 0 else 0
-    
-    results_qs = KEBMockResult.objects.filter(student=student)
-    c_name = str(student.current_class).upper()
-    is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "A-LEVEL"])
-    
-    total_uace_points = sum(r.points for r in results_qs if r.points)
-    all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
-    
-    all_grades = [r.grade for r in results_qs if r.grade]
-    most_frequent_grade = Counter(all_grades).most_common(1)[0][0] if all_grades else "N/A"
-
-    total_uace_points = sum(r.points for r in results_qs if r.points)
-    all_fails = all(r.score < 40 for r in results_qs) if results_qs.exists() else True
+results_qs = KEBMockResult.objects.filter(student=student)
+        c_name = str(student.current_class).upper().replace(" ", "")
+        is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "ALEVEL", "A-LEVEL"])
         
-    bar_y = base_y - 144
-    bar_height = 22
-    full_width = width - 90  # Calculates the span from left margin to right
-    split_point = 150       # Width of the Gold Grade section
+        total_score_sum = 0
+        total_uace_points = 0
+        subject_count = results_qs.count()
+        all_fails = True # Default to true
+
+        # --- THE Hub Hub MATH PULSE ---
+        for r in results_qs:
+            total_score_sum += r.score
+            if r.score >= 40: all_fails = False # Law: If one subject is passed, they don't fail everything
+            
+            if is_a_level:
+                # 🎓 NEW A-LEVEL 5-POINT SCALE
+                if r.score >= 80: total_uace_points += 5
+                elif r.score >= 70: total_uace_points += 4
+                elif r.score >= 60: total_uace_points += 3
+                elif r.score >= 50: total_uace_points += 2
+                elif r.score >= 40: total_uace_points += 1
+
+        final_average = total_score_sum / subject_count if subject_count > 0 else 0
+
+        # =============================================================
+        # ⭐ 6. THE SOVEREIGN MERIT & RANKING BAR (HIGH-PRESTIGE)
+        # =============================================================
+        bar_y = base_y - 144
+        bar_height = 22
+        full_width = width - 90 
+        split_point = 160 
 
         # 1. Paint the GRADE Section (Imperial Gold)
-    p.setFillColor(rich_gold)
-    p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
+        p.setFillColor(rich_gold)
+        p.rect(45, bar_y, split_point, bar_height, fill=1, stroke=0)
         
         # 2. Paint the RANKING Section (Emerald Green)
-    p.setFillColor(success_green)
-    p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
+        p.setFillColor(success_green)
+        p.rect(45 + split_point, bar_y, full_width - split_point, bar_height, fill=1, stroke=0)
 
-        # 3. Insert the Text for GRADE (Black ink on Gold)
-    p.setFillColor(colors.black)
-    p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_average:.1f}%  ★★★")
+        # 3. Insert Text for GRADE (Left side - Showing Average)
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_average:.1f}% ★★★")
 
-        # 4. Insert the Text for RANKING (White ink on Green)
-    p.setFillColor(colors.white)
-    p.setFont("Times-Bold", 9)
+        # 4. Insert Text for RANKING (Right side - National Status)
+        p.setFillColor(colors.white)
+        p.setFont("Times-Bold", 7.5) # Slightly smaller to fit your long official text
         
-    if is_a_level:
-        rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
-    else:
-        res_tier = "RESULT 2 (Does not qualify, often due to incomplete compulsory subjects)" if all_fails else "RESULT 1 (Qualifies for the UCE certificate, requiring at least a Grade D or higher in at least one subject)"
-        rank_text = f"KEB RANKING: {res_tier}"
-    
-        p.drawString(45 + split_point + 15, bar_y + 7, rank_text)
-    
-    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+        if is_a_level:
+            rank_text = f"KEB WEIGHT: {total_uace_points} / 15 POINTS"
+        else:
+            if all_fails:
+                rank_text = "RESULT 2 (Incomplete compulsory subjects / Fails)"
+            else:
+                rank_text = "RESULT 1 (Qualifies for the UCE certificate - National Standard)"
         
-        # 2. Map the average to the National Grade
-    if final_average >= 80: final_overall_grade = "A"
-    elif final_average >= 70: final_overall_grade = "B"
-    elif final_average >= 60: final_overall_grade = "C"
-    elif final_average >= 50: final_overall_grade = "D"
-    else: final_overall_grade = "E"
-    data_rows.append([
+        p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
+
+        # =============================================================
+        # 📊 11. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
+        # =============================================================
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [140, 45, 35, 130, 160] 
+        data_rows = [headers]
+
+        for r in results_qs:
+            row_score = r.score
+            # 💎 Individual Interpretation
+            if row_score >= 90: interp = "EXCEPTIONAL"
+            elif row_score >= 80: interp = "OUTSTANDING"
+            elif row_score >= 70: interp = "GOOD"
+            elif row_score >= 60: interp = "SATISFACTORY"
+            elif row_score >= 50: interp = "BASIC"
+            elif row_score >= 40: interp = "ELEMENTARY"
+            else: interp = "UNSATISFACTORY"
+            
+            data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
+
+        if not results_qs.exists():
+            data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
+
+        # --- 🧮 ADD THE GOLDEN SUMMARY ROW AT THE END ---
+        if final_average >= 80: final_overall_grade = "A"
+        elif final_average >= 70: final_overall_grade = "B"
+        elif final_average >= 60: final_overall_grade = "C"
+        elif final_average >= 50: final_overall_grade = "D"
+        else: final_overall_grade = "E"
+
+        data_rows.append([
             'OVERALL NATIONAL RECORD SUMMARY', 
             f"{final_average:.1f}%", 
             final_overall_grade, 
-            "", 
+            "", # Graph column merged
             f"FINAL GRADE: {final_overall_grade}"
         ])
 
-
-    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
-    col_widths = [140, 45, 35, 130, 160] 
-    data_rows = [headers]
-    total_score_sum = 0 # 💎 Track sum for average
-
-    for r in results_qs:
-        score = r.score
-        if score >= 90: interp = "EXCEPTIONAL"
-        elif score >= 80: interp = "OUTSTANDING"
-        elif score >= 70: interp = "GOOD"
-        elif score >= 60: interp = "SATISFACTORY"
-        elif score >= 50: interp = "BASIC"
-        elif score >= 40: interp = "ELEMENTARY"
-        else: interp = "UNSATISFACTORY"
-        data_rows.append([r.subject.name.upper(), f"{score:g}%", r.grade, "", interp])
-        
-
-    if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
-
-    # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 320
-    table = Table(data_rows, colWidths=col_widths, rowHeights=17)
-    table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
-            ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        # 💎 DRAW THE TABLE
+        table_y = base_y - 320
+        table = Table(data_rows, colWidths=col_widths, rowHeights=17)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), gov_blue), 
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), 
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black), 
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.whitesmoke]), # Skip last row
+            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.whitesmoke]),
             
-            # 🛡️ THE Hub Hub Hub Hub Hub SUMMARY ROW STYLING (GOLD & BOLD)
+            # 🛡️ THE Hub Hub Hub GOLDEN FOOTER (The Verdict)
             ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
             ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-            ('SPAN', (3, -1), (4, -1)), # Merge Graph and Interpretation columns
+            ('SPAN', (3, -1), (4, -1)), # Merge Graph and Interpretation for final text
         ]))
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 45, table_y)
-
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 45, table_y)
     # 📈 5.5 ALIGNED BARS (Recalculated for height 17)
     graph_x = 45 + 140 + 45 + 35 + 15 
     for i, r in enumerate(results_qs):
