@@ -3799,6 +3799,36 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(15, base_y - 410, width - 30, 395, stroke=1)
     p.setLineWidth(0.5); p.setStrokeColor(imperial_gold); p.rect(18, base_y - 407, width - 36, 389, stroke=1)
 
+    if school.keb_logo and os.path.exists(school.keb_logo.path):
+        p.saveState() # 🛡️ Save current settings
+        
+        # 💎 THE "GHOST" EFFECT: Set opacity to 4% (0.04)
+        # This makes it look like it's embedded in the paper
+        p.setFillAlpha(0.04) 
+        
+        # 📍 POSITIONING: Center of the slip
+        # width/2 = 297.5. We subtract half the image width (115) to center it.
+        # base_y - 320 positions it behind the marks table area.
+        p.drawImage(
+            school.keb_logo.path, 
+            width/2 - 115, 
+            base_y - 320, 
+            width=230,   # 💎 Large and Authoritative
+            height=200,  # 💎 Proportional to the telescope logo
+            mask='auto'
+        )
+        
+        p.restoreState() # 🛡️ Reset opacity to 100% for the rest of the text
+    else:
+        # Fallback text watermark if no logo is uploaded
+        p.saveState()
+        p.setFont("Times-Bold", 40)
+        p.setFillColor(colors.lightgrey, alpha=0.05)
+        p.translate(width/2, base_y - 200)
+        p.rotate(45)
+        p.drawCentredString(0, 0, "KEB MOCK OFFICIAL")
+        p.restoreState()
+
     # 2. 🏛️ NATIONAL TOP HEADERS (Extreme Top)
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     p.drawCentredString(width/2, base_y - 25, "THE REPUBLIC OF UGANDA")
@@ -3943,7 +3973,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     
     p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5)
-    p.drawString(45, base_y - 330, "KEB EVALUATION STANDARDS:")
+    p.drawString(45, base_y - 334, "KEB EVALUATION STANDARDS:")
 
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],
@@ -3967,27 +3997,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setStrokeColor(gov_blue); p.line(45, base_y - 385, 200, base_y - 385)
     p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
-    seal_x = width - 190 
-    seal_y = base_y - 415
-
-    if school.keb_logo and os.path.exists(school.keb_logo.path):
-        # 💎 DRAW THE TELESCOPE LOGO (Larger & Proportional 55x55)
-        p.drawImage(school.keb_logo.path, seal_x, seal_y, width=35, height=35, mask='auto')
-    else:
-        # Fallback if no logo
-        p.setStrokeColor(colors.teal)
-        p.circle(seal_x + 25, seal_y + 25, 25, stroke=1)
-
-    # 💎 TEXT ATTACHED TO THE RIGHT OF THE LOGO
-    # We position the text exactly 60 units from the start of the logo
-    p.setFillColor(gov_blue)
-    p.setFont("Times-Bold", 10)
-    p.drawString(seal_x + 60, seal_y + 35, "KEB VERIFIED")
-    
-    p.setFont("Times-Bold", 7)
-    p.setFillColor(colors.black)
-    p.drawString(seal_x + 60, seal_y + 22, "KEB MOCK")
-    p.drawString(seal_x + 60, seal_y + 12, "REGISTRY 2026")
     
     # Bottom Timestamp
     p.setFont("Times-Roman", 5); p.setFillColor(colors.grey)
