@@ -3949,7 +3949,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     if len(data_rows) == 1: data_rows.append(["NO RECORDS FOUND", "-", "-", "-", "-"])
 
     # 💎 THE REDUCTION: Changed rowHeights to 17 (from 22)
-    table_y = base_y - 30
+    table_y = base_y - 310
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
