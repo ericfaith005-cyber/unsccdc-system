@@ -3834,7 +3834,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         
         # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
         # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
-        p.setFillAlpha(0.07) 
+        p.setFillAlpha(0.09) 
         
         # 📍 MATHEMATICAL CENTERING
         # A4 Width is 595. Slip height is roughly 400.
@@ -3939,15 +3939,27 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
-        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.whitesmoke]),
-        ('BACKGROUND', (0, -1), (-1, -1), rich_gold), ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-        ('SPAN', (3, -1), (4, -1)), 
-    ]))
-    table.wrapOn(p, width, height); table.drawOn(p, 45, table_y)
+            # Header stays solid for authority
+            ('BACKGROUND', (0,0), (-1,0), gov_blue), 
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), 
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black), 
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+
+            # 🛡️ THE Hub Hub Hub TRANSPARENCY FIX:
+            # We REMOVE 'ROWBACKGROUNDS' so the watermark shows through!
+            # Instead, we use a very faint tint for alternating rows
+            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.transparent, colors.Color(0,0,0, alpha=0.03)]),
+            
+            # 🏆 Summary Row (Bottom) stays Gold
+            ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
+            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+            ('SPAN', (3, -1), (4, -1)), 
+        ]))
+    table.wrapOn(p, width, height)
+    table.drawOn(p, 45, table_y)
 
     # 📈 10. SYNCED GRAPH BARS
     graph_x = 45 + 140 + 45 + 35 + 15 
