@@ -3899,9 +3899,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
 
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
-    data_rows.append(['OVERALL NATIONAL RECORD SUMMARY', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
+    data_rows.append(['OVERALL AVERAGE', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
 
-    table_y = base_y - 320
+    table_y = base_y - 340
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -3925,7 +3925,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
     # 📐 11. DYNAMIC GRADING KEY
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5); p.drawString(45, base_y - 332, "NATIONAL EVALUATION STANDARDS:")
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5); p.drawString(45, base_y - 342, "NATIONAL EVALUATION STANDARDS:")
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['UACE:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
     else:
@@ -3933,7 +3933,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=14)
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
-    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 365)
+    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 370)
 
     # ✍️ 12. FOOTER & CHAIRMAN
     p.setStrokeColor(gov_blue); p.line(45, base_y - 388, 200, base_y - 388)
