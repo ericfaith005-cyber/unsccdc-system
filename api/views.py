@@ -3937,23 +3937,23 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     # 1. LOOP ONLY THROUGH SUBJECTS
     for m in results_qs:
-         row_score = m.score if m.score else 0
-         total_score_sum += row_score 
+        row_score = m.score if m.score else 0
+        total_score_sum += row_score 
 
-            # Individual Interpretation
-            if row_score >= 90: interp = "EXCEPTIONAL"
-            elif row_score >= 80: interp = "OUTSTANDING"
-            elif row_score >= 70: interp = "GOOD"
-            elif row_score >= 60: interp = "SATISFACTORY"
-            elif row_score >= 50: interp = "BASIC"
-            elif row_score >= 40: interp = "ELEMENTARY"
-            else: interp = "UNSATISFACTORY"
+        # Individual Interpretation
+    if row_score >= 90: interp = "EXCEPTIONAL"
+    elif row_score >= 80: interp = "OUTSTANDING"
+    elif row_score >= 70: interp = "GOOD"
+    elif row_score >= 60: interp = "SATISFACTORY"
+    elif row_score >= 50: interp = "BASIC"
+    elif row_score >= 40: interp = "ELEMENTARY"
+    else: interp = "UNSATISFACTORY"
             
             # Add ONLY the subject row here
-            data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
+    data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
 
         # 2. 🛑 THE loop HAS ENDED. NOW CALCULATE THE OVERALL VERDICT
-        final_average = total_score_sum / subject_count if subject_count > 0 else 0
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
         
     if final_average >= 80: final_overall_grade = "A"
     elif final_average >= 70: final_overall_grade = "B"
