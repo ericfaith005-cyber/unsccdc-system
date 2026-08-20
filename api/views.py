@@ -3847,6 +3847,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     lx, ly, lw, lh = 45, base_y - 135, 70, 70
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
+    else:
+        p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
 
     ix = 125
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
@@ -3857,14 +3859,19 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(ix, base_y - 120, f"YEAR: 2026")
     
     # 📸 7. STUDENT PHOTO (FAR RIGHT)
-    px, py, pw, ph = width - 110, base_y - 130, 65, 80
+    px, py, pw, ph = width - 110, base_y - 120, 75, 90
     if student.photo and os.path.exists(student.photo.path):
-        p.setStrokeColor(gov_blue); p.setLineWidth(1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
         p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
-
+    else:
+    # 👤 Draw the Vector Silhouette
+        p.setStrokeColor(colors.grey); p.rect(px, py, pw, ph, stroke=1)
+        p.setFillColor(colors.HexColor("#DCDCDC"))
+        p.circle(px + pw/2, py + ph - 25, 15, fill=1)
+        p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
-    bar_y = base_y - 165
+    bar_y = base_y - 160
     split_point = 160 
     p.setFillColor(rich_gold)
     p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
