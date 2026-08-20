@@ -3834,11 +3834,11 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         
         # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
         # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
-        p.setFillAlpha(0.09) 
+        p.setFillAlpha(0.08) 
         
         # 📍 MATHEMATICAL CENTERING
         # A4 Width is 595. Slip height is roughly 400.
-        watermark_size = 280 # 💎 MASSIVE SIZE
+        watermark_size = 270 # 💎 MASSIVE SIZE
         center_x = (width / 2) - (watermark_size / 2)
         # Position it right behind the marks table area
         center_y = (base_y - 210) - (watermark_size / 2)
