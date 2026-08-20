@@ -3840,11 +3840,10 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawCentredString(width/2, base_y - 25, "THE REPUBLIC OF UGANDA")
     p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
     p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD")
-    p.setStrokeColor(rich_gold); p.setLineWidth(0.8)
-    p.line(45, base_y - 52, width - 45, base_y - 52)
+    
 
     # 🖼️ 6. SCHOOL LOGO (LEFT) & INFO (RIGHT)
-    lx, ly, lw, lh = 45, base_y - 135, 70, 70
+    lx, ly, lw, lh = 45, base_y - 125, 70, 70
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
     else:
@@ -3871,7 +3870,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
-    bar_y = base_y - 160
+    bar_y = base_y - 145
     split_point = 160 
     p.setFillColor(rich_gold)
     p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
@@ -3908,7 +3907,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
     data_rows.append(['OVERALL AVERAGE', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
 
-    table_y = base_y - 340
+    table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -3932,13 +3931,13 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
     # 📐 11. DYNAMIC GRADING KEY
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5); p.drawString(45, base_y - 342, "NATIONAL EVALUATION STANDARDS:")
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5); p.drawString(45, base_y - 342, "KEB EVALUATION STANDARDS:")
     if is_a_level:
-        key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['UACE:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
+        key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['INTERPRETATION:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
     else:
-        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['UCE:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']]
+        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['INTERPRETATION:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']]
     
-    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=14)
+    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=17)
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 370)
 
