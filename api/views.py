@@ -3831,8 +3831,37 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         p.saveState()
-        p.setFillAlpha(0.04) 
-        p.drawImage(school.keb_logo.path, width/2 - 115, base_y - 320, width=230, height=200, mask='auto')
+        
+        # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
+        # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
+        p.setFillAlpha(0.07) 
+        
+        # 📍 MATHEMATICAL CENTERING
+        # A4 Width is 595. Slip height is roughly 400.
+        watermark_size = 280 # 💎 MASSIVE SIZE
+        center_x = (width / 2) - (watermark_size / 2)
+        # Position it right behind the marks table area
+        center_y = (base_y - 210) - (watermark_size / 2)
+        
+        # 🎨 DRAW THE GHOST IMAGE
+        p.drawImage(
+            school.keb_logo.path, 
+            center_x, 
+            center_y, 
+            width=watermark_size, 
+            height=watermark_size, 
+            mask='auto'
+        )
+        
+        p.restoreState() # 🛡️ Reset to full strength for the text
+    else:
+        # Fallback if no logo is found in the system
+        p.saveState()
+        p.setFont("Times-Bold", 50)
+        p.setFillColor(colors.lightgrey, alpha=0.06)
+        p.translate(width/2, base_y - 200)
+        p.rotate(35)
+        p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
         p.restoreState()
 
     # 🏛️ 5. NATIONAL TOP HEADERS
@@ -3896,8 +3925,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     for r in results_qs:
         row_score = r.score
         if row_score >= 90: interp = "EXCEPTIONAL"
-        elif row_score >= 80: interp = "ADVANCED"
-        elif row_score >= 70: interp = "STRONG"
+        elif row_score >= 80: interp = "OUTSATANDING"
+        elif row_score >= 70: interp = "GOOD"
         elif row_score >= 60: interp = "SATISFACTORY"
         elif row_score >= 50: interp = "BASIC"
         elif row_score >= 40: interp = "ELEMENTARY"
@@ -3931,15 +3960,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
     # 📐 11. DYNAMIC GRADING KEY
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 7.5); p.drawString(45, base_y - 342, "KEB EVALUATION STANDARDS:")
     if is_a_level:
         key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['INTERPRETATION:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
     else:
-        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['INTERPRETATION:', 'Exceptional', 'Strong', 'Satisfactory', 'Basic', 'Elementary']]
+        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['INTERPRETATION:', 'EXCEPTIONAL', 'OUTSTANDING', 'SATISFACTORY', 'BASIC', 'ELEMEMENTARY']]
     
     k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=17)
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
-    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 370)
+    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     # ✍️ 12. FOOTER & CHAIRMAN
     p.setStrokeColor(gov_blue); p.line(45, base_y - 388, 200, base_y - 388)
