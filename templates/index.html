@@ -1,51 +1,46 @@
-{% load static %}
-<!DOCTYPE html><html><head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UNSCCDC | National Hub</title>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Rajdhani:wght@700&display=swap');
-    body { background: #000; color: #fff; font-family: 'Rajdhani', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-    .card { width: 90%; max-width: 400px; padding: 40px; background: #0d0d0d; border: 1px solid rgba(212,175,55,0.1); border-radius: 45px; text-align: center; box-shadow: 0 40px 100px #000; position: relative; }
-    .logo { height: 80px; margin-bottom: 10px; filter: drop-shadow(0 0 10px #D4AF37); }
-    h1 { font-family: 'Orbitron', sans-serif; color: #D4AF37; font-size: 22px; letter-spacing: 4px; margin: 0; }
-    .input-box { background: #050505; border: 1px solid #1a1a1a; border-radius: 20px; padding: 15px 20px; margin-bottom: 12px; display: flex; align-items: center; }
-    .input-box input { background: transparent; border: none; color: #fff; width: 100%; font-size: 15px; outline: none; text-transform: uppercase; }
-    .access-btn { width: 100%; background: #D4AF37; color: #000; border: none; padding: 20px; border-radius: 40px; font-weight: 900; font-size: 15px; letter-spacing: 2px; cursor: pointer; margin-top: 20px; }
-    .error { color: #ff4444; font-size: 11px; margin-bottom: 15px; font-weight: bold; }
-</style>
-</head><body>
-<div class="card">
-    <img src="{% static 'icons/hub_logo.png' %}" class="logo">
-    <h1>UNSCCDC GLOBAL</h1>
-    <p style="color:rgba(255,255,255,0.2); font-size:9px; letter-spacing:2px; margin-bottom:30px;">NATIONAL EDUCATION CENTRE</p>
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
 
-    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
 
-    {% if stage == 'gate' %}
-    <!-- 📦 STAGE 1: FULL IDENTITY REGISTRY -->
-    <form method="POST" action="{% url 'parent_login' %}">
-        {% csrf_token %}
-        <div class="input-box"><input type="text" name="parent" placeholder="PARENT FULL NAME" required></div>
-        <div class="input-box"><input type="text" name="student" placeholder="STUDENT FULL NAME" required></div>
-        <div class="input-box"><input type="text" name="phone" placeholder="PHONE (+256...)" required></div>
-        <div class="input-box"><input type="text" name="code" placeholder="ACCESS CODE" required></div>
-        <button type="submit" name="verify_identity" class="access-btn">VERIFY IDENTITY</button>
-    </form>
-    <a href="/staff-login/" style="display:block; margin-top:25px; color:rgba(255,255,255,0.2); text-decoration:none; font-size:10px; font-weight:bold;">ENTER STAFF COMMAND PORTAL →</a>
-    
-    {% else %}
-    <!-- 🔑 STAGE 2: 6-DIGIT PIN VAULT -->
-    <form method="POST" action="{% url 'parent_login' %}">
-        {% csrf_token %}
-        <h2 style="color: #D4AF37;">IDENTITY CONFIRMED ✅</h2>
-        <p style="color:#444; font-size:10px; margin-bottom:20px;">ENTER YOUR 6-DIGIT SECURE PIN</p>
-        <input type="hidden" name="student_id" value="{{ student.account_number }}">
-        <div class="input-box">
-            <input type="password" name="pin" maxlength="6" style="text-align:center; font-size:28px; letter-spacing:15px;" autofocus required>
-        </div>
-        <button type="submit" name="authorize_access" class="access-btn" style="background:#D90000; color:#fff;">AUTHORIZE HUB ACCESS</button>
-        <p onclick="location.reload()" style="font-size:10px; color:#333; margin-top:20px; cursor:pointer;">← Return to Gate</p>
-    </form>
-    {% endif %}
-</div>
-</body></html>
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="unsccdc_global">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>unsccdc_global</title>
+  <link rel="manifest" href="/static/web/manifest.json">
+</head>
+<body>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

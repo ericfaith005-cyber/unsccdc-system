@@ -4091,17 +4091,39 @@ def save_keb_marks(request):
         
         return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=synced')
 
+# =============================================================
+# 🏛️ THE Hub Hub Hub Hub Hub OFFICIAL WEB PORTAL GATEWAY
+# =============================================================
 def web_app_home(request):
-    """🏛️ THE OFFICIAL WEB PORTAL GATEWAY"""
+    """The front gate for the entire national system"""
     try:
-        # This looks for the index.html we copied from Flutter
+        # 🛡️ Attempt to serve the Flutter Web App
         return render(request, 'index.html')
-    except Exception as e:
-        # 🚑 EMERGENCY BYPASS: If index.html is missing, show this instead of a 500 error
-        return HttpResponse(f"""
-            <body style="background:#000; color:gold; text-align:center; padding:100px; font-family:serif;">
-                <h1>UNSCCDC GLOBAL PORTAL</h1>
-                <p style="color:white;">Status: Online. <br>Error: The Web Interface (index.html) was not found in the templates folder.</p>
-                <a href="/admin/" style="color:gold;">GO TO ADMIN OFFICE</a>
-            </body>
-        """)
+    except:
+        # 🚑 EMERGENCY FALLBACK: If index.html is missing, show this beautiful page
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>UNSCCDC GLOBAL | National Hub</title>
+            <style>
+                body { background: #050505; color: white; font-family: 'Times New Roman', serif; text-align: center; padding: 100px 20px; }
+                .box { max-width: 600px; margin: auto; border: 2px solid #D4AF37; padding: 40px; border-radius: 25px; background: rgba(212,175,55,0.02); }
+                h1 { color: #D4AF37; letter-spacing: 3px; font-size: 35px; }
+                .btn { background: #D4AF37; color: black; padding: 15px 30px; text-decoration: none; font-weight: 900; border-radius: 12px; display: inline-block; margin-top: 20px; }
+                .status { color: #00ff00; font-weight: bold; font-size: 12px; margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="box">
+                <div class="status">● SYSTEM STATUS: ONLINE & SECURE</div>
+                <h1>UNSCCDC GLOBAL</h1>
+                <p>Uganda National Schools Central Control Digital Centre</p>
+                <p style="color: #666;">The Web Interface is currently synchronizing. Please enter the Master Office to manage the registry.</p>
+                <a href="/admin/" class="btn">ENTER MASTER OFFICE</a>
+                <div style="margin-top: 40px; font-size: 10px; color: #444;">Developed by Yawe Eric &copy; 2026</div>
+            </div>
+        </body>
+        </html>
+        """
+        return HttpResponse(html)
