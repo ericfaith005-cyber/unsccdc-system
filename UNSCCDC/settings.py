@@ -89,10 +89,8 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'frontend'),  # 💎 #1 PRIORITY: THE MOBILE Hub
-            os.path.join(BASE_DIR, 'templates'), # 💎 #2 PRIORITY: THE OFFICE
-        ],
+        # 💎 THIS IS THE CRITICAL LINE 💎
+        'DIRS': [os.path.join(BASE_DIR, 'templates')], 
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -39,6 +39,7 @@ urlpatterns = [
     path('icons/Icon-192.png', RedirectView.as_view(url='/static/icons/Icon-192.png')),
     path('icons/Icon-512.png', RedirectView.as_view(url='/static/icons/Icon-512.png')),
     path('favicon.png', RedirectView.as_view(url='/static/favicon.png')),
+    path('', views.web_app_home, name='web_home'),  
 ]
 
 # 🖼️ FORCING MEDIA AND STATIC FILES TO APPEAR

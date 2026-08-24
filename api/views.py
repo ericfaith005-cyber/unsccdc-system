@@ -3911,7 +3911,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 15 POINTS"
+        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
     else:
         res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
         rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
@@ -4090,3 +4090,18 @@ def save_keb_marks(request):
                 )
         
         return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=synced')
+
+def web_app_home(request):
+    """🏛️ THE OFFICIAL WEB PORTAL GATEWAY"""
+    try:
+        # This looks for the index.html we copied from Flutter
+        return render(request, 'index.html')
+    except Exception as e:
+        # 🚑 EMERGENCY BYPASS: If index.html is missing, show this instead of a 500 error
+        return HttpResponse(f"""
+            <body style="background:#000; color:gold; text-align:center; padding:100px; font-family:serif;">
+                <h1>UNSCCDC GLOBAL PORTAL</h1>
+                <p style="color:white;">Status: Online. <br>Error: The Web Interface (index.html) was not found in the templates folder.</p>
+                <a href="/admin/" style="color:gold;">GO TO ADMIN OFFICE</a>
+            </body>
+        """)
