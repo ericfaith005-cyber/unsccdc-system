@@ -928,3 +928,18 @@ class KEBMockAdmin(admin.ModelAdmin):
 class KEBMockPortalAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         return redirect('/api/registry/') # Use the registry explorer to pick students
+
+@admin.register(NationalBook)
+class NationalBookAdmin(admin.ModelAdmin):
+    list_display = ('title', 'author', 'price', 'stock_available', 'is_active')
+    search_fields = ('title', 'author')
+
+@admin.register(NationalBookOrder)
+class NationalBookOrderAdmin(admin.ModelAdmin):
+    list_display = ('order_id', 'book', 'buyer_name', 'phone', 'total_cost', 'status_badge')
+    list_filter = ('status', 'timestamp')
+    
+    def status_badge(self, obj):
+        colors = {'PENDING': 'red', 'PAID': 'orange', 'DELIVERED': 'green'}
+        return mark_safe(f'<b style="color:{colors.get(obj.status, "white")};">{obj.status}</b>')
+    status_badge.short_description = "Delivery Status"

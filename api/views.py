@@ -4091,39 +4091,83 @@ def save_keb_marks(request):
         
         return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=synced')
 
-# =============================================================
-# 🏛️ THE Hub Hub Hub Hub Hub OFFICIAL WEB PORTAL GATEWAY
-# =============================================================
 def web_app_home(request):
-    """The front gate for the entire national system"""
-    try:
-        # 🛡️ Attempt to serve the Flutter Web App
-        return render(request, 'index.html')
-    except:
-        # 🚑 EMERGENCY FALLBACK: If index.html is missing, show this beautiful page
-        html = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>UNSCCDC GLOBAL | National Hub</title>
-            <style>
-                body { background: #050505; color: white; font-family: 'Times New Roman', serif; text-align: center; padding: 100px 20px; }
-                .box { max-width: 600px; margin: auto; border: 2px solid #D4AF37; padding: 40px; border-radius: 25px; background: rgba(212,175,55,0.02); }
-                h1 { color: #D4AF37; letter-spacing: 3px; font-size: 35px; }
-                .btn { background: #D4AF37; color: black; padding: 15px 30px; text-decoration: none; font-weight: 900; border-radius: 12px; display: inline-block; margin-top: 20px; }
-                .status { color: #00ff00; font-weight: bold; font-size: 12px; margin-bottom: 10px; }
-            </style>
-        </head>
-        <body>
-            <div class="box">
-                <div class="status">● SYSTEM STATUS: ONLINE & SECURE</div>
+    """🏛️ THE Hub Hub Hub Hub Hub OFFICIAL SOVEREIGN GATEWAY"""
+    html = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>UNSCCDC GLOBAL | National Hub</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+        <style>
+            * { font-family: "Times New Roman", Times, serif; transition: 0.3s; }
+            body { background: #000; color: white; margin: 0; overflow-x: hidden; text-align: center; }
+            
+            /* 🇺🇬 THE LIVE WAVING FLAG BACKGROUND */
+            #bg-video {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                z-index: -1; opacity: 0.2; object-fit: cover; filter: saturate(1.5) blur(2px);
+            }
+            
+            .main-container { padding: 80px 20px; max-width: 900px; margin: auto; }
+            
+            /* 💎 PRESTIGE GLASS CARDS */
+            .command-card {
+                background: rgba(255, 255, 255, 0.03);
+                backdrop-filter: blur(15px);
+                border: 2px solid #D4AF37;
+                border-radius: 30px;
+                padding: 50px;
+                box-shadow: 0 0 50px rgba(212, 175, 55, 0.1);
+            }
+            
+            h1 { color: #D4AF37; letter-spacing: 5px; font-size: 40px; font-weight: 900; margin: 0; }
+            .status-line { color: #00ff00; font-size: 10px; font-weight: bold; letter-spacing: 3px; margin-bottom: 30px; }
+            
+            /* 🚀 THE ACTION BUTTONS */
+            .btn-group { display: flex; flex-direction: column; gap: 20px; margin-top: 40px; align-items: center; }
+            .btn {
+                text-decoration: none; padding: 20px 40px; width: 300px; border-radius: 15px;
+                font-weight: 900; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
+                border: 2px solid #D4AF37; cursor: pointer; display: block;
+            }
+            .btn-gold { background: #D4AF37; color: black; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3); }
+            .btn-gold:hover { transform: scale(1.05); background: white; }
+            .btn-outline { color: #D4AF37; background: transparent; }
+            .btn-outline:hover { background: rgba(212, 175, 55, 0.1); }
+            
+            .footer { margin-top: 60px; color: #444; font-size: 11px; letter-spacing: 1px; }
+        </style>
+    </head>
+    <body>
+        <video autoplay muted loop playsinline id="bg-video">
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-flag-of-uganda-waving-in-the-wind-32538-large.mp4" type="video/mp4">
+        </video>
+        
+        <div class="main-container">
+            <div class="command-card">
+                <div style="font-size: 60px; margin-bottom: 10px;">🌍</div>
                 <h1>UNSCCDC GLOBAL</h1>
-                <p>Uganda National Schools Central Control Digital Centre</p>
-                <p style="color: #666;">The Web Interface is currently synchronizing. Please enter the Master Office to manage the registry.</p>
-                <a href="/admin/" class="btn">ENTER MASTER OFFICE</a>
-                <div style="margin-top: 40px; font-size: 10px; color: #444;">Developed by Yawe Eric &copy; 2026</div>
+                <div class="status-line">● NATIONAL NODE ACTIVE ●</div>
+                
+                <p style="color: #888; line-height: 1.6;">Welcome to the 2026 Sovereign Education Infrastructure. <br> Accessing the National Registry, Financial War-Room, and E-Library.</p>
+                
+                <div class="btn-group">
+                    <a href="/admin/" class="btn btn-gold"><i class="fas fa-unlock-alt"></i> Enter Master Office</a>
+                    <a href="/api/get-app/" class="btn btn-outline"><i class="fas fa-download"></i> Download Mobile App</a>
+                    <a href="/api/registry/" class="btn btn-outline" style="border-color: #008080; color: #008080;"><i class="fas fa-search"></i> Registry Explorer</a>
+                </div>
             </div>
-        </body>
-        </html>
-        """
-        return HttpResponse(html)
+            
+            <div class="footer">
+                ENGINEERED BY YAWE ERIC<br>
+                Official Property of the Republic of Uganda
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
+

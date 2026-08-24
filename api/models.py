@@ -692,3 +692,43 @@ class KEBMockPortal(Student):
         proxy = True
         verbose_name = "KEB MOCKS CENTER"
         verbose_name_plural = "KEB MOCKS CENTER"
+
+class NationalBook(models.Model):
+    title = models.CharField(max_length=255)
+    author = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Price (UGX)")
+    description = models.TextField(blank=True)
+    cover_image = models.ImageField(upload_to='books/covers/', null=True, blank=True)
+    stock_available = models.IntegerField(default=100)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "National Book Registry"
+        verbose_name_plural = "National Book Registry"
+
+    def __str__(self): return self.title
+
+class NationalBookOrder(models.Model):
+    STATUS_CHOICES = [('PENDING','Pending Pay'),('PAID','Escrow Confirmed'),('DISPATCHED','In Transit'),('DELIVERED','Delivered')]
+    
+    order_id = models.CharField(max_length=20, unique=True, editable=False)
+    book = models.ForeignKey(NationalBook, on_delete=models.CASCADE)
+    buyer_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    location = models.CharField(max_length=255, help_text="GPS or School Address")
+    quantity = models.IntegerField(default=1)
+    total_cost = models.DecimalField(max_digits=12, decimal_places=2)
+    escrow_fee = models.DecimalField(max_digits=12, decimal_places=2, help_text="10% Deposit")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            self.order_id = "ORD-" + "".join(random.choices(string.digits, k=6))
+        self.total_cost = self.book.price * self.quantity
+        self.escrow_fee = self.total_cost * 0.10 # 💎 10% Law
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = "Book Order Management"
+        verbose_name_plural = "Book Order Management"
