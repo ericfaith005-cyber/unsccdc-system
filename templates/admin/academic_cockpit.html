@@ -1,0 +1,93 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --glow-blue: #00d4ff; --imperial-gold: #D4AF37; --deep-obsidian: #050a18; --panel-bg: rgba(255,255,255,0.03); }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: var(--deep-obsidian) !important; padding: 15px !important; }
+
+    /* 🎮 TOP CONTROL BAR */
+    .control-bar { 
+        display: flex; gap: 15px; align-items: center; background: #000; 
+        padding: 15px; border-radius: 10px; border: 1px solid #1a2a3a; margin-bottom: 20px;
+    }
+    .btn-action { padding: 8px 20px; border-radius: 5px; border: none; font-weight: 900; cursor: pointer; font-size: 11px; }
+    .btn-load { background: #1a2a3a; color: white; border: 1px solid var(--glow-blue); }
+    .btn-save { background: #28a745; color: white; }
+    .btn-auto { background: #fd7e14; color: white; }
+
+    /* 📊 TWO-COLUMN GRID */
+    .cockpit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* 📝 LEFT PANEL: SUBJECTS */
+    .panel-box { 
+        background: var(--panel-bg); border: 1px solid #1a2a3a; border-radius: 12px; 
+        padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .panel-title { color: var(--glow-blue); font-size: 12px; font-weight: bold; border-bottom: 1px solid #1a2a3a; padding-bottom: 10px; margin-bottom: 15px; display: block; }
+    
+    .subject-table { width: 100%; border-collapse: collapse; }
+    .subject-table th { color: #555; font-size: 10px; text-align: left; padding: 10px; }
+    .subject-table td { padding: 10px; border-bottom: 1px solid #0d1625; color: #fff; font-size: 12px; }
+    .check-mark { color: #00ff00; font-weight: bold; }
+
+    /* ✍️ RIGHT PANEL: TEACHER REMARKS & SIG */
+    .remark-area { width: 100%; background: #000; border: 1px solid #333; color: #00ff00; padding: 15px; border-radius: 8px; font-family: monospace !important; margin-bottom: 15px; }
+    .signature-pad { 
+        width: 100%; height: 180px; background: white; border-radius: 10px; 
+        display: flex; align-items: center; justify-content: center; overflow: hidden;
+    }
+    .signature-image { max-width: 100%; opacity: 0.8; filter: contrast(1.2); }
+</style>
+
+<div class="control-bar">
+    <span style="color:white; font-weight:bold;">Class:</span>
+    <select style="background:#000; color:white; border:1px solid #333;"><option>{{ sel_class }}</option></select>
+    <span style="color:white; font-weight:bold;">Term:</span>
+    <select style="background:#000; color:white; border:1px solid #333;"><option>{{ sel_term }}</option></select>
+    <button class="btn-action btn-load">↻ LOAD</button>
+    <button class="btn-action btn-auto">⚡ AUTO-GENERATE SMART REMARKS</button>
+    <button class="btn-action btn-save">💾 SAVE ALL</button>
+</div>
+
+<div class="cockpit-grid">
+    <!-- LEFT: SUBJECT INITIALS -->
+    <div class="panel-box">
+        <span class="panel-title">SUBJECT TEACHER INITIALS</span>
+        <table class="subject-table">
+            <thead>
+                <tr><th>SUBJECT</th><th>TEACHER INITIALS OR NAME</th><th>STATUS</th></tr>
+            </thead>
+            <tbody>
+                {% for item in subject_map %}
+                <tr>
+                    <td style="font-weight: bold;">{{ item.subject }}</td>
+                    <td style="color: #aaa;">{{ item.teacher }}</td>
+                    <td class="check-mark">✓</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- RIGHT: CLASS TEACHER SECTION -->
+    <div class="panel-box" style="border-color: #fd7e14;">
+        <span class="panel-title" style="color: #fd7e14;">CLASS TEACHER (CT)</span>
+        <label style="color:white; font-size: 10px;">CT NAME:</label>
+        <input type="text" value="NSAYIGA RONALD" style="width:100%; background:#000; border:1px solid #333; color:white; padding:8px; margin-bottom:15px;">
+        
+        <label style="color:white; font-size: 10px;">CT REMARK (DEFAULT):</label>
+        <textarea class="remark-area" rows="3">You are capable of performing, don't relax please.</textarea>
+        
+        <label style="color:white; font-size: 10px;">CT SIGNATURE:</label>
+        <div class="signature-pad">
+            <!-- 💎 This pulls the signature we added to the School Model earlier -->
+            {% if school.chairman_signature %}
+                <img src="{{ school.chairman_signature.url }}" class="signature-image">
+            {% else %}
+                <span style="color:#ccc">NO SIGNATURE LOADED</span>
+            {% endif %}
+        </div>
+        <p style="color: #00ff00; font-size: 10px; margin-top: 10px;">✓ Loaded saved signature</p>
+    </div>
+</div>
+{% endblock %}

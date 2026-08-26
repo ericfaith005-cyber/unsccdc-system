@@ -2282,6 +2282,7 @@ def operations_hub_view(request):
     # 🎨 THE Hub Hub Hub Hub Hub Hub Hub MINOR TABS REGISTRY
     # Each item: (Name, Icon, Color, Link, Description)
     minor_tabs = [
+        ("Command Cockpit", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
         ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
         ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
         ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
@@ -4273,3 +4274,32 @@ def generate_analysis_pdf(request, student_id):
 
     p.showPage(); p.save()
     return response
+
+@login_required
+def academic_cockpit_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    
+    # 🧠 Logic for filters
+    sel_class = request.GET.get('class', 'S.1')
+    sel_term = request.GET.get('term', '1')
+    
+    # 🕵️ Fetch subjects and find which teacher handles each one
+    subjects = Subject.objects.all()
+    subject_teacher_map = []
+    
+    for sub in subjects:
+        # Look for the staff member assigned to this subject at this school
+        teacher = Staff.objects.filter(subjects=sub, school=school).first()
+        subject_teacher_map.append({
+            'subject': sub.name.upper(),
+            'teacher': teacher.full_name.upper() if teacher else "NOT ASSIGNED",
+            'initials': teacher.full_name.split()[-1].upper() if teacher else "---"
+        })
+
+    return render(request, 'admin/academic_cockpit.html', {
+        'school': school,
+        'subject_map': subject_teacher_map,
+        'sel_class': sel_class,
+        'sel_term': sel_term,
+        'title': "ACADEMIC COMMAND COCKPIT"
+    })

@@ -72,5 +72,6 @@ urlpatterns = [
     path('save-keb-marks/', views.save_keb_marks, name='save_keb_marks'),
     path('secretary-entry/', views.secretary_marks_entry, name='secretary_entry'),
     path('performance-hub/', views.performance_analytics_view, name='performance_hub'),
-path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
+    path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
+    path('cockpit/', views.academic_cockpit_view, name='academic_cockpit'),
 ]
