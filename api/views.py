@@ -3982,9 +3982,26 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
-    # ✍️ 12. FOOTER & CHAIRMAN
-    p.setStrokeColor(gov_blue); p.line(45, base_y - 388, 200, base_y - 388)
-    p.drawString(45, base_y - 398, "KEB EXAMINATIONS CHAIRMAN")
+    sig_x = 55
+    sig_y = base_y - 382 # Positioned to sit ON the line
+    
+    # 💎 DRAW THE DIGITAL SIGNATURE
+    if school.chairman_signature and os.path.exists(school.chairman_signature.path):
+        try:
+            # We draw the signature with transparency (mask='auto')
+            # Width=80, Height=35 is perfect for a standard signature
+            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=80, height=40, mask='auto')
+        except Exception as e:
+            print(f"Signature Rendering Error: {e}")
+
+    # 📏 The Official Signature Line
+    p.setStrokeColor(gov_blue)
+    p.setLineWidth(1)
+    p.line(45, base_y - 385, 200, base_y - 385) # The physical line
+    
+    p.setFillColor(colors.black)
+    p.setFont("Times-Bold", 8)
+    p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
     
 @login_required
 def keb_mock_portal_view(request):

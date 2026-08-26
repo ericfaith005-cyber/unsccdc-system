@@ -447,7 +447,12 @@ admin.site.register([
 
 class SchoolAdmin(admin.ModelAdmin):
     list_display = ('name', 'school_code', 'district', 'is_verified')
-    readonly_fields = ('logo_preview',)
+    readonly_fields = ('logo_preview', 'signature_preview')
+
+    def signature_preview(self, obj):
+        if obj.chairman_signature:
+            return mark_safe(f'<img src="{obj.chairman_signature.url}" width="150" style="border:1px solid #ccc; background:white;"/>')
+        return "No Signature Uploaded"
     
     def logo_preview(self, obj):
         if obj.logo:
