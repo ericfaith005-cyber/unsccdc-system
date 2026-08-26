@@ -732,3 +732,10 @@ class NationalBookOrder(models.Model):
     class Meta:
         verbose_name = "Book Order Management"
         verbose_name_plural = "Book Order Management"
+
+# 📊 THE PERFORMANCE INTELLIGENCE PROXY
+class PerformanceAnalytics(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "NATIONAL PERFORMANCE ANALYTICS"
+        verbose_name_plural = "NATIONAL PERFORMANCE ANALYTICS"

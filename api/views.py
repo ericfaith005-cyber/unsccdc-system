@@ -2298,6 +2298,7 @@ def operations_hub_view(request):
         ("KEB Mock Center", "fa-file-signature", "#2196F3", "/api/keb-portal/", "Candidate Passlips"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
         ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
+        ("Performance Hub", "fa-chart-pie", "#008080", "/api/performance-hub/", "Advanced AI Analysis"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
         ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
@@ -4171,3 +4172,87 @@ def web_app_home(request):
     """
     return HttpResponse(html)
 
+@login_required
+def performance_analytics_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class', 'S.1')
+    
+    # 🕵️ Fetch Students in Class
+    students = Student.objects.filter(school=school, current_class=selected_class)
+    
+    analysis_data = []
+    for s in students:
+        marks = s.marks.all()
+        if marks.exists():
+            # 🧮 Calculate Best Subject
+            best_sub = marks.order_by('-eot_score').first()
+            avg_score = marks.aggregate(a=Avg('eot_score'))['a'] or 0
+            
+            # Prepare data for Chart.js
+            labels = [m.subject.name for m in marks]
+            scores = [m.eot_score for m in marks]
+            
+            analysis_data.append({
+                'student': s,
+                'avg': round(avg_score, 1),
+                'best': best_sub.subject.name.upper(),
+                'best_score': best_sub.eot_score,
+                'labels': json.dumps(labels),
+                'scores': json.dumps(scores)
+            })
+
+    return render(request, 'admin/performance_analysis.html', {
+        'school': school,
+        'analysis': analysis_data,
+        'selected_class': selected_class,
+        'title': "SOVEREIGN PERFORMANCE ANALYTICS"
+    })
+
+def generate_analysis_pdf(request, student_id):
+    student = get_object_or_404(Student, account_number=student_id)
+    marks = student.marks.all()
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ANALYSIS_{student.full_name}.pdf"'
+    
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+    gov_blue = colors.HexColor("#002366")
+    rich_gold = colors.HexColor("#D4AF37")
+
+    # 🎨 NATIONAL Hub Hub Hub DESIGN
+    p.setFillColor(colors.HexColor("#F8F9FA")); p.rect(0, 0, width, height, fill=1)
+    p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+
+    # 🏛️ HEADER
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 16)
+    p.drawCentredString(width/2, height-60, "SOVEREIGN PERFORMANCE ANALYTICS REPORT")
+    p.setFont("Times-Roman", 10); p.setFillColor(colors.black)
+    p.drawCentredString(width/2, height-80, f"OFFICIAL AUDIT FOR {student.full_name.upper()}")
+
+    # 📈 ANALYSIS SECTION
+    p.setFillColor(rich_gold); p.rect(45, height-150, width-90, 40, fill=1)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
+    best = marks.order_by('-eot_score').first()
+    p.drawString(60, height-135, f"BEST DONE SUBJECT: {best.subject.name if best else 'N/A'}")
+    
+    # 📊 SUBJECT STRENGTH COMPARISON
+    p.setFont("Times-Bold", 11); p.drawString(50, height-190, "SUBJECT-BY-SUBJECT STRENGTH RADIUS:")
+    y = height - 220
+    for m in marks:
+        p.setFont("Times-Bold", 9); p.drawString(50, y, f"{m.subject.name.upper()}")
+        # Draw a horizontal strength bar
+        p.setFillColor(colors.lightgrey); p.rect(150, y-2, 350, 8, fill=1, stroke=0)
+        p.setFillColor(gov_blue); p.rect(150, y-2, (m.eot_score * 3.5), 8, fill=1, stroke=0)
+        p.setFillColor(colors.black); p.drawRightString(width-55, y, f"{m.eot_score}%")
+        y -= 20
+
+    # 📝 SYSTEM ADVISORY
+    p.setStrokeColor(rich_gold); p.rect(50, 100, width-100, 60)
+    p.setFont("Times-Italic", 9)
+    p.drawString(60, 140, "NATIONAL SYSTEM ADVISORY:")
+    p.drawString(60, 125, f"Based on the analysis, {student.full_name} shows high competence in {best.subject.name if best else 'N/A'}.")
+    p.drawString(60, 110, "Consider strengthening technical skills to match academic performance.")
+
+    p.showPage(); p.save()
+    return response

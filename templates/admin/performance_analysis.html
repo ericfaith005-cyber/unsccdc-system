@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    :root { --navy: #002366; --gold: #D4AF37; --obsidian: #050505; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; }
+    .analysis-card { background: #0d0d0d; border: 1px solid #222; border-radius: 20px; padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--gold); }
+    .chart-container { height: 250px; margin-top: 20px; }
+    .btn-print { background: var(--gold); color: #000; font-weight: 900; padding: 10px 20px; border-radius: 10px; text-decoration: none; }
+</style>
+
+<div style="padding: 20px;">
+    <h1 style="color: #fff; letter-spacing: 3px;">NATIONAL ANALYTICS HUB</h1>
+    <p style="color: var(--gold); font-weight: bold;">{{ school.name|upper }} ● PERFORMANCE TRENDS</p>
+
+    {% for item in analysis %}
+    <div class="analysis-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <h2 style="color: #fff; margin: 0;">{{ item.student.full_name|upper }}</h2>
+                <span style="color: #00ff00; font-weight: bold;">BEST SUBJECT: {{ item.best }} ({{ item.best_score }}%)</span>
+            </div>
+            <a href="/api/download-analysis/{{ item.student.account_number }}/" class="btn-print">🖨️ PRINT PDF</a>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="chart_{{ item.student.id }}"></canvas>
+        </div>
+    </div>
+
+    <script>
+        new Chart(document.getElementById('chart_{{ item.student.id }}'), {
+            type: 'bar',
+            data: {
+                labels: {{ item.labels|safe }},
+                datasets: [{
+                    label: 'Subject Performance (%)',
+                    data: {{ item.scores|safe }},
+                    backgroundColor: 'rgba(212, 175, 55, 0.6)',
+                    borderColor: '#D4AF37',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#222' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+    {% endfor %}
+</div>
+{% endblock %}
