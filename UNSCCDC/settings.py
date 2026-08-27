@@ -262,6 +262,7 @@ JAZZMIN_SETTINGS = {
 }
 
 JAZZMIN_UI_TWEAKS = {
+    "navbar": "navbar-dark",
     "navbar_small_text": False,
     "footer_small_text": True,
     "body_small_text": False,
@@ -269,18 +270,20 @@ JAZZMIN_UI_TWEAKS = {
     "brand_colour": "navbar-warning", # Golden Brand
     "accent": "accent-warning",       # Golden Accents
     "navbar": "navbar-dark",
-    "no_navbar_border": False,
+    "no_navbar_border": True,
     "navbar_fixed": True,
     "layout_boxed": False,
-    "footer_fixed": False,
+    "footer_fixed": True,
     "sidebar_fixed": True,
-    "sidebar": "sidebar-dark-warning", # Golden Sidebar highlights
+    "sidebar": "sidebar-dark-success",
     "sidebar_nav_small_text": False,
     "sidebar_disable_expand": False,
     "sidebar_nav_child_indent": True,
     "sidebar_nav_compact_style": False,
     "sidebar_nav_legacy_style": False,
     "sidebar_nav_flat_style": False,
+    "accent": "accent-success",  
+    "brand_colour": "navbar-success", 
     "theme": "darkly",
     "use_google_fonts": True,
     "show_sidebar": True,
@@ -288,7 +291,7 @@ JAZZMIN_UI_TWEAKS = {
     "changeform_format": "horizontal_tabs",
     "dark_mode_theme": "darkly",
     "button_classes": {
-        "primary": "btn-outline-warning", # Golden buttons
+        "primary": "btn-outline-success",
         "secondary": "btn-secondary",
         "info": "btn-info",
         "warning": "btn-warning",
