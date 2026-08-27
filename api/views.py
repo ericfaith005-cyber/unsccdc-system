@@ -2292,6 +2292,7 @@ def operations_hub_view(request):
         ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
         ("Staff Salaries", "fa-hand-holding-usd", "#9b59b6", "/api/payroll-hub/", "Payroll & Tax"),
+        ("Import/Export", "fa-file-excel", "#2ecc71", "/api/exchange-center/", "Bulk Data Logistics"),
         ("SMS Broadcast", "fa-comment-alt", "#e67e22", "/api/sms-hub/", "Notify Parents"),
         ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
         ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
@@ -3934,7 +3935,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         elif row_score >= 50: interp = "BASIC"
         elif row_score >= 40: interp = "ELEMENTARY"
         else: interp = "UNSATISFACTORY"
-        data_rows.append([r.subject.name.upper(), f"{row_score:g}%", r.grade, "", interp])
+        data_rows.append([r.subject.name.upper(), f"{row_score:g}", r.grade, "", interp])
 
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
     data_rows.append(['OVERALL AVERAGE', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
@@ -3984,32 +3985,15 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
-    p.setDash(1, 2)
-    p.line(45, base_y - 315, width - 45, base_y - 315)
-    p.setDash()
-
-    p.setFillColor(colors.black); p.setFont("Times-BoldItalic", 7)
-    legal_text = [
-        "1. This document is a property of the Kyadondo Examinations Board (KEB).",
-        "2. Any alteration of the information on this slip renders it null and void.",
-        "3. This result slip is a mock evaluation and serves as a performance indicator for UNEB finals.",
-        "4. Institutional verification can be done via the UNSCCDC National Registry portal."
-    ]
-    
-    ly_pos = base_y - 330
-    for line in legal_text:
-        p.drawString(45, ly_pos, line)
-        ly_pos -= 10
-
     sig_x = 55
-    sig_y = base_y - 382 # Positioned to sit ON the line
+    sig_y = base_y - 390 # Positioned to sit ON the line
     
     # 💎 DRAW THE DIGITAL SIGNATURE
     if school.chairman_signature and os.path.exists(school.chairman_signature.path):
         try:
             # We draw the signature with transparency (mask='auto')
             # Width=80, Height=35 is perfect for a standard signature
-            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=80, height=40, mask='auto')
+            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=80, height=30, mask='auto')
         except Exception as e:
             print(f"Signature Rendering Error: {e}")
 
@@ -4020,7 +4004,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 395, "KEB EXAMINATIONS CHAIRMAN")
+    p.drawString(45, base_y - 400, "KEB EXAMINATIONS CHAIRMAN")
     
 @login_required
 def keb_mock_portal_view(request):
@@ -4438,4 +4422,33 @@ def report_designer_hub(request):
         'primary_subs': subjects_primary,
         'a_level_subs': subjects_a_level,
         'title': "GRADES & SUBJECTS ARCHITECT"
+    })
+
+import pandas as pd
+
+@login_required
+def data_exchange_view(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    recent_exchanges = DataExchangeHub.objects.filter(school=school).order_by('-timestamp')[:10]
+    
+    preview_data = None
+    selected_exchange = None
+    
+    # 🕵️ PREVIEW LOGIC
+    exchange_id = request.GET.get('preview_id')
+    if exchange_id:
+        selected_exchange = get_object_or_404(DataExchangeHub, id=exchange_id)
+        try:
+            # Read only the first 5 rows for a fast preview
+            df = pd.read_excel(selected_exchange.exchange_file.path)
+            preview_data = df.head(10).to_html(classes='preview-table', index=False)
+        except Exception as e:
+            preview_data = f"Error reading file: {str(e)}"
+
+    return render(request, 'admin/data_exchange.html', {
+        'school': school,
+        'exchanges': recent_exchanges,
+        'preview_data': preview_data,
+        'selected_exchange': selected_exchange,
+        'title': "NATIONAL LOGISTICS CENTER"
     })

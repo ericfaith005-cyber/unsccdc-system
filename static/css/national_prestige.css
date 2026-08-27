@@ -103,3 +103,28 @@ body {
 .user-panel .info i.fa-circle {
     color: #00ff00 !important; /* National Green for Active */
 }
+
+/* 🛡️ THE Hub Hub Hub COMMANDER PANEL */
+.user-panel {
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important;
+    padding-bottom: 15px !important;
+    margin-bottom: 15px !important;
+}
+
+.user-panel .image img {
+    height: 45px !important;
+    width: 45px !important;
+    animation: flag-sway 3s infinite ease-in-out;
+}
+
+@keyframes flag-sway {
+    0% { transform: rotate(-2deg) scale(1); }
+    50% { transform: rotate(2deg) scale(1.05); }
+    100% { transform: rotate(-2deg) scale(1); }
+}
+
+/* 🖋️ TIMES NEW ROMAN FOR THE USERNAME */
+.user-panel .info {
+    font-family: "Times New Roman", Times, serif !important;
+    text-transform: uppercase;
+}

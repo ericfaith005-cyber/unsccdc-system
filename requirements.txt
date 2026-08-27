@@ -16,3 +16,4 @@ beautifulsoup4
 requests
 matplotlib
 numpy
+openpyxl

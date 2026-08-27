@@ -77,4 +77,5 @@ urlpatterns = [
     path('architect/', views.report_designer_hub, name='report_architect'),
     path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
     path('overall-performance/', views.generate_overall_performance_pdf, name='overall_performance'),
+    path('exchange-center/', views.data_exchange_view, name='exchange_center'),
 ]

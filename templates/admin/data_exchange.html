@@ -1,0 +1,77 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --navy: #001035; --gold: #D4AF37; --obsidian: #050505; --success: #00ff00; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 25px !important; }
+
+    /* 📦 MAIN EXCHANGE PANELS */
+    .exchange-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+    .control-panel { background: #0d0d0d; border: 1px solid #222; border-radius: 20px; padding: 25px; border-top: 4px solid var(--gold); }
+    
+    /* 📋 PREVIEW TABLE CSS */
+    .preview-box { background: #111; border: 1px dashed var(--gold); border-radius: 15px; padding: 20px; min-height: 300px; overflow-x: auto; }
+    .preview-table { width: 100%; border-collapse: collapse; color: white; font-size: 12px; }
+    .preview-table th { background: var(--navy); color: var(--gold); padding: 10px; border: 1px solid #333; }
+    .preview-table td { padding: 8px; border: 1px solid #222; text-align: center; }
+
+    .btn-sync { background: var(--gold); color: black; font-weight: 900; width: 100%; padding: 15px; border-radius: 10px; border: none; cursor: pointer; margin-top: 20px; }
+    .btn-download { background: transparent; color: var(--gold); border: 1px solid var(--gold); padding: 5px 10px; border-radius: 5px; text-decoration: none; font-size: 11px; }
+</style>
+
+<div class="header" style="border-left: 6px solid var(--gold); padding-left: 20px; margin-bottom: 40px;">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0;">DATA IMPORT & EXPORT CENTER</h1>
+    <p style="color: var(--gold); font-size: 12px; font-weight: bold;">OFFICIAL LOGISTICS HUB ● {{ school.name|upper }}</p>
+</div>
+
+<div class="exchange-grid">
+    <!-- LEFT: RECENT FILES & ACTIONS -->
+    <div class="control-panel">
+        <h3 style="color: #fff; font-size: 14px; margin-bottom: 20px;">COMMANDS</h3>
+        <a href="/admin/api/dataexchangehub/add/" class="btn-sync" style="display:block; text-align:center; text-decoration:none; margin-bottom:20px;">➕ UPLOAD NEW FILE</a>
+        
+        <hr style="border-color:#222;">
+        
+        <h3 style="color: var(--gold); font-size: 12px;">RECENT ACTIVITY</h3>
+        {% for ex in exchanges %}
+        <div style="margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 10px;">
+            <div style="font-weight: bold; font-size: 12px; color: #fff;">{{ ex.get_category_display }}</div>
+            <div style="font-size: 10px; color: #555;">{{ ex.timestamp|date:"d M, H:i" }}</div>
+            <div style="margin-top: 8px; display: flex; gap: 5px;">
+                <a href="?preview_id={{ ex.id }}" class="btn-download">VIEW PREVIEW</a>
+                {% if not ex.processed %}
+                    <a href="/api/execute-bridge/{{ ex.id }}/" class="btn-download" style="border-color: #00ff00; color: #00ff00;">SYNC DATA</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- RIGHT: THE Hub Hub Hub PREVIEW WINDOW -->
+    <div class="control-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="color: #fff; font-size: 14px; margin: 0;">DATA PREVIEW WINDOW</h3>
+            {% if selected_exchange %}
+                <span style="background: rgba(0,255,0,0.1); color: #00ff00; padding: 4px 10px; border-radius: 50px; font-size: 9px; font-weight: bold;">
+                    READY FOR NATIONAL INTEGRATION
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="preview-box">
+            {% if preview_data %}
+                {{ preview_data|safe }}
+            {% else %}
+                <div style="text-align: center; padding-top: 100px; color: #333;">
+                    <i class="fas fa-file-excel" style="font-size: 50px; display: block; margin-bottom: 20px;"></i>
+                    SELECT A FILE FROM THE LEFT TO PREVIEW CONTENT
+                </div>
+            {% endif %}
+        </div>
+
+        {% if preview_data and not selected_exchange.processed %}
+            <button class="btn-sync" onclick="alert('Commencing National Registry Update...')">🚀 COMMENCE DATA WELDING</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

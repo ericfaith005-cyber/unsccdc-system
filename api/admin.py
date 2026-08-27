@@ -948,3 +948,8 @@ class NationalBookOrderAdmin(admin.ModelAdmin):
         colors = {'PENDING': 'red', 'PAID': 'orange', 'DELIVERED': 'green'}
         return mark_safe(f'<b style="color:{colors.get(obj.status, "white")};">{obj.status}</b>')
     status_badge.short_description = "Delivery Status"
+
+@admin.register(DataExchangeProxy)
+class DataExchangeProxyAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        return redirect('/api/exchange-center/')

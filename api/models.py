@@ -757,3 +757,25 @@ class PerformanceAnalytics(Student):
         proxy = True
         verbose_name = "NATIONAL PERFORMANCE ANALYTICS"
         verbose_name_plural = "NATIONAL PERFORMANCE ANALYTICS"
+
+class DataExchangeHub(models.Model):
+    EXCHANGE_TYPES = [('IMPORT', 'Import to System'), ('EXPORT', 'Export from Registry')]
+    DATA_CATEGORIES = [('STUDENTS', 'Student Bio'), ('MARKS', 'Academic Marks'), ('FEES', 'Financial Ledger')]
+
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+    exchange_file = models.FileField(upload_to='exchange/files/')
+    category = models.CharField(max_length=20, choices=DATA_CATEGORIES, default='STUDENTS')
+    exchange_type = models.CharField(max_length=10, choices=EXCHANGE_TYPES, default='IMPORT')
+    processed = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "National Data Exchange"
+        verbose_name_plural = "National Data Exchange"
+
+# 💎 THE PROXY TAB
+class DataExchangeProxy(DataExchangeHub):
+    class Meta:
+        proxy = True
+        verbose_name = "Import & Export Center"
+        verbose_name_plural = "Import & Export Center"
