@@ -14,3 +14,5 @@ pandas
 python-docx
 beautifulsoup4
 requests
+matplotlib
+numpy

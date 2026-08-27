@@ -3984,6 +3984,23 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
+    p.setDash(1, 2)
+    p.line(45, base_y - 315, width - 45, base_y - 315)
+    p.setDash()
+
+    p.setFillColor(colors.black); p.setFont("Times-BoldItalic", 7)
+    legal_text = [
+        "1. This document is a property of the Kyadondo Examinations Board (KEB).",
+        "2. Any alteration of the information on this slip renders it null and void.",
+        "3. This result slip is a mock evaluation and serves as a performance indicator for UNEB finals.",
+        "4. Institutional verification can be done via the UNSCCDC National Registry portal."
+    ]
+    
+    ly_pos = base_y - 330
+    for line in legal_text:
+        p.drawString(45, ly_pos, line)
+        ly_pos -= 10
+
     sig_x = 55
     sig_y = base_y - 382 # Positioned to sit ON the line
     
@@ -4237,50 +4254,141 @@ def performance_analytics_view(request):
     except Exception as e:
         return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Analytics Engine Error</h1><p>{str(e)}</p></body>")
 
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+from django.db.models import Avg, Max, Min
+from reportlab.lib.utils import ImageReader
+
+# 💎 HELPER: THE Hub Hub Hub VECTOR GRAPH CREATOR
+def generate_graph_stream(labels, values, title, color="#002366"):
+    plt.figure(figsize=(6, 3), dpi=100)
+    plt.bar(labels, values, color=color, alpha=0.7)
+    plt.title(title, fontsize=10, fontweight='bold', family='serif')
+    plt.xticks(rotation=45, fontsize=7)
+    plt.yticks(fontsize=8)
+    plt.ylim(0, 100)
+    plt.grid(axis='y', linestyle='--', alpha=0.3)
+    plt.tight_layout()
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', transparent=True)
+    plt.close()
+    buf.seek(0)
+    return ImageReader(buf)
+
+# 1. 🎓 INDIVIDUAL STUDENT INTELLIGENCE REPORT
 def generate_analysis_pdf(request, student_id):
     student = get_object_or_404(Student, account_number=student_id)
     marks = KEBMockResult.objects.filter(student=student).select_related('subject')
     
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="MOCK_ANALYSIS_{student.full_name}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="KEB_ANALYSIS_{student.full_name}.pdf"'
     
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
-    gov_blue = colors.HexColor("#002366")
-    rich_gold = colors.HexColor("#D4AF37")
+    gov_blue, rich_gold = colors.HexColor("#002366"), colors.HexColor("#D4AF37")
 
-    # 🖌️ BACKGROUND
+    # 🎨 THE Hub Hub DESIGN
     p.setFillColor(colors.HexColor("#FDFDF5")); p.rect(0, 0, width, height, fill=1)
-    p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+    p.setStrokeColor(gov_blue); p.setLineWidth(4); p.rect(20, 20, width-40, height-40)
 
-    # 🏛️ TITLE
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 18)
-    p.drawCentredString(width/2, height-60, "NATIONAL MOCK PERFORMANCE AUDIT")
-    p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
-    p.drawCentredString(width/2, height-80, f"CANDIDATE: {student.full_name.upper()}")
+    # 🏛️ HEADER
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 16)
+    p.drawCentredString(width/2, height-60, "NATIONAL PERFORMANCE INTELLIGENCE REPORT")
+    p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
+    p.drawCentredString(width/2, height-80, f"OFFICIAL KEB MOCK AUDIT: {student.full_name.upper()}")
 
-    # 📊 SUBJECT-BY-SUBJECT GRAPH
-    y = height - 150
-    for m in marks:
-        p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
-        p.drawString(60, y, m.subject.name.upper())
-        
-        # Draw Horizontal Data Bar
-        p.setFillColor(colors.lightgrey); p.rect(180, y-3, 300, 10, fill=1, stroke=0)
-        # Bar length calculation: 3 units per 1%
-        bar_len = m.score * 3
-        p.setFillColor(gov_blue if m.score >= 50 else colors.red)
-        p.rect(180, y-3, bar_len, 10, fill=1, stroke=0)
-        
-        p.setFont("Times-Bold", 10)
-        p.drawRightString(width - 60, y, f"{m.score:g}%")
-        y -= 25
+    # 📊 DRAW THE GRAPH
+    if marks.exists():
+        labels = [m.subject.name[:5].upper() for m in marks]
+        values = [float(m.score) for m in marks]
+        graph = generate_graph_stream(labels, values, "SUBJECT-BY-SUBJECT MASTERY RADIUS")
+        p.drawImage(graph, 50, height-300, width=500, height=200)
 
-    # 🛡️ SOVEREIGN FOOTER
-    p.setStrokeColor(rich_gold); p.line(60, 150, width-60, 150)
-    p.setFont("Times-Italic", 9)
-    p.drawCentredString(width/2, 130, "This analysis is an official projection based on Kyadondo Examinations Board standards.")
+    # ✍️ ANALYTICAL DESCRIPTION
+    p.setFont("Times-Bold", 11); p.drawString(55, height-330, "EXECUTIVE SUMMARY:")
+    p.setFont("Times-Roman", 9)
+    best = marks.order_by('-score').first()
+    desc = f"Based on the 2026 KEB Mock cycle, the candidate demonstrates peak performance in {best.subject.name.upper()} " \
+           f"with a score of {best.score:g}%. This indicates a high aptitude for logical deduction in this field."
     
+    text_obj = p.beginText(55, height-350)
+    text_obj.setLeading(12)
+    for line in [desc, "Target areas for improvement include subjects below the 50% median threshold."]:
+        text_obj.textLine(line)
+    p.drawText(text_obj)
+
+    p.showPage(); p.save()
+    return response
+
+# 🚀 2. THE Hub Hub Hub OVERALL SCHOOL PERFORMANCE AUDIT
+@login_required
+def generate_overall_performance_pdf(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class', 'S.4')
+    
+    # 🕵️ AGGREGATE THE NATIONAL BRAIN
+    # Get averages for every subject in the class
+    subject_stats = KEBMockResult.objects.filter(
+        student__school=school, 
+        student__current_class=selected_class
+    ).values('subject__name').annotate(
+        avg_score=Avg('score')
+    ).order_by('-avg_score')
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="OVERALL_PERFORMANCE_{selected_class}.pdf"'
+    
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+    
+    # 🏛️ MASTER LAYOUT
+    p.setStrokeColor(colors.HexColor("#D90000")); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
+    p.setFillColor(colors.HexColor("#002366")); p.setFont("Times-Bold", 18)
+    p.drawCentredString(width/2, height-70, "NATIONAL Hub Hub Hub PERFORMANCE EXECUTIVE SUMMARY")
+    p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
+    p.drawCentredString(width/2, height-90, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
+
+    # 🏆 BEST vs WORST SUBJECTS
+    if subject_stats:
+        best_sub = subject_stats[0]
+        worst_sub = subject_stats.reverse()[0]
+
+        data = [
+            ['STRENGTH CATEGORY', 'SUBJECT NAME', 'AVERAGE MARK', 'GRADE'],
+            ['NATIONAL STRENGTH', best_sub['subject__name'].upper(), f"{best_sub['avg_score']:.1f}%", "A"],
+            ['NATIONAL WEAKNESS', worst_sub['subject__name'].upper(), f"{worst_sub['avg_score']:.1f}%", "E"]
+        ]
+        table = Table(data, colWidths=[150, 150, 100, 100])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#002366")),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ]))
+        table.wrapOn(p, width, height); table.drawOn(p, 50, height-200)
+
+        # 📈 OVERALL CLASS GRAPH
+        labels = [s['subject__name'][:4].upper() for s in subject_stats]
+        values = [float(s['avg_score']) for s in subject_stats]
+        class_graph = generate_graph_stream(labels, values, "CLASS SUBJECT COMPARISON", color="#D90000")
+        p.drawImage(class_graph, 50, height-450, width=500, height=220)
+
+        # 💡 NATIONAL RECOMMENDATIONS
+        p.setFont("Times-Bold", 12); p.drawString(50, 200, "SYSTEM Hub Hub Hub RECOMMENDATIONS:")
+        p.setFont("Times-Roman", 10)
+        recs = [
+            f"1. Prioritize resources for {worst_sub['subject__name']} to improve the national mean.",
+            f"2. Utilize the teaching staff of {best_sub['subject__name']} to mentor other departments.",
+            "3. Schedule intensive remedial sessions for candidates scoring below the 15-point UACE threshold."
+        ]
+        y_rec = 180
+        for r in recs:
+            p.drawString(60, y_rec, r)
+            y_rec -= 15
+
     p.showPage(); p.save()
     return response
 

@@ -75,4 +75,6 @@ urlpatterns = [
     path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
     path('cockpit/', views.academic_cockpit_view, name='academic_cockpit'),
     path('architect/', views.report_designer_hub, name='report_architect'),
+    path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
+    path('overall-performance/', views.generate_overall_performance_pdf, name='overall_performance'),
 ]
