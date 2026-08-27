@@ -1,57 +1,109 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-    :root { --navy: #002366; --gold: #D4AF37; --obsidian: #050505; }
+    :root { --navy: #001035; --gold: #D4AF37; --obsidian: #050505; --neon-teal: #00f2ff; }
     * { font-family: "Times New Roman", Times, serif !important; }
-    #content { background: #000 !important; }
-    .analysis-card { background: #0d0d0d; border: 1px solid #222; border-radius: 20px; padding: 25px; margin-bottom: 30px; border-left: 5px solid var(--gold); }
-    .chart-container { height: 250px; margin-top: 20px; }
-    .btn-print { background: var(--gold); color: #000; font-weight: 900; padding: 10px 20px; border-radius: 10px; text-decoration: none; }
+    #content { background: #000 !important; padding: 20px !important; }
+
+    /* 📊 PERFORMANCE CARDS */
+    .analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; }
+    .student-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid #222;
+        border-radius: 25px;
+        padding: 25px;
+        position: relative;
+        transition: 0.4s;
+    }
+    .student-card:hover { border-color: var(--gold); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    
+    .flag-ribbon {
+        height: 3px; width: 100%; position: absolute; top: 0; left: 0;
+        background: linear-gradient(to right, #000 33%, #FCDC04 33%, #FCDC04 66%, #D90000 66%);
+    }
+
+    .stat-badge { background: #111; padding: 10px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+    .val { font-size: 20px; font-weight: 900; color: #fff; display: block; }
+    .lbl { font-size: 9px; color: var(--gold); letter-spacing: 2px; }
+
+    .chart-box { height: 200px; margin-top: 20px; background: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
 </style>
 
-<div style="padding: 20px;">
-    <h1 style="color: #fff; letter-spacing: 3px;">NATIONAL ANALYTICS HUB</h1>
-    <p style="color: var(--gold); font-weight: bold;">{{ school.name|upper }} ● PERFORMANCE TRENDS</p>
+<div class="page-header" style="margin-bottom: 30px; border-left: 5px solid var(--gold); padding-left: 20px;">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin:0;">{{ sel_class }} MOCK INTELLIGENCE</h1>
+    <p style="color: var(--gold); font-size: 12px; font-weight: bold;">{{ school.name|upper }} ● NATIONAL PERFORMANCE COMPARISON</p>
+</div>
 
+<!-- 🧭 CLASS FILTER -->
+<div style="margin-bottom: 30px;">
+    {% for c in target_classes %}
+    <a href="?class={{ c }}" style="text-decoration:none; padding:10px 25px; border-radius:10px; margin-right:10px; background:{% if sel_class == c %}var(--gold){% else %}#111{% endif %}; color:{% if sel_class == c %}#000{% else %}#fff{% endif %}; font-weight:bold; font-size:12px;">{{ c }} CANDIDATES</a>
+    {% endfor %}
+</div>
+
+<div class="analysis-grid">
     {% for item in analysis %}
-    <div class="analysis-card">
+    <div class="student-card">
+        <div class="flag-ribbon"></div>
+        
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-                <h2 style="color: #fff; margin: 0;">{{ item.student.full_name|upper }}</h2>
-                <span style="color: #00ff00; font-weight: bold;">BEST SUBJECT: {{ item.best }} ({{ item.best_score }}%)</span>
+                <h3 style="color: #fff; margin: 0;">{{ item.student.full_name|upper }}</h3>
+                <p style="color: #555; font-size: 10px; margin-top: 5px;">NATIONAL REGISTRY ID: {{ item.student.account_number }}</p>
             </div>
-            <a href="/api/download-analysis/{{ item.student.account_number }}/" class="btn-print">🖨️ PRINT PDF</a>
+            <div style="display: flex; gap: 10px;">
+                <div class="stat-badge"><span class="val">{{ item.avg }}%</span><span class="lbl">AVG</span></div>
+                <a href="/api/download-analysis/{{ item.student.account_number }}/" style="background:var(--gold); color:#000; padding:10px; border-radius:10px; text-decoration:none;"><i class="fas fa-print"></i></a>
+            </div>
         </div>
 
-        <div class="chart-container">
+        <div style="margin-top: 15px; color: var(--neon-teal); font-size: 11px; font-weight: bold;">
+            <i class="fas fa-star"></i> CORE STRENGTH: {{ item.best_subject }} ({{ item.best_score }}%)
+        </div>
+
+        <div class="chart-box">
             <canvas id="chart_{{ item.student.id }}"></canvas>
         </div>
     </div>
 
     <script>
-        new Chart(document.getElementById('chart_{{ item.student.id }}'), {
-            type: 'bar',
-            data: {
-                labels: {{ item.labels|safe }},
-                datasets: [{
-                    label: 'Subject Performance (%)',
-                    data: {{ item.scores|safe }},
-                    backgroundColor: 'rgba(212, 175, 55, 0.6)',
-                    borderColor: '#D4AF37',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#222' } },
-                    x: { grid: { display: false } }
+        (function() {
+            const ctx = document.getElementById('chart_{{ item.student.id }}').getContext('2d');
+            new Chart(ctx, {
+                type: 'line', // 💎 'line' or 'bar' looks very professional
+                data: {
+                    labels: JSON.parse('{{ item.chart_labels|safe }}'),
+                    datasets: [{
+                        label: 'Mock Score',
+                        data: JSON.parse('{{ item.chart_scores|safe }}'),
+                        borderColor: '#D4AF37',
+                        backgroundColor: 'rgba(212, 175, 55, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, max: 100, grid: { color: '#111' }, ticks: { color: '#444' } },
+                        x: { grid: { display: false }, ticks: { color: '#666', font: { size: 8 } } }
+                    }
                 }
-            }
-        });
+            });
+        })();
     </script>
+    {% empty %}
+    <div style="padding: 100px; text-align: center; color: #444; grid-column: span 2;">
+        <i class="fas fa-microchip" style="font-size: 50px; margin-bottom: 20px;"></i>
+        <h2>NO MOCK DATA DETECTED</h2>
+        <p>Please ensure KEB Mock marks are entered in the Mocks Center.</p>
+    </div>
     {% endfor %}
 </div>
 {% endblock %}

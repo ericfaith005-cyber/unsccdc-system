@@ -2282,11 +2282,12 @@ def operations_hub_view(request):
     # 🎨 THE Hub Hub Hub Hub Hub Hub Hub MINOR TABS REGISTRY
     # Each item: (Name, Icon, Color, Link, Description)
     minor_tabs = [
-        ("Command Cockpit", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
+        ("Command View", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
         ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
         ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
         ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
         ("Fees Reminders", "fa-bell", "#f39c12", "/admin/api/feesreminder/", "Print Reminders"), 
+        ("Report Architect", "fa-palette", "#ff007f", "/api/architect/", "Design & Branding"),
         ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
         ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
         ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
@@ -4192,86 +4193,94 @@ def web_app_home(request):
 
 @login_required
 def performance_analytics_view(request):
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    selected_class = request.GET.get('class', 'S.1')
-    
-    # 🕵️ Fetch Students in Class
-    students = Student.objects.filter(school=school, current_class=selected_class)
-    
-    analysis_data = []
-    for s in students:
-        marks = s.marks.all()
-        if marks.exists():
-            # 🧮 Calculate Best Subject
-            best_sub = marks.order_by('-eot_score').first()
-            avg_score = marks.aggregate(a=Avg('eot_score'))['a'] or 0
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        
+        # 1. 🧠 TARGET CLASSES (Focusing on Candidates)
+        target_classes = ['S.4', 'S.6', 'P.7']
+        sel_class = request.GET.get('class', 'S.4')
+        
+        # 2. 🔎 FETCH CANDIDATES
+        students = Student.objects.filter(school=school, current_class=sel_class).order_by('full_name')
+        
+        analysis_data = []
+        for s in students:
+            # 💎 FOCUS ON KEB MOCK RESULTS
+            mock_marks = KEBMockResult.objects.filter(student=s).select_related('subject')
             
-            # Prepare data for Chart.js
-            labels = [m.subject.name for m in marks]
-            scores = [m.eot_score for m in marks]
-            
-            analysis_data.append({
-                'student': s,
-                'avg': round(avg_score, 1),
-                'best': best_sub.subject.name.upper(),
-                'best_score': best_sub.eot_score,
-                'labels': json.dumps(labels),
-                'scores': json.dumps(scores)
-            })
+            if mock_marks.exists():
+                # 🧮 CALCULATION ENGINE
+                avg_score = mock_marks.aggregate(a=Avg('score'))['a'] or 0
+                best_sub_obj = mock_marks.order_by('-score').first()
+                
+                # Prepare clean data for Chart.js
+                labels = [m.subject.name.upper() for m in mock_marks]
+                scores = [float(m.score) for m in mock_marks]
+                
+                analysis_data.append({
+                    'student': s,
+                    'avg': round(avg_score, 1),
+                    'best_subject': best_sub_obj.subject.name.upper() if best_sub_obj else "N/A",
+                    'best_score': best_sub_obj.score if best_sub_obj else 0,
+                    'chart_labels': json.dumps(labels),
+                    'chart_scores': json.dumps(scores),
+                })
 
-    return render(request, 'admin/performance_analysis.html', {
-        'school': school,
-        'analysis': analysis_data,
-        'selected_class': selected_class,
-        'title': "SOVEREIGN PERFORMANCE ANALYTICS"
-    })
+        context = {
+            'school': school,
+            'analysis': analysis_data,
+            'sel_class': sel_class,
+            'target_classes': target_classes,
+            'title': "NATIONAL MOCK ANALYTICS"
+        }
+        return render(request, 'admin/performance_analysis.html', context)
+    except Exception as e:
+        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Analytics Engine Error</h1><p>{str(e)}</p></body>")
 
 def generate_analysis_pdf(request, student_id):
     student = get_object_or_404(Student, account_number=student_id)
-    marks = student.marks.all()
+    marks = KEBMockResult.objects.filter(student=student).select_related('subject')
     
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="ANALYSIS_{student.full_name}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="MOCK_ANALYSIS_{student.full_name}.pdf"'
     
     p = canvas.Canvas(response, pagesize=A4)
     width, height = A4
     gov_blue = colors.HexColor("#002366")
     rich_gold = colors.HexColor("#D4AF37")
 
-    # 🎨 NATIONAL Hub Hub Hub DESIGN
-    p.setFillColor(colors.HexColor("#F8F9FA")); p.rect(0, 0, width, height, fill=1)
+    # 🖌️ BACKGROUND
+    p.setFillColor(colors.HexColor("#FDFDF5")); p.rect(0, 0, width, height, fill=1)
     p.setStrokeColor(gov_blue); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
 
-    # 🏛️ HEADER
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 16)
-    p.drawCentredString(width/2, height-60, "SOVEREIGN PERFORMANCE ANALYTICS REPORT")
-    p.setFont("Times-Roman", 10); p.setFillColor(colors.black)
-    p.drawCentredString(width/2, height-80, f"OFFICIAL AUDIT FOR {student.full_name.upper()}")
+    # 🏛️ TITLE
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 18)
+    p.drawCentredString(width/2, height-60, "NATIONAL MOCK PERFORMANCE AUDIT")
+    p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
+    p.drawCentredString(width/2, height-80, f"CANDIDATE: {student.full_name.upper()}")
 
-    # 📈 ANALYSIS SECTION
-    p.setFillColor(rich_gold); p.rect(45, height-150, width-90, 40, fill=1)
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
-    best = marks.order_by('-eot_score').first()
-    p.drawString(60, height-135, f"BEST DONE SUBJECT: {best.subject.name if best else 'N/A'}")
-    
-    # 📊 SUBJECT STRENGTH COMPARISON
-    p.setFont("Times-Bold", 11); p.drawString(50, height-190, "SUBJECT-BY-SUBJECT STRENGTH RADIUS:")
-    y = height - 220
+    # 📊 SUBJECT-BY-SUBJECT GRAPH
+    y = height - 150
     for m in marks:
-        p.setFont("Times-Bold", 9); p.drawString(50, y, f"{m.subject.name.upper()}")
-        # Draw a horizontal strength bar
-        p.setFillColor(colors.lightgrey); p.rect(150, y-2, 350, 8, fill=1, stroke=0)
-        p.setFillColor(gov_blue); p.rect(150, y-2, (m.eot_score * 3.5), 8, fill=1, stroke=0)
-        p.setFillColor(colors.black); p.drawRightString(width-55, y, f"{m.eot_score}%")
-        y -= 20
+        p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
+        p.drawString(60, y, m.subject.name.upper())
+        
+        # Draw Horizontal Data Bar
+        p.setFillColor(colors.lightgrey); p.rect(180, y-3, 300, 10, fill=1, stroke=0)
+        # Bar length calculation: 3 units per 1%
+        bar_len = m.score * 3
+        p.setFillColor(gov_blue if m.score >= 50 else colors.red)
+        p.rect(180, y-3, bar_len, 10, fill=1, stroke=0)
+        
+        p.setFont("Times-Bold", 10)
+        p.drawRightString(width - 60, y, f"{m.score:g}%")
+        y -= 25
 
-    # 📝 SYSTEM ADVISORY
-    p.setStrokeColor(rich_gold); p.rect(50, 100, width-100, 60)
+    # 🛡️ SOVEREIGN FOOTER
+    p.setStrokeColor(rich_gold); p.line(60, 150, width-60, 150)
     p.setFont("Times-Italic", 9)
-    p.drawString(60, 140, "NATIONAL SYSTEM ADVISORY:")
-    p.drawString(60, 125, f"Based on the analysis, {student.full_name} shows high competence in {best.subject.name if best else 'N/A'}.")
-    p.drawString(60, 110, "Consider strengthening technical skills to match academic performance.")
-
+    p.drawCentredString(width/2, 130, "This analysis is an official projection based on Kyadondo Examinations Board standards.")
+    
     p.showPage(); p.save()
     return response
 
@@ -4302,4 +4311,23 @@ def academic_cockpit_view(request):
         'sel_class': sel_class,
         'sel_term': sel_term,
         'title': "ACADEMIC COMMAND COCKPIT"
+    })
+
+@login_required
+def report_designer_hub(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    
+    # 🧠 Fetch Data for the sub-tabs
+    subjects_primary = Subject.objects.filter(is_primary=True)
+    subjects_a_level = Subject.objects.filter(is_a_level=True)
+    
+    # 🎨 Current Design
+    template, _ = ReportTemplate.objects.get_or_create(school=school)
+
+    return render(request, 'admin/report_designer.html', {
+        'school': school,
+        'template': template,
+        'primary_subs': subjects_primary,
+        'a_level_subs': subjects_a_level,
+        'title': "GRADES & SUBJECTS ARCHITECT"
     })

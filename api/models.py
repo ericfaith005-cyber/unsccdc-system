@@ -126,6 +126,12 @@ class Subject(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10, blank=True, null=True) # e.g., 535 for Physics
     level = models.CharField(max_length=10, choices=LEVEL_CHOICES, default='UCE')
+    is_primary = models.BooleanField(default=False)
+    is_o_level = models.BooleanField(default=True)
+    is_a_level = models.BooleanField(default=False)
+    # 🧪 FOR A-LEVEL COMBINATIONS (e.g. PCM, PEM)
+    combination_tag = models.CharField(max_length=10, blank=True, null=True, help_text="e.g. BCM, HEG")
+
     is_core = models.BooleanField(default=True, help_text="Is this a compulsory subject?")
     
     # FOR A-LEVEL COMBINATIONS
@@ -142,6 +148,17 @@ class Subject(models.Model):
 
     def __str__(self):
         return f"[{self.level}] {self.name}"
+
+class ReportTemplate(models.Model):
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+    design_name = models.CharField(max_length=100, default="Standard Excellence")
+    background_image = models.ImageField(upload_to='templates/bg/', null=True, blank=True)
+    opacity = models.FloatField(default=0.05)
+    theme_color = models.CharField(max_length=50, default="Royal Gold")
+    page_frame_enabled = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = "REPORT DESIGNER VAULT"
 
 class Student(models.Model):
 

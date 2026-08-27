@@ -74,4 +74,5 @@ urlpatterns = [
     path('performance-hub/', views.performance_analytics_view, name='performance_hub'),
     path('download-analysis/<str:student_id>/', views.generate_analysis_pdf, name='download_analysis'),
     path('cockpit/', views.academic_cockpit_view, name='academic_cockpit'),
+    path('architect/', views.report_designer_hub, name='report_architect'),
 ]
