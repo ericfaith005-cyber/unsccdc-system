@@ -2299,6 +2299,7 @@ def operations_hub_view(request):
         ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
         ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
         ("KEB Mock Center", "fa-file-signature", "#2196F3", "/api/keb-portal/", "Candidate Passlips"),
+        ("KEB Ingestion", "fa-file-signature", "#2196F3", "/api/keb-ingestion/", "Speed Marks Entry"),
         ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
         ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
         ("Performance Hub", "fa-chart-pie", "#008080", "/api/performance-hub/", "Advanced AI Analysis"),
@@ -4452,3 +4453,86 @@ def data_exchange_view(request):
         'selected_exchange': selected_exchange,
         'title': "NATIONAL LOGISTICS CENTER"
     })
+
+@login_required
+@transaction.atomic
+def keb_mock_ingestion_view(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        
+        # 1. 🧠 CLASS & SUBJECT REGISTRY
+        sector_map = {
+            'PRIMARY': ['P.6', 'P.7'],
+            'SECONDARY': ['S.4', 'S.6'],
+        }
+        classes = sector_map.get(school.sector, ['S.4', 'S.6'])
+        selected_class = request.GET.get('class', classes[0])
+        selected_student_id = request.GET.get('student_id')
+        
+        subjects = Subject.objects.all().order_by('name')
+        students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+
+        # 2. 💾 MASS COMMIT LOGIC (One Student, All Subjects)
+        if request.method == "POST" and selected_student_id:
+            target_std = get_object_or_404(Student, id=selected_student_id)
+            
+            for sub in subjects:
+                score_val = request.POST.get(f'sub_{sub.id}')
+                if score_val is not None and score_val != "":
+                    score = float(score_val)
+                    
+                    # 🤖 Apply National KEB Grading Logic
+                    is_a_level = any(x in selected_class.upper() for x in ["S5", "S6"])
+                    grade = "F"
+                    pts = 0
+                    
+                    if not is_a_level:
+                        if score >= 80: grade = "A"
+                        elif score >= 70: grade = "B"
+                        elif score >= 60: grade = "C"
+                        elif score >= 50: grade = "D"
+                        else: grade = "E"
+                    else:
+                        if score >= 80: grade, pts = "A", 5
+                        elif score >= 70: grade, pts = "B", 4
+                        elif score >= 60: grade, pts = "C", 3
+                        elif score >= 50: grade, pts = "D", 2
+                        elif score >= 40: grade, pts = "E", 1
+                        elif score >= 35: grade, pts = "O", 1
+                    
+                    KEBMockResult.objects.update_or_create(
+                        student=target_std, subject=sub,
+                        defaults={'score': score, 'grade': grade, 'points': pts}
+                    )
+            return redirect(f'/api/keb-ingestion/?class={selected_class}&student_id={selected_student_id}&status=success')
+
+        # 3. 🧠 MEMORY ENGINE: Pull existing marks for the form
+        existing_marks = {}
+        if selected_student_id:
+            marks_found = KEBMockResult.objects.filter(student_id=selected_student_id)
+            for m in marks_found:
+                existing_marks[m.subject.id] = m.score
+
+        # 4. 🚩 AUDIT ENGINE: Calculate missing marks for the sidebar
+        audit_list = []
+        for s in students:
+            done_count = KEBMockResult.objects.filter(student=s).count()
+            missing = subjects.count() - done_count
+            audit_list.append({
+                'student': s,
+                'is_complete': missing <= 0,
+                'missing': missing if missing > 0 else 0
+            })
+
+        return render(request, 'admin/keb_mock_ingestion.html', {
+            'school': school,
+            'classes': classes,
+            'selected_class': selected_class,
+            'audit_list': audit_list,
+            'subjects': subjects,
+            'selected_student': students.filter(id=selected_student_id).first() if selected_student_id else None,
+            'existing_marks': existing_marks,
+            'title': "KEB MOCK INGESTION"
+        })
+    except Exception as e:
+        return HttpResponse(f"Ingestion Engine Error: {str(e)}")
