@@ -204,8 +204,7 @@ JAZZMIN_SETTINGS = {
         "api.FinancialCommandCenter": "fas fa-chart-line",
     },
 
-    # 🎨 THE DESIGN (DIAMOND OBSIDIAN)
-    "theme": "darkly", # Deep Black Theme
+    
     "dark_mode_theme": "darkly",
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
