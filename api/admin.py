@@ -459,6 +459,11 @@ class SchoolAdmin(admin.ModelAdmin):
             return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
         return "No Logo Uploaded"
     
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser: return qs
+        return qs.filter(id=request.user.profile.school.id)
+    
     # 💎 THE CATEGORIZED TABS (FIELDSETS)
     fieldsets = (
         ('🏢 INSTITUTIONAL PROFILE', {

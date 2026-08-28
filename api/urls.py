@@ -79,4 +79,8 @@ urlpatterns = [
     path('overall-performance/', views.generate_overall_performance_pdf, name='overall_performance'),
     path('exchange-center/', views.data_exchange_view, name='exchange_center'),
     path('keb-ingestion/', views.keb_mock_ingestion_view, name='keb_ingestion'),
+    path('biometric-center/', views.biometric_photo_center, name='biometric_center'),
+    path('update-photo-ajax/', views.update_student_photo_ajax, name='update_photo_ajax'),
+    path('export-photo-audit/', views.export_photo_audit_pdf, name='export_photo_audit'),
+    path('register-school/', views.school_self_registration, name='register_school'),
 ]

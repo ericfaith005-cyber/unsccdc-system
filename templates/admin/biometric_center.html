@@ -1,0 +1,90 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --navy: #001035; --gold: #D4AF37; --success: #00ff00; --danger: #ff4444; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; }
+    
+    .biometric-card { background: #0d0d0d; border: 1px solid #222; border-radius: 20px; padding: 25px; margin-bottom: 20px; border-top: 4px solid var(--gold); }
+    
+    .status-pill { padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; }
+    .missing { background: rgba(255,0,0,0.1); color: var(--danger); border: 1px solid var(--danger); }
+    .ready { background: rgba(0,255,0,0.1); color: var(--success); border: 1px solid var(--success); }
+
+    .photo-preview-circle { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; background: #111; }
+    
+    /* ⚡ HOVER UPLOAD BUTTON */
+    .upload-btn { background: var(--navy); color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 11px; }
+    .upload-btn:hover { background: var(--gold); color: black; }
+</style>
+
+<div class="biometric-card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="color: #fff; margin: 0; letter-spacing: 3px;">NATIONAL BIOMETRIC CENTER</h1>
+        <a href="/api/export-photo-audit/?class={{ selected_class }}" class="btn btn-danger" style="font-weight: 900;">
+            <i class="fas fa-file-pdf"></i> EXPORT MISSING PHOTOS AUDIT
+        </a>
+    </div>
+    <p style="color: var(--gold); font-weight: bold;">{{ total_count }} Total Candidates | <span style="color:var(--danger)">{{ missing_count }} Missing Photos</span></p>
+</div>
+
+<div style="background: #080808; border-radius: 20px; overflow: hidden; border: 1px solid #1a1a1a;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: var(--navy); color: var(--gold); text-align: left;">
+                <th style="padding: 20px;">CANDIDATE BIOMETRICS</th>
+                <th>PRN / CODE</th>
+                <th>STATUS</th>
+                <th style="text-align: right; padding-right: 20px;">ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr style="border-bottom: 1px solid #111;">
+                <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
+                    <img src="{% if s.photo %}{{ s.photo.url }}{% else %}https://via.placeholder.com/150{% endif %}" class="photo-preview-circle">
+                    <b style="color: white; font-size: 15px;">{{ s.full_name|upper }}</b>
+                </td>
+                <td style="color: #666; font-family: monospace;">{{ s.payment_code }}</td>
+                <td>
+                    {% if s.photo %}
+                        <span class="status-pill ready">● VERIFIED</span>
+                    {% else %}
+                        <span class="status-pill missing">● NO PHOTO</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right; padding-right: 20px;">
+                    <input type="file" id="input_{{ s.id }}" style="display: none;" onchange="uploadPhoto('{{ s.id }}')">
+                    <button class="upload-btn" onclick="document.getElementById('input_{{ s.id }}').click()">
+                        <i class="fas fa-camera"></i> UPLOAD PASSPORT
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function uploadPhoto(studentId) {
+    const fileInput = document.getElementById('input_' + studentId);
+    const formData = new FormData();
+    formData.append('student_id', studentId);
+    formData.append('photo', fileInput.files[0]);
+
+    fetch('/api/update-photo-ajax/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.status === 'success') {
+            alert(data.msg);
+            location.reload();
+        } else {
+            alert("Error: " + data.msg);
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -2283,6 +2283,7 @@ def operations_hub_view(request):
     # Each item: (Name, Icon, Color, Link, Description)
     minor_tabs = [
         ("Command View", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
+        ("Biometric Center", "fa-camera-retro", "#ff5722", "/api/biometric-center/", "Passport Management"),
         ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
         ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
         ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
@@ -3436,6 +3437,7 @@ def draw_human_shadow(canvas_obj, x, y, width, height):
     canvas_obj.restoreState()
 
     
+# 🚀 THE Hub Hub Hub Hub Hub NATIONAL PAIRED BATCH ENGINE
 @login_required
 def batch_report_download(request):
     try:
@@ -3443,26 +3445,55 @@ def batch_report_download(request):
         selected_class = request.GET.get('class')
         
         if not selected_class:
-            return HttpResponse("Error: Please select a class to print.")
+            return HttpResponse("<h1>Error</h1><p>Please select a class to print.</p>")
 
-        students = Student.objects.filter(school=school, current_class=selected_class, is_active=True).order_by('full_name')
+        # 🕵️ Fetch all active students in the class A-Z
+        students = Student.objects.filter(
+            school=school, 
+            current_class=selected_class, 
+            is_active=True
+        ).order_by('full_name')
 
         if not students.exists():
             return HttpResponse(f"No active students found in {selected_class}")
 
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="BATCH_REPORTS_{selected_class}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="BATCH_A1_SLIPS_{selected_class}.pdf"'
         
-        # Create canvas
         p = canvas.Canvas(response, pagesize=A4)
-        
-        for student in students:
-            draw_report_card_layout(p, student)
-            p.showPage() # 📄 Start a new page for the next student
+        width, height = A4 # 595 x 842 points
+        half_height = height / 2 # 421 points
+
+        # 🔄 THE Hub Hub Hub Hub Hub PAIRING LOOP
+        # We loop through students in steps of 2
+        for i in range(0, len(students), 2):
+            # 1. DRAW STUDENT A (Top Half of A4)
+            student_a = students[i]
+            draw_keb_slip_layout(p, student_a, school, 0) # y_offset = 0
+
+            # 2. DRAW THE PERFORATION LINE (The 'Cut Here' Guide)
+            p.setDash(4, 4)
+            p.setStrokeColor(colors.grey)
+            p.setLineWidth(0.5)
+            p.line(0, half_height, width, half_height)
+            p.setDash() # Reset to solid line
+
+            # 3. DRAW STUDENT B (Bottom Half of A4)
+            # Check if there is a second student to pair with
+            if i + 1 < len(students):
+                student_b = students[i + 1]
+                draw_keb_slip_layout(p, student_b, school, half_height) # y_offset = 421
+            
+            # 💎 THE Hub Hub Hub PAGE BREAK
+            # After finishing the two slips, we flip to a new A4 sheet
+            p.showPage()
             
         p.save()
         return response
+
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         return HttpResponse(f"National Batch Error: {str(e)}")
 
 
@@ -4006,6 +4037,65 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 400, "KEB EXAMINATIONS CHAIRMAN")
+
+# 🚀 THE Hub Hub Hub Hub Hub NATIONAL PAIRED BATCH ENGINE
+@login_required
+def batch_report_download(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class')
+        
+        if not selected_class:
+            return HttpResponse("<h1>Error</h1><p>Please select a class to print.</p>")
+
+        # 🕵️ Fetch all active students in the class A-Z
+        students = Student.objects.filter(
+            school=school, 
+            current_class=selected_class, 
+            is_active=True
+        ).order_by('full_name')
+
+        if not students.exists():
+            return HttpResponse(f"No active students found in {selected_class}")
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="BATCH_A1_SLIPS_{selected_class}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4 # 595 x 842 points
+        half_height = height / 2 # 421 points
+
+        # 🔄 THE Hub Hub Hub Hub Hub PAIRING LOOP
+        # We loop through students in steps of 2
+        for i in range(0, len(students), 2):
+            # 1. DRAW STUDENT A (Top Half of A4)
+            student_a = students[i]
+            draw_keb_slip_layout(p, student_a, school, 0) # y_offset = 0
+
+            # 2. DRAW THE PERFORATION LINE (The 'Cut Here' Guide)
+            p.setDash(4, 4)
+            p.setStrokeColor(colors.grey)
+            p.setLineWidth(0.5)
+            p.line(0, half_height, width, half_height)
+            p.setDash() # Reset to solid line
+
+            # 3. DRAW STUDENT B (Bottom Half of A4)
+            # Check if there is a second student to pair with
+            if i + 1 < len(students):
+                student_b = students[i + 1]
+                draw_keb_slip_layout(p, student_b, school, half_height) # y_offset = 421
+            
+            # 💎 THE Hub Hub Hub PAGE BREAK
+            # After finishing the two slips, we flip to a new A4 sheet
+            p.showPage()
+            
+        p.save()
+        return response
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return HttpResponse(f"National Batch Error: {str(e)}")
     
 @login_required
 def keb_mock_portal_view(request):
@@ -4536,3 +4626,116 @@ def keb_mock_ingestion_view(request):
         })
     except Exception as e:
         return HttpResponse(f"Ingestion Engine Error: {str(e)}")
+
+@login_required
+def biometric_photo_center(request):
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class', 'S.4')
+    
+    # 🕵️ Get students and check photo status
+    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+    
+    # 📊 AUDIT: Count missing photos
+    missing_count = students.filter(Q(photo='') | Q(photo__isnull=True)).count()
+    total_count = students.count()
+
+    context = {
+        'school': school,
+        'students': students,
+        'selected_class': selected_class,
+        'missing_count': missing_count,
+        'total_count': total_count,
+        'title': "NATIONAL BIOMETRIC CENTER"
+    }
+    return render(request, 'admin/biometric_center.html', context)
+
+@login_required
+@csrf_exempt
+def update_student_photo_ajax(request):
+    """💎 THE Hub Hub Hub AUTO-UPDATE ENGINE"""
+    if request.method == "POST":
+        student_id = request.POST.get('student_id')
+        photo_file = request.FILES.get('photo')
+        
+        if student_id and photo_file:
+            student = get_object_or_404(Student, id=student_id)
+            student.photo = photo_file
+            student.save()
+            return JsonResponse({"status": "success", "msg": f"Photo updated for {student.full_name}"})
+            
+    return JsonResponse({"status": "error", "msg": "Failed to sync photo"}, status=400)
+
+@login_required
+def export_photo_audit_pdf(request):
+    """📄 GENERATES THE 'MISSING PHOTOS' DOCUMENT"""
+    school = getattr(request.user, 'school', None) or School.objects.first()
+    selected_class = request.GET.get('class', 'S.4')
+    
+    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="PHOTO_AUDIT_{selected_class}.pdf"'
+    
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
+    
+    p.setFont("Times-Bold", 16)
+    p.drawCentredString(width/2, height-50, "NATIONAL BIOMETRIC AUDIT REPORT")
+    p.setFont("Times-Roman", 10)
+    p.drawCentredString(width/2, height-70, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
+    
+    data = [['#', 'STUDENT NAME', 'PRN CODE', 'BIOMETRIC STATUS']]
+    for i, s in enumerate(students, 1):
+        status = "✅ UPLOADED" if s.photo else "❌ MISSING"
+        data.append([i, s.full_name.upper(), s.payment_code, status])
+    
+    t = Table(data, colWidths=[40, 250, 100, 100])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#002366")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+    ]))
+    t.wrapOn(p, width, height)
+    t.drawOn(p, 50, height-300)
+    
+    p.showPage(); p.save()
+    return response
+
+from django.contrib.auth import login
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
+from .models import School, UserProfile
+
+def school_self_registration(request):
+    """🏛️ THE NATIONAL SCHOOL ENROLLMENT GATEWAY"""
+    if request.method == "POST":
+        s_name = request.POST.get('school_name')
+        s_sector = request.POST.get('sector')
+        admin_name = request.POST.get('admin_username')
+        admin_pass = request.POST.get('password')
+        admin_email = request.POST.get('email')
+
+        # 1. Create the School
+        new_school = School.objects.create(
+            name=s_name,
+            sector=s_sector,
+            school_code=f"REG-{random.randint(1000, 9999)}"
+        )
+
+        # 2. Create the User
+        user = User.objects.create_user(
+            username=admin_name, 
+            email=admin_email, 
+            password=admin_pass
+        )
+        user.is_staff = True # 🔓 Grant access to the system dashboard
+        user.save()
+
+        # 3. Weld them together
+        UserProfile.objects.create(user=user, school=new_school)
+
+        login(request, user) # Auto-login after registration
+        return redirect('/admin/')
+
+    return render(request, 'registration/signup.html')

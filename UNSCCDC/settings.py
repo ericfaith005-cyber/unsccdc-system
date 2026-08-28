@@ -203,8 +203,6 @@ JAZZMIN_SETTINGS = {
         "api.SchoolPayLedger": "fas fa-money-check-alt",
         "api.FinancialCommandCenter": "fas fa-chart-line",
     },
-
-    
     "dark_mode_theme": "darkly",
 
     # --- 💎 EVERY SINGLE ICON MAPPED & PROTECTED 💎 ---
