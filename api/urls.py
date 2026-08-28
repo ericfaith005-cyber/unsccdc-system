@@ -82,6 +82,4 @@ urlpatterns = [
     path('biometric-center/', views.biometric_photo_center, name='biometric_center'),
     path('update-photo-ajax/', views.update_student_photo_ajax, name='update_photo_ajax'),
     path('export-photo-audit/', views.export_photo_audit_pdf, name='export_photo_audit'),
-    path('register-school/', views.school_self_registration, name='register_school'),
-    path('repair-dates-99/', views.repair_database_dates),
 ]

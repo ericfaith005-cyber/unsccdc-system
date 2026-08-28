@@ -446,7 +446,7 @@ admin.site.register([
 
 
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ('name', 'school_code', 'district', 'is_verified')
+    list_display = ('name', 'school_code', 'district')
     readonly_fields = ('logo_preview', 'signature_preview')
 
     def signature_preview(self, obj):
@@ -458,11 +458,6 @@ class SchoolAdmin(admin.ModelAdmin):
         if obj.logo:
             return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
         return "No Logo Uploaded"
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser: return qs
-        return qs.filter(id=request.user.profile.school.id)
     
     # 💎 THE CATEGORIZED TABS (FIELDSETS)
     fieldsets = (

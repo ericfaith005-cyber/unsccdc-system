@@ -85,10 +85,6 @@ class School(models.Model):
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
     
-    # 🛡️ 10. SYSTEM STATUS (THE FIX FOR YOUR ERRORS)
-    is_verified = models.BooleanField(default=True)
-    created_at = models.DateTimeField(default=django.utils.timezone.now) # 💎 KILLS THE ERROR
-    
     # 📱 11. USSD GUIDELINES
     ussd_instructions = models.TextField(
         default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
@@ -125,15 +121,6 @@ class School(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.school_code})"
-
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='admins')
-    phone = models.CharField(max_length=20)
-    is_master_admin = models.BooleanField(default=True)
-
-    def __str__(self): return f"{self.user.username} @ {self.school.name}"
 
 # NATIONAL CURRICULUM REGISTRY 
 
