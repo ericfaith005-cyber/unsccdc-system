@@ -4739,3 +4739,25 @@ def school_self_registration(request):
         return redirect('/admin/')
 
     return render(request, 'registration/signup.html')
+
+from django.utils import timezone
+
+def repair_database_dates(request):
+    """🛡️ THE Hub Hub Hub Hub Hub EMERGENCY DATE REPAIR"""
+    try:
+        # 1. Fix Schools with missing dates
+        schools_fixed = School.objects.filter(created_at__isnull=True).update(created_at=timezone.now())
+        
+        # 2. Fix Data Bridge entries with missing dates
+        bridges_fixed = NationalDataBridge.objects.filter(timestamp__isnull=True).update(timestamp=timezone.now())
+        
+        return HttpResponse(f"""
+            <body style='background:#000; color:gold; text-align:center; padding:50px; font-family:serif;'>
+                <h1>🛡️ SOVEREIGN REPAIR COMPLETE</h1>
+                <p style='color:white;'>Fixed {schools_fixed} School records.</p>
+                <p style='color:white;'>Fixed {bridges_fixed} Bridge records.</p>
+                <a href='/admin/' style='color:gold;'>RETURN TO OFFICE</a>
+            </body>
+        """)
+    except Exception as e:
+        return HttpResponse(f"Repair Error: {str(e)}")

@@ -53,32 +53,39 @@ class School(models.Model):
     SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]
     school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
     is_verified = models.BooleanField(default=False) # 🛡️ Admin must approve new schools
-    created_at = models.DateTimeField(auto_now_add=True)
-    class School(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     name = models.CharField(max_length=255)
-    sector = models.CharField(max_length=20, choices=[('PRIMARY','Primary'),('SECONDARY','Secondary'),('UNIVERSITY','University')], default='SECONDARY')
-    school_code = models.CharField(max_length=50, unique=True)
-    logo = models.ImageField(upload_to='logos/', null=True, blank=True)
-    
-    # 📞 Contact Details
-    phone = models.CharField(max_length=20, default="+256")
-    phone2 = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    school_motto = models.CharField(max_length=255, default="Excellence")
-    
-    # 📅 Academic Dates
+    director = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    district = models.CharField(max_length=100, default="Kampala")
+    school_motto = models.CharField(max_length=255)
+    school_account_id = models.CharField(max_length=100, unique=True, editable=False)
+    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
+    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
+        
+    # PRESTIGE REGISTRY DATA 
+    uneb_center_number = models.CharField(max_length=20, default="U0000")
+    school_type = models.CharField(max_length=100, default="Secondary / Boarding")
+    rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
+    mission = models.TextField(default="To provide high-quality education.")
+    vision = models.TextField(default="A lead institution of excellence.")
+    core_values = models.TextField(default="Integrity, Excellence, Discipline")
+        
+    # USSD SETTINGS
+    ussd_instructions = models.TextField(
+        default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
+        help_text="Provide step-by-step dialing instructions for the Parent App"
+    )
     
-    # 🛡️ Verification & Metadata (THE FIX FOR YOUR ERROR)
-    is_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True) # 💎 THIS IS THE MISSING COLUMN
-    
-    # 🎨 Customization
-    stamp_color = models.CharField(max_length=20, default="#008080")
-
-    def __str__(self):
-        return self.name
+    # BANKING & API CREDENTIALS 
+    school_code = models.CharField(max_length=100, blank=True)
+    api_password = models.CharField(max_length=255, blank=True)
+    total_revenue_collected = models.BigIntegerField(default=0)
+    total_commission_earned = models.BigIntegerField(default=0)
+    is_verified = models.BooleanField(default=True)
+    followers_count = models.IntegerField(default=1500)
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -97,47 +104,16 @@ class School(models.Model):
         if self.school_type == 'PRI': return "UNEB - PLE Standard"
         if self.school_type == 'SEC': return "NCDC - NLSC (20 Point Scale)"
         return "UNEB - UACE Standard"
-        
-    name = models.CharField(max_length=255)
-    director = models.CharField(max_length=255)
-    address = models.CharField(max_length=255)
-    district = models.CharField(max_length=100, default="Kampala")
-    school_motto = models.CharField(max_length=255)
-    school_account_id = models.CharField(max_length=100, unique=True, editable=False)
-    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
-    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
-    term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
-    next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
     
-    # PRESTIGE REGISTRY DATA 
-    uneb_center_number = models.CharField(max_length=20, default="U0000")
-    school_type = models.CharField(max_length=100, default="Secondary / Boarding")
-    rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
-    mission = models.TextField(default="To provide high-quality education.")
-    vision = models.TextField(default="A lead institution of excellence.")
-    core_values = models.TextField(default="Integrity, Excellence, Discipline")
-    
-    # USSD SETTINGS
-    ussd_instructions = models.TextField(
-        default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
-        help_text="Provide step-by-step dialing instructions for the Parent App"
-    )
-
-    # BANKING & API CREDENTIALS 
-    school_code = models.CharField(max_length=100, blank=True)
-    api_password = models.CharField(max_length=255, blank=True)
-    total_revenue_collected = models.BigIntegerField(default=0)
-    total_commission_earned = models.BigIntegerField(default=0)
-    is_verified = models.BooleanField(default=True)
-    followers_count = models.IntegerField(default=1500)
 
     def save(self, *args, **kwargs):
         if not self.school_account_id:
             import random, string
             self.school_account_id = "SCH" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
         super().save(*args, **kwargs)
-
+    
     def __str__(self): return self.name
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -579,7 +555,7 @@ class NationalDataBridge(models.Model):
     preview_data = models.JSONField(null=True, blank=True) 
     is_processed = models.BooleanField(default=False)
     records_count = models.IntegerField(default=0)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
     class Meta:
         verbose_name = "NATIONAL DATA BRIDGE"
