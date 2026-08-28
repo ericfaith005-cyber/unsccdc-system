@@ -26,6 +26,8 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+import django.utils.timezone # 💎 Ensure this is imported at the top
+
 class School(models.Model):
     LEVEL_CHOICES = [
         ('KIND', 'Kindergarten (Baby, Middle, Top)'),
@@ -53,7 +55,7 @@ class School(models.Model):
     SCHOOL_TYPES = [('PRI', 'Primary (PLE)'), ('SEC', 'Secondary (UCE)'), ('ADV', 'Advanced (UACE)')]
     school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
     is_verified = models.BooleanField(default=False) # 🛡️ Admin must approve new schools
-    created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    created_at = models.DateTimeField(default=django.utils.timezone.now) 
     name = models.CharField(max_length=255)
     director = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
@@ -196,6 +198,7 @@ class Student(models.Model):
     
     parent_link = models.ForeignKey('Parent', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     is_active = models.BooleanField(default=True)
+    is_verified = models.BooleanField(default=True, verbose_name="Registry Verified")
 
     def save(self, *args, **kwargs):
     
@@ -555,7 +558,7 @@ class NationalDataBridge(models.Model):
     preview_data = models.JSONField(null=True, blank=True) 
     is_processed = models.BooleanField(default=False)
     records_count = models.IntegerField(default=0)
-    timestamp = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    timestamp = models.DateTimeField(default=django.utils.timezone.now)
 
     class Meta:
         verbose_name = "NATIONAL DATA BRIDGE"
@@ -628,7 +631,7 @@ class NationalUpdate(models.Model):
     source = models.CharField(max_length=50) # e.g., UNEB, MoES
     title = models.CharField(max_length=500)
     link = models.URLField()
-    date_found = models.DateTimeField(auto_now_add=True)
+    date_found = models.DateTimeField(default=django.utils.timezone.now)
     is_new = models.BooleanField(default=True)
 
     class Meta:
