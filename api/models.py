@@ -54,6 +54,31 @@ class School(models.Model):
     school_type = models.CharField(max_length=3, choices=SCHOOL_TYPES, default='SEC')
     is_verified = models.BooleanField(default=False) # 🛡️ Admin must approve new schools
     created_at = models.DateTimeField(auto_now_add=True)
+    class School(models.Model):
+    name = models.CharField(max_length=255)
+    sector = models.CharField(max_length=20, choices=[('PRIMARY','Primary'),('SECONDARY','Secondary'),('UNIVERSITY','University')], default='SECONDARY')
+    school_code = models.CharField(max_length=50, unique=True)
+    logo = models.ImageField(upload_to='logos/', null=True, blank=True)
+    
+    # 📞 Contact Details
+    phone = models.CharField(max_length=20, default="+256")
+    phone2 = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    school_motto = models.CharField(max_length=255, default="Excellence")
+    
+    # 📅 Academic Dates
+    term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
+    next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
+    
+    # 🛡️ Verification & Metadata (THE FIX FOR YOUR ERROR)
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True) # 💎 THIS IS THE MISSING COLUMN
+    
+    # 🎨 Customization
+    stamp_color = models.CharField(max_length=20, default="#008080")
+
+    def __str__(self):
+        return self.name
     
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
