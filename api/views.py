@@ -4707,38 +4707,64 @@ from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from .models import School, UserProfile
 
+from django.contrib.auth import login, get_user_model
+from .models import School
+
 def school_self_registration(request):
-    """🏛️ THE NATIONAL SCHOOL ENROLLMENT GATEWAY"""
+    """🏛️ THE NATIONAL Hub Hub Hub Hub Hub ENROLLMENT GATEWAY"""
+    User = get_user_model()
+    
     if request.method == "POST":
         s_name = request.POST.get('school_name')
-        s_sector = request.POST.get('sector')
-        admin_name = request.POST.get('admin_username')
+        admin_uname = request.POST.get('username')
         admin_pass = request.POST.get('password')
-        admin_email = request.POST.get('email')
-
-        # 1. Create the School
+        
+        # 1. Create the School FIRST
         new_school = School.objects.create(
             name=s_name,
-            sector=s_sector,
             school_code=f"REG-{random.randint(1000, 9999)}"
         )
 
-        # 2. Create the User
-        user = User.objects.create_user(
-            username=admin_name, 
-            email=admin_email, 
-            password=admin_pass
-        )
-        user.is_staff = True # 🔓 Grant access to the system dashboard
+        # 2. Create the Admin User
+        user = User.objects.create_user(username=admin_uname, password=admin_pass)
+        user.is_staff = True # 🔓 Access to Dashboard
+        # Link school directly to user if your model supports it, 
+        # or use the UserProfile we discussed
         user.save()
 
-        # 3. Weld them together
-        UserProfile.objects.create(user=user, school=new_school)
-
-        login(request, user) # Auto-login after registration
+        # 3. Success
+        login(request, user)
         return redirect('/admin/')
 
-    return render(request, 'registration/signup.html')
+    # 🎨 THE HIGH-DEFINITION SIGNUP PAGE
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Enroll School | UNSCCDC</title>
+        <style>
+            * { font-family: "Times New Roman", serif; }
+            body { background: #000; color: white; text-align: center; padding-top: 100px; }
+            .box { max-width: 400px; margin: auto; border: 2px solid #D4AF37; padding: 40px; border-radius: 20px; background: rgba(255,255,255,0.02); }
+            input { width: 100%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #333; color: gold; border-radius: 10px; }
+            .btn { background: #D4AF37; color: black; padding: 15px; width: 100%; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h1 style="color:#D4AF37;">SCHOOL ENROLLMENT</h1>
+            <p>Register your institution in the National Registry</p>
+            <form method="POST">
+                <input type="text" name="school_name" placeholder="SCHOOL NAME" required>
+                <input type="text" name="username" placeholder="CHOOSE ADMIN USERNAME" required>
+                <input type="password" name="password" placeholder="SET ACCESS PASSWORD" required>
+                <button type="submit" class="btn">COMMENCE REGISTRATION</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    """
+    return HttpResponse(html)
 
 from django.utils import timezone
 
