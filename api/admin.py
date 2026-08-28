@@ -445,9 +445,45 @@ admin.site.register([
 
 
 
+@admin.register(School)
 class SchoolAdmin(admin.ModelAdmin):
+    # 📊 1. THE Hub Hub Hub LIST VIEW
+    # Ensure every name here exists in the model above!
     list_display = ('name', 'school_code', 'district', 'is_verified')
-    readonly_fields = ('logo_preview', 'signature_preview')
+    search_fields = ('name', 'school_code')
+
+    # 🛡️ 2. THE Hub Hub Hub Hub Hub QUERY SHIELD
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        try:
+            # Safely check for the school link
+            return qs.filter(id=request.user.profile.school.id)
+        except:
+            return qs.none() # Return empty list instead of crashing with 500
+
+    # 💎 3. THE Hub Hub Hub Hub Hub FIELDSET TABS
+    fieldsets = (
+        ('🏢 INSTITUTIONAL PROFILE', {
+            'fields': ('logo', 'logo_preview', 'name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
+        }),
+        ('📟 USSD GATEWAY INSTRUCTIONS', {
+            'description': "What parents see when they dial *165#",
+            'fields': ('ussd_instructions',)
+        }),
+        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
+            'description': "Bank-Level Gateway Credentials",
+            'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
+        }),
+        ('✍️ NATIONAL AUTHORIZATION', {
+            'fields': ('keb_logo', 'chairman_signature', 'signature_preview')
+        }),
+    )
+
+    # 💎 4. CONSOLIDATED READONLY FIELDS
+    # Put ALL previews and auto-calculated fields in ONE list here!
+    readonly_fields = ('logo_preview', 'signature_preview', 'total_revenue_collected', 'total_commission_earned')
 
     def signature_preview(self, obj):
         if obj.chairman_signature:
@@ -458,27 +494,6 @@ class SchoolAdmin(admin.ModelAdmin):
         if obj.logo:
             return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
         return "No Logo Uploaded"
-    
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser: return qs
-        return qs.filter(id=request.user.profile.school.id)
-    
-    # 💎 THE CATEGORIZED TABS (FIELDSETS)
-    fieldsets = (
-        ('🏢 INSTITUTIONAL PROFILE', {
-            'fields': ('name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
-        }),
-        ('📟 USSD GATEWAY INSTRUCTIONS', {
-            'description': "What parents see when they dial *165#",
-            'fields': ('ussd_instructions',)
-        }),
-        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
-            'description': "Bank-Level Gateway Credentials",
-            'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
-        }),
-    )
-    readonly_fields = ('total_revenue_collected', 'total_commission_earned')
 admin.site.register(School, SchoolAdmin)
 
 from django.utils.safestring import mark_safe
