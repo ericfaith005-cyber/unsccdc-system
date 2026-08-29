@@ -107,22 +107,29 @@
         <tbody>
             {% for s in students %}
             <tr style="border-bottom: 1px solid #111;">
-                <!-- 🔍 Find this section in your <tbody> -->
-                <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
-            {% if s.photo %}
-            <!-- 💎 THE Hub Hub Hub ABSOLUTE URL FIX -->
-            <!-- We use 'request.scheme' and 'request.get_host' to build the full WhatsApp-style link -->
-            <img src="{{ s.photo.url }}" 
-             class="photo-thumb" 
-             onclick="openStudio('{{ request.scheme }}://{{ request.get_host }}{{ s.photo.url }}', '{{ s.full_name|upper }}')"
-             onerror="this.src='https://via.placeholder.com/150';">
-            {% else %}
-            <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;">
-            <i class="fas fa-user-slash" style="color:#333"></i>
-            </div>
-        {% endif %}
-        <b style="color: white; font-size: 15px;">{{ s.full_name|upper }}</b>
-        </td>
+                <td style="padding: 20px; color: #444; font-weight: bold;">{{ forloop.counter }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        {% if s.photo %}
+                            <img src="{{ s.photo.url }}" 
+                            class="photo-thumb" 
+                            onclick="openStudio('{{ request.scheme }}://{{ request.get_host }}{{ s.photo.url }}', '{{ s.full_name|upper }}')"
+                            onerror="this.src='https://via.placeholder.com/150';">
+                        {% else %}
+                            <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;">
+                                <i class="fas fa-user-slash" style="color:#333"></i>
+                            </div>
+                        {% endif %}
+                        <b style="color: white; font-size: 15px;">{{ s.full_name|upper }}</b>
+                    </div>
+                </td>
+                <td style="color: #00ff00; font-family: monospace; font-weight: bold;">{{ s.payment_code }}</td>
+                <td style="text-align: right; padding-right: 20px;">
+                    {% if s.photo %}
+                    <button class="btn-action btn-view" onclick="openStudio('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
+                        <i class="fas fa-eye"></i> VIEW
+                    </button>
+                    {% endif %}
                     
                     <input type="file" id="input_{{ s.id }}" style="display: none;" onchange="syncPhotoToRegistry('{{ s.id }}')">
                     <button class="btn-action btn-upload" onclick="document.getElementById('input_{{ s.id }}').click()">
