@@ -484,7 +484,7 @@ from django.utils.safestring import mark_safe
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
 
-    list_display = ('photo_thumbnail', 'full_name_styled', 'payment_code_styled', 'current_class', 'get_sector', 'status_badge', 'is_verified_badge')
+    list_display = ('photo_thumbnail', 'full_name_styled', 'payment_code_styled', 'current_class', 'get_sector', 'status_badge')
     list_filter = ('school__sector', 'current_class', 'is_active')
     search_fields = ('full_name', 'account_number', 'payment_code')
     list_per_page = 25 
@@ -506,12 +506,6 @@ class StudentAdmin(admin.ModelAdmin):
     def payment_code_styled(self, obj):
         return mark_safe(f'<code style="background:#002366; color:#00ff00; padding:4px 10px; border-radius:5px; font-weight:bold;">{obj.payment_code}</code>')
     payment_code_styled.short_description = "National PRN"
-
-    def is_verified_badge(self, obj):
-        if obj.is_verified:
-            return mark_safe('<b style="color: #00ff00; font-size: 10px;">✅ VERIFIED</b>')
-        return mark_safe('<b style="color: #ff4444; font-size: 10px;">⚠️ PENDING</b>')
-    is_verified_badge.short_description = "Security Status"
 
     def status_badge(self, obj):
         if obj.is_active:

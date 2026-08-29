@@ -191,9 +191,6 @@ class Student(models.Model):
     is_active = models.BooleanField(default=True, verbose_name="Active in Registry")
     
     parent_link = models.ForeignKey('Parent', on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
-    is_active = models.BooleanField(default=True)
-    is_verified = models.BooleanField(default=True, verbose_name="Registry Verified")
-
     def save(self, *args, **kwargs):
     
         if not self.account_number:
