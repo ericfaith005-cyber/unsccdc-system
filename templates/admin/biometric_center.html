@@ -48,14 +48,38 @@
         background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center;
         backdrop-filter: blur(10px);
     }
+    /* 📱 WHATSAPP-STYLE PRO PORTRAIT VIEW */
     .modal-frame {
-        background: #fff; padding: 12px; border-radius: 20px; text-align: center;
-        border: 6px solid var(--gold); max-width: 380px;
-        animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: #000; /* Pure Black background for the photo to pop */
+        padding: 5px;
+        border-radius: 15px;
+        text-align: center;
+        border: 2px solid var(--gold);
+        max-width: 90%;
+        width: 400px; /* Standard Portrait Width */
+        box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+        animation: whatsappPop 0.3s ease-out;
     }
-    .modal-frame img { width: 100%; border-radius: 12px; filter: contrast(1.05) brightness(1.02); }
-    
-    @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-frame img { 
+        width: 100%; 
+        height: auto; 
+        max-height: 500px;
+        border-radius: 10px; 
+        object-fit: contain; /* 💎 Ensures the full face is seen without cutting */
+        display: block;
+    }
+
+    .modal-id-footer {
+        background: var(--navy);
+        margin-top: 5px;
+        padding: 15px;
+        border-radius: 0 0 10px 10px;
+    }
+
+    @keyframes whatsappPop { 
+        from { opacity: 0; transform: scale(0.9) translateY(20px); } 
+        to { opacity: 1; transform: scale(1) translateY(0); } 
+    }
 </style>
 
 <div class="biometric-card">
@@ -83,26 +107,22 @@
         <tbody>
             {% for s in students %}
             <tr style="border-bottom: 1px solid #111;">
-                <td style="padding: 20px; color: #444; font-weight: bold;">{{ forloop.counter }}</td>
-                <td>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        {% if s.photo %}
-                            <img src="{{ s.photo.url }}" class="photo-thumb" onclick="openStudio('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
-                        {% else %}
-                            <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;" onclick="alert('No photo uploaded for this student yet.')">
-                                <i class="fas fa-user-slash" style="color:#333"></i>
-                            </div>
-                        {% endif %}
-                        <b style="color: white; font-size: 14px; letter-spacing: 0.5px;">{{ s.full_name|upper }}</b>
-                    </div>
-                </td>
-                <td style="color: #00ff00; font-family: monospace; font-weight: bold;">{{ s.payment_code }}</td>
-                <td style="text-align: right; padding-right: 20px;">
-                    {% if s.photo %}
-                    <button class="btn-action btn-view" onclick="openStudio('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
-                        <i class="fas fa-eye"></i> VIEW
-                    </button>
-                    {% endif %}
+                <!-- 🔍 Find this section in your <tbody> -->
+                <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
+            {% if s.photo %}
+            <!-- 💎 THE Hub Hub Hub ABSOLUTE URL FIX -->
+            <!-- We use 'request.scheme' and 'request.get_host' to build the full WhatsApp-style link -->
+            <img src="{{ s.photo.url }}" 
+             class="photo-thumb" 
+             onclick="openStudio('{{ request.scheme }}://{{ request.get_host }}{{ s.photo.url }}', '{{ s.full_name|upper }}')"
+             onerror="this.src='https://via.placeholder.com/150';">
+            {% else %}
+            <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;">
+            <i class="fas fa-user-slash" style="color:#333"></i>
+            </div>
+        {% endif %}
+        <b style="color: white; font-size: 15px;">{{ s.full_name|upper }}</b>
+        </td>
                     
                     <input type="file" id="input_{{ s.id }}" style="display: none;" onchange="syncPhotoToRegistry('{{ s.id }}')">
                     <button class="btn-action btn-upload" onclick="document.getElementById('input_{{ s.id }}').click()">
@@ -118,13 +138,17 @@
 <!-- 🖼️ THE Hub Hub Hub STUDIO VIEWER MODAL -->
 <div id="studioModal" class="modal-bg" onclick="closeStudio()">
     <div class="modal-frame" onclick="event.stopPropagation()">
+        <!-- 📸 The Big Photo -->
         <img id="studioImg" src="">
-        <h2 id="studioName" style="margin: 15px 0 5px 0; color: #000; font-weight: 900; font-size: 18px;"></h2>
-        <div style="background: var(--navy); color: #fff; padding: 5px; font-size: 9px; font-weight: bold; border-radius: 5px; display: inline-block; letter-spacing: 2px;">
-            AUTHENTICATED NATIONAL IDENTITY
+        
+        <!-- 🪪 The Identity Footer -->
+        <div class="modal-id-footer">
+            <h2 id="studioName" style="margin: 0; color: #D4AF37; font-weight: 900; font-size: 20px; letter-spacing: 1px;"></h2>
+            <p style="color: #fff; font-size: 9px; margin-top: 5px; letter-spacing: 2px; font-weight: bold; opacity: 0.7;">
+                OFFICIAL NATIONAL BIOMETRIC RECORD
+            </p>
+            <button onclick="closeStudio()" style="margin-top:15px; background:transparent; border:1px solid #444; color:#888; padding:8px 20px; border-radius:8px; cursor:pointer;">CLOSE</button>
         </div>
-        <br><br>
-        <button onclick="closeStudio()" style="background: #eee; border: 1px solid #ccc; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">CLOSE</button>
     </div>
 </div>
 
