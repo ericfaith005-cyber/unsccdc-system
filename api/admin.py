@@ -453,7 +453,7 @@ class SchoolAdmin(admin.ModelAdmin):
             'fields': ('logo', 'logo_preview', 'name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
         }),
         ('📟 USSD GATEWAY INSTRUCTIONS', {
-            'description': "What parents see when they dial *165#",
+            'description ': "What parents see when they dial *165#",
             'fields': ('ussd_instructions',)
         }),
         ('🔒 SCHOOLPAY HIGH-SECURITY API', {

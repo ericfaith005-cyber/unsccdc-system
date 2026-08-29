@@ -64,9 +64,6 @@ class School(models.Model):
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     uneb_center_number = models.CharField(max_length=20, default="U0000")
     api_password = models.CharField(max_length=255, blank=True)
-    
-    # 📞 6. COMMUNICATION CHANNELS
-    phone = models.CharField(max_length=20, default="+256")
     phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
     email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
     
