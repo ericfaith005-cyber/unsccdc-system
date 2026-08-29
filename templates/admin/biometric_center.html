@@ -1,62 +1,112 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <style>
-    :root { --navy: #001035; --gold: #D4AF37; --success: #00ff00; --danger: #ff4444; }
+    /* 🏛️ NATIONAL BIOMETRIC THEME */
+    :root { 
+        --navy: #001035; 
+        --gold: #D4AF37; 
+        --success: #00ff00; 
+        --obsidian: #050505;
+    }
     * { font-family: "Times New Roman", Times, serif !important; }
-    #content { background: #000 !important; }
-    
-    .biometric-card { background: #0d0d0d; border: 1px solid #222; border-radius: 20px; padding: 25px; margin-bottom: 20px; border-top: 4px solid var(--gold); }
-    
-    .status-pill { padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; }
-    .missing { background: rgba(255,0,0,0.1); color: var(--danger); border: 1px solid var(--danger); }
-    .ready { background: rgba(0,255,0,0.1); color: var(--success); border: 1px solid var(--success); }
+    #content { background: #000 !important; padding: 20px !important; }
 
-    .photo-preview-circle { width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; background: #111; }
+    .biometric-card { 
+        background: #0d0d0d; 
+        border: 1px solid #222; 
+        border-radius: 20px; 
+        padding: 30px; 
+        margin-bottom: 25px; 
+        border-top: 5px solid var(--gold);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    /* 📸 THE Hub Hub Hub THUMBNAIL Hub Hub Hub */
+    .photo-thumb { 
+        width: 55px; height: 55px; 
+        border-radius: 10px; 
+        border: 2px solid #333; 
+        object-fit: cover; 
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .photo-thumb:hover { border-color: var(--gold); transform: scale(1.1); }
+
+    /* 🔘 THE Hub Hub Hub BUTTONS Hub Hub Hub */
+    .btn-action { 
+        padding: 8px 15px; border-radius: 8px; font-weight: 900; 
+        font-size: 11px; text-decoration: none; cursor: pointer; transition: 0.3s;
+    }
+    .btn-view { background: transparent; color: var(--gold); border: 1px solid var(--gold); margin-right: 8px; }
+    .btn-view:hover { background: var(--gold); color: black; }
+    .btn-upload { background: var(--navy); color: white; border: 1px solid #222; }
+    .btn-upload:hover { border-color: var(--gold); }
+
+    /* 🖼️ THE Hub Hub Hub IMPERIAL PHOTO MODAL Hub Hub Hub */
+    .modal-bg {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center;
+        backdrop-filter: blur(10px);
+    }
+    .modal-frame {
+        background: #fff; padding: 12px; border-radius: 20px; text-align: center;
+        border: 6px solid var(--gold); max-width: 380px;
+        animation: popUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal-frame img { width: 100%; border-radius: 12px; filter: contrast(1.05) brightness(1.02); }
     
-    /* ⚡ HOVER UPLOAD BUTTON */
-    .upload-btn { background: var(--navy); color: var(--gold); border: 1px solid var(--gold); padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 900; font-size: 11px; }
-    .upload-btn:hover { background: var(--gold); color: black; }
+    @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 
 <div class="biometric-card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="color: #fff; margin: 0; letter-spacing: 3px;">NATIONAL BIOMETRIC CENTER</h1>
-        <a href="/api/export-photo-audit/?class={{ selected_class }}" class="btn btn-danger" style="font-weight: 900;">
-            <i class="fas fa-file-pdf"></i> EXPORT MISSING PHOTOS AUDIT
+        <div>
+            <h1 style="color: #fff; margin: 0; letter-spacing: 4px; font-weight: 900;">NATIONAL BIOMETRIC CENTER</h1>
+            <p style="color: var(--gold); font-weight: bold; margin-top: 5px;">{{ school.name|upper }} ● PASSPORT REGISTRY</p>
+        </div>
+        <a href="/api/export-photo-audit/?class={{ selected_class }}" class="btn btn-outline-danger" style="font-weight: 900; border-radius: 12px;">
+            <i class="fas fa-file-pdf"></i> MISSING PHOTOS REPORT
         </a>
     </div>
-    <p style="color: var(--gold); font-weight: bold;">{{ total_count }} Total Candidates | <span style="color:var(--danger)">{{ missing_count }} Missing Photos</span></p>
 </div>
 
 <div style="background: #080808; border-radius: 20px; overflow: hidden; border: 1px solid #1a1a1a;">
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr style="background: var(--navy); color: var(--gold); text-align: left;">
-                <th style="padding: 20px;">CANDIDATE BIOMETRICS</th>
-                <th>PRN / CODE</th>
-                <th>STATUS</th>
-                <th style="text-align: right; padding-right: 20px;">ACTION</th>
+                <th style="padding: 20px;">#</th>
+                <th>CANDIDATE BIOMETRICS</th>
+                <th>PRN / ACCESS CODE</th>
+                <th style="text-align: right; padding-right: 30px;">ACTIONS</th>
             </tr>
         </thead>
         <tbody>
             {% for s in students %}
             <tr style="border-bottom: 1px solid #111;">
-                <td style="padding: 15px; display: flex; align-items: center; gap: 15px;">
-                    <img src="{% if s.photo %}{{ s.photo.url }}{% else %}https://via.placeholder.com/150{% endif %}" class="photo-preview-circle">
-                    <b style="color: white; font-size: 15px;">{{ s.full_name|upper }}</b>
-                </td>
-                <td style="color: #666; font-family: monospace;">{{ s.payment_code }}</td>
+                <td style="padding: 20px; color: #444; font-weight: bold;">{{ forloop.counter }}</td>
                 <td>
-                    {% if s.photo %}
-                        <span class="status-pill ready">● VERIFIED</span>
-                    {% else %}
-                        <span class="status-pill missing">● NO PHOTO</span>
-                    {% endif %}
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        {% if s.photo %}
+                            <img src="{{ s.photo.url }}" class="photo-thumb" onclick="openStudio('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
+                        {% else %}
+                            <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;" onclick="alert('No photo uploaded for this student yet.')">
+                                <i class="fas fa-user-slash" style="color:#333"></i>
+                            </div>
+                        {% endif %}
+                        <b style="color: white; font-size: 14px; letter-spacing: 0.5px;">{{ s.full_name|upper }}</b>
+                    </div>
                 </td>
+                <td style="color: #00ff00; font-family: monospace; font-weight: bold;">{{ s.payment_code }}</td>
                 <td style="text-align: right; padding-right: 20px;">
-                    <input type="file" id="input_{{ s.id }}" style="display: none;" onchange="uploadPhoto('{{ s.id }}')">
-                    <button class="upload-btn" onclick="document.getElementById('input_{{ s.id }}').click()">
-                        <i class="fas fa-camera"></i> UPLOAD PASSPORT
+                    {% if s.photo %}
+                    <button class="btn-action btn-view" onclick="openStudio('{{ s.photo.url }}', '{{ s.full_name|upper }}')">
+                        <i class="fas fa-eye"></i> VIEW
+                    </button>
+                    {% endif %}
+                    
+                    <input type="file" id="input_{{ s.id }}" style="display: none;" onchange="syncPhotoToRegistry('{{ s.id }}')">
+                    <button class="btn-action btn-upload" onclick="document.getElementById('input_{{ s.id }}').click()">
+                        <i class="fas fa-camera"></i> {% if s.photo %}REPLACE{% else %}UPLOAD{% endif %}
                     </button>
                 </td>
             </tr>
@@ -65,26 +115,53 @@
     </table>
 </div>
 
-<script>
-function uploadPhoto(studentId) {
-    const fileInput = document.getElementById('input_' + studentId);
-    const formData = new FormData();
-    formData.append('student_id', studentId);
-    formData.append('photo', fileInput.files[0]);
+<!-- 🖼️ THE Hub Hub Hub STUDIO VIEWER MODAL -->
+<div id="studioModal" class="modal-bg" onclick="closeStudio()">
+    <div class="modal-frame" onclick="event.stopPropagation()">
+        <img id="studioImg" src="">
+        <h2 id="studioName" style="margin: 15px 0 5px 0; color: #000; font-weight: 900; font-size: 18px;"></h2>
+        <div style="background: var(--navy); color: #fff; padding: 5px; font-size: 9px; font-weight: bold; border-radius: 5px; display: inline-block; letter-spacing: 2px;">
+            AUTHENTICATED NATIONAL IDENTITY
+        </div>
+        <br><br>
+        <button onclick="closeStudio()" style="background: #eee; border: 1px solid #ccc; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">CLOSE</button>
+    </div>
+</div>
 
-    fetch('/api/update-photo-ajax/', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === 'success') {
-            alert(data.msg);
-            location.reload();
-        } else {
-            alert("Error: " + data.msg);
-        }
-    });
-}
+<script>
+    // 🎭 Open the High-Definition Studio View
+    function openStudio(url, name) {
+        document.getElementById('studioImg').src = url;
+        document.getElementById('studioName').innerText = name;
+        document.getElementById('studioModal').style.display = 'flex';
+    }
+
+    function closeStudio() {
+        document.getElementById('studioModal').style.display = 'none';
+    }
+
+    // ⚡ AJAX Auto-Sync Logic
+    function syncPhotoToRegistry(studentId) {
+        const fileInput = document.getElementById('input_' + studentId);
+        const formData = new FormData();
+        formData.append('student_id', studentId);
+        formData.append('photo', fileInput.files[0]);
+
+        // Show temporary loading message
+        alert("Synchronizing with National Registry... Please wait.");
+
+        fetch('/api/update-photo-ajax/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success') {
+                location.reload();
+            } else {
+                alert("Critical Registry Error: " + data.msg);
+            }
+        });
+    }
 </script>
 {% endblock %}
