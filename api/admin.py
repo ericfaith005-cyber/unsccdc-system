@@ -442,12 +442,31 @@ admin.site.register([
     CommissionAnalytics
     ])
 
-
-
-
 class SchoolAdmin(admin.ModelAdmin):
+    # 📊 1. THE Hub Hub Hub LIST VIEW
     list_display = ('name', 'school_code', 'district')
-    readonly_fields = ('logo_preview', 'signature_preview')
+    search_fields = ('name', 'school_code')
+
+    # 💎 2. THE Hub Hub Hub Hub Hub FIELDSET TABS
+    fieldsets = (
+        ('🏢 INSTITUTIONAL PROFILE', {
+            'fields': ('logo', 'logo_preview', 'name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
+        }),
+        ('📟 USSD GATEWAY INSTRUCTIONS', {
+            'description': "What parents see when they dial *165#",
+            'fields': ('ussd_instructions',)
+        }),
+        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
+            'description': "Bank-Level Gateway Credentials",
+            'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
+        }),
+        ('✍️ AUTHORIZATION', {
+            'fields': ('keb_logo', 'chairman_signature', 'signature_preview')
+        }),
+    )
+
+    # 💎 3. CONSOLIDATED READONLY FIELDS (Merged both into one list!)
+    readonly_fields = ('logo_preview', 'signature_preview', 'total_revenue_collected', 'total_commission_earned')
 
     def signature_preview(self, obj):
         if obj.chairman_signature:
@@ -458,22 +477,6 @@ class SchoolAdmin(admin.ModelAdmin):
         if obj.logo:
             return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
         return "No Logo Uploaded"
-    
-    # 💎 THE CATEGORIZED TABS (FIELDSETS)
-    fieldsets = (
-        ('🏢 INSTITUTIONAL PROFILE', {
-            'fields': ('name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
-        }),
-        ('📟 USSD GATEWAY INSTRUCTIONS', {
-            'description': "What parents see when they dial *165#",
-            'fields': ('ussd_instructions',)
-        }),
-        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
-            'description': "Bank-Level Gateway Credentials",
-            'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
-        }),
-    )
-    readonly_fields = ('total_revenue_collected', 'total_commission_earned')
 admin.site.register(School, SchoolAdmin)
 
 from django.utils.safestring import mark_safe

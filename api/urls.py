@@ -82,4 +82,6 @@ urlpatterns = [
     path('biometric-center/', views.biometric_photo_center, name='biometric_center'),
     path('update-photo-ajax/', views.update_student_photo_ajax, name='update_photo_ajax'),
     path('export-photo-audit/', views.export_photo_audit_pdf, name='export_photo_audit'),
+    # 💎 THE Hub Hub Hub Hub Hub SECRET DOCTOR LINK
+    path('fix-db-now-99/', views.emergency_database_fix),
 ]

@@ -4702,3 +4702,52 @@ def export_photo_audit_pdf(request):
     p.showPage(); p.save()
     return response
 
+from django.db import connection
+from django.http import HttpResponse
+
+def emergency_database_fix(request):
+    """🛡️ THE Hub Hub Hub Hub Hub EMERGENCY SQL INJECTOR"""
+    try:
+        with connection.cursor() as cursor:
+            # 1. Physically force the 'phone' column into the 'api_school' table
+            # We use 'VARCHAR(50)' to match your model and add a default
+            cursor.execute("""
+                ALTER TABLE api_school 
+                ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '+256';
+            """)
+            
+            # 2. While we are here, let's ensure 'created_at' also exists
+            cursor.execute("""
+                ALTER TABLE api_school 
+                ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+            """)
+
+        return HttpResponse("<h1 style='color:white; background:green; padding:50px;'>SUCCESS: 'phone' and 'created_at' columns injected! The Registry is now healed.</h1><a href='/admin/'>Return to Office</a>")
+    except Exception as e:
+        return HttpResponse(f"<h1 style='color:white; background:red; padding:50px;'>Injection Error</h1><p>{str(e)}</p>")
+    
+
+    from django.db import connection
+from django.http import HttpResponse
+
+def emergency_database_fix(request):
+    """🛡️ THE Hub Hub Hub Hub Hub EMERGENCY SQL INJECTOR"""
+    try:
+        with connection.cursor() as cursor:
+            # 1. Physically force the 'phone' column into the 'api_school' table
+            # We use 'VARCHAR(50)' to match your model and add a default
+            cursor.execute("""
+                ALTER TABLE api_school 
+                ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '+256';
+            """)
+            
+            # 2. While we are here, let's ensure 'created_at' also exists
+            cursor.execute("""
+                ALTER TABLE api_school 
+                ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+            """)
+
+        return HttpResponse("<h1 style='color:white; background:green; padding:50px;'>SUCCESS: 'phone' and 'created_at' columns injected! The Registry is now healed.</h1><a href='/admin/'>Return to Office</a>")
+    except Exception as e:
+        return HttpResponse(f"<h1 style='color:white; background:red; padding:50px;'>Injection Error</h1><p>{str(e)}</p>")
+
