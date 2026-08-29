@@ -2289,6 +2289,7 @@ def operations_hub_view(request):
         ("Performance Hub", "fa-chart-pie", "#008080", "/api/performance-hub/", "Advanced AI Analysis"),
         ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
         ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
+        ("Merit List", "fa-trophy", "#ffd700", "/api/merit-list/", "National Rankings"),
         ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
         ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
         ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), # 💎 15th TAB
@@ -4733,4 +4734,58 @@ def emergency_database_fix(request):
         return HttpResponse("<h1 style='color:white; background:green; padding:50px;'>SUCCESS: 'phone' and 'created_at' columns injected! The Registry is now healed.</h1><a href='/admin/'>Return to Office</a>")
     except Exception as e:
         return HttpResponse(f"<h1 style='color:white; background:red; padding:50px;'>Injection Error</h1><p>{str(e)}</p>")
+    
+@login_required
+def national_merit_view(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        exam_type = request.GET.get('type', 'TERMLY') # TERMLY or MOCK
+        selected_class = request.GET.get('class', 'ALL')
+
+        # 🕵️ 1. Fetch Students
+        query = Student.objects.filter(school=school, is_active=True)
+        if selected_class != 'ALL':
+            query = query.filter(current_class=selected_class)
+
+        rank_list = []
+        
+        for s in query:
+            # 🧮 2. Calculate Average based on Exam Type
+            if exam_type == 'MOCK':
+                marks = KEBMockResult.objects.filter(student=s)
+                scores = [m.score for m in marks]
+            else:
+                marks = AcademicResult.objects.filter(student=s)
+                # For termly, we use the EOT score as the standard
+                scores = [m.eot_score for m in marks]
+
+            if scores:
+                avg = sum(scores) / len(scores)
+                # Find best subject
+                if exam_type == 'MOCK':
+                    best_sub = marks.order_by('-score').first().subject.name if marks.exists() else "N/A"
+                else:
+                    best_sub = marks.order_by('-eot_score').first().subject.name if marks.exists() else "N/A"
+                
+                rank_list.append({
+                    'student': s,
+                    'avg': round(avg, 1),
+                    'best': best_sub.upper(),
+                    'count': len(scores)
+                })
+
+        # 🏆 3. THE Hub Hub Hub Hub Hub MASTER SORT
+        # Sort by average descending (Highest to Lowest)
+        rank_list.sort(key=lambda x: x['avg'], reverse=True)
+
+        context = {
+            'school': school,
+            'rank_list': rank_list,
+            'exam_type': exam_type,
+            'selected_class': selected_class,
+            'title': "NATIONAL MERIT LIST"
+        }
+        return render(request, 'admin/national_merit.html', context)
+    except Exception as e:
+        return HttpResponse(f"Ranking Engine Error: {str(e)}")
 

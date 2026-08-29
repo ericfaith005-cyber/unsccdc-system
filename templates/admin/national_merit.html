@@ -1,0 +1,87 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --gold: #D4AF37; --navy: #001035; --silver: #C0C0C0; --bronze: #CD7F32; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 25px !important; }
+
+    .merit-header { border-left: 6px solid var(--gold); padding-left: 20px; margin-bottom: 30px; }
+    
+    /* 🎮 CONTROL BAR */
+    .merit-controls { background: var(--navy); padding: 15px; border-radius: 15px; border: 1px solid var(--gold); margin-bottom: 25px; display: flex; gap: 20px; align-items: center; }
+    .control-btn { text-decoration: none; padding: 8px 18px; border-radius: 8px; font-weight: 900; font-size: 11px; transition: 0.3s; }
+    .active-btn { background: var(--gold); color: black; }
+    .inactive-btn { background: rgba(255,255,255,0.05); color: white; border: 1px solid #333; }
+
+    /* 🏆 RANKING TABLE */
+    .table-container { background: #080808; border-radius: 20px; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
+    .table-container::before { content: ""; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(to right, #000, #FCDC04, #D90000); }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { background: rgba(255,255,255,0.02); color: var(--gold); padding: 18px; text-align: left; font-size: 11px; letter-spacing: 2px; }
+    td { padding: 15px 18px; border-bottom: 1px solid #111; color: #fff; font-size: 14px; }
+    
+    /* 🎖️ MEDAL SYSTEM */
+    .rank-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12px; }
+    .rank-1 { background: var(--gold); color: black; box-shadow: 0 0 15px var(--gold); }
+    .rank-2 { background: var(--silver); color: black; }
+    .rank-3 { background: var(--bronze); color: black; }
+    .rank-other { border: 1px solid #333; color: #555; }
+</style>
+
+<div class="merit-header">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin: 0;">NATIONAL MERIT REGISTRY</h1>
+    <p style="color: var(--gold); font-size: 12px; font-weight: bold;">{{ school.name|upper }} ● {{ exam_type }} RANKING</p>
+</div>
+
+<div class="merit-controls">
+    <span style="color: white; font-weight: bold; font-size: 12px;">EXAM TYPE:</span>
+    <a href="?type=TERMLY" class="control-btn {% if exam_type == 'TERMLY' %}active-btn{% else %}inactive-btn{% endif %}">INTERNAL EXAMS</a>
+    <a href="?type=MOCK" class="control-btn {% if exam_type == 'MOCK' %}active-btn{% else %}inactive-btn{% endif %}">KEB MOCKS</a>
+    
+    <button onclick="window.print()" style="margin-left: auto; background: white; color: black; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 900; cursor: pointer;">
+        <i class="fas fa-print"></i> PRINT MERIT LIST
+    </button>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 60px;">RANK</th>
+                <th>STUDENT IDENTITY</th>
+                <th>CLASS</th>
+                <th>AVERAGE</th>
+                <th>CORE STRENGTH</th>
+                <th style="text-align: right;">ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in rank_list %}
+            <tr style="{% if forloop.counter <= 3 %}background: rgba(212, 175, 55, 0.03);{% endif %}">
+                <td>
+                    <div class="rank-circle rank-{% if forloop.counter == 1 %}1{% elif forloop.counter == 2 %}2{% elif forloop.counter == 3 %}3{% else %}other{% endif %}">
+                        {{ forloop.counter }}
+                    </div>
+                </td>
+                <td>
+                    <b style="color: white;">{{ item.student.full_name|upper }}</b><br>
+                    <small style="color: #555;">ID: {{ item.student.account_number }}</small>
+                </td>
+                <td>{{ item.student.current_class }}</td>
+                <td>
+                    <b style="color: #00ff00; font-size: 16px;">{{ item.avg }}%</b><br>
+                    <small style="color: #444;">{{ item.count }} Subjects</small>
+                </td>
+                <td style="color: var(--gold); font-weight: bold; font-size: 11px;">{{ item.best }}</td>
+                <td style="text-align: right;">
+                    <a href="/api/download-dossier/{{ item.student.account_number }}/" style="color: #5fb1ff; text-decoration: none; font-size: 11px; font-weight: bold;">VIEW DOSSIER</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" style="padding: 100px; text-align: center; color: #444;">NO PERFORMANCE DATA FOUND IN REGISTRY</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

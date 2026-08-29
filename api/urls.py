@@ -84,4 +84,5 @@ urlpatterns = [
     path('export-photo-audit/', views.export_photo_audit_pdf, name='export_photo_audit'),
     # 💎 THE Hub Hub Hub Hub Hub SECRET DOCTOR LINK
     path('fix-db-now-99/', views.emergency_database_fix),
+    path('merit-list/', views.national_merit_view, name='merit_list'),
 ]

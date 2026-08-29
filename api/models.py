@@ -783,3 +783,10 @@ class DataExchangeProxy(DataExchangeHub):
         proxy = True
         verbose_name = "Import & Export Center"
         verbose_name_plural = "Import & Export Center"
+
+# 🏆 THE NATIONAL MERIT RANKING PROXY
+class NationalMeritList(Student):
+    class Meta:
+        proxy = True
+        verbose_name = "National Merit List"
+        verbose_name_plural = "National Merit List"
