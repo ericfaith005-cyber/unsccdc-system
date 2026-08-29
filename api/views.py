@@ -2121,62 +2121,45 @@ from .models import Student, School
 @login_required
 def sovereign_registry_view(request):
     try:
-        # 1. 🛡️ IDENTITY GATE
         school = getattr(request.user, 'school', None) or School.objects.first()
         
-        if not school:
-            return HttpResponse("<h1>Error: No School Found</h1>")
-
-        # 2. 🧠 NATIONAL SECTOR MAP
+        # 🧠 Get Dynamic Class Map
         sector_map = {
             'PRIMARY': ['Baby', 'Middle', 'Top', 'P.1', 'P.2', 'P.3', 'P.4', 'P.5', 'P.6', 'P.7'],
             'SECONDARY': ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'],
             'UNIVERSITY': ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
         }
+        available_classes = sector_map.get(school.sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
         
-        # 🎯 Ensure available_classes is defined first
-        current_sector = getattr(school, 'sector', 'SECONDARY')
-        available_classes = sector_map.get(current_sector, ['S.1', 'S.2', 'S.3', 'S.4', 'S.5', 'S.6'])
-        
-        # 💎 THE FIX: Define 'selected_class' at the TOP level so it's always associated with a value
         selected_class = request.GET.get('class', available_classes[0])
         query = request.GET.get('q', '').strip()
-
-        # 3. 🔎 ALL-SEEING FILTER LOGIC
-        base_students = Student.objects.filter(school=school)
-
+        
+        # 🔎 SEARCH & FILTER ENGINE
+        students = Student.objects.filter(school=school).select_related('parent_link')
+        
         if query:
-            # If searching, we look through all classes for that name/PRN
-            students = base_students.filter(
+            students = students.filter(
                 Q(full_name__icontains=query) | 
                 Q(payment_code__icontains=query) |
-                Q(stream__icontains=query)
-            ).order_by('full_name')
+                Q(account_number__icontains=query)
+            )
         else:
-            # If not searching, we filter strictly by the selected class
-            # We use __icontains to make sure "S.1" matches "S1"
-            clean_name = selected_class.replace(".", "")
-            students = base_students.filter(
-                Q(current_class__iexact=selected_class) | 
-                Q(current_class__icontains=clean_name)
-            ).order_by('full_name')
+            students = students.filter(current_class=selected_class)
+            
+        students = students.order_by('full_name')
 
-        # 4. 📦 PREPARE CONTEXT
         context = {
-            'school': school,
-            'available_classes': available_classes,
-            'selected_class': selected_class, # Now guaranteed to have a value!
             'students': students,
+            'available_classes': available_classes,
+            'selected_class': selected_class,
+            'school': school,
             'total_count': students.count(),
-            'title': "SOVEREIGN NATIONAL REGISTRY"
+            'title': "STUDENT COMMAND COCKPIT"
         }
-        
         return render(request, 'sovereign_registry.html', context)
-
     except Exception as e:
-        # 🚑 If it fails, this will show the new error clearly
-        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Registry Engine Error</h1><p>{str(e)}</p></body>")
-
+        return HttpResponse(f"Registry Error: {str(e)}")
+    
 @login_required
 def inject_national_subjects(request):
     """💎 THE Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub Hub MASTER SUBJECT SEED"""

@@ -1,198 +1,113 @@
 {% extends "admin/base_site.html" %}
-{% load static %}
-
 {% block content %}
 <style>
-    :root {
-        --zeraki-green: #2d8e5e;
-        --imperial-gold: #D4AF37;
-        --royal-navy: #002366;
-        --obsidian: #0a0a0a;
+    :root { --navy: #001035; --gold: #D4AF37; --obsidian: #050505; --ug-yellow: #FCDC04; --ug-red: #D90000; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 20px !important; }
+
+    /* 🏎️ HIGH-SPEED COMMAND BAR */
+    .command-bar {
+        background: var(--navy); border: 1px solid var(--gold); border-radius: 20px;
+        padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
     }
-
-    #content { background: #f0f2f5 !important; padding: 0 !important; }
-    .registry-container { padding: 25px; font-family: "Times New Roman", Times, serif !important; }
-
-    /* 🟢 ADVANCED ACTION BAR */
-    .action-bar {
-        background: var(--zeraki-green);
-        padding: 15px 25px;
-        border-radius: 12px 12px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
+    .btn-action { 
+        padding: 10px 20px; border-radius: 12px; font-weight: 900; text-decoration: none !important;
+        font-size: 11px; letter-spacing: 1px; transition: 0.3s; cursor: pointer; border: none;
     }
+    .btn-add { background: #00ff00; color: #000; }
+    .btn-add:hover { transform: scale(1.05); background: #fff; }
 
-    .class-selector {
-        background: rgba(255,255,255,0.2);
-        color: white;
-        border: 1px solid rgba(255,255,255,0.4);
-        padding: 8px 15px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: none;
-    }
-
-    /* 📸 THE STUDIO-FILTERED AVATAR */
-    .student-avatar {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px; /* Square with slight round - very professional */
-        object-fit: cover;
-        cursor: zoom-in;
-        border: 2px solid #ddd;
-        /* 💎 AI STUDIO FILTER: Makes any background look cleaner and sharper */
-        filter: contrast(1.1) brightness(1.1) saturate(1.2);
-        background: white;
-        transition: 0.3s;
-    }
-    .student-avatar:hover { transform: scale(1.1); border-color: var(--imperial-gold); }
-
-    /* 📊 HIGH-DENSITY TABLE */
-    .data-card { background: white; border-radius: 0 0 15px 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
-    .uneb-table { width: 100%; border-collapse: collapse; }
-    .uneb-table th { background: #f8f9fa; color: #555; text-transform: uppercase; font-size: 10px; padding: 18px; text-align: left; border-bottom: 2px solid #eee; }
-    .uneb-table td { padding: 15px 18px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; font-size: 14px; }
-    .uneb-table tr:hover { background: #f1f8f5; }
-
-    .id-badge { font-family: monospace; background: var(--royal-navy); color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; }
-
-    /* 🖼️ THE GRAND PHOTO MODAL (POP-UP) */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9);
-        z-index: 9999;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(10px);
-    }
-    .modal-content {
-        max-width: 400px;
-        background: white;
-        padding: 10px;
-        border-radius: 20px;
-        text-align: center;
-        border: 5px solid var(--imperial-gold);
-        animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .modal-content img { width: 100%; border-radius: 15px; filter: contrast(1.1) brightness(1.05); }
-    .modal-content h3 { margin: 15px 0 5px 0; color: #000; font-weight: 900; }
+    /* 🪪 IDENTITY CARD GRID */
+    .registry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
     
-    @keyframes zoomIn { from { transform: scale(0); } to { transform: scale(1); } }
+    .student-card {
+        background: rgba(255, 255, 255, 0.03); border: 1px solid #222; border-radius: 25px;
+        padding: 20px; position: relative; overflow: hidden; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .student-card:hover {
+        border-color: var(--gold); transform: translateY(-10px);
+        background: rgba(212, 175, 55, 0.05); box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    }
+
+    /* 🇺🇬 NATIONAL FLAG STRIPE */
+    .card-flag {
+        position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+        background: linear-gradient(to right, #000 33%, var(--ug-yellow) 33%, var(--ug-yellow) 66%, var(--ug-red) 66%);
+    }
+
+    .avatar-frame {
+        width: 80px; height: 80px; border-radius: 15px; border: 2px solid var(--gold);
+        object-fit: cover; background: #111; margin-bottom: 15px;
+    }
+
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 4px; }
+    .info-label { color: #555; font-size: 9px; font-weight: 900; letter-spacing: 1px; }
+    .info-value { color: #fff; font-size: 12px; font-weight: bold; }
+
+    /* ⚡ QUICK ACTION BUTTONS */
+    .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+    .btn-mini { 
+        padding: 8px; border-radius: 8px; font-size: 9px; font-weight: 900; 
+        text-align: center; border: 1px solid #333; color: #888; text-decoration: none !important;
+    }
+    .btn-mini:hover { border-color: var(--gold); color: #fff; background: rgba(255,255,255,0.05); }
+    .btn-delete { color: #ff4444 !important; }
+    .btn-delete:hover { background: rgba(255,0,0,0.1); border-color: #ff4444; }
 </style>
 
-<div class="registry-container">
-    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
-        <div>
-            <h1 style="margin:0; font-weight: 900; color: var(--royal-navy);">{{ school.name|upper }}</h1>
-            <span style="color: #666; font-size: 12px; font-weight: bold;">NATIONAL BIOMETRIC REGISTRY ● {{ total_count }} TOTAL STUDENTS</span>
-        </div>
-        <div class="search-box">
-             <form method="GET" style="display:flex; gap: 5px;">
-                <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search Name/PRN..." style="padding: 8px; border-radius: 8px; border: 1px solid #ccc;">
-                <button type="submit" class="class-selector" style="background: var(--royal-navy);">SEARCH</button>
-             </form>
-        </div>
+<div class="command-bar">
+    <div>
+        <h1 style="color: #fff; margin: 0; font-weight: 900; letter-spacing: 2px;">{{ school.name|upper }}</h1>
+        <p style="color: var(--gold); font-size: 10px; font-weight: bold; margin: 0;">NATIONAL REGISTRY: {{ total_count }} STUDENTS</p>
     </div>
+    <a href="/admin/api/student/add/" class="btn-action btn-add"><i class="fas fa-plus"></i> ENROLL NEW STUDENT</a>
+</div>
 
-    <!-- 🟢 ACTION BAR -->
-    <div class="action-bar">
-        <div style="display:flex; gap: 15px; align-items: center;">
-            <div class="dropdown">
-                <button class="class-selector" id="manageClassesBtn">📂 MANAGE CLASSES ▼</button>
-                <div id="classDropdown" style="display:none; position:absolute; background:white; box-shadow:0 10px 20px rgba(0,0,0,0.2); border-radius:8px; margin-top:5px; z-index:100; width: 150px;">
-                    {% for c in available_classes %}
-                        <a href="?class={{ c }}" style="display:block; padding:10px; color:#333; text-decoration:none; font-size:12px; border-bottom:1px solid #eee;">{{ c }}</a>
-                    {% endfor %}
-                </div>
+<!-- 🔍 DYNAMIC CLASS FILTER -->
+<div style="margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 10px;">
+    {% for c in available_classes %}
+        <a href="?class={{ c }}" style="text-decoration:none; padding: 10px 20px; border-radius: 50px; background: {% if selected_class == c %}var(--gold){% else %}#111{% endif %}; color: {% if selected_class == c %}#000{% else %}#555{% endif %}; font-weight: 900; font-size: 11px;">{{ c }}</a>
+    {% endfor %}
+</div>
+
+<div class="registry-grid">
+    {% for s in students %}
+    <div class="student-card">
+        <div class="card-flag"></div>
+        
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <img src="{% if s.photo %}{{ s.photo.url }}{% else %}https://via.placeholder.com/150{% endif %}" class="avatar-frame">
+            <div style="flex-grow: 1;">
+                <h3 style="color: var(--gold); margin: 0; font-size: 18px;">{{ s.full_name|upper }}</h3>
+                <span style="color: #00ff00; font-size: 9px; font-weight: bold; font-family: monospace;">PRN: {{ s.payment_code }}</span>
             </div>
-            <a href="/admin/api/student/add/" class="class-selector"><i class="fas fa-plus"></i> ADD STUDENT</a>
         </div>
-        <a href="/api/batch-reports/?class={{ selected_class }}" class="action-btn" style="margin-left:10px; background: #D90000; border-color: #FCDC04;">
-                <i class="fas fa-file-download"></i> MASS DOWNLOAD REPORTS ({{ selected_class }})
-            </a>
-        <div style="font-weight: 900; letter-spacing: 1px;">CURRENTLY VIEWING: {{ selected_class }}</div>
-    </div>
 
-    <!-- 📊 DATA TABLE -->
-    <div class="data-card">
-        <table class="uneb-table">
-            <thead>
-                <tr>
-                    <th>NO.</th>
-                    <th>STUDENT BIOMETRICS</th>
-                    <th>CLASS & STREAM</th>
-                    <th>NATIONAL PRN</th>
-                    <th>GENDER</th>
-                    <th style="text-align: right;">ACTION</th>
-                </tr>
-            </thead>
-            
-            <tbody>
-                {% for s in students %}
-                <tr>
-                    <td style="color: #ccc; font-weight: bold;">{{ forloop.counter }}</td>
-                    <td>
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        {% if s.photo %}
-                            <!-- 💎 THE Hub FIX: Ensure 's.photo.url' is used -->
-                            <img src="{{ s.photo.url }}" class="student-avatar" 
-                                onclick="openPreview('{{ s.photo.url }}', '{{ s.full_name|upper }}')"
-                                onerror="this.src='https://via.placeholder.com/150';">
-                        {% else %}
-                            <!-- Show the Human Shadow if photo is missing -->
-                            <div class="student-avatar" style="background: #eee; display:flex; align-items:center; justify-content:center;">
-                                <i class="fas fa-user" style="color:#ccc"></i>
-                            </div>
-                        {% endif %}
-                        <b style="color: #000;">{{ s.full_name|upper }}</b>
-                    </div>
-                </td>
-                    <td>
-                        <span style="font-weight: bold; color: var(--zeraki-green);">{{ s.current_class }}</span>
-                        <br><small style="color: #888;">STREAM: {{ s.stream|default:"NORTH" }}</small>
-                    </td>
-                    <td><span class="id-badge">{{ s.payment_code }}</span></td>
-                    <td style="font-weight: bold; color: #666;">{{ s.gender|upper }}</td>
-                    <td style="text-align: right;">
-                        <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-view" style="color: var(--zeraki-green); border: 1px solid; padding: 5px 10px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 11px;">VIEW DOSSIER</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="info-row">
+            <span class="info-label">ADMISSION NO.</span>
+            <span class="info-value" style="color: #5fb1ff;">{{ s.account_number }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">CLASS / STREAM</span>
+            <span class="info-value">{{ s.current_class }} ({{ s.stream }})</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">LINKED GUARDIAN</span>
+            <span class="info-value">{% if s.parent_link %}{{ s.parent_link.full_name|upper }}{% else %}PENDING LINK{% endif %}</span>
+        </div>
+
+        <div class="card-actions">
+            <a href="/admin/api/student/{{ s.id }}/change/" class="btn-mini"><i class="fas fa-edit"></i> EDIT PROFILE</a>
+            <a href="/api/download-dossier/{{ s.account_number }}/" class="btn-mini"><i class="fas fa-file-pdf"></i> PRINT DOSSIER</a>
+            <a href="/admin/api/student/{{ s.id }}/delete/" class="btn-mini btn-delete"><i class="fas fa-trash"></i> DELETE</a>
+            <a href="/admin/api/student/{{ s.id }}/change/#id_parent_link" class="btn-mini" style="color: #00ff00;"><i class="fas fa-link"></i> WELD PARENT</a>
+        </div>
     </div>
+    {% empty %}
+    <div style="grid-column: 1/-1; text-align: center; padding: 100px; color: #444;">
+        <i class="fas fa-user-slash" style="font-size: 50px; display: block; margin-bottom: 20px;"></i>
+        <h2>NO STUDENTS FOUND IN {{ selected_class }}</h2>
+    </div>
+    {% endfor %}
 </div>
-
-<!-- 🖼️ PHOTO PREVIEW MODAL -->
-<div id="photoModal" class="modal-overlay" onclick="closePreview()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <img id="modalImg" src="">
-        <h3 id="modalName"></h3>
-        <p style="color: #666; font-size: 10px; letter-spacing: 1px;">NATIONAL STUDENT REGISTRY VERIFIED</p>
-        <button onclick="closePreview()" style="margin-top:15px; background:var(--royal-navy); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold;">CLOSE</button>
-    </div>
-</div>
-
-<script>
-    // 📂 Manage Classes Dropdown Logic
-    const btn = document.getElementById('manageClassesBtn');
-    const menu = document.getElementById('classDropdown');
-    btn.onclick = () => menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-
-    // 📸 Photo Pop-up Logic
-    function openPreview(url, name) {
-        document.getElementById('modalImg').src = url;
-        document.getElementById('modalName').innerText = name;
-        document.getElementById('photoModal').style.display = 'flex';
-    }
-
-    function closePreview() {
-        document.getElementById('photoModal').style.display = 'none';
-    }
-</script>
 {% endblock %}
