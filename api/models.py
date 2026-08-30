@@ -805,14 +805,10 @@ from django.conf import settings
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='user_profiles')
-    # 🔐 This stores the PLAIN password once so you can show it to the new user
-    generated_key = models.CharField(max_length=100, blank=True, null=True)
+    school = models.ForeignKey('School', on_delete=models.SET_NULL, null=True, blank=True, related_name='user_profiles')
+    phone = models.CharField(max_length=50, blank=True, null=True) # 📞 FOR CONTACTS
+    generated_key = models.CharField(max_length=100, blank=True, null=True) # 🔐 FOR PASSWORDS
     is_school_admin = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username} @ {self.school.name}"
-
-    class Meta:
-        verbose_name = "System Access Keys"
-        verbose_name_plural = "System Access Keys"
+        return f"{self.user.username} @ {self.school.name if self.school else 'No School'}"

@@ -4825,77 +4825,71 @@ def school_signup_portal(request):
     return render(request, 'registration/signup.html')
 
 from django.contrib.auth import get_user_model
-from .models import UserProfile, School
-
-import random
-import string
-from django.contrib.auth import get_user_model
 from django.db import transaction
-from .models import UserProfile, School # 💎 Ensure these are imported!
+from .models import UserProfile, School # 💎 ENSURE THESE ARE HERE
 
 @login_required
 def imperial_user_factory(request):
-    """🏭 THE Hub Hub Hub Hub Hub HIGH-SPEED USER GENERATOR (ERROR-FREE)"""
+    """🏭 THE Hub Hub Hub Hub Hub HIGH-SPEED USER GENERATOR (VERSION 3.0)"""
     try:
-        # 1. 🛡️ SAFE SCHOOL LOOKUP 
-        # First check the profile, then look for any school in the system
-        user_profile = getattr(request.user, 'profile', None)
-        if user_profile:
-            school = user_profile.school
-        else:
-            school = School.objects.first() # Fallback for the Master Admin
-
-        if not school:
-            return HttpResponse("<h1>Registry Error</h1><p>No School found. Please create a school first.</p>")
+        # 1. 🛡️ THE Hub Hub Hub Hub Hub SELF-HEALING PROFILE CHECK
+        # If the logged-in admin doesn't have a profile, create one on the fly!
+        user_profile, created = UserProfile.objects.get_or_create(
+            user=request.user,
+            defaults={'school': School.objects.first(), 'is_school_admin': True}
+        )
+        
+        current_school = user_profile.school
+        if not current_school:
+            return HttpResponse("<body style='background:black;color:gold;padding:50px;'><h1>REGISTRY ERROR</h1><p>No School found. Create a school in the Admin first!</p></body>")
 
         if request.method == "POST":
-            full_name = request.POST.get('full_name', '').strip()
-            username = request.POST.get('username', '').strip().lower()
-            email = request.POST.get('email', '').strip()
-            phone = request.POST.get('phone', '').strip() # 📞 The 'Contacts' you requested
+            f_name = request.POST.get('full_name', '').strip()
+            u_name = request.POST.get('username', '').strip().lower()
+            u_email = request.POST.get('email', '').strip()
+            u_phone = request.POST.get('phone', '').strip()
             
-            # 🤖 2. GENERATE AUTOMATIC PASSWORD
-            # 3 Letters + 3 Numbers (e.g. KEB-492)
+            # 🤖 2. THE Hub Hub Hub Hub Hub AUTO-KEY GENERATOR
             letters = ''.join(random.choices(string.ascii_uppercase, k=3))
             digits = ''.join(random.choices(string.digits, k=3))
-            auto_password = f"UNS-{letters}{digits}"
+            auto_key = f"UNS-{letters}{digits}"
 
             with transaction.atomic():
                 User = get_user_model()
                 
-                # 🛡️ CHECK IF USER ALREADY EXISTS
-                if User.objects.filter(username=username).exists():
-                    return HttpResponse(f"<h2 style='color:red;'>ERROR: Username '{username}' is already taken in the National Registry!</h2><a href='javascript:history.back()'>Go Back</a>")
+                # 🛡️ CHECK IF USERNAME IS TAKEN
+                if User.objects.filter(username=u_name).exists():
+                    return HttpResponse(f"<script>alert('Error: Username {u_name} is already in the National Registry!'); history.back();</script>")
 
-                # 3. Create the Auth User
+                # 3. FORGE THE NEW ACCOUNT
                 new_user = User.objects.create_user(
-                    username=username,
-                    password=auto_password,
-                    email=email,
-                    first_name=full_name
+                    username=u_name,
+                    password=auto_key,
+                    email=u_email,
+                    first_name=f_name
                 )
                 new_user.is_staff = True # 🔓 Access to Dashboard
                 new_user.save()
 
-                # 4. Create the Profile & Link 'Contacts'
+                # 4. WELD THE PROFILE & CONTACTS
                 UserProfile.objects.create(
                     user=new_user, 
-                    school=school, 
-                    phone=phone, # 💎 Saving the phone number
-                    generated_key=auto_password 
+                    school=current_school, 
+                    phone=u_phone, 
+                    generated_key=auto_key 
                 )
 
                 return render(request, 'admin/user_factory_success.html', {
-                    'uname': username,
-                    'upass': auto_password,
-                    'name': full_name,
-                    'school': school,
-                    'phone': phone
+                    'uname': u_name,
+                    'upass': auto_key,
+                    'name': f_name,
+                    'school': current_school,
+                    'phone': u_phone
                 })
 
-        return render(request, 'admin/user_factory.html', {'school': school})
+        return render(request, 'admin/user_factory.html', {'school': current_school})
 
     except Exception as e:
-        # 🚑 THE TRUTH TRAP: Shows the error instead of '500'
+        # 🚑 THE EMERGENCY Hub Hub Hub Hub Hub TRUTH MAP
         import traceback
-        return HttpResponse(f"<body style='background:black; color:red; padding:50px;'><h1>Factory Engine Error</h1><pre>{traceback.format_exc()}</pre></body>")
+        return HttpResponse(f"<body style='background:black; color:red; padding:50px;'><h1>Factory Engine Failure</h1><pre>{traceback.format_exc()}</pre></body>")
