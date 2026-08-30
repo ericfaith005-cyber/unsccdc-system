@@ -71,6 +71,9 @@ class School(models.Model):
     # 💰 7. TREASURY METRICS
     total_revenue_collected = models.BigIntegerField(default=0)
     total_commission_earned = models.BigIntegerField(default=0)
+
+    is_verified = models.BooleanField(default=False, verbose_name="National Approval Status")
+    created_at = models.DateTimeField(default=django.utils.timezone.now)
     
     # 📈 8. PRESTIGE DATA
     rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
