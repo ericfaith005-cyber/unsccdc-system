@@ -194,3 +194,55 @@ body {
     text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
     padding-left: 20px !important;
 }
+
+/* ============================================================= */
+/* 🏛️ NATIONAL COMMAND: TOTAL UPPERCASE ENFORCEMENT             */
+/* ============================================================= */
+
+/* 1. SIDEBAR TABS (The main labels) */
+.nav-sidebar .nav-link p {
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px !important;
+}
+
+/* 2. SIDEBAR HEADERS (Like 'Api', 'Auth', etc.) */
+.nav-header {
+    text-transform: uppercase !important;
+    font-weight: 900 !important;
+    letter-spacing: 2px !important;
+    color: var(--imperial-gold) !important;
+}
+
+/* 3. TOP NAVIGATION TABS (The horizontal menu) */
+.main-header .nav-link {
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+}
+
+/* 4. DASHBOARD BREADCRUMBS (Path at the top) */
+.breadcrumb-item {
+    text-transform: uppercase !important;
+    font-size: 10px !important;
+    letter-spacing: 1px !important;
+}
+
+/* 5. TABLE HEADERS (The 'Zeraki' table columns) */
+#result_list thead th .text a, 
+#result_list thead th .text span {
+    text-transform: uppercase !important;
+}
+
+/* 6. BUTTONS (Add Student, Save, etc.) */
+.btn, .submit-row input, .button {
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    font-weight: 900 !important;
+}
+
+/* 7. BRAND TEXT (Top left logo text) */
+.brand-text {
+    text-transform: uppercase !important;
+    letter-spacing: 3px !important;
+}

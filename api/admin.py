@@ -250,8 +250,6 @@ class AcademicResultsHubAdmin(admin.ModelAdmin):
     
     national_standing.short_description = "Status"
 
-
-    
 class NationalLedgerAdmin(SchoolIsolatedAdmin):
     # 💎 THE VIEW: Every name in this list MUST be a method or a model field
     list_display = (

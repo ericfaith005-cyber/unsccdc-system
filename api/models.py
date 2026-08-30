@@ -1,4 +1,5 @@
 # --- 💎 SURGERY: RESTORING IMPERIAL IMPORTS 💎 ---
+from django.conf import settings 
 import random
 import string
 import datetime # 💎 CRITICAL: Needed for the Year in Staff ID
@@ -81,6 +82,9 @@ class School(models.Model):
     # 📅 9. ACADEMIC CALENDAR
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
+
+    is_verified = models.BooleanField(default=False, verbose_name="Approved by National Centre") # 💎 Starts as FALSE
+    created_at = models.DateTimeField(default=django.utils.timezone.now)
     
     # 📱 11. USSD GUIDELINES
     ussd_instructions = models.TextField(
@@ -119,6 +123,12 @@ class School(models.Model):
     def __str__(self):
         return f"{self.name} ({self.school_code})"
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='admins')
+    is_school_admin = models.BooleanField(default=True)
+
+    def __str__(self): return f"{self.user.username} @ {self.school.name}"
 # NATIONAL CURRICULUM REGISTRY 
 
 class Subject(models.Model):
@@ -660,8 +670,8 @@ class StaffSalary(models.Model):
         return (self.amount_base + self.allowances) - self.deductions_tax
 
     class Meta:
-        verbose_name = "Staff Payroll Record"
-        verbose_name_plural = "Staff Payroll Records"
+        verbose_name = "STAFF PAYROLL RECORD"
+        verbose_name_plural = "STAFF PAYROLL RECORDS"
 
 # 💎 THE PROXY TAB FOR THE SIDEBAR
 class PayrollCommand(StaffSalary):
