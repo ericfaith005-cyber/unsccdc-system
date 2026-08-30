@@ -1,5 +1,5 @@
 # --- 💎 SURGERY: RESTORING IMPERIAL IMPORTS 💎 ---
-from django.conf import settings 
+
 import random
 import string
 import datetime # 💎 CRITICAL: Needed for the Year in Staff ID
@@ -120,13 +120,6 @@ class School(models.Model):
     def __str__(self):
         return f"{self.name} ({self.school_code})"
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='admins')
-    is_school_admin = models.BooleanField(default=True)
-
-    def __str__(self): return f"{self.user.username} @ {self.school.name}"
-# NATIONAL CURRICULUM REGISTRY 
 
 class Subject(models.Model):
     LEVEL_CHOICES = [
