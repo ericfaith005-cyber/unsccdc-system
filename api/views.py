@@ -4827,46 +4827,75 @@ def school_signup_portal(request):
 from django.contrib.auth import get_user_model
 from .models import UserProfile, School
 
+import random
+import string
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from .models import UserProfile, School # 💎 Ensure these are imported!
+
 @login_required
 def imperial_user_factory(request):
-    """🏭 THE Hub Hub Hub Hub Hub HIGH-SPEED USER GENERATOR"""
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    
-    if request.method == "POST":
-        full_name = request.POST.get('full_name').strip()
-        username = request.POST.get('username').strip().lower()
-        
-        # 🤖 1. GENERATE AUTOMATIC PASSWORD (e.g., UNS-X4A)
-        # Combination of 3 letters and 3 numbers for speed and security
-        letters = ''.join(random.choices(string.ascii_uppercase, k=3))
-        digits = ''.join(random.choices(string.digits, k=3))
-        auto_password = f"UNS-{letters}{digits}"
+    """🏭 THE Hub Hub Hub Hub Hub HIGH-SPEED USER GENERATOR (ERROR-FREE)"""
+    try:
+        # 1. 🛡️ SAFE SCHOOL LOOKUP 
+        # First check the profile, then look for any school in the system
+        user_profile = getattr(request.user, 'profile', None)
+        if user_profile:
+            school = user_profile.school
+        else:
+            school = School.objects.first() # Fallback for the Master Admin
 
-        try:
-            User = get_user_model()
-            # 2. Create the User in the Auth System
-            new_user = User.objects.create_user(
-                username=username,
-                password=auto_password,
-                first_name=full_name
-            )
-            new_user.is_staff = True # 🔓 Access to Dashboard
-            new_user.save()
+        if not school:
+            return HttpResponse("<h1>Registry Error</h1><p>No School found. Please create a school first.</p>")
 
-            # 3. Create the Profile and Link to School
-            UserProfile.objects.create(
-                user=new_user, 
-                school=school, 
-                generated_key=auto_password # Save for the success screen!
-            )
+        if request.method == "POST":
+            full_name = request.POST.get('full_name', '').strip()
+            username = request.POST.get('username', '').strip().lower()
+            email = request.POST.get('email', '').strip()
+            phone = request.POST.get('phone', '').strip() # 📞 The 'Contacts' you requested
+            
+            # 🤖 2. GENERATE AUTOMATIC PASSWORD
+            # 3 Letters + 3 Numbers (e.g. KEB-492)
+            letters = ''.join(random.choices(string.ascii_uppercase, k=3))
+            digits = ''.join(random.choices(string.digits, k=3))
+            auto_password = f"UNS-{letters}{digits}"
 
-            return render(request, 'admin/user_factory_success.html', {
-                'uname': username,
-                'upass': auto_password,
-                'name': full_name,
-                'school': school
-            })
-        except Exception as e:
-            return HttpResponse(f"Registry Conflict: {str(e)}")
+            with transaction.atomic():
+                User = get_user_model()
+                
+                # 🛡️ CHECK IF USER ALREADY EXISTS
+                if User.objects.filter(username=username).exists():
+                    return HttpResponse(f"<h2 style='color:red;'>ERROR: Username '{username}' is already taken in the National Registry!</h2><a href='javascript:history.back()'>Go Back</a>")
 
-    return render(request, 'admin/user_factory.html', {'school': school})
+                # 3. Create the Auth User
+                new_user = User.objects.create_user(
+                    username=username,
+                    password=auto_password,
+                    email=email,
+                    first_name=full_name
+                )
+                new_user.is_staff = True # 🔓 Access to Dashboard
+                new_user.save()
+
+                # 4. Create the Profile & Link 'Contacts'
+                UserProfile.objects.create(
+                    user=new_user, 
+                    school=school, 
+                    phone=phone, # 💎 Saving the phone number
+                    generated_key=auto_password 
+                )
+
+                return render(request, 'admin/user_factory_success.html', {
+                    'uname': username,
+                    'upass': auto_password,
+                    'name': full_name,
+                    'school': school,
+                    'phone': phone
+                })
+
+        return render(request, 'admin/user_factory.html', {'school': school})
+
+    except Exception as e:
+        # 🚑 THE TRUTH TRAP: Shows the error instead of '500'
+        import traceback
+        return HttpResponse(f"<body style='background:black; color:red; padding:50px;'><h1>Factory Engine Error</h1><pre>{traceback.format_exc()}</pre></body>")
