@@ -444,7 +444,6 @@ class SchoolAdmin(admin.ModelAdmin):
     # 📊 1. THE Hub Hub Hub LIST VIEW
     list_display = ('name', 'school_code', 'district')
     search_fields = ('name', 'school_code')
-    list_filter = ('is_verified', 'sector', 'district')
 
     # 💎 2. THE Hub Hub Hub Hub Hub FIELDSET TABS
     fieldsets = (
@@ -476,20 +475,6 @@ class SchoolAdmin(admin.ModelAdmin):
         if obj.logo:
             return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
         return "No Logo Uploaded"
-    
-    def is_verified_badge(self, obj):
-        if obj.is_verified:
-            return mark_safe('<b style="color: #00ff00; font-size: 10px;">✅ APPROVED</b>')
-        return mark_safe('<b style="color: #ff9900; font-size: 10px;">⏳ PENDING</b>')
-    is_verified_badge.short_description = "Status"
-
-    # 🛡️ GLOBAL APPROVAL ACTION
-    actions = ['approve_selected_schools']
-    def approve_selected_schools(self, request, queryset):
-        queryset.update(is_verified=True)
-        self.message_user(request, "Selected institutions have been officially verified.")
-    approve_selected_schools.short_description = "👍 Approve Selected Schools"
-
 admin.site.register(School, SchoolAdmin)
 
 from django.utils.safestring import mark_safe
