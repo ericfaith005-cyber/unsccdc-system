@@ -85,4 +85,5 @@ urlpatterns = [
     # 💎 THE Hub Hub Hub Hub Hub SECRET DOCTOR LINK
     path('fix-db-now-99/', views.emergency_database_fix),
     path('merit-list/', views.national_merit_view, name='merit_list'),
+    path('user-factory/', views.imperial_user_factory, name='user_factory'),
 ]

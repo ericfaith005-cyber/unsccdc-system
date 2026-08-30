@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    :root { --gold: #D4AF37; --navy: #001035; --obsidian: #050505; --neon-green: #39ff14; }
+    * { font-family: "Times New Roman", Times, serif !important; }
+    #content { background: #000 !important; padding: 40px !important; }
+
+    .factory-card {
+        max-width: 500px; margin: auto; background: rgba(255, 255, 255, 0.02);
+        border: 2px solid #222; border-radius: 30px; padding: 50px;
+        backdrop-filter: blur(15px); position: relative; overflow: hidden;
+    }
+    .factory-card::before {
+        content: ""; position: absolute; top:0; left:0; width:100%; height:4px;
+        background: linear-gradient(to right, #000, var(--gold), #D90000);
+    }
+    
+    input { 
+        width: 100%; padding: 15px; margin: 12px 0; background: #0d0d0d; 
+        border: 1px solid #333; border-radius: 12px; color: gold; font-size: 16px; outline: none;
+    }
+    input:focus { border-color: var(--neon-green); box-shadow: 0 0 15px rgba(0,255,0,0.2); }
+
+    .btn-create {
+        background: var(--gold); color: black; border: none; padding: 20px;
+        width: 100%; border-radius: 15px; font-weight: 900; cursor: pointer;
+        text-transform: uppercase; letter-spacing: 3px; margin-top: 25px;
+    }
+</style>
+
+<div class="factory-card">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <i class="fas fa-user-plus" style="font-size: 50px; color: var(--gold);"></i>
+        <h1 style="color: #fff; margin: 10px 0 0 0; letter-spacing: 4px;">USER FACTORY</h1>
+        <p style="color: #555; font-size: 10px; font-weight: bold;">AUTOMATIC Hub Hub Hub Hub ACCESS GENERATOR</p>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <label style="color:var(--gold); font-size: 12px;">OFFICIAL FULL NAME</label>
+        <input type="text" name="full_name" placeholder="e.g. MUBIRU JOHN" required>
+
+        <label style="color:var(--gold); font-size: 12px;">NATIONAL USER ID (USERNAME)</label>
+        <input type="text" name="username" placeholder="e.g. mubiru.john" required>
+
+        <p style="color: #444; font-size: 10px; font-style: italic; margin-top: 10px;">
+            * Security Note: An encrypted 6-digit access key will be generated automatically in real-time.
+        </p>
+
+        <button type="submit" class="btn-create">🏗️ FORGE ACCOUNT NOW</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<style>
+    .success-box {
+        max-width: 500px; margin: 50px auto; background: #000;
+        border: 2px solid #00ff00; border-radius: 30px; padding: 40px; text-align: center;
+        color: white; font-family: "Times New Roman", serif;
+    }
+    .credential-box { background: #111; padding: 20px; border-radius: 15px; margin: 20px 0; border: 1px dashed #00ff00; }
+    .key-text { font-family: monospace; font-size: 35px; color: #00ff00; letter-spacing: 10px; font-weight: 900; }
+</style>
+
+<div class="success-box">
+    <h1 style="color: #00ff00;">✓ SOVEREIGN Hub Hub Hub SUCCESS</h1>
+    <p>Account for <b>{{ name }}</b> has been forged in the registry.</p>
+    
+    <div class="credential-box">
+        <p style="color: #555; font-size: 10px;">USER ID</p>
+        <p style="font-size: 20px; font-weight: bold;">{{ uname }}</p>
+        <hr style="border-color: #222;">
+        <p style="color: #555; font-size: 10px;">AUTOMATIC ACCESS KEY</p>
+        <p class="key-text">{{ upass }}</p>
+    </div>
+
+    <button onclick="window.print()" class="btn btn-outline-success">🖨️ PRINT ACCESS CARD</button>
+    <br><br>
+    <a href="/api/user-factory/" style="color: gold; text-decoration: none;">Create Another User</a>
+</div>
+{% endblock %}

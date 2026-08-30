@@ -120,14 +120,6 @@ class School(models.Model):
     def __str__(self):
         return f"{self.name} ({self.school_code})"
 
-class UserProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='admins')
-    is_school_admin = models.BooleanField(default=True)
-
-    def __str__(self): return f"{self.user.username} @ {self.school.name}"
-# NATIONAL CURRICULUM REGISTRY 
-
 class Subject(models.Model):
     LEVEL_CHOICES = [
         ('PLE', 'Primary Level (PLE)'),
@@ -625,16 +617,24 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.user.username} @ {self.school.name}"
 
-class NationalUpdate(models.Model):
-    source = models.CharField(max_length=50) # e.g., UNEB, MoES
-    title = models.CharField(max_length=500)
-    link = models.URLField()
-    date_found = models.DateTimeField(default=django.utils.timezone.now)
-    is_new = models.BooleanField(default=True)
+import random
+import string
+from django.db import models
+from django.conf import settings
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='user_profiles')
+    # 🔐 This stores the PLAIN password once so you can show it to the new user
+    generated_key = models.CharField(max_length=100, blank=True, null=True)
+    is_school_admin = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.school.name}"
 
     class Meta:
-        ordering = ['-date_found']
-        verbose_name = "NATIONAL LIVE FEED"
+        verbose_name = "System Access Keys"
+        verbose_name_plural = "System Access Keys"
 
 class BroadcastLog(models.Model):
     MSG_TYPES = [('SMS', 'SMS Text'), ('WHATSAPP', 'WhatsApp Message')]
@@ -797,3 +797,22 @@ class NationalMeritList(Student):
         proxy = True
         verbose_name = "National Merit List"
         verbose_name_plural = "National Merit List"
+
+import random
+import string
+from django.db import models
+from django.conf import settings
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='user_profiles')
+    # 🔐 This stores the PLAIN password once so you can show it to the new user
+    generated_key = models.CharField(max_length=100, blank=True, null=True)
+    is_school_admin = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.username} @ {self.school.name}"
+
+    class Meta:
+        verbose_name = "System Access Keys"
+        verbose_name_plural = "System Access Keys"
