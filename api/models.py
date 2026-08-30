@@ -83,9 +83,6 @@ class School(models.Model):
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
 
-    is_verified = models.BooleanField(default=False, verbose_name="Approved by National Centre") # 💎 Starts as FALSE
-    created_at = models.DateTimeField(default=django.utils.timezone.now)
-    
     # 📱 11. USSD GUIDELINES
     ussd_instructions = models.TextField(
         default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
