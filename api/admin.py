@@ -442,7 +442,8 @@ admin.site.register([
 
 class SchoolAdmin(admin.ModelAdmin):
     # 📊 1. THE Hub Hub Hub LIST VIEW
-    list_display = ('name', 'school_code', 'district')
+    list_display = ('name', 'school_code', 'district', 'is_verified_badge')
+    list_filter = ('is_verified', 'sector', 'district')
     search_fields = ('name', 'school_code')
 
     # 💎 2. THE Hub Hub Hub Hub Hub FIELDSET TABS
@@ -470,6 +471,19 @@ class SchoolAdmin(admin.ModelAdmin):
         if obj.chairman_signature:
             return mark_safe(f'<img src="{obj.chairman_signature.url}" width="150" style="border:1px solid #ccc; background:white;"/>')
         return "No Signature Uploaded"
+    
+    def is_verified_badge(self, obj):
+        if obj.is_verified:
+            return mark_safe('<b style="color: #00ff00; font-size: 10px;">✅ APPROVED</b>')
+        return mark_safe('<b style="color: #ff9900; font-size: 10px;">⏳ PENDING</b>')
+    is_verified_badge.short_description = "Status"
+
+    # 🛡️ GLOBAL APPROVAL ACTION
+    actions = ['approve_selected_schools']
+    def approve_selected_schools(self, request, queryset):
+        queryset.update(is_verified=True)
+        self.message_user(request, "Selected institutions have been officially verified.")
+    approve_selected_schools.short_description = "👍 Approve Selected Schools"
     
     def logo_preview(self, obj):
         if obj.logo:

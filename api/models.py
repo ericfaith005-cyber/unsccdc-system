@@ -82,6 +82,7 @@ class School(models.Model):
     # 📅 9. ACADEMIC CALENDAR
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
+    is_verified = models.BooleanField(default=False, verbose_name="National Approval Status")
 
     # 📱 11. USSD GUIDELINES
     ussd_instructions = models.TextField(
