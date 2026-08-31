@@ -57,7 +57,9 @@ class School(models.Model):
     school_motto = models.CharField(max_length=255, blank=True, null=True)
     sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='SECONDARY')
     logo = models.ImageField(upload_to='logos/', null=True, blank=True)
-    
+    logo_data = models.TextField(null=True, blank=True) 
+    keb_logo_data = models.TextField(null=True, blank=True)
+    signature_data = models.TextField(null=True, blank=True)
     # 📍 LOCATION & COMMS
     address = models.CharField(max_length=255, blank=True, null=True)
     district = models.CharField(max_length=100, default="Kampala")
@@ -163,6 +165,7 @@ class Student(models.Model):
     account_number = models.CharField(max_length=30, unique=True, editable=False)
     school = models.ForeignKey('School', on_delete=models.CASCADE, related_name='students_in_school')
     photo = models.ImageField(upload_to='students/photos/', null=True, blank=True)
+    photo_data = models.TextField(null=True, blank=True)
     level_category = models.CharField(max_length=20, default='UCE_NEW')
 
     # OFFICIAL DOCUMENT VAULT

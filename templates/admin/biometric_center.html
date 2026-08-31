@@ -111,9 +111,9 @@
                 <td>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         {% if s.photo %}
-                            <img src="{{ s.photo.url }}" 
+                            <img src="data:image/jpeg;base64,{{ s.photo_data }}" 
                             class="photo-thumb" 
-                            onclick="openStudio('{{ request.scheme }}://{{ request.get_host }}{{ s.photo.url }}', '{{ s.full_name|upper }}')"
+                            onclick="openStudio('data:image/jpeg;base64,{{ s.photo_data }}', '{{ s.full_name|upper }}')"
                             onerror="this.src='https://via.placeholder.com/150';">
                         {% else %}
                             <div class="photo-thumb" style="background:#111; display:flex; align-items:center; justify-content:center;">

@@ -4893,3 +4893,41 @@ def national_merit_view(request):
 from django.contrib.auth import login, get_user_model
 from django.db import transaction
 
+import base64
+
+def convert_to_base64(file):
+    """🛡️ THE Hub Hub Hub Hub Hub Hub Hub VECTOR ENCODER"""
+    try:
+        return base64.b64encode(file.read()).decode('utf-8')
+    except:
+        return None
+
+@login_required
+@csrf_exempt
+def update_student_photo_ajax(request):
+    if request.method == "POST":
+        student_id = request.POST.get('student_id')
+        photo_file = request.FILES.get('photo')
+        
+        if student_id and photo_file:
+            student = get_object_or_404(Student, id=student_id)
+            # 💎 ENCODE AND SAVE AS TEXT
+            encoded_string = convert_to_base64(photo_file)
+            student.photo_data = encoded_string
+            student.save()
+            return JsonResponse({"status": "success", "msg": f"Biometrics Linked for {student.full_name}"})
+            
+    return JsonResponse({"status": "error", "msg": "Sync Failed"}, status=400)
+
+from io import BytesIO
+from reportlab.lib.utils import ImageReader
+
+def get_base64_image(base64_string):
+    """💎 TURNS DATABASE TEXT BACK INTO A HIGH-RES IMAGE"""
+    if not base64_string: return None
+    try:
+        format, imgstr = base64_string.split(';base64,') if ',' in base64_string else (None, base64_string)
+        img_data = base64.b64decode(imgstr)
+        return ImageReader(BytesIO(img_data))
+    except:
+        return None
