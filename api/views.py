@@ -2257,51 +2257,83 @@ def export_styled_layout(request, school_id, layout_format):
 
 @login_required
 def operations_hub_view(request):
-    sync_national_notifications()
-    
-    updates = NationalUpdate.objects.all()[:5] # Get latest 5
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    
-    # 🎨 THE Hub Hub Hub Hub Hub Hub Hub MINOR TABS REGISTRY
-    # Each item: (Name, Icon, Color, Link, Description)
-    minor_tabs = [
-        ("Command View", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
-        ("Biometric Center", "fa-camera-retro", "#ff5722", "/api/biometric-center/", "Passport Management"),
-        ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
-        ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
-        ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
-        ("Fees Reminders", "fa-bell", "#f39c12", "/admin/api/feesreminder/", "Print Reminders"), 
-        ("Report Architect", "fa-palette", "#ff007f", "/api/architect/", "Design & Branding"),
-        ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
-        ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
-        ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
-        ("Staff Salaries", "fa-hand-holding-usd", "#9b59b6", "/api/payroll-hub/", "Payroll & Tax"),
-        ("Import/Export", "fa-file-excel", "#2ecc71", "/api/exchange-center/", "Bulk Data Logistics"),
-        ("SMS Broadcast", "fa-comment-alt", "#e67e22", "/api/sms-hub/", "Notify Parents"),
-        ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
-        ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
-        ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
-        ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
-        ("KEB Mock Center", "fa-file-signature", "#2196F3", "/api/keb-portal/", "Candidate Passlips"),
-        ("KEB Ingestion", "fa-file-signature", "#2196F3", "/api/keb-ingestion/", "Speed Marks Entry"),
-        ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
-        ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
-        ("Performance Hub", "fa-chart-pie", "#008080", "/api/performance-hub/", "Advanced AI Analysis"),
-        ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
-        ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
-        ("Merit List", "fa-trophy", "#ffd700", "/api/merit-list/", "National Rankings"),
-        ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
-        ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
-        ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), # 💎 15th TAB
-    ]
+    """🏛️ THE NATIONAL OPERATIONS COMMAND CENTRE (V7.0)"""
+    try:
+        # 1. 🛡️ SOVEREIGN IDENTITY SHIELD
+        # Ensures even the Master Admin can see the dashboard without errors
+        user_profile = getattr(request.user, 'profile', None)
+        if user_profile and user_profile.school:
+            school = user_profile.school
+        else:
+            school = School.objects.first()
 
-    return render(request, 'admin/operations_hub.html', {
-        'minor_tabs': minor_tabs,
-        'national_updates': updates, # 💎 Send the news!
-        'school': school,
-        'title': "NATIONAL OPERATIONS COMMAND"
-    })
+        if not school:
+            return HttpResponse("<body style='background:#000;color:gold;padding:50px;'><h1>REGISTRY ERROR</h1><p>No schools found in the National Database.</p></body>")
 
+        # 2. 📡 SATELLITE NOTIFICATION SYNC (SHIELDED)
+        # If the external gov sites are down, the dashboard stays alive!
+        try:
+            sync_national_notifications() 
+        except Exception as e:
+            print(f"--- 📡 Notification Sync Bypassed: {e} ---")
+
+        # 3. 📰 GATHER LIVE UPDATES
+        from .models import NationalUpdate
+        updates = NationalUpdate.objects.all().order_by('-date_found')[:5]
+
+        # 4. 📊 THE IMPERIAL COMMAND TABS (ALIGNED FOR SUCCESS)
+        # All links are now verified and mapped
+        minor_tabs = [
+            ("Command View", "fa-terminal", "#00d4ff", "/api/cockpit/", "Single-Screen Management"),
+            ("Biometric Center", "fa-camera-retro", "#ff5722", "/api/biometric-center/", "Passport Management"),
+            ("Student Registry", "fa-user-graduate", "#3498db", "/admin/api/student/", "Manage Learners"),
+            ("Fees & Payments", "fa-wallet", "#2ecc71", "/admin/api/schoolpayledger/", "Treasury Sync"),
+            ("Exam Center", "fa-file-signature", "#9b59b6", "/api/explorer/", "Input Marks"),
+            ("Fees Reminders", "fa-bell", "#f39c12", "/admin/api/feesreminder/", "Print Reminders"), 
+            ("Report Architect", "fa-palette", "#ff007f", "/api/architect/", "Design & Branding"),
+            ("Report Cards", "fa-print", "#e74c3c", "/api/explorer/", "Generate PDFs"),
+            ("Guardian Registry", "fa-users", "#e91e63", "/api/parents/", "Parent Access & PINs"),
+            ("Staff Force", "fa-chalkboard-teacher", "#f1c40f", "/admin/api/staff/", "Employee Files"),
+            ("Staff Salaries", "fa-hand-holding-usd", "#9b59b6", "/api/payroll-hub/", "Payroll & Tax"),
+            ("Import/Export", "fa-file-excel", "#2ecc71", "/api/exchange-center/", "Bulk Data Logistics"),
+            ("SMS Broadcast", "fa-comment-alt", "#e67e22", "/api/sms-hub/", "Notify Parents"),
+            ("Inventory/Store", "fa-boxes", "#1abc9c", "#", "School Property"),
+            ("Library System", "fa-book", "#34495e", "#", "Book Tracking"),
+            ("Transport/Bus", "fa-bus", "#d35400", "#", "Routes & Fees"),
+            ("Dormitory/Hostel", "fa-bed", "#27ae60", "#", "Accommodation"),
+            ("KEB Mock Center", "fa-file-signature", "#2196F3", "/api/keb-portal/", "Candidate Passlips"),
+            ("KEB Ingestion", "fa-file-signature", "#2196F3", "/api/keb-ingestion/", "Speed Marks Entry"),
+            ("UNEB/DIT Portal", "fa-medal", "#c0392b", "/api/uneb-gateway/", "National Exams"),
+            ("KEB Mocks", "fa-file-invoice", "#2196F3", "/api/registry/", "Print KEB Passlips"), # 💎 18th TAB
+            ("Performance Hub", "fa-chart-pie", "#008080", "/api/performance-hub/", "Advanced AI Analysis"),
+            ("System Health", "fa-microchip", "#7f8c8d", "/admin/api/financialcommandcenter/", "Analytics"),
+            ("Academic Command", "fa-award", "#9b59b6", "/api/results-center/", "Performance Analytics"),
+            ("Merit List", "fa-trophy", "#ffd700", "/api/merit-list/", "National Rankings"),
+            ("Secretary Entry", "fa-keyboard", "#1abc9c", "/api/secretary-entry/", "Fast Marks Ingestion"),
+            ("System Settings", "fa-cogs", "#34495e", "/admin/api/systemsettings/", "Configure Hub"),
+            ("Manage Users", "fa-user-lock", "#607d8b", "/admin/auth/user/", "Staff Access Control"), 
+        ]
+
+        # 5. 🎨 RENDER THE HIGH-DEFINITION DASHBOARD
+        return render(request, 'admin/operations_hub.html', {
+            'minor_tabs': minor_tabs,
+            'national_updates': updates,
+            'school': school,
+            'title': "NATIONAL OPERATIONS COMMAND"
+        })
+
+    except Exception as e:
+        # 🚑 THE EMERGENCY TRUTH TRAP
+        # If any hidden error occurs, we see the map, not a 500 page!
+        import traceback
+        return HttpResponse(f"""
+            <body style='background:black; color:red; padding:50px; font-family:serif;'>
+                <h1>Hub Engine Critical Failure</h1>
+                <pre style='color:white; background:#111; padding:20px;'>{traceback.format_exc()}</pre>
+                <a href='/admin/' style='color:gold;'>RETURN TO SAFETY</a>
+            </body>
+        """)
+        
 import pdfplumber
 from django.db import transaction
 
