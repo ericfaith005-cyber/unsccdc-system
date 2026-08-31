@@ -4750,42 +4750,120 @@ def update_student_photo_ajax(request):
             
     return JsonResponse({"status": "error", "msg": "Failed to sync photo"}, status=400)
 
-@login_required
 def export_photo_audit_pdf(request):
-    """📄 GENERATES THE 'MISSING PHOTOS' DOCUMENT"""
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    selected_class = request.GET.get('class', 'S.4')
-    
-    students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="PHOTO_AUDIT_{selected_class}.pdf"'
-    
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-    
-    p.setFont("Times-Bold", 16)
-    p.drawCentredString(width/2, height-50, "NATIONAL BIOMETRIC AUDIT REPORT")
-    p.setFont("Times-Roman", 10)
-    p.drawCentredString(width/2, height-70, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
-    
-    data = [['#', 'STUDENT NAME', 'PRN CODE', 'BIOMETRIC STATUS']]
-    for i, s in enumerate(students, 1):
-        status = "✅ UPLOADED" if s.photo else "❌ MISSING"
-        data.append([i, s.full_name.upper(), s.payment_code, status])
-    
-    t = Table(data, colWidths=[40, 250, 100, 100])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#002366")),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
-    ]))
-    t.wrapOn(p, width, height)
-    t.drawOn(p, 50, height-300)
-    
-    p.showPage(); p.save()
-    return response
+    """🏛️ THE NATIONAL BIOMETRIC AUDIT ENGINE - V5.0"""
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class', 'S.4')
+        
+        # 🕵️ Fetch all students in the class A-Z
+        students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="BIOMETRIC_AUDIT_{selected_class}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        
+        # 🎨 NATIONAL PALETTE
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        ug_red = colors.HexColor("#D90000")
+        off_white = colors.HexColor("#FDFDF5")
+
+        # 1. 🖌️ PAINT THE FLOOR & BORDERS
+        p.setFillColor(off_white)
+        p.rect(0, 0, width, height, fill=1, stroke=0)
+        
+        # Triple-Guard National Borders (The "Authority Frame")
+        p.setLineWidth(4); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(20, 20, width-40, height-40)
+        p.setStrokeColor(ug_red); p.rect(21, 21, width-42, height-42)
+
+        # 2. 🏛️ NATIONAL HEADERS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-58, "UNSCCDC NATIONAL BIOMETRIC REGISTRY")
+        
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-90, school.name.upper())
+        
+        # 📏 Header Divider
+        p.setStrokeColor(rich_gold); p.setLineWidth(1.2)
+        p.line(40, height-105, width-40, height-105)
+
+        # 3. 📋 REPORT TITLE & STATS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
+        p.drawCentredString(width/2, height-130, f"BIOMETRIC COMPLIANCE AUDIT: {selected_class}")
+        
+        # Stats Bar
+        total = students.count()
+        # 💎 Note: Checking both 'photo' and 'photo_data' for our new Base64 logic!
+        missing = sum(1 for s in students if not (s.photo or (hasattr(s, 'photo_data') and s.photo_data)))
+        
+        p.setFont("Times-Roman", 9)
+        p.drawString(50, height-155, f"TOTAL ENROLLMENT: {total}")
+        p.setFillColor(ug_red)
+        p.drawRightString(width-50, height-155, f"MISSING BIOMETRICS: {missing}")
+
+        # 4. 📊 THE AUDIT DATA TABLE
+        headers = ['NO.', 'STUDENT LEGAL NAME', 'PRN / ACCESS CODE', 'STATUS']
+        data_rows = [headers]
+        
+        for i, s in enumerate(students, 1):
+            # Check if photo exists in either traditional field or new Base64 field
+            has_biometric = "✅ UPLOADED" if (s.photo or (hasattr(s, 'photo_data') and s.photo_data)) else "❌ MISSING"
+            data_rows.append([
+                i, 
+                s.full_name.upper(), 
+                s.payment_code or '---', 
+                has_biometric
+            ])
+
+        # Create Table
+        table = Table(data_rows, colWidths=[40, 260, 110, 100])
+        
+        # 💎 THE Hub Hub Hub Hub Hub STYLE: Red text for MISSING
+        style_list = [
+            ('BACKGROUND', (0,0), (-1,0), gov_blue),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+            ('FONTSIZE', (0,0), (-1,0), 10),
+            ('FONTSIZE', (0,1), (-1,-1), 9),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black),
+            ('ALIGN', (0,0), (0,-1), 'CENTER'),
+            ('ALIGN', (2,0), (-1,-1), 'CENTER'),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
+        ]
+
+        # Apply specific colors to the 'STATUS' column
+        for row_idx, row_data in enumerate(data_rows):
+            if "MISSING" in str(row_data[3]):
+                style_list.append(('TEXTCOLOR', (3, row_idx), (3, row_idx), ug_red))
+            elif "UPLOADED" in str(row_data[3]):
+                style_list.append(('TEXTCOLOR', (3, row_idx), (3, row_idx), colors.darkgreen))
+
+        table.setStyle(TableStyle(style_list))
+        
+        # 📐 Calculation to prevent overlap: 
+        # Title is at height-130, so table starts at height-175
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 40, height - 175 - (len(data_rows) * 18)) 
+
+        # 5. ✍️ AUTHORIZATION
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
+        footer_y = 60
+        p.line(50, footer_y, 200, footer_y)
+        p.drawCentredString(125, footer_y - 12, "Director of Studies")
+        
+        p.drawRightString(width-50, footer_y - 12, f"Print Date: {datetime.datetime.now().strftime('%d/%b/%Y')}")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return HttpResponse(f"Audit Engine Error: {str(e)}")
 
 from django.db import connection
 from django.http import HttpResponse
