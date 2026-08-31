@@ -441,54 +441,54 @@ admin.site.register([
     ])
 
 class SchoolAdmin(admin.ModelAdmin):
-    # 📊 1. THE Hub Hub Hub LIST VIEW
     list_display = ('name', 'school_code', 'district', 'is_verified_badge')
     list_filter = ('is_verified', 'sector', 'district')
     search_fields = ('name', 'school_code')
 
-    # 💎 2. THE Hub Hub Hub Hub Hub FIELDSET TABS
+    # 💎 THE Hub Hub Hub Hub Hub CONSOLIDATED READONLY LIST
+    # This MUST contain every method used in fieldsets below!
+    readonly_fields = (
+        'logo_preview', 
+        'signature_preview', 
+        'total_revenue_collected', 
+        'total_commission_earned'
+    )
+
     fieldsets = (
         ('🏢 INSTITUTIONAL PROFILE', {
             'fields': ('logo', 'logo_preview', 'name', 'director', 'address', 'district', 'school_motto', 'uneb_center_number')
         }),
-        ('📟 USSD GATEWAY INSTRUCTIONS', {
-            'description ': "What parents see when they dial *165#",
+        ('📟 GATEWAY INSTRUCTIONS', {
             'fields': ('ussd_instructions',)
         }),
-        ('🔒 SCHOOLPAY HIGH-SECURITY API', {
-            'description': "Bank-Level Gateway Credentials",
+        ('🔒 SECURITY API', {
             'fields': ('school_code', 'api_password', 'total_revenue_collected', 'total_commission_earned')
         }),
-        ('✍️ AUTHORIZATION', {
+        ('✍️ NATIONAL AUTHORIZATION', {
             'fields': ('keb_logo', 'chairman_signature', 'signature_preview')
         }),
     )
 
-    # 💎 3. CONSOLIDATED READONLY FIELDS (Merged both into one list!)
-    readonly_fields = ('logo_preview', 'signature_preview', 'total_revenue_collected', 'total_commission_earned')
-
-    def signature_preview(self, obj):
-        if obj.chairman_signature:
-            return mark_safe(f'<img src="{obj.chairman_signature.url}" width="150" style="border:1px solid #ccc; background:white;"/>')
-        return "No Signature Uploaded"
-    
     def is_verified_badge(self, obj):
         if obj.is_verified:
             return mark_safe('<b style="color: #00ff00; font-size: 10px;">✅ APPROVED</b>')
         return mark_safe('<b style="color: #ff9900; font-size: 10px;">⏳ PENDING</b>')
     is_verified_badge.short_description = "Status"
 
-    # 🛡️ GLOBAL APPROVAL ACTION
+    def logo_preview(self, obj):
+        if obj.logo:
+            return mark_safe(f'<img src="{obj.logo.url}" width="80" style="border-radius:10px;"/>')
+        return "No Logo"
+
+    def signature_preview(self, obj):
+        if obj.chairman_signature:
+            return mark_safe(f'<img src="{obj.chairman_signature.url}" width="150" style="background:white; border:1px solid #ccc;"/>')
+        return "No Signature"
+
     actions = ['approve_selected_schools']
     def approve_selected_schools(self, request, queryset):
         queryset.update(is_verified=True)
-        self.message_user(request, "Selected institutions have been officially verified.")
     approve_selected_schools.short_description = "👍 Approve Selected Schools"
-    
-    def logo_preview(self, obj):
-        if obj.logo:
-            return mark_safe(f'<img src="{obj.logo.url}" width="100" />')
-        return "No Logo Uploaded"
 admin.site.register(School, SchoolAdmin)
 
 from django.utils.safestring import mark_safe

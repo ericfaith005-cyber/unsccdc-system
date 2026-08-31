@@ -34,8 +34,15 @@ import django.utils.timezone
 from django.db import models
 from PIL import Image # 💎 Ensure 'pip install Pillow' is done
 
+import os
+import random
+import string
+import django.utils.timezone
+from django.db import models
+from PIL import Image
+
 class School(models.Model):
-    # 🏛️ 1. NATIONAL SECTOR REGISTRY
+    # 🏛️ SECTOR REGISTRY
     SECTOR_CHOICES = [
         ('PRIMARY', 'Primary Level (PLE System)'),
         ('SECONDARY', 'Secondary Level (UCE/UACE System)'),
@@ -44,80 +51,57 @@ class School(models.Model):
         ('INTERNATIONAL', 'International (Year 1 - Year 13)'),
     ]
 
-    # 👤 2. CORE IDENTITY
+    # 👤 CORE IDENTITY
     name = models.CharField(max_length=255, db_index=True)
     director = models.CharField(max_length=255, blank=True, null=True)
     school_motto = models.CharField(max_length=255, blank=True, null=True)
     sector = models.CharField(max_length=20, choices=SECTOR_CHOICES, default='SECONDARY')
-    
-    # 🖼️ 3. BRANDING & AUTHENTICATION
     logo = models.ImageField(upload_to='logos/', null=True, blank=True)
-    keb_logo = models.ImageField(upload_to='logos/keb/', null=True, blank=True, verbose_name="Official KEB Logo")
-    chairman_signature = models.ImageField(upload_to='signatures/', null=True, blank=True, verbose_name="Chairman Signature")
-    stamp_color = models.CharField(max_length=20, default="#002366", help_text="Hex color for digital stamp")
     
-    # 📍 4. GEOGRAPHIC LOCATION
+    # 📍 LOCATION & COMMS
     address = models.CharField(max_length=255, blank=True, null=True)
     district = models.CharField(max_length=100, default="Kampala")
+    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
+    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
     
-    # 🔐 5. SYSTEM CODES & API
+    # 🔐 SYSTEM CODES & API
     school_account_id = models.CharField(max_length=100, unique=True, editable=False)
     school_code = models.CharField(max_length=100, blank=True, help_text="Provided by SchoolPay")
     uneb_center_number = models.CharField(max_length=20, default="U0000")
     api_password = models.CharField(max_length=255, blank=True)
-    phone2 = models.CharField(max_length=20, blank=True, null=True, verbose_name="Secondary Phone")
-    email = models.EmailField(blank=True, null=True, verbose_name="Official Email")
     
-    # 💰 7. TREASURY METRICS
+    # 💰 TREASURY
     total_revenue_collected = models.BigIntegerField(default=0)
     total_commission_earned = models.BigIntegerField(default=0)
     
-    # 📈 8. PRESTIGE DATA
+    # 📈 PRESTIGE
     rating = models.CharField(max_length=30, default="⭐⭐⭐⭐⭐")
     mission = models.TextField(default="To provide high-quality education.")
     vision = models.TextField(default="A lead institution of excellence.")
     core_values = models.TextField(default="Integrity, Excellence, Discipline")
     followers_count = models.IntegerField(default=1500)
     
-    # 📅 9. ACADEMIC CALENDAR
+    # 📅 CALENDAR
     term_end_date = models.CharField(max_length=100, default="05th Dec 2026")
     next_term_start = models.CharField(max_length=100, default="02nd Feb 2027")
+    
+    # 🛡️ STATUS & RECOVERY (CRITICAL FIX)
     is_verified = models.BooleanField(default=False, verbose_name="National Approval Status")
+    created_at = models.DateTimeField(default=django.utils.timezone.now) # 💎 KILLS THE CRASH
+    stamp_color = models.CharField(max_length=20, default="#002366")
 
-    # 📱 11. USSD GUIDELINES
-    ussd_instructions = models.TextField(
-        default="1. Dial *165# (MTN) or *185# (Airtel)\n2. Select Fees & SchoolPay\n3. Select Pay Fees\n4. Enter PRN",
-        help_text="Step-by-step instructions for the Parent App"
-    )
+    # ✍️ AUTHORIZATION
+    keb_logo = models.ImageField(upload_to='logos/keb/', null=True, blank=True)
+    chairman_signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
 
-    # 🤖 THE Hub Hub Hub Hub Hub CONSOLIDATED Hub Hub Hub Hub Hub SAVE ENGINE
+    # 📟 USSD
+    ussd_instructions = models.TextField(default="Dial *165#...")
+
     def save(self, *args, **kwargs):
-        # A. Auto-Generate unique Account ID
         if not self.school_account_id:
             self.school_account_id = "SCH" + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(5))
-        
-        # B. Standard Save to Database
         super(School, self).save(*args, **kwargs)
 
-        # C. Post-Save Image Processing (Formatting the Logo)
-        if self.logo:
-            try:
-                img = Image.open(self.logo.path)
-                if img.height > 300 or img.width > 300:
-                    output_size = (300, 300)
-                    img.thumbnail(output_size, Image.LANCZOS)
-                    img.save(self.logo.path, quality=95)
-            except Exception as e:
-                print(f"Logo Auto-Format Error: {e}")
-
-    # 🧠 THE Hub Hub Hub Hub Hub DYNAMIC GRADING BRAIN
-    @property
-    def grading_standard(self):
-        if self.sector == 'PRIMARY': return "UNEB - PLE Standard"
-        if self.sector == 'SECONDARY': return "NCDC - New Curriculum (15 Point Scale)"
-        if self.sector == 'UNIVERSITY': return "NCHE - CGPA Standard"
-        return "National Standard"
-    
     def __str__(self):
         return f"{self.name} ({self.school_code})"
 
