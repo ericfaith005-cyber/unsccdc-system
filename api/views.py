@@ -4792,33 +4792,3 @@ def national_merit_view(request):
 from django.contrib.auth import login, get_user_model
 from django.db import transaction
 
-def school_signup_portal(request):
-    """🏛️ THE Hub Hub Hub Hub Hub NATIONAL ONBOARDING GATEWAY"""
-    if request.method == "POST":
-        s_name = request.POST.get('school_name').strip()
-        admin_uname = request.POST.get('username').strip()
-        admin_pass = request.POST.get('password').strip()
-        admin_email = request.POST.get('email').strip()
-
-        try:
-            with transaction.atomic():
-                # 1. Create Unverified School
-                new_school = School.objects.create(
-                    name=s_name,
-                    school_code=f"REQ-{random.randint(10000, 99999)}",
-                    is_verified=False 
-                )
-                # 2. Create the User
-                User = get_user_model()
-                user = User.objects.create_user(username=admin_uname, email=admin_email, password=admin_pass)
-                user.is_staff = True # 🔓 Access to Dashboard
-                user.save()
-
-                # 3. Link them
-                UserProfile.objects.create(user=user, school=new_school)
-                
-            return HttpResponse("<body style='background:#000;color:gold;text-align:center;padding:100px;font-family:serif;'><h1>REGISTRATION SUBMITTED</h1><p style='color:white;'>Your school is now in the National Queue. Please wait for verification.</p><a href='/admin/' style='color:gold;'>Go to Login</a></body>")
-        except Exception as e:
-            return HttpResponse(f"Error: {str(e)}")
-
-    return render(request, 'registration/signup.html')
