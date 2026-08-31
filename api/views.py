@@ -2287,7 +2287,7 @@ def operations_hub_view(request):
         except Exception as e:
             print(f"--- ⚠️ NationalUpdate Table not ready yet: {e} ---")
             updates = [] # Fallback to empty list
-            
+
         # 4. 📊 THE IMPERIAL COMMAND TABS (ALIGNED FOR SUCCESS)
         # All links are now verified and mapped
         minor_tabs = [
@@ -3518,6 +3518,67 @@ def batch_report_download(request):
         import traceback
         print(traceback.format_exc())
         return HttpResponse(f"National Batch Error: {str(e)}")
+
+# =============================================================
+# 🚀 THE Hub Hub Hub Hub Hub NATIONAL KEB BATCH ENGINE (A-ONE)
+# =============================================================
+@login_required
+def batch_keb_passlip_download(request):
+    try:
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class')
+        
+        if not selected_class:
+            return HttpResponse("<h1 style='color:red;'>Error: Please select a class.</h1>")
+
+        # 🕵️ Fetch all active candidates in this class
+        students = Student.objects.filter(
+            school=school, 
+            current_class=selected_class, 
+            is_active=True
+        ).order_by('full_name')
+
+        if not students.exists():
+            return HttpResponse(f"<h1>No candidates found in {selected_class}</h1>")
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="BATCH_KEB_PASSLIPS_{selected_class}.pdf"'
+        
+        # 📄 Start the A4 Canvas
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4 # 595 x 842 points
+        half_height = height / 2 # 421 points
+
+        # 🔄 THE Hub Hub Hub PAIRING ENGINE
+        # We loop through students in steps of 2
+        for i in range(0, len(students), 2):
+            
+            # 1. DRAW FIRST STUDENT (Top Half)
+            student_a = students[i]
+            draw_keb_slip_layout(p, student_a, school, 0) # y_offset = 0
+
+            # ✂️ THE PERFORATION LINE (The 'Cut Here' Guide)
+            p.setDash(4, 4)
+            p.setStrokeColor(colors.grey)
+            p.setLineWidth(0.5)
+            p.line(0, half_height, width, half_height)
+            p.setDash() # Reset to solid
+
+            # 2. DRAW SECOND STUDENT (Bottom Half)
+            if i + 1 < len(students):
+                student_b = students[i + 1]
+                draw_keb_slip_layout(p, student_b, school, half_height) # y_offset = 421
+            
+            # 💎 FLIP THE PAGE (Next A4 Sheet)
+            p.showPage()
+            
+        p.save()
+        return response
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>Batch Error</h1><pre>{str(e)}</pre></body>")
 
 
 @login_required
