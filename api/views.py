@@ -2277,10 +2277,17 @@ def operations_hub_view(request):
         except Exception as e:
             print(f"--- 📡 Notification Sync Bypassed: {e} ---")
 
-        # 3. 📰 GATHER LIVE UPDATES
-        from .models import NationalUpdate
-        updates = NationalUpdate.objects.all().order_by('-date_found')[:5]
-
+        updates = []
+        try:
+            from .models import NationalUpdate
+            # We use a try-except here so if the table is missing, the HUB DOES NOT CRASH
+            updates = NationalUpdate.objects.all().order_by('-date_found')[:5]
+            # Force evaluation to catch the error here, not in the template
+            list(updates) 
+        except Exception as e:
+            print(f"--- ⚠️ NationalUpdate Table not ready yet: {e} ---")
+            updates = [] # Fallback to empty list
+            
         # 4. 📊 THE IMPERIAL COMMAND TABS (ALIGNED FOR SUCCESS)
         # All links are now verified and mapped
         minor_tabs = [
@@ -2333,7 +2340,7 @@ def operations_hub_view(request):
                 <a href='/admin/' style='color:gold;'>RETURN TO SAFETY</a>
             </body>
         """)
-        
+
 import pdfplumber
 from django.db import transaction
 
