@@ -3964,44 +3964,60 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(15, base_y - 410, width - 30, 395, stroke=1)
     p.setLineWidth(0.5); p.setStrokeColor(rich_gold); p.rect(18, base_y - 407, width - 36, 389, stroke=1)
 
+    p.setLineWidth(4); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30, stroke=1)
+    p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44, stroke=1)
+
+    # 🌌 3. SCHOOL LOGO WATERMARK (THE SOUL)
     if school.logo and os.path.exists(school.logo.path):
         p.saveState()
-        p.setFillAlpha(0.08) # 💎 Perfectly visible but transparent
-        # Centered: width/2 - half_size
+        p.setFillAlpha(0.08) # 💎 Transparent but visible
         p.drawImage(school.logo.path, width/2 - 150, height/2 - 150, width=300, height=300, mask='auto')
         p.restoreState()
 
-    # 🏛️ 5. NATIONAL TOP HEADERS
+    # 🏛️ 4. NATIONAL TOP HEADERS
     p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
     p.drawCentredString(width/2, height - 50, "THE REPUBLIC OF UGANDA")
-    p.setFont("Times-Bold", 16); p.setFillColor(gov_blue)
-    p.drawCentredString(width/2, height - 70, "KYADONDO EXAMINATIONS BOARD")
+    p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+    p.drawCentredString(width/2, height - 75, "KYADONDO EXAMINATIONS BOARD")
     
+    # 🔭 5. KEB LOGO - LARGE & CENTERED (FIXED OVERLAP)
     if school.keb_logo and os.path.exists(school.keb_logo.path):
-        p.drawImage(school.keb_logo.path, width/2 - 40, height - 160, width=80, height=80, mask='auto')
-        
-    ix = 100
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(ix, base_y - 75, school.name.upper())
+        # Positioned lower so it doesn't cover the text
+        p.drawImage(school.keb_logo.path, width/2 - 45, height - 175, width=90, height=90, mask='auto')
+
+    # 📏 6. TOP DIVIDER
+    p.setStrokeColor(rich_gold); p.setLineWidth(0.8)
+    p.line(45, height - 185, width - 45, height - 185)
+
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 14)
+    p.drawString(45, height - 210, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(ix, base_y - 90, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(ix, base_y - 105, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(ix, base_y - 120, f"YEAR: 2026")
-    
-    # 📸 7. STUDENT PHOTO (FAR RIGHT)
-    px, py, pw, ph = width - 110, base_y - 120, 75, 90
+    p.drawString(45, height - 225, f"TEL: {getattr(school, 'phone2', '---')}")
+    p.drawString(45, height - 240, f"EMAIL: {getattr(school, 'email', '---')}")
+    p.setFont("Times-Italic", 9); p.setFillColor(colors.grey)
+    p.drawString(45, height - 255, f"MOTTO: \"{getattr(school, 'school_motto', 'Excellence')}\"")
+
+    # Student Photo (Far Right)
+    px, py, pw, ph = width - 130, height - 280, 85, 105
     if student.photo and os.path.exists(student.photo.path):
-        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
-        p.rect(px, py, pw, ph, stroke=1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5); p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
     else:
-    # 👤 Draw the Vector Silhouette
+        # Draw the professional human shadow if photo is missing
         p.setStrokeColor(colors.grey); p.rect(px, py, pw, ph, stroke=1)
         p.setFillColor(colors.HexColor("#DCDCDC"))
-        p.circle(px + pw/2, py + ph - 25, 15, fill=1)
-        p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
-    # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
-    bar_y = base_y - 145
+        p.circle(px + pw/2, py + ph - 28, 18, fill=1) # Head
+        p.roundRect(px + 10, py + 12, pw - 20, 45, 10, fill=1) # Shoulders
+
+    # Student Info (Next to Photo)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 10.5)
+    sx = width - 340 
+    p.drawString(sx, height - 210, f"NAME: {student.full_name.upper()}")
+    p.drawString(sx, height - 225, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(sx, height - 240, f"YEAR: 2026")
+    p.drawString(sx, height - 255, "REGISTRY: AUTHENTICATED")
+
+    bar_y = base_y - 315
     split_point = 160 
     p.setFillColor(rich_gold)
     p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
