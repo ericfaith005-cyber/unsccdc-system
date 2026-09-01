@@ -143,15 +143,27 @@ class Subject(models.Model):
         return f"[{self.level}] {self.name}"
 
 class ReportTemplate(models.Model):
+    FORMAT_CHOICES = [('A4', 'A4 Standard'), ('A5', 'A5 Mini (A-One)'), ('A3', 'A3 Poster'), ('LEGAL', 'Legal Size')]
+    TARGET_CHOICES = [('REPORT', 'School Report Card'), ('KEB', 'KEB Mock Passlip')]
+
     school = models.ForeignKey('School', on_delete=models.CASCADE)
-    design_name = models.CharField(max_length=100, default="Standard Excellence")
-    background_image = models.ImageField(upload_to='templates/bg/', null=True, blank=True)
-    opacity = models.FloatField(default=0.05)
-    theme_color = models.CharField(max_length=50, default="Royal Gold")
-    page_frame_enabled = models.BooleanField(default=True)
+    target_type = models.CharField(max_length=20, choices=TARGET_CHOICES, default='REPORT')
+    page_format = models.CharField(max_length=10, choices=FORMAT_CHOICES, default='A4')
     
+    # 🎨 Color Schemes
+    primary_color = models.CharField(max_length=20, default="#002366") # Royal Navy
+    secondary_color = models.CharField(max_length=20, default="#D4AF37") # Gold
+    
+    # 🌌 Watermark Control
+    watermark_opacity = models.FloatField(default=0.05)
+    use_school_logo_as_watermark = models.BooleanField(default=True)
+    
+    # 🖼️ Frame Settings
+    border_thickness = models.FloatField(default=4.0)
+    is_active = models.BooleanField(default=True)
+
     class Meta:
-        verbose_name = "REPORT DESIGNER VAULT"
+        verbose_name = "Sovereign Design Vault"
 
 class Student(models.Model):
 

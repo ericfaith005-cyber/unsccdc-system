@@ -1,88 +1,97 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <style>
-    :root { --gold: #D4AF37; --navy: #001035; --obsidian: #050505; --success: #00ff00; --danger: #ff4444; }
+    :root { --gold: #D4AF37; --navy: #001035; --obsidian: #050505; --success: #00ff00; }
     * { font-family: "Times New Roman", Times, serif !important; }
     #content { background: #000 !important; padding: 20px !important; }
 
     .master-grid { display: grid; grid-template-columns: 1fr 1.8fr; gap: 20px; }
-    .glass-panel { background: rgba(255,255,255,0.03); border: 1px solid #222; border-radius: 20px; padding: 20px; position: relative; overflow: hidden; }
-    .glass-panel::before { content: ""; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(to right, #000, var(--gold), #D90000); }
+    .panel { background: rgba(255,255,255,0.02); border: 1px solid #222; border-radius: 20px; padding: 20px; position: relative; }
 
-    /* 🚩 AUDIT SIDEBAR */
-    .audit-row { border-bottom: 1px solid #111; padding: 12px; cursor: pointer; transition: 0.3s; display: flex; justify-content: space-between; align-items: center; }
-    .audit-row:hover { background: rgba(212, 175, 55, 0.05); }
-    .active-std { border-left: 4px solid var(--gold); background: rgba(212, 175, 55, 0.1) !important; }
-    .badge { padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; }
+    /* 🔍 SEARCH BAR */
+    .search-input { width: 100%; padding: 12px 40px; background: #0d0d0d; border: 1px solid #333; border-radius: 12px; color: white; outline: none; }
+    .search-input:focus { border-color: var(--gold); }
 
-    /* ✍️ ENTRY FORM */
-    .subject-entry { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a1a; }
-    .mark-field { background: #000; border: 1px solid #333; color: var(--success); width: 80px; padding: 8px; text-align: center; font-weight: 900; border-radius: 8px; }
-    .mark-field:focus { border-color: var(--gold); outline: none; }
+    /* 📊 PREVIEW CARD */
+    .preview-card { background: linear-gradient(135deg, var(--navy), #000); border: 2px solid var(--gold); border-radius: 15px; padding: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+    .mark-field { background: #000; border: 1px solid #333; color: var(--success); width: 70px; padding: 8px; text-align: center; font-weight: 900; border-radius: 8px; }
 </style>
 
-<div style="margin-bottom: 30px;">
-    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin:0;">KEB MOCK INGESTION CENTER</h1>
+<div style="margin-bottom: 25px;">
+    <h1 style="color: #fff; font-weight: 900; letter-spacing: 3px; margin:0;">KEB MOCK COMMAND CENTER</h1>
     <p style="color: var(--gold); font-size: 11px;">NATIONAL CANDIDATE REGISTRY ● {{ school.name|upper }}</p>
 </div>
 
-<!-- 🔍 CLASS PILLS -->
-<div class="glass-panel" style="margin-bottom: 20px; padding: 10px;">
-    <div style="display: flex; gap: 10px;">
-        {% for c in classes %}
-            <a href="?class={{ c }}" style="text-decoration:none; padding: 10px 20px; border-radius: 12px; background: {% if selected_class == c %}var(--gold){% else %}#111{% endif %}; color: {% if selected_class == c %}black{% else %}white{% endif %}; font-weight: 900;">{{ c }}</a>
-        {% endfor %}
-    </div>
-</div>
-
 <div class="master-grid">
-    <!-- LEFT: AUDIT LIST -->
-    <div class="glass-panel">
-        <h3 style="color: var(--gold); font-size: 12px; margin-bottom: 15px;">CLASS AUDIT (MISSING MARKS)</h3>
-        <div style="max-height: 600px; overflow-y: auto;">
-            {% for item in audit_list %}
-            <div class="audit-row {% if selected_student.id == item.student.id %}active-std{% endif %}" onclick="window.location.href='?class={{ selected_class }}&student_id={{ item.student.id }}'">
-                <div>
-                    <div style="color: white; font-weight: bold; font-size: 13px;">{{ item.student.full_name|upper }}</div>
-                    <div style="color: #444; font-size: 9px;">PRN: {{ item.student.payment_code }}</div>
+    <!-- LEFT: SEARCHABLE AUDIT LIST -->
+    <div>
+        <div class="panel" style="margin-bottom: 15px;">
+            <form method="GET">
+                <input type="hidden" name="class" value="{{ selected_class }}">
+                <div style="position: relative;">
+                    <i class="fas fa-search" style="position:absolute; left:15px; top:15px; color:gray;"></i>
+                    <input type="text" name="q" value="{{ q }}" placeholder="Search Candidate Name..." class="search-input">
                 </div>
-                {% if item.is_complete %}
-                    <span class="badge" style="color: var(--success); background: rgba(0,255,0,0.1);">COMPLETE ✅</span>
-                {% else %}
-                    <span class="badge" style="color: var(--danger); background: rgba(255,0,0,0.1);">MISSING: {{ item.missing }}</span>
-                {% endif %}
+            </form>
+        </div>
+
+        <div class="panel" style="max-height: 600px; overflow-y: auto;">
+            <h3 style="color: var(--gold); font-size: 10px; letter-spacing: 2px;">CANDIDATE LIST ({{ selected_class }})</h3>
+            {% for item in audit_list %}
+            <div style="padding: 12px; border-bottom: 1px solid #111; cursor: pointer; display: flex; justify-content: space-between; {% if selected_student.id == item.student.id %}border-left: 4px solid var(--gold); background: rgba(212,175,55,0.05);{% endif %}"
+                 onclick="window.location.href='?class={{ selected_class }}&student_id={{ item.student.id }}'">
+                <span style="color: white; font-weight: bold; font-size: 13px;">{{ item.student.full_name|upper }}</span>
+                <span style="color: {% if item.is_complete %}#00ff00{% else %}#555{% endif %}; font-size: 10px;">{{ item.count }} Subs</span>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- RIGHT: SPEED ENTRY -->
-    <div class="glass-panel">
+    <!-- RIGHT: PREVIEW & SPEED ENTRY -->
+    <div class="panel">
         {% if selected_student %}
-            <h2 style="color: #fff; margin: 0;">{{ selected_student.full_name|upper }}</h2>
-            <p style="color: #555; font-size: 11px; margin-bottom: 20px;">Inputting Mock Results for {{ selected_class }}</p>
+            <!-- 💎 THE Hub Hub Hub PREVIEW Hub Hub Hub Hub Hub BAR -->
+            <div class="preview-card">
+                <div>
+                    <h2 style="color: #fff; margin: 0; font-size: 18px;">{{ selected_student.full_name|upper }}</h2>
+                    <span style="color: var(--gold); font-size: 9px; font-weight: 900;">PRELIMINARY STANDING: {{ preview.status }}</span>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: white; font-size: 22px; font-weight: 900;">{{ preview.avg }}%</div>
+                    <div style="color: var(--gold); font-size: 10px; font-weight: 900;">GRADE: {{ preview.grade }}</div>
+                </div>
+                <a href="/api/keb-passlip/{{ selected_student.account_number }}/" target="_blank" 
+                   style="background: #D90000; color: white; padding: 10px 15px; border-radius: 10px; text-decoration: none; font-weight: 900; font-size: 11px;">
+                    <i class="fas fa-print"></i> VIEW PASSLIP
+                </a>
+            </div>
 
-            <form method="POST">
+            <form method="POST" action="/api/save-keb-marks/">
                 {% csrf_token %}
-                <div style="max-height: 450px; overflow-y: auto; padding-right: 15px;">
+                <input type="hidden" name="class_name" value="{{ selected_class }}">
+                <input type="hidden" name="subject_id" value="ALL_MODE"> <!-- Logic trigger -->
+                <input type="hidden" name="student_id_manual" value="{{ selected_student.id }}">
+
+                <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
                     {% for sub in subjects %}
-                    <div class="subject-entry">
-                        <span style="color: #aaa; font-weight: bold;">{{ sub.name|upper }}</span>
-                        <input type="number" name="sub_{{ sub.id }}" step="0.1" class="mark-field" 
+                    <div style="display:flex; justify-content: space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid #1a1a1a;">
+                        <span style="color: #aaa; font-weight: bold; font-size: 12px;">{{ sub.name|upper }}</span>
+                        <input type="number" name="score_{{ selected_student.id }}_{{ sub.id }}" step="0.1" class="mark-field" 
                                value="{% for sid, val in existing_marks.items %}{% if sid == sub.id %}{{ val|floatformat:g }}{% endif %}{% endfor %}"
                                placeholder="--">
                     </div>
                     {% endfor %}
                 </div>
 
-                <button type="submit" class="btn btn-warning" style="width: 100%; margin-top: 20px; font-weight: 900; height: 55px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.4);">
-                    🚀 COMMIT TO KEB REGISTRY
+                <button type="submit" class="btn btn-warning" style="width: 100%; margin-top: 25px; font-weight: 900; height: 55px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.4);">
+                    🚀 COMMIT TO NATIONAL REGISTRY
                 </button>
             </form>
         {% else %}
-            <div style="padding: 150px 20px; text-align: center; color: #333;">
-                <i class="fas fa-fingerprint" style="font-size: 50px; margin-bottom: 20px;"></i>
-                <br>SELECT A CANDIDATE FROM THE LEFT TO INGEST DATA
+            <div style="padding: 150px 20px; text-align: center; color: #444;">
+                <i class="fas fa-search-plus" style="font-size: 50px; display: block; margin-bottom: 20px;"></i>
+                SEARCH OR SELECT A CANDIDATE TO BEGIN
             </div>
         {% endif %}
     </div>

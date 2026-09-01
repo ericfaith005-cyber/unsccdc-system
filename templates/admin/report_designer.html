@@ -1,101 +1,89 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <style>
-    :root { --neon-blue: #00d4ff; --neon-green: #39ff14; --neon-pink: #ff007f; --imperial-gold: #D4AF37; }
+    :root { --neon-blue: #00d4ff; --neon-green: #39ff14; --gold: #D4AF37; --obsidian: #080808; }
     * { font-family: "Times New Roman", Times, serif !important; }
-    #content { background: #050a18 !important; padding: 10px !important; color: white; }
+    #content { background: #050a18 !important; color: white; padding: 20px !important; }
 
-    /* 🧭 TOP HORIZONTAL SUB-NAVBAR */
-    .sub-nav { display: flex; gap: 15px; border-bottom: 1px solid #1a2a3a; padding: 10px; margin-bottom: 20px; }
-    .sub-nav a { text-decoration: none; color: #888; font-size: 12px; font-weight: bold; transition: 0.3s; }
-    .sub-nav a:hover, .sub-nav a.active { color: var(--neon-blue); border-bottom: 2px solid var(--neon-blue); }
-
-    /* 🛠️ CONTROL PANELS */
-    .designer-panel { 
-        background: rgba(255,255,255,0.02); border: 1px solid #1a2a3a; 
-        border-radius: 12px; padding: 20px; margin-bottom: 20px; 
-    }
-    .panel-header { color: var(--neon-blue); font-size: 11px; font-weight: 900; letter-spacing: 2px; border-bottom: 1px solid #111; padding-bottom: 8px; margin-bottom: 15px; display: block;}
-
-    /* 🔘 BUTTONS FROM PHOTO */
-    .btn-action { padding: 10px 20px; border-radius: 6px; border: none; font-weight: 900; cursor: pointer; font-size: 11px; margin-right: 10px; transition: 0.3s; }
-    .btn-save { background: var(--neon-green); color: #000; }
-    .btn-new { background: #1a2a3a; color: white; border: 1px solid var(--neon-blue); }
-    .btn-clear { background: var(--neon-pink); color: white; }
-    .btn-auto { background: #fd7e14; color: white; }
-
-    /* 🎨 THEME SELECTORS (BOTTOM OF PHOTO) */
-    .theme-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-    .theme-btn { background: #111; border: 1px solid #333; color: white; padding: 8px 15px; border-radius: 5px; font-size: 10px; }
-    .theme-btn:hover { border-color: var(--imperial-gold); }
-
-    /* 🎚️ SLIDER */
-    input[type=range] { width: 200px; accent-color: var(--neon-blue); }
+    .designer-card { background: rgba(255,255,255,0.02); border: 1px solid #1a2a3a; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .panel-label { color: var(--neon-blue); font-size: 11px; font-weight: 900; letter-spacing: 2px; display: block; margin-bottom: 15px; text-transform: uppercase; }
+    
+    /* 🔘 BUTTON STYLES FROM YOUR PHOTO */
+    .btn-save { background: #32ff7e; color: #000; border: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    .btn-new { background: transparent; color: white; border: 1px solid var(--neon-blue); padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    .btn-mode { background: var(--neon-blue); color: black; border: none; padding: 10px 15px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+    .btn-clear { background: #ff3860; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    
+    input[type=range] { width: 300px; accent-color: var(--neon-blue); }
+    select { background: #000; color: white; border: 1px solid #333; padding: 10px; border-radius: 5px; width: 300px; }
 </style>
 
-<!-- 1. NAVIGATION -->
-<div class="sub-nav">
-    <a href="#" class="active">⦿ SETTING</a>
-    <a href="/admin/api/subject/">⦿ SUBJECT</a>
-    <a href="#">⦿ A-LEVEL SUBJECTS</a>
-    <a href="#">⦿ COMBINATIONS</a>
-    <a href="#">⦿ GRADING SCALE</a>
-    <a href="#">⦿ ASSESSMENT STRUCTURE</a>
-    <a href="#">⦿ UNIT PAY</a>
-</div>
-
-<h1 style="color: var(--imperial-gold); font-size: 24px; margin-left: 10px;">Report Designer</h1>
-
-<!-- 2. SAVED DESIGNS PANEL -->
-<div class="designer-panel">
-    <span class="panel-header">SAVED DESIGNS</span>
-    <div style="display: flex; align-items: center; gap: 20px;">
-        <select style="background:#000; color:white; width:300px; padding:10px; border-radius:8px;">
-            <option>Standard 2026 Layout - (Active)</option>
-        </select>
-        <button class="btn-action btn-save">💾 Save Design</button>
-        <button class="btn-action btn-new">📄 Save As New</button>
-        <span style="color: var(--neon-green); font-size: 10px; font-style: italic;">Active design: its the best</span>
-    </div>
-</div>
-
-<!-- 3. BACKGROUND CONTROL PANEL -->
-<div class="designer-panel">
-    <span class="panel-header">BACKGROUND IMAGE</span>
-    <div style="display:flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-        <button class="btn-action btn-new"><i class="fas fa-upload"></i> Upload Photo / Scan...</button>
-        
-        <div style="background:#111; border-radius:8px; display:flex;">
-            <button class="btn-action" style="background:var(--neon-blue); color:black;">Background (prints & saves)</button>
-            <button class="btn-action" style="background:transparent; color:white;">Guide only (not printed)</button>
+<form id="designForm" method="POST" action="/api/save-design/">
+    {% csrf_token %}
+    
+    <!-- 1. DOCUMENT TARGET -->
+    <div class="designer-card">
+        <span class="panel-label">DOCUMENT TARGET & SIZE</span>
+        <div style="display:flex; gap:20px; align-items:center;">
+            <select name="target_type">
+                <option value="REPORT">Official School Report Card</option>
+                <option value="KEB">KEB Mock Result Slip</option>
+            </select>
+            <select name="page_format">
+                <option value="A4">A4 Standard Page</option>
+                <option value="A5">A5 Mini (Two per A4)</option>
+                <option value="LEGAL">Long Legal Paper</option>
+            </select>
+            <button type="submit" class="btn-save">💾 Save Design</button>
         </div>
-
-        <span style="font-weight: bold; font-size: 11px;">Opacity:</span>
-        <input type="range" min="0" max="100" value="5">
-        <button class="btn-action btn-clear">✕ Clear</button>
-        <button class="btn-action btn-auto">⏹ Smart Auto-Layout</button>
     </div>
-</div>
 
-<!-- 4. PAGE FRAME -->
-<div class="designer-panel" style="min-height: 150px; border-color: var(--imperial-gold);">
-    <span class="panel-header" style="color: var(--imperial-gold);">PAGE FRAME (outer card border)</span>
-    <div style="border: 2px solid rgba(255,255,255,0.1); height: 80px; border-radius: 10px; margin-top: 20px;"></div>
-</div>
+    <!-- 2. BACKGROUND & WATERMARK -->
+    <div class="designer-card">
+        <span class="panel-label">BACKGROUND & WATERMARK</span>
+        <div style="display:flex; align-items:center; gap:30px; flex-wrap:wrap;">
+            <button type="button" class="btn-new">📂 Upload Background / Seal</button>
+            
+            <div style="display:flex; gap:2px; background:#111; border-radius:5px;">
+                <button type="button" class="btn-mode">Active Background</button>
+                <button type="button" style="background:transparent; color:white; border:none; padding:10px;">Guide Only</button>
+            </div>
 
-<!-- 5. COLOR THEMES -->
-<div class="designer-panel">
-    <span class="panel-header">COLOR THEMES & BACKGROUND</span>
-    <div class="theme-grid">
-        <button class="theme-btn">🏆 Royal Gold</button>
-        <button class="theme-btn">🌊 Ocean Blue</button>
-        <button class="theme-btn">🌲 Forest Green</button>
-        <button class="theme-btn">🍷 Crimson Classic</button>
-        <button class="theme-btn">🌑 Slate Modern</button>
-        <button class="theme-btn">🌸 Rose Elegant</button>
-        <button class="theme-btn">🔥 Sunset Orange</button>
-        <button class="theme-btn">🖋️ Monochrome Ink</button>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span>Opacity:</span>
+                <input type="range" name="opacity" min="0" max="20" value="5" id="opacityRange">
+                <span id="opacityVal">5%</span>
+            </div>
+
+            <button type="button" class="btn-clear">✕ Clear</button>
+        </div>
     </div>
-</div>
 
+    <!-- 3. COLOR THEMES -->
+    <div class="designer-card">
+        <span class="panel-label">COLOR THEMES & BRANDING</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="color" name="primary_color" value="#002366" style="height:40px; width:100px; background:none; border:none;">
+            <button type="button" class="btn-new" style="border-color:gold; color:gold;">🏆 Royal Gold</button>
+            <button type="button" class="btn-new" style="border-color:#00d4ff; color:#00d4ff;">🌊 Ocean Blue</button>
+            <button type="button" class="btn-new" style="border-color:#32ff7e; color:#32ff7e;">🌲 Forest Green</button>
+        </div>
+    </div>
+</form>
+
+<script>
+    // 🎚️ Live Opacity Display
+    document.getElementById('opacityRange').oninput = function() {
+        document.getElementById('opacityVal').innerText = this.value + "%";
+    }
+
+    // ⚡ AJAX Save
+    document.getElementById('designForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const res = await fetch(e.target.action, { method: 'POST', body: formData });
+        const data = await res.json();
+        alert(data.msg);
+    }
+</script>
 {% endblock %}

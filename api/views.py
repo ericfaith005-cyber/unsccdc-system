@@ -4243,67 +4243,39 @@ def keb_mock_portal_view(request):
         return render(request, 'admin/keb_mock_portal.html', context)
     except Exception as e:
         return HttpResponse(f"<body style='background:black;color:red;padding:50px;'><h1>KEB Portal Engine Error</h1><p>{str(e)}</p></body>")
-    
+
+from reportlab.lib import pagesizes # 💎 Ensure this is imported
 @login_required
 @transaction.atomic
 def save_keb_marks(request):
-    """🛡️ THE Hub Hub Hub Hub Hub NATIONAL GRADING ENGINE (UCE & UACE)"""
     if request.method == "POST":
-        subject_id = request.POST.get('subject_id')
-        class_name = request.POST.get('class_name').upper()
+        class_name = request.POST.get('class_name')
+        # 🕵️ Detect if we are saving one student's whole list
+        manual_std_id = request.POST.get('student_id_manual')
         
-        # 🕵️ Determine the Level (O-Level vs A-Level)
-        is_a_level = any(x in class_name for x in ["S.5", "S5", "S.6", "S6"])
-
         for key, value in request.POST.items():
+            # Matches 'score_STUDENTID_SUBJECTID'
             if key.startswith('score_') and value != "":
-                student_id = key.replace('score_', '')
-                student = get_object_or_404(Student, id=student_id)
-                subject = get_object_or_404(Subject, id=subject_id)
+                parts = key.split('_')
+                std_id = parts[1]
+                sub_id = parts[2]
                 
+                student = Student.objects.get(id=std_id)
+                subject = Subject.objects.get(id=sub_id)
                 score = float(value)
-                grade = "E"
-                points = 0
-
-                # 📊 1. NEW CURRICULUM UCE (O-LEVEL) GRADING
-                if not is_a_level:
-                    if score >= 80: grade = "A"
-                    elif score >= 70: grade = "B"
-                    elif score >= 60: grade = "C"
-                    elif score >= 50: grade = "D"
-                    else: grade = "E"
-                    points = 0 # Points usually aren't used for O-level aggregates in new curriculum
-
-                # 🎓 2. UACE (A-LEVEL) PRINCIPAL PASS SCALES
-                else:
-                    if score >= 80: 
-                        grade = "A"; points = 6
-                    elif score >= 70: 
-                        grade = "B"; points = 5
-                    elif score >= 60: 
-                        grade = "C"; points = 4
-                    elif score >= 50: 
-                        grade = "D"; points = 3
-                    elif score >= 40: 
-                        grade = "E"; points = 2
-                    elif score >= 35: 
-                        grade = "O"; points = 1
-                    else: 
-                        grade = "F"; points = 0
-
-                # 💾 SAVE TO THE KEB REGISTRY
+                
+                # Apply National Grading
+                grade = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
+                
                 KEBMockResult.objects.update_or_create(
-                    student=student,
-                    subject=subject,
-                    defaults={
-                        'score': score, 
-                        'grade': grade,
-                        'points': points # 💎 Automatically stored for A-level rankings
-                    }
+                    student=student, subject=subject,
+                    defaults={'score': score, 'grade': grade}
                 )
         
-        return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=synced')
-
+        redirect_url = f'/api/keb-ingestion/?class={class_name}'
+        if manual_std_id: redirect_url += f'&student_id={manual_std_id}'
+        return redirect(redirect_url)
+    
 def web_app_home(request):
     """🏛️ THE Hub Hub Hub Hub Hub OFFICIAL SOVEREIGN GATEWAY"""
     html = """
@@ -4659,74 +4631,53 @@ def keb_mock_ingestion_view(request):
         classes = sector_map.get(school.sector, ['S.4', 'S.6'])
         selected_class = request.GET.get('class', classes[0])
         selected_student_id = request.GET.get('student_id')
+        search_query = request.GET.get('q', '').strip().upper() # 💎 THE SEARCH KEY
         
         subjects = Subject.objects.all().order_by('name')
-        students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
+        
+        # 🔎 SEARCH LOGIC: Look for name or PRN
+        students = Student.objects.filter(school=school, current_class=selected_class)
+        if search_query:
+            students = students.filter(Q(full_name__icontains=search_query) | Q(payment_code__icontains=search_query))
+        students = students.order_by('full_name')
 
-        # 2. 💾 MASS COMMIT LOGIC (One Student, All Subjects)
-        if request.method == "POST" and selected_student_id:
-            target_std = get_object_or_404(Student, id=selected_student_id)
-            
-            for sub in subjects:
-                score_val = request.POST.get(f'sub_{sub.id}')
-                if score_val is not None and score_val != "":
-                    score = float(score_val)
-                    
-                    # 🤖 Apply National KEB Grading Logic
-                    is_a_level = any(x in selected_class.upper() for x in ["S5", "S6"])
-                    grade = "F"
-                    pts = 0
-                    
-                    if not is_a_level:
-                        if score >= 80: grade = "A"
-                        elif score >= 70: grade = "B"
-                        elif score >= 60: grade = "C"
-                        elif score >= 50: grade = "D"
-                        else: grade = "E"
-                    else:
-                        if score >= 80: grade, pts = "A", 5
-                        elif score >= 70: grade, pts = "B", 4
-                        elif score >= 60: grade, pts = "C", 3
-                        elif score >= 50: grade, pts = "D", 2
-                        elif score >= 40: grade, pts = "E", 1
-                        elif score >= 35: grade, pts = "O", 1
-                    
-                    KEBMockResult.objects.update_or_create(
-                        student=target_std, subject=sub,
-                        defaults={'score': score, 'grade': grade, 'points': pts}
-                    )
-            return redirect(f'/api/keb-ingestion/?class={selected_class}&student_id={selected_student_id}&status=success')
-
-        # 3. 🧠 MEMORY ENGINE: Pull existing marks for the form
+        # 2. 🧠 PREVIEW ENGINE (Calculates results for the UI before committing)
+        preview_summary = {"avg": 0, "grade": "N/A", "status": "PENDING"}
         existing_marks = {}
+        
         if selected_student_id:
-            marks_found = KEBMockResult.objects.filter(student_id=selected_student_id)
+            selected_student = get_object_or_404(Student, id=selected_student_id)
+            marks_found = KEBMockResult.objects.filter(student=selected_student)
+            
+            total_score = 0
             for m in marks_found:
                 existing_marks[m.subject.id] = m.score
+                total_score += m.score
+            
+            if marks_found.exists():
+                avg = total_score / marks_found.count()
+                grade = "A" if avg >= 80 else "B" if avg >= 70 else "C" if avg >= 60 else "D" if avg >= 50 else "E"
+                preview_summary = {"avg": round(avg, 1), "grade": grade, "status": "READY"}
 
-        # 4. 🚩 AUDIT ENGINE: Calculate missing marks for the sidebar
+        # 3. 🚩 AUDIT LIST (Who is missing data?)
         audit_list = []
         for s in students:
-            done_count = KEBMockResult.objects.filter(student=s).count()
-            missing = subjects.count() - done_count
-            audit_list.append({
-                'student': s,
-                'is_complete': missing <= 0,
-                'missing': missing if missing > 0 else 0
-            })
+            done = KEBMockResult.objects.filter(student=s).count()
+            audit_list.append({'student': s, 'is_complete': done >= subjects.count(), 'count': done})
 
         return render(request, 'admin/keb_mock_ingestion.html', {
-            'school': school,
             'classes': classes,
             'selected_class': selected_class,
             'audit_list': audit_list,
             'subjects': subjects,
             'selected_student': students.filter(id=selected_student_id).first() if selected_student_id else None,
             'existing_marks': existing_marks,
-            'title': "KEB MOCK INGESTION"
+            'preview': preview_summary,
+            'q': search_query,
+            'school': school
         })
     except Exception as e:
-        return HttpResponse(f"Ingestion Engine Error: {str(e)}")
+        return HttpResponse(f"Terminal Error: {str(e)}")
 
 @login_required
 def biometric_photo_center(request):
@@ -5031,3 +4982,20 @@ def get_base64_image(base64_string):
         return ImageReader(BytesIO(img_data))
     except:
         return None
+
+@login_required
+def save_report_design(request):
+    """💾 SAVES THE Hub Hub Hub Hub Hub ARCHITECTURAL SETTINGS"""
+    if request.method == "POST":
+        school = request.user.profile.school
+        target = request.POST.get('target_type')
+        
+        # Get or create the template for this specific school and document type
+        template, _ = ReportTemplate.objects.get_or_create(school=school, target_type=target)
+        
+        template.page_format = request.POST.get('page_format')
+        template.primary_color = request.POST.get('primary_color')
+        template.watermark_opacity = float(request.POST.get('opacity', 0.05)) / 100
+        template.save()
+        
+        return JsonResponse({"status": "SUCCESS", "msg": "National Design Templates Synchronized!"})
