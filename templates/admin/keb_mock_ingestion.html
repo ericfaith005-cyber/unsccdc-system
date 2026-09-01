@@ -78,7 +78,7 @@
                     <div style="display:flex; justify-content: space-between; align-items:center; padding: 10px 0; border-bottom: 1px solid #1a1a1a;">
                         <span style="color: #aaa; font-weight: bold; font-size: 12px;">{{ sub.name|upper }}</span>
                         <input type="number" name="score_{{ selected_student.id }}_{{ sub.id }}" step="0.1" class="mark-field" 
-                               value="{% for sid, val in existing_marks.items %}{% if sid == sub.id %}{{ val|floatformat:g }}{% endif %}{% endfor %}"
+                               
                                placeholder="--">
                     </div>
                     {% endfor %}
