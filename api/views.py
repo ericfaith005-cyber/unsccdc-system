@@ -4008,19 +4008,19 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
 
     # 🖼️ 6. SCHOOL LOGO (LEFT) & INFO (RIGHT)
-    lx, ly, lw, lh = 45, base_y - 125, 70, 70
+    lx, ly, lw, lh = 45, base_y - 120, 73, 73
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
     else:
         p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
 
     ix = 125
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(ix, base_y - 75, school.name.upper())
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
+    p.drawString(ix, base_y - 70, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(ix, base_y - 90, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(ix, base_y - 105, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(ix, base_y - 120, f"YEAR: 2026")
+    p.drawString(ix, base_y - 85, f"STUDENT: {student.full_name.upper()}")
+    p.drawString(ix, base_y - 100, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(ix, base_y - 115, f"YEAR: 2026")
     
     # 📸 7. STUDENT PHOTO (FAR RIGHT)
     px, py, pw, ph = width - 110, base_y - 120, 75, 90
@@ -4117,8 +4117,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
-    sig_x = 55
-    sig_y = base_y - 414 # Positioned to sit ON the line
+    sig_x = 40
+    sig_y = base_y - 410 # Positioned to sit ON the line
     
     # 💎 DRAW THE DIGITAL SIGNATURE
     if school.chairman_signature and os.path.exists(school.chairman_signature.path):
