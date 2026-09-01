@@ -4118,7 +4118,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     sig_x = 55
-    sig_y = base_y - 400 # Positioned to sit ON the line
+    sig_y = base_y - 414 # Positioned to sit ON the line
     
     # 💎 DRAW THE DIGITAL SIGNATURE
     if school.chairman_signature and os.path.exists(school.chairman_signature.path):
@@ -4132,7 +4132,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 📏 The Official Signature Line
     p.setStrokeColor(gov_blue)
     p.setLineWidth(1)
-    p.line(45, base_y - 390, 200, base_y - 390) # The physical line
+    p.line(45, base_y - 398, 200, base_y - 398) # The physical line
     
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
