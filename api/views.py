@@ -3960,29 +3960,26 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
-    p.rect(10, 20, width - 20, height - 40, fill=1, stroke=0) # 💎 Expanded to full page
-    p.setLineWidth(4); p.setStrokeColor(gov_blue); p.rect(15, 25, width - 30, height - 50, stroke=1)
-    p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(20, 30, width - 40, height - 60, stroke=1)
-    # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
+    p.rect(10, base_y - 415, width - 20, 405, fill=1, stroke=0)
+    p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(15, base_y - 410, width - 30, 395, stroke=1)
+    p.setLineWidth(0.5); p.setStrokeColor(rich_gold); p.rect(18, base_y - 407, width - 36, 389, stroke=1)
+
     if school.logo and os.path.exists(school.logo.path):
-            p.saveState()
-            # 💎 0.06 opacity: Visible but doesn't block the marks
-            p.setFillAlpha(0.06) 
-            # Massive centering: 250x250 size
-            p.drawImage(school.logo.path, width/2 - 125, base_y - 320, width=250, height=250, mask='auto')
-            p.restoreState()
-        
+        p.saveState()
+        p.setFillAlpha(0.08) # 💎 Perfectly visible but transparent
+        # Centered: width/2 - half_size
+        p.drawImage(school.logo.path, width/2 - 150, height/2 - 150, width=300, height=300, mask='auto')
+        p.restoreState()
 
     # 🏛️ 5. NATIONAL TOP HEADERS
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    p.drawCentredString(width/2, base_y - 25, "THE REPUBLIC OF UGANDA")
-    p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
-    p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD")
-    if school.keb_logo and os.path.exists(school.keb_logo.path):
-        # width/2 is 297.5. Subtracting 40 centers an 80-width logo perfectly.
-        p.drawImage(school.keb_logo.path, width/2 - 40, base_y - 130, width=80, height=80, mask='auto')
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
+    p.drawCentredString(width/2, height - 50, "THE REPUBLIC OF UGANDA")
+    p.setFont("Times-Bold", 16); p.setFillColor(gov_blue)
+    p.drawCentredString(width/2, height - 70, "KYADONDO EXAMINATIONS BOARD")
     
-
+    if school.keb_logo and os.path.exists(school.keb_logo.path):
+        p.drawImage(school.keb_logo.path, width/2 - 40, height - 160, width=80, height=80, mask='auto')
+        
     ix = 100
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
     p.drawString(ix, base_y - 75, school.name.upper())
