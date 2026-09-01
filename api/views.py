@@ -3898,6 +3898,22 @@ def generate_keb_passlip(request, student_id):
     except Exception as e:
         return HttpResponse(f"KEB Printing Error: {str(e)}", status=400)
 
+def generate_national_report_pdf(request, student_id):
+    try:
+        student = Student.objects.get(account_number=student_id)
+        school = student.school
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="National_Passlip_{student.full_name}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        # 💎 THE Hub Hub Hub FIX: No more loop. We draw it once at full scale.
+        draw_keb_slip_layout(p, student, school, 0) # y_offset is always 0 now
+
+        p.save()
+        return response
+    except Exception as e:
+        return HttpResponse(f"Registry Engine Error: {str(e)}", status=400)
+
 def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
     base_y = height - y_offset 
@@ -3944,61 +3960,30 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
-    p.rect(10, base_y - 415, width - 20, 405, fill=1, stroke=0)
-    p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(15, base_y - 410, width - 30, 395, stroke=1)
-    p.setLineWidth(0.5); p.setStrokeColor(rich_gold); p.rect(18, base_y - 407, width - 36, 389, stroke=1)
-
+    p.rect(10, 20, width - 20, height - 40, fill=1, stroke=0) # 💎 Expanded to full page
+    p.setLineWidth(4); p.setStrokeColor(gov_blue); p.rect(15, 25, width - 30, height - 50, stroke=1)
+    p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(20, 30, width - 40, height - 60, stroke=1)
     # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
-    if school.keb_logo and os.path.exists(school.keb_logo.path):
-        p.saveState()
+    if school.logo and os.path.exists(school.logo.path):
+            p.saveState()
+            # 💎 0.06 opacity: Visible but doesn't block the marks
+            p.setFillAlpha(0.06) 
+            # Massive centering: 250x250 size
+            p.drawImage(school.logo.path, width/2 - 125, base_y - 320, width=250, height=250, mask='auto')
+            p.restoreState()
         
-        # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
-        # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
-        p.setFillAlpha(0.08) 
-        
-        # 📍 MATHEMATICAL CENTERING
-        # A4 Width is 595. Slip height is roughly 400.
-        watermark_size = 270 # 💎 MASSIVE SIZE
-        center_x = (width / 2) - (watermark_size / 2)
-        # Position it right behind the marks table area
-        center_y = (base_y - 210) - (watermark_size / 2)
-        
-        # 🎨 DRAW THE GHOST IMAGE
-        p.drawImage(
-            school.keb_logo.path, 
-            center_x, 
-            center_y, 
-            width=watermark_size, 
-            height=watermark_size, 
-            mask='auto'
-        )
-        
-        p.restoreState() # 🛡️ Reset to full strength for the text
-    else:
-        # Fallback if no logo is found in the system
-        p.saveState()
-        p.setFont("Times-Bold", 50)
-        p.setFillColor(colors.lightgrey, alpha=0.06)
-        p.translate(width/2, base_y - 200)
-        p.rotate(35)
-        p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
-        p.restoreState()
 
     # 🏛️ 5. NATIONAL TOP HEADERS
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     p.drawCentredString(width/2, base_y - 25, "THE REPUBLIC OF UGANDA")
     p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
     p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD")
+    if school.keb_logo and os.path.exists(school.keb_logo.path):
+        # width/2 is 297.5. Subtracting 40 centers an 80-width logo perfectly.
+        p.drawImage(school.keb_logo.path, width/2 - 40, base_y - 130, width=80, height=80, mask='auto')
     
 
-    # 🖼️ 6. SCHOOL LOGO (LEFT) & INFO (RIGHT)
-    lx, ly, lw, lh = 45, base_y - 125, 70, 70
-    if school.logo and os.path.exists(school.logo.path):
-        p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
-    else:
-        p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
-
-    ix = 125
+    ix = 100
     p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
     p.drawString(ix, base_y - 75, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
@@ -4506,7 +4491,7 @@ def generate_overall_performance_pdf(request):
     # 🏛️ MASTER LAYOUT
     p.setStrokeColor(colors.HexColor("#D90000")); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
     p.setFillColor(colors.HexColor("#002366")); p.setFont("Times-Bold", 18)
-    p.drawCentredString(width/2, height-70, "NATIONAL Hub Hub Hub PERFORMANCE EXECUTIVE SUMMARY")
+    p.drawCentredString(width/2, height-70, "KEB PERFORMANCE EXECUTIVE SUMMARY")
     p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
     p.drawCentredString(width/2, height-90, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
 
@@ -4751,119 +4736,125 @@ def update_student_photo_ajax(request):
     return JsonResponse({"status": "error", "msg": "Failed to sync photo"}, status=400)
 
 def export_photo_audit_pdf(request):
-    """🏛️ THE NATIONAL BIOMETRIC AUDIT ENGINE - V5.0"""
+    """🏛️ THE Hub Hub Hub MULTI-PAGE BIOMETRIC AUDIT ENGINE"""
     try:
         school = getattr(request.user, 'school', None) or School.objects.first()
         selected_class = request.GET.get('class', 'S.4')
         
-        # 🕵️ Fetch all students in the class A-Z
+        # 🕵️ Fetch ALL students
         students = Student.objects.filter(school=school, current_class=selected_class).order_by('full_name')
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="BIOMETRIC_AUDIT_{selected_class}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="FULL_AUDIT_{selected_class}.pdf"'
         
         p = canvas.Canvas(response, pagesize=A4)
         width, height = A4
         
-        # 🎨 NATIONAL PALETTE
+        # 🎨 NATIONAL COLORS
         gov_blue = colors.HexColor("#002366")
         rich_gold = colors.HexColor("#D4AF37")
         ug_red = colors.HexColor("#D90000")
-        off_white = colors.HexColor("#FDFDF5")
+        success_green = colors.HexColor("#006400")
 
-        # 1. 🖌️ PAINT THE FLOOR & BORDERS
-        p.setFillColor(off_white)
-        p.rect(0, 0, width, height, fill=1, stroke=0)
-        
-        # Triple-Guard National Borders (The "Authority Frame")
-        p.setLineWidth(4); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
-        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(20, 20, width-40, height-40)
-        p.setStrokeColor(ug_red); p.rect(21, 21, width-42, height-42)
+        # 💎 INTERNAL FUNCTION TO DRAW HEADER ON EVERY PAGE
+        def draw_audit_header(canvas_obj, page_num):
+            # 1. Background & Triple Border
+            canvas_obj.setFillColor(colors.HexColor("#FDFDF5"))
+            canvas_obj.rect(0, 0, width, height, fill=1, stroke=0)
+            canvas_obj.setLineWidth(4); canvas_obj.setStrokeColor(gov_blue); canvas_obj.rect(15, 15, width-30, height-30)
+            canvas_obj.setLineWidth(1); canvas_obj.setStrokeColor(colors.HexColor("#FCDC04")); canvas_obj.rect(20, 20, width-40, height-40)
 
-        # 2. 🏛️ NATIONAL HEADERS
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
-        p.drawCentredString(width/2, height-58, "UNSCCDC NATIONAL BIOMETRIC REGISTRY")
-        
-        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-90, school.name.upper())
-        
-        # 📏 Header Divider
-        p.setStrokeColor(rich_gold); p.setLineWidth(1.2)
-        p.line(40, height-105, width-40, height-105)
+            # 2. Titles
+            canvas_obj.setFillColor(colors.black); canvas_obj.setFont("Times-Bold", 10)
+            canvas_obj.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+            canvas_obj.drawCentredString(width/2, height-58, "UNSCCDC NATIONAL BIOMETRIC REGISTRY")
+            
+            canvas_obj.setFont("Times-Bold", 18); canvas_obj.setFillColor(gov_blue)
+            canvas_obj.drawCentredString(width/2, height-90, school.name.upper())
+            
+            canvas_obj.setStrokeColor(rich_gold); canvas_obj.line(40, height-105, width-40, height-105)
+            
+            canvas_obj.setFillColor(colors.black); canvas_obj.setFont("Times-Bold", 12)
+            canvas_obj.drawCentredString(width/2, height-130, f"BIOMETRIC COMPLIANCE AUDIT: {selected_class}")
+            
+            # Page Number
+            canvas_obj.setFont("Times-Roman", 8)
+            canvas_obj.drawRightString(width-50, 30, f"Page {page_num}")
 
-        # 3. 📋 REPORT TITLE & STATS
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
-        p.drawCentredString(width/2, height-130, f"BIOMETRIC COMPLIANCE AUDIT: {selected_class}")
+        # 🔄 DATA CHUNKING (35 Students per page to prevent overlap)
+        rows_per_page = 32
+        total_students = students.count()
+        page_count = 1
         
-        # Stats Bar
-        total = students.count()
-        # 💎 Note: Checking both 'photo' and 'photo_data' for our new Base64 logic!
-        missing = sum(1 for s in students if not (s.photo or (hasattr(s, 'photo_data') and s.photo_data)))
+        # Initial Header
+        draw_audit_header(p, page_count)
         
-        p.setFont("Times-Roman", 9)
-        p.drawString(50, height-155, f"TOTAL ENROLLMENT: {total}")
-        p.setFillColor(ug_red)
-        p.drawRightString(width-50, height-155, f"MISSING BIOMETRICS: {missing}")
-
-        # 4. 📊 THE AUDIT DATA TABLE
+        y_position = height - 170
         headers = ['NO.', 'STUDENT LEGAL NAME', 'PRN / ACCESS CODE', 'STATUS']
-        data_rows = [headers]
         
+        # Header for the table
+        p.setFillColor(gov_blue); p.rect(40, y_position - 15, width-80, 20, fill=1, stroke=0)
+        p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
+        p.drawString(45, y_position - 10, "NO.")
+        p.drawString(85, y_position - 10, "STUDENT LEGAL NAME")
+        p.drawString(345, y_position - 10, "PRN / ACCESS CODE")
+        p.drawString(465, y_position - 10, "STATUS")
+        
+        y_position -= 35
+
         for i, s in enumerate(students, 1):
-            # Check if photo exists in either traditional field or new Base64 field
-            has_biometric = "✅ UPLOADED" if (s.photo or (hasattr(s, 'photo_data') and s.photo_data)) else "❌ MISSING"
-            data_rows.append([
-                i, 
-                s.full_name.upper(), 
-                s.payment_code or '---', 
-                has_biometric
-            ])
+            # 🛡️ CHECK IF WE NEED A NEW PAGE
+            if i > 0 and i % rows_per_page == 0:
+                p.showPage()
+                page_count += 1
+                draw_audit_header(p, page_count)
+                y_position = height - 170
+                # Redraw Table Header on new page
+                p.setFillColor(gov_blue); p.rect(40, y_position - 15, width-80, 20, fill=1, stroke=0)
+                p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
+                p.drawString(45, y_position - 10, "NO.")
+                p.drawString(85, y_position - 10, "STUDENT LEGAL NAME")
+                p.drawString(345, y_position - 10, "PRN / ACCESS CODE")
+                p.drawString(465, y_position - 10, "STATUS")
+                y_position -= 35
 
-        # Create Table
-        table = Table(data_rows, colWidths=[40, 260, 110, 100])
-        
-        # 💎 THE Hub Hub Hub Hub Hub STYLE: Red text for MISSING
-        style_list = [
-            ('BACKGROUND', (0,0), (-1,0), gov_blue),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
-            ('FONTSIZE', (0,0), (-1,0), 10),
-            ('FONTSIZE', (0,1), (-1,-1), 9),
-            ('GRID', (0,0), (-1,-1), 0.1, colors.black),
-            ('ALIGN', (0,0), (0,-1), 'CENTER'),
-            ('ALIGN', (2,0), (-1,-1), 'CENTER'),
-            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.white, colors.whitesmoke]),
-        ]
+            # ✍️ DRAW STUDENT ROW
+            p.setFillColor(colors.black); p.setFont("Times-Roman", 10)
+            p.drawString(45, y_position, str(i))
+            p.setFont("Times-Bold", 9)
+            p.drawString(85, y_position, s.full_name.upper()[:45]) # Truncate very long names
+            p.setFont("Courier", 9)
+            p.drawString(345, y_position, s.payment_code or "---")
+            
+            # Status Badge with Square Icon
+            has_photo = bool(s.photo or (hasattr(s, 'photo_data') and s.photo_data))
+            if has_photo:
+                p.setFillColor(success_green)
+                p.rect(465, y_position - 2, 8, 8, fill=1, stroke=0) # Green Square
+                p.drawString(478, y_position, "UPLOADED")
+            else:
+                p.setFillColor(ug_red)
+                p.rect(465, y_position - 2, 8, 8, fill=1, stroke=0) # Red Square
+                p.drawString(478, y_position, "MISSING")
+                
+            # Draw thin line under row
+            p.setStrokeColor(colors.lightgrey); p.setLineWidth(0.2)
+            p.line(40, y_position - 5, width-40, y_position - 5)
+            
+            y_position -= 20
 
-        # Apply specific colors to the 'STATUS' column
-        for row_idx, row_data in enumerate(data_rows):
-            if "MISSING" in str(row_data[3]):
-                style_list.append(('TEXTCOLOR', (3, row_idx), (3, row_idx), ug_red))
-            elif "UPLOADED" in str(row_data[3]):
-                style_list.append(('TEXTCOLOR', (3, row_idx), (3, row_idx), colors.darkgreen))
-
-        table.setStyle(TableStyle(style_list))
-        
-        # 📐 Calculation to prevent overlap: 
-        # Title is at height-130, so table starts at height-175
-        table.wrapOn(p, width, height)
-        table.drawOn(p, 40, height - 175 - (len(data_rows) * 18)) 
-
-        # 5. ✍️ AUTHORIZATION
+        # ✍️ FINAL FOOTER (ONLY ON THE LAST PAGE)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1)
+        p.line(50, 70, 200, 70)
         p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-        footer_y = 60
-        p.line(50, footer_y, 200, footer_y)
-        p.drawCentredString(125, footer_y - 12, "Director of Studies")
-        
-        p.drawRightString(width-50, footer_y - 12, f"Print Date: {datetime.datetime.now().strftime('%d/%b/%Y')}")
+        p.drawString(70, 58, "Director of Studies / Registrar")
+        p.drawRightString(width-50, 58, f"Final Audit Date: {datetime.date.today().strftime('%d/%b/%Y')}")
 
-        p.showPage(); p.save()
+        p.showPage()
+        p.save()
         return response
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        return HttpResponse(f"Audit Engine Error: {str(e)}")
+        return HttpResponse(f"Multi-Page Error: {str(e)}")
 
 from django.db import connection
 from django.http import HttpResponse
