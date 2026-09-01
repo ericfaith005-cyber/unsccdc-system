@@ -4118,14 +4118,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     sig_x = 40
-    sig_y = base_y - 410 # Positioned to sit ON the line
+    sig_y = base_y - 400 # Positioned to sit ON the line
     
     # 💎 DRAW THE DIGITAL SIGNATURE
     if school.chairman_signature and os.path.exists(school.chairman_signature.path):
         try:
             # We draw the signature with transparency (mask='auto')
             # Width=80, Height=35 is perfect for a standard signature
-            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=80, height=30, mask='auto')
+            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=70, height=20, mask='auto')
         except Exception as e:
             print(f"Signature Rendering Error: {e}")
 
