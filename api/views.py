@@ -5074,3 +5074,271 @@ def save_report_design(request):
         
         return JsonResponse({"status": "SUCCESS", "msg": "National Design Templates Synchronized!"})
 
+# =============================================================
+# 🚀 19.5 THE Hub Hub Hub EXECUTIVE NATIONAL PERFORMANCE AUDIT
+# =============================================================
+@login_required
+def generate_overall_performance_pdf(request):
+    """🏛️ Generates a high-level analytics summary for the entire class/school."""
+    try:
+        # 1. IDENTITY & CONTEXT
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class', 'S.4').upper()
+        
+        # 🕵️ AGGREGATE DATA FROM THE BRAIN
+        # Calculate averages for every subject in the specific class
+        subject_stats = KEBMockResult.objects.filter(
+            student__school=school, 
+            student__current_class=selected_class
+        ).values('subject__name').annotate(
+            avg_score=Avg('score')
+        ).order_by('-avg_score')
+
+        if not subject_stats:
+            return HttpResponse("<body style='background:black;color:gold;padding:50px;'><h1>NO DATA DETECTED</h1><p>Ensure mock marks are entered before generating summary.</p></body>")
+
+        # 📄 INITIALIZE PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="OVERALL_PERFORMANCE_{selected_class}.pdf"'
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        gov_blue = colors.HexColor("#002366")
+        rich_gold = colors.HexColor("#D4AF37")
+        ug_red = colors.HexColor("#D90000")
+
+        # 🖌️ 2. NATIONAL Hub Hub Hub Hub Hub BORDERS & BG
+        p.setFillColor(colors.HexColor("#FDFDF5"))
+        p.rect(0, 0, width, height, fill=1, stroke=0)
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44)
+
+        # 🏛️ 3. HEADERS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-58, "KYADONDO EXAMINATIONS BOARD (KEB)")
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-95, "EXECUTIVE PERFORMANCE SUMMARY")
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
+        p.drawCentredString(width/2, height-115, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
+        p.line(45, height-125, width-45, height-125)
+
+        # 📈 4. THE Hub Hub Hub Hub Hub ANALYTICS GRAPH
+        # We draw a graph of all subjects in the class
+        labels = [s['subject__name'][:6].upper() for s in subject_stats]
+        values = [float(s['avg_score']) for s in subject_stats]
+        
+        # Use our graph helper (Ensure you have matplotlib/numpy installed)
+        try:
+            from .views import generate_pro_analytics_graph # Re-using our earlier helper
+            graph = generate_pro_analytics_graph(labels, values)
+            p.drawImage(graph, 50, height-380, width=500, height=240)
+        except:
+            p.rect(50, height-380, 500, 240, stroke=1)
+            p.drawCentredString(width/2, height-260, "[GRAPH GENERATION IN PROGRESS]")
+
+        # 🏆 5. BEST VS WORST SUBJECTS TABLE
+        best_sub = subject_stats[0]
+        worst_sub = subject_stats.reverse()[0]
+        
+        def get_grade(score):
+            if score >= 80: return "A"
+            if score >= 70: return "B"
+            if score >= 60: return "C"
+            if score >= 50: return "D"
+            return "E"
+
+        data = [
+            ['CATEGORY', 'SUBJECT', 'CLASS MEAN', 'AVG GRADE'],
+            ['NATIONAL STRENGTH', best_sub['subject__name'].upper(), f"{best_sub['avg_score']:.1f}%", get_grade(best_sub['avg_score'])],
+            ['CRITICAL WEAKNESS', worst_sub['subject__name'].upper(), f"{worst_sub['avg_score']:.1f}%", get_grade(worst_sub['avg_score'])]
+        ]
+
+        table = Table(data, colWidths=[150, 150, 100, 100])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), gov_blue),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
+            ('FONTSIZE', (0,0), (-1,-1), 10),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('BACKGROUND', (0,1), (0,1), colors.honeydew),
+            ('BACKGROUND', (0,2), (0,2), colors.mistyrose),
+        ]))
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 45, height-480)
+
+        # 💡 6. SYSTEM RECOMMENDATIONS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
+        p.drawString(50, height-520, "NATIONAL SYSTEM RECOMMENDATIONS:")
+        
+        p.setFont("Times-Roman", 10)
+        recs = [
+            f"• Priority: Deployment of additional resources for {worst_sub['subject__name'].upper()}.",
+            f"• Mentorship: Assign instructors from {best_sub['subject__name'].upper()} to support weak departments.",
+            "• Digital: Increase student engagement with E-Learning modules for technical subjects.",
+            "• Parents: Issue digital fees reminders to facilitate weekend remedial bootcamps."
+        ]
+        y_pos = height-540
+        for r in recs:
+            p.drawString(60, y_pos, r)
+            y_pos -= 18
+
+        # 🛡️ 7. SOVEREIGN SEAL
+        p.setStrokeColor(colors.teal); p.circle(width-100, 100, 40, stroke=1, fill=0)
+        p.setFont("Times-Bold", 8)
+        p.drawCentredString(width-100, 105, "KEB HQ")
+        p.drawCentredString(width-100, 95, "AUTHENTICATED")
+
+        p.showPage(); p.save()
+        return response
+
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"Executive Report Error: {traceback.format_exc()}")
+
+
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+from django.db.models import Avg
+from reportlab.lib.utils import ImageReader
+
+# =============================================================
+# 📊 1. THE Hub Hub Hub Hub Hub ANALYTICS ARTIST (MATPLOTLIB)
+# =============================================================
+def generate_class_graph(labels, values, title):
+    """Draws a professional analytics bar chart for the PDF"""
+    plt.figure(figsize=(7, 3.5), dpi=150)
+    y_pos = np.arange(len(labels))
+    
+    # 🎨 Sovereign Colors for the Bars
+    colors_list = ['#002366' if v >= 60 else '#D90000' for v in values]
+    
+    plt.bar(labels, values, color=colors_list, alpha=0.8, edgecolor='black', linewidth=0.5)
+    plt.axhline(y=50, color='gray', linestyle='--', alpha=0.5) # National Median Line
+    
+    plt.title(title, fontsize=11, fontweight='bold', family='serif')
+    plt.xticks(rotation=30, fontsize=8)
+    plt.yticks(fontsize=8)
+    plt.ylim(0, 100)
+    plt.ylabel("Average Mark (%)", fontsize=8)
+    plt.tight_layout()
+    
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', transparent=True)
+    plt.close()
+    buf.seek(0)
+    return ImageReader(buf)
+
+# =============================================================
+# 🚀 2. THE Hub Hub Hub EXECUTIVE PERFORMANCE ENGINE (FIXES ERROR)
+# =============================================================
+@login_required
+def generate_overall_performance_pdf(request):
+    """🏛️ Generates the Master Executive Summary for the School Board"""
+    try:
+        # 1. 🔑 SET IDENTITY
+        school = getattr(request.user, 'school', None) or School.objects.first()
+        selected_class = request.GET.get('class', 'S.4').upper()
+        
+        # 2. 🧠 AGGREGATE THE BRAIN (Calculating Subject Means)
+        # We group all mock results by subject and get the average
+        stats = KEBMockResult.objects.filter(
+            student__school=school, 
+            student__current_class=selected_class
+        ).values('subject__name').annotate(
+            avg_score=Avg('score')
+        ).order_by('-avg_score')
+
+        if not stats:
+            return HttpResponse("<body style='background:#000;color:gold;padding:50px;'><h1>NO MOCK DATA</h1><p>Registry is empty for "+selected_class+".</p></body>")
+
+        # 3. 📄 INITIALIZE THE Hub Hub Hub Hub Hub A4 DOCUMENT
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="EXECUTIVE_SUMMARY_{selected_class}.pdf"'
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        
+        gov_blue = colors.HexColor("#002366")   # Royal Navy
+        rich_gold = colors.HexColor("#D4AF37")  # Imperial Gold
+        ug_red = colors.HexColor("#D90000")     # National Red
+
+        # 4. 🖌️ PAINT THE Hub Hub Hub BORDERS
+        p.setFillColor(colors.HexColor("#FDFDF5"))
+        p.rect(0, 0, width, height, fill=1, stroke=0)
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(rich_gold); p.rect(22, 22, width-44, height-44)
+
+        # 5. 🏛️ NATIONAL HEADERS (Times New Roman)
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-58, "KYADONDO EXAMINATIONS BOARD (KEB)")
+        p.setFont("Times-Bold", 22); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-100, "EXECUTIVE PERFORMANCE AUDIT")
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
+        p.drawCentredString(width/2, height-125, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
+        p.line(45, height-135, width-45, height-135)
+
+        # 6. 🏆 THE Hub Hub Hub Hub Hub SUMMARY TABLE (Best vs Worst)
+        best = stats[0]
+        worst = stats.reverse()[0]
+        
+        def map_grade(s):
+            if s >= 80: return "A (Exceptional)"
+            if s >= 65: return "B (Strong)"
+            if s >= 50: return "C (Satisfactory)"
+            return "E (Elementary)"
+
+        summary_data = [
+            ['INDICATOR', 'SUBJECT NAME', 'MEAN SCORE', 'EQUIV. GRADE'],
+            ['NATIONAL STRENGTH', best['subject__name'].upper(), f"{best['avg_score']:.1f}%", map_grade(best['avg_score'])],
+            ['CRITICAL WEAKNESS', worst['subject__name'].upper(), f"{worst['avg_score']:.1f}%", map_grade(worst['avg_score'])]
+        ]
+        
+        summ_table = Table(summary_data, colWidths=[130, 150, 100, 130])
+        summ_table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 9),
+            ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('BACKGROUND', (0,1), (0,1), colors.honeydew), ('BACKGROUND', (0,2), (0,2), colors.mistyrose),
+        ]))
+        summ_table.wrapOn(p, width, height)
+        summ_table.drawOn(p, 45, height-220)
+
+        # 7. 📈 THE Hub Hub Hub Hub Hub ANALYTICS GRAPH
+        labels = [s['subject__name'][:5].upper() for s in stats]
+        values = [float(s['avg_score']) for s in stats]
+        graph = generate_class_graph(labels, values, "OVERALL SUBJECT MASTERY RADIUS")
+        p.drawImage(graph, 45, height-520, width=500, height=280)
+
+        # 8. 💡 SOVEREIGN Hub Hub Hub RECOMMENDATIONS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 12)
+        p.drawString(50, height-560, "NATIONAL SYSTEM RECOMMENDATIONS:")
+        
+        p.setFont("Times-Roman", 10)
+        recs = [
+            f"1. URGENT: Deploy specialized remedial support for {worst['subject__name'].upper()}.",
+            f"2. MENTORSHIP: Use the winning department of {best['subject__name'].upper()} to train others.",
+            "3. PARENTS: Use the SMS Broadcast tool to alert parents of students below the 45% median.",
+            "4. RESOURCES: Reallocate library procurement priority to the weakest performing subjects."
+        ]
+        ry = height-585
+        for r in recs:
+            p.drawString(60, ry, r)
+            ry -= 20
+
+        # 9. 🛡️ FINAL Hub Hub Hub Hub Hub AUTHENTICATION
+        p.setStrokeColor(colors.teal); p.circle(width/2, 100, 35, stroke=1, fill=0)
+        p.setFont("Times-Bold", 8)
+        p.drawCentredString(width/2, 105, "UNSCCDC")
+        p.drawCentredString(width/2, 95, "AUDITED")
+        
+        p.setFont("Times-Roman", 6); p.setFillColor(colors.grey)
+        p.drawRightString(width-50, 50, f"Generated: {datetime.datetime.now().strftime('%d/%b/%Y %H:%M')}")
+
+        p.showPage(); p.save()
+        return response
+
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"Executive Audit Error: {traceback.format_exc()}")

@@ -16,9 +16,6 @@ urlpatterns = [
     path('academics/', views.academics_tab, name='academics'),
     path('finances/', views.finances_tab, name='finances'),
 
-    # 🔐 3. THE Hub Hub Hub Hub Hub Hub Hub NATIONAL AUTHENTICATION GATEWAY
-    # 💎 THE Hub Hub Hub CRITICAL FIX: Only ONE verify-identity door!
-    # This points to our surgical student_identity_gate method.
     path('verify-identity/', views.student_identity_gate, name='verify_identity'),
     path('authorize-pin/', views.pin_vault_auth, name='authorize_pin'),
     path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
