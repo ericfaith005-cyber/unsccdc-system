@@ -40,6 +40,18 @@
     </button>
 </div>
 
+<div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 12px;">
+    <span style="color: #D4AF37; font-weight: 900; font-size: 10px; letter-spacing: 2px;">SELECT CLASS:</span>
+    {% for c in classes %}
+        <a href="?class={{ c }}&subject={{ sel_sub }}" 
+           style="text-decoration:none; padding: 6px 15px; border-radius: 8px; font-size: 11px; font-weight: bold; 
+           background: {% if sel_class == c %}var(--gold){% else %}#111{% endif %}; 
+           color: {% if sel_class == c %}#000{% else %}#666{% endif %}; transition: 0.2s;">
+           {{ c }}
+        </a>
+    {% endfor %}
+</div>
+
 <!-- 📚 SUBJECT SELECTOR STRIP -->
 <div class="subject-pill-box">
     {% for s in subjects %}

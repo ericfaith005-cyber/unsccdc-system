@@ -1,0 +1,19 @@
+<div style="padding: 30px; font-family: 'Times New Roman', serif; background: #FFF9E6; border: 2px solid #002366; color: black;">
+    <center>
+        <h3 style="margin:0;">KYADONDO EXAMINATIONS BOARD</h3>
+        <p style="font-size: 10px; font-weight: bold; margin-bottom: 20px;">OFFICIAL MOCK PREVIEW</p>
+        <img src="{{ photo_url }}" style="width: 80px; border: 1px solid #002366; margin-bottom: 15px;">
+    </center>
+    <div style="font-weight: bold; margin-bottom: 10px;">NAME: {{ student.full_name|upper }}</div>
+    <div style="font-weight: bold; color: green; margin-bottom: 15px;">RANKING: {{ res_tier }}</div>
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
+        <tr style="background: #002366; color: white; font-size: 10px;">
+            <th style="padding: 5px;">SUBJECT</th><th style="padding: 5px;">SCORE</th><th style="padding: 5px;">GRADE</th>
+        </tr>
+        {% for r in results %}
+        <tr style="text-align: center; font-size: 12px; border-bottom: 0.5px solid #ccc;">
+            <td style="padding: 8px;">{{ r.subject.name|upper }}</td><td>{{ r.score|g }}%</td><td>{{ r.grade }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>

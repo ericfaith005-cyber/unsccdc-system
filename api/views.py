@@ -4218,7 +4218,7 @@ def keb_mock_portal_view(request):
         sel_sub = request.GET.get('subject', first_sub)
         
         # ⚡ Fetch Students 
-        students = Student.objects.filter(school=school, current_class=sel_class).order_by('full_name')
+        students = Student.objects.filter(school=school, current_class=sel_class).select_related('parent_link').prefetch_related('keb_results').order_by('full_name')
         
         # 📊 Audit Data (Linking results to students)
         audit = []
@@ -5345,20 +5345,15 @@ def generate_overall_performance_pdf(request):
 
 @login_required
 def passlip_html_preview(request, student_id):
-    """💎 THE Hub Hub Hub Hub Hub HTML PASSLIP PREVIEW ENGINE"""
+    """🛡️ FIXED: Never crashes even if photo is missing"""
     student = get_object_or_404(Student, account_number=student_id)
-    school = student.school
     results = KEBMockResult.objects.filter(student=student)
     
-    # Calculate Average & Grade
-    total = sum(r.score for r in results)
-    avg = total / results.count() if results.exists() else 0
-    grade = "A" if avg >= 80 else "B" if avg >= 70 else "C" if avg >= 60 else "D" if avg >= 50 else "E"
+    # 💎 Add this line to handle the 'Result 1' logic we discussed
+    all_fails = all(r.score < 40 for r in results) if results.exists() else True
+    res_tier = "RESULT 2" if all_fails else "RESULT 1"
 
     return render(request, 'admin/passlip_preview_snippet.html', {
-        'student': student,
-        'school': school,
-        'results': results,
-        'avg': round(avg, 1),
-        'grade': grade,
+        'student': student, 'results': results, 'res_tier': res_tier,
+        'photo_url': student.photo.url if student.photo else "https://via.placeholder.com/150"
     })
