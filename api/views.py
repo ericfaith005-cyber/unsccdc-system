@@ -4125,7 +4125,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         try:
             # We draw the signature with transparency (mask='auto')
             # Width=80, Height=35 is perfect for a standard signature
-            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=70, height=20, mask='auto')
+            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=85, height=20, mask='auto')
         except Exception as e:
             print(f"Signature Rendering Error: {e}")
 
@@ -4248,33 +4248,64 @@ from reportlab.lib import pagesizes # 💎 Ensure this is imported
 @login_required
 @transaction.atomic
 def save_keb_marks(request):
+    """Kills the 500 error and saves marks for the entire class list."""
     if request.method == "POST":
+        subject_id = request.POST.get('subject_id')
         class_name = request.POST.get('class_name')
-        # 🕵️ Detect if we are saving one student's whole list
-        manual_std_id = request.POST.get('student_id_manual')
         
+        if not subject_id or subject_id == "None":
+            return HttpResponse("Error: No Subject Selected")
+
         for key, value in request.POST.items():
-            # Matches 'score_STUDENTID_SUBJECTID'
             if key.startswith('score_') and value != "":
-                parts = key.split('_')
-                std_id = parts[1]
-                sub_id = parts[2]
-                
-                student = Student.objects.get(id=std_id)
-                subject = Subject.objects.get(id=sub_id)
+                # Extract student ID: score_123 -> 123
+                std_id = key.split('_')[1]
                 score = float(value)
                 
-                # Apply National Grading
-                grade = "A" if score >= 80 else "B" if score >= 70 else "C" if score >= 60 else "D" if score >= 50 else "E"
+                # Apply National Grading (UCE/UACE auto-detect)
+                is_a_level = any(x in class_name.upper() for x in ["S5", "S6"])
+                grade = "F"
+                if not is_a_level:
+                    if score >= 80: grade = "A"
+                    elif score >= 70: grade = "B"
+                    elif score >= 60: grade = "C"
+                    elif score >= 50: grade = "D"
+                    else: grade = "E"
                 
                 KEBMockResult.objects.update_or_create(
-                    student=student, subject=subject,
+                    student_id=std_id, subject_id=subject_id,
                     defaults={'score': score, 'grade': grade}
                 )
         
-        redirect_url = f'/api/keb-ingestion/?class={class_name}'
-        if manual_std_id: redirect_url += f'&student_id={manual_std_id}'
-        return redirect(redirect_url)
+        return redirect(f'/api/keb-portal/?class={class_name}&subject={subject_id}&status=success')
+
+@login_required
+def search_student_for_mock(request):
+    """The engine for the advanced search pop-up."""
+    query = request.GET.get('q', '').strip()
+    subject_id = request.GET.get('subject_id')
+    
+    if not query:
+        return JsonResponse({'results': []})
+
+    # Search by Name or PRN
+    students = Student.objects.filter(
+        Q(full_name__icontains=query) | Q(payment_code__icontains=query)
+    ).select_related('school')[:5] # Limit to 5 for speed
+
+    results = []
+    for s in students:
+        # Check if they already have a mark for this subject
+        res = KEBMockResult.objects.filter(student=s, subject_id=subject_id).first()
+        results.append({
+            'id': s.id,
+            'name': s.full_name.upper(),
+            'prn': s.payment_code,
+            'class': s.current_class,
+            'existing_score': res.score if res else ""
+        })
+    
+    return JsonResponse({'results': results})
     
 def web_app_home(request):
     """🏛️ THE Hub Hub Hub Hub Hub OFFICIAL SOVEREIGN GATEWAY"""
@@ -4405,6 +4436,56 @@ def performance_analytics_view(request):
 import io
 import matplotlib.pyplot as plt
 import numpy as np
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import Paragraph, Table, TableStyle
+from reportlab.lib.utils import ImageReader
+
+# 📊 1. THE ADVANCED ANALYTICS GRAPH ENGINE
+def generate_pro_analytics_graph(labels, values):
+    # Set the style to be clean and modern
+    plt.rcParams['font.family'] = 'serif'
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=150) # High Resolution
+    
+    y_pos = np.arange(len(labels))
+    # 🎨 Color Logic: Green for high, Gold for mid, Red for low
+    bar_colors = []
+    for v in values:
+        if v >= 75: bar_colors.append('#006400') # Deep Green
+        elif v >= 50: bar_colors.append('#D4AF37') # Gold
+        else: bar_colors.append('#D90000') # National Red
+
+    bars = ax.barh(y_pos, values, align='center', color=bar_colors, height=0.6)
+    
+    # 📐 Add labels and styling
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(labels, fontsize=9, fontweight='bold')
+    ax.invert_yaxis()  # Labels read top-to-bottom
+    ax.set_xlabel('Mastery Percentage (%)', fontsize=8, fontweight='bold')
+    ax.set_title('SUBJECT-BY-SUBJECT COMPETENCY RADIUS', fontsize=12, fontweight='black', pad=20)
+    ax.set_xlim(0, 100)
+    
+    # Add grid lines behind the bars
+    ax.grid(axis='x', linestyle='--', alpha=0.4)
+    ax.set_axisbelow(True)
+
+    # Add numeric labels to the end of bars
+    for bar in bars:
+        width = bar.get_width()
+        ax.annotate(f'{width:g}%',
+                    xy=(width, bar.get_y() + bar.get_height() / 2),
+                    xytext=(3, 0), textcoords="offset points",
+                    ha='left', va='center', fontsize=8, fontweight='bold')
+
+    plt.tight_layout()
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', transparent=True)
+    plt.close()
+    buf.seek(0)
+    return ImageReader(buf)
+
+import io
+import matplotlib.pyplot as plt
+import numpy as np
 from django.db.models import Avg, Max, Min
 from reportlab.lib.utils import ImageReader
 
@@ -4427,119 +4508,112 @@ def generate_graph_stream(labels, values, title, color="#002366"):
 
 # 1. 🎓 INDIVIDUAL STUDENT INTELLIGENCE REPORT
 def generate_analysis_pdf(request, student_id):
-    student = get_object_or_404(Student, account_number=student_id)
-    marks = KEBMockResult.objects.filter(student=student).select_related('subject')
-    
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="KEB_ANALYSIS_{student.full_name}.pdf"'
-    
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-    gov_blue, rich_gold = colors.HexColor("#002366"), colors.HexColor("#D4AF37")
+    try:
+        student = get_object_or_404(Student, account_number=student_id)
+        school = student.school
+        marks = KEBMockResult.objects.filter(student=student).select_related('subject')
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="AUDIT_{student.full_name}.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=A4)
+        width, height = A4
+        gov_blue, rich_gold = colors.HexColor("#002366"), colors.HexColor("#D4AF37")
+        off_white = colors.HexColor("#FDFDF5")
 
-    # 🎨 THE Hub Hub DESIGN
-    p.setFillColor(colors.HexColor("#FDFDF5")); p.rect(0, 0, width, height, fill=1)
-    p.setStrokeColor(gov_blue); p.setLineWidth(4); p.rect(20, 20, width-40, height-40)
+        # 🎨 1. THE Hub Hub Hub Hub Hub BACKGROUND & TRIPLE BORDERS
+        p.setFillColor(off_white); p.rect(0, 0, width, height, fill=1, stroke=0)
+        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
+        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(22, 22, width-44, height-44)
 
-    # 🏛️ HEADER
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 16)
-    p.drawCentredString(width/2, height-60, "NATIONAL PERFORMANCE INTELLIGENCE REPORT")
-    p.setFont("Times-Bold", 10); p.setFillColor(colors.black)
-    p.drawCentredString(width/2, height-80, f"OFFICIAL KEB MOCK AUDIT: {student.full_name.upper()}")
+        # 🏛️ 2. HEADERS
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
+        p.drawCentredString(width/2, height-58, "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT")
+        
+        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
+        p.drawCentredString(width/2, height-90, school.name.upper())
+        p.setStrokeColor(rich_gold); p.line(45, height-105, width-45, height-105)
 
-    # 📊 DRAW THE GRAPH
-    if marks.exists():
-        labels = [m.subject.name[:5].upper() for m in marks]
-        values = [float(m.score) for m in marks]
-        graph = generate_graph_stream(labels, values, "SUBJECT-BY-SUBJECT MASTERY RADIUS")
-        p.drawImage(graph, 50, height-300, width=500, height=200)
-
-    # ✍️ ANALYTICAL DESCRIPTION
-    p.setFont("Times-Bold", 11); p.drawString(55, height-330, "EXECUTIVE SUMMARY:")
-    p.setFont("Times-Roman", 9)
-    best = marks.order_by('-score').first()
-    desc = f"Based on the 2026 KEB Mock cycle, the candidate demonstrates peak performance in {best.subject.name.upper()} " \
-           f"with a score of {best.score:g}%. This indicates a high aptitude for logical deduction in this field."
-    
-    text_obj = p.beginText(55, height-350)
-    text_obj.setLeading(12)
-    for line in [desc, "Target areas for improvement include subjects below the 50% median threshold."]:
-        text_obj.textLine(line)
-    p.drawText(text_obj)
-
-    p.showPage(); p.save()
-    return response
-
-# 🚀 2. THE Hub Hub Hub OVERALL SCHOOL PERFORMANCE AUDIT
-@login_required
-def generate_overall_performance_pdf(request):
-    school = getattr(request.user, 'school', None) or School.objects.first()
-    selected_class = request.GET.get('class', 'S.4')
-    
-    # 🕵️ AGGREGATE THE NATIONAL BRAIN
-    # Get averages for every subject in the class
-    subject_stats = KEBMockResult.objects.filter(
-        student__school=school, 
-        student__current_class=selected_class
-    ).values('subject__name').annotate(
-        avg_score=Avg('score')
-    ).order_by('-avg_score')
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="OVERALL_PERFORMANCE_{selected_class}.pdf"'
-    
-    p = canvas.Canvas(response, pagesize=A4)
-    width, height = A4
-    
-    # 🏛️ MASTER LAYOUT
-    p.setStrokeColor(colors.HexColor("#D90000")); p.setLineWidth(5); p.rect(15, 15, width-30, height-30)
-    p.setFillColor(colors.HexColor("#002366")); p.setFont("Times-Bold", 18)
-    p.drawCentredString(width/2, height-70, "KEB PERFORMANCE EXECUTIVE SUMMARY")
-    p.setFont("Times-Bold", 12); p.setFillColor(colors.black)
-    p.drawCentredString(width/2, height-90, f"INSTITUTION: {school.name.upper()} | CLASS: {selected_class}")
-
-    # 🏆 BEST vs WORST SUBJECTS
-    if subject_stats:
-        best_sub = subject_stats[0]
-        worst_sub = subject_stats.reverse()[0]
-
-        data = [
-            ['STRENGTH CATEGORY', 'SUBJECT NAME', 'AVERAGE MARK', 'GRADE'],
-            ['NATIONAL STRENGTH', best_sub['subject__name'].upper(), f"{best_sub['avg_score']:.1f}%", "A"],
-            ['NATIONAL WEAKNESS', worst_sub['subject__name'].upper(), f"{worst_sub['avg_score']:.1f}%", "E"]
-        ]
-        table = Table(data, colWidths=[150, 150, 100, 100])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#002366")),
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
-            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'),
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ]))
-        table.wrapOn(p, width, height); table.drawOn(p, 50, height-200)
-
-        # 📈 OVERALL CLASS GRAPH
-        labels = [s['subject__name'][:4].upper() for s in subject_stats]
-        values = [float(s['avg_score']) for s in subject_stats]
-        class_graph = generate_graph_stream(labels, values, "CLASS SUBJECT COMPARISON", color="#D90000")
-        p.drawImage(class_graph, 50, height-450, width=500, height=220)
-
-        # 💡 NATIONAL RECOMMENDATIONS
-        p.setFont("Times-Bold", 12); p.drawString(50, 200, "SYSTEM Hub Hub Hub RECOMMENDATIONS:")
+        # 👤 3. CANDIDATE PROFILE
+        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
+        p.drawString(50, height-130, f"CANDIDATE: {student.full_name.upper()}")
         p.setFont("Times-Roman", 10)
-        recs = [
-            f"1. Prioritize resources for {worst_sub['subject__name']} to improve the national mean.",
-            f"2. Utilize the teaching staff of {best_sub['subject__name']} to mentor other departments.",
-            "3. Schedule intensive remedial sessions for candidates scoring below the 15-point UACE threshold."
-        ]
-        y_rec = 180
-        for r in recs:
-            p.drawString(60, y_rec, r)
-            y_rec -= 15
+        p.drawString(50, height-145, f"NATIONAL PRN: {student.payment_code} | LEVEL: {student.current_class}")
+        
+        # 📈 4. THE Hub Hub Hub Hub Hub ADVANCED GRAPH
+        if marks.exists():
+            labels = [m.subject.name.upper() for m in marks]
+            values = [float(m.score) for m in marks]
+            graph = generate_pro_analytics_graph(labels, values)
+            # Draw graph in the center
+            p.drawImage(graph, 45, height-420, width=500, height=250)
 
-    p.showPage(); p.save()
-    return response
+        # ✍️ 5. THE Hub Hub Hub Hub Hub INTELLIGENCE ANALYSIS (Wrapped Text)
+        styles = ParagraphStyle('Main', fontName='Times-Roman', fontSize=10, leading=14)
+        bold_style = ParagraphStyle('Bold', fontName='Times-Bold', fontSize=11, textColor=gov_blue)
 
+        p.drawInlineImage(None, 50, height-440) # Spacing
+        
+        # Determine Strengths & Weaknesses
+        best_sub = marks.order_by('-score').first()
+        weak_subs = marks.filter(score__lt=50)
+        
+        summary_title = Paragraph("<b>I. EXECUTIVE COGNITIVE SUMMARY:</b>", bold_style)
+        summary_title.wrapOn(p, 500, 20)
+        summary_title.drawOn(p, 50, height-460)
+
+        analysis_text = (
+            f"Following the 2026 KEB National Mock cycle, the candidate displays a dominant cognitive aptitude in "
+            f"<b>{best_sub.subject.name.upper()}</b> with a peak score of {best_sub.score:g}%. This performance "
+            f"is well above the national median, suggesting a high potential for professional specialization in this field."
+        )
+        
+        para = Paragraph(analysis_text, styles)
+        para.wrapOn(p, 500, 100)
+        para.drawOn(p, 50, height-520)
+
+        # 🚩 6. AREAS FOR IMMEDIATE EFFORT
+        effort_title = Paragraph("<b>II. CRITICAL INTERVENTION ZONES:</b>", bold_style)
+        effort_title.wrapOn(p, 500, 20)
+        effort_title.drawOn(p, 50, height-550)
+
+        if weak_subs.exists():
+            weak_names = ", ".join([w.subject.name.upper() for w in weak_subs])
+            effort_text = (
+                f"The audit has flagged <b>{weak_names}</b> as under-performing zones (Below 50%). "
+                f"Immediate remedial focus is required. The candidate must increase 'Activity of Integration' engagement "
+                f"to achieve the minimum UCE/UACE competency standards."
+            )
+        else:
+            effort_text = "No critical weaknesses detected. The candidate is currently maintaining a balanced national profile."
+
+        para2 = Paragraph(effort_text, styles)
+        para2.wrapOn(p, 500, 100)
+        para2.drawOn(p, 50, height-610)
+
+        # 🏆 7. SYSTEM Hub Hub Hub Hub Hub RECOMMENDATIONS
+        p.setFillColor(gov_blue); p.rect(45, 80, width-90, 80, fill=0, stroke=1)
+        p.setFont("Times-Bold", 10)
+        p.drawString(60, 145, "NATIONAL SYSTEM ADVISORY & RECOMMENDATIONS")
+        
+        p.setFont("Times-Roman", 9)
+        p.drawString(65, 125, "• Enroll candidate in subject-specific weekend bootcamps for flagged zones.")
+        p.drawString(65, 110, "• Utilize the Digital Library 'Revision Vault' for past KEB/UNEB papers.")
+        p.drawString(65, 95, "• Monitor weekly progress through the UNSCCDC Mobile Hub interface.")
+
+        # 🛡️ 8. SEAL & STAMP
+        p.setStrokeColor(colors.teal); p.circle(width-80, 120, 35, stroke=1, fill=0)
+        p.setFont("Times-Bold", 8)
+        p.drawCentredString(width-80, 125, "UNSCCDC")
+        p.drawCentredString(width-80, 115, "AUDITED")
+
+        p.showPage(); p.save()
+        return response
+    except Exception as e:
+        import traceback
+        return HttpResponse(f"Audit Error: {traceback.format_exc()}")
+    
 @login_required
 def academic_cockpit_view(request):
     school = getattr(request.user, 'school', None) or School.objects.first()

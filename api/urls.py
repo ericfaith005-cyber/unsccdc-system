@@ -86,4 +86,5 @@ urlpatterns = [
     path('fix-db-now-99/', views.emergency_database_fix),
     path('merit-list/', views.national_merit_view, name='merit_list'),
     path('batch-keb-passlips/', views.batch_keb_passlip_download, name='batch_keb_passlips'),
+    path('search-student-mock-ajax/', views.search_student_for_mock, name='search_mock_ajax'),
 ]

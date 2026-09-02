@@ -1,177 +1,127 @@
 {% extends "admin/base_site.html" %}
 {% block content %}
 <style>
-    :root { --navy: #001035; --gold: #D4AF37; --obsidian: #050505; --ug-yellow: #FCDC04; --ug-red: #D90000; }
+    :root { --gold: #D4AF37; --navy: #001035; --obsidian: #050505; --neon-blue: #00d4ff; }
     * { font-family: "Times New Roman", Times, serif !important; }
-    #content { background: #000 !important; padding: 0 !important; }
+    #content { background: #000 !important; padding: 20px !important; }
 
-    .keb-wrapper { background: #000; min-height: 100vh; padding: 30px; color: white; }
+    /* 🏎️ COMMAND BAR */
+    .command-bar { background: var(--navy); padding: 15px 25px; border-radius: 15px; border: 1px solid var(--gold); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     
-    /* 🛡️ HEADER DESIGN */
-    .keb-header {
-        border-left: 6px solid var(--gold);
-        padding-left: 20px;
-        margin-bottom: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+    /* 🖼️ THE Hub Hub Hub Hub Hub MODAL (POP-UP) */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; backdrop-filter: blur(8px); justify-content: center; align-items: center; }
+    .modal-card { background: #0d0d0d; width: 500px; border: 2px solid var(--gold); border-radius: 25px; padding: 35px; position: relative; box-shadow: 0 0 50px rgba(212,175,55,0.2); }
+    
+    .search-field { width: 100%; background: #000; border: 1px solid #333; color: gold; padding: 15px; border-radius: 12px; margin-bottom: 20px; outline: none; }
+    .search-field:focus { border-color: var(--neon-blue); }
 
-    /* 📊 DASHBOARD CARDS */
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
-    .stat-card {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid #222;
-        padding: 25px;
-        border-radius: 20px;
-        text-align: center;
-        position: relative;
-        overflow: hidden;
-    }
-    .stat-card::after { content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--gold); }
+    .result-row { background: rgba(255,255,255,0.03); margin-top: 10px; padding: 15px; border-radius: 10px; border-left: 3px solid var(--gold); }
+    .mark-mini-input { background: #000; border: 1px solid #00ff00; color: #00ff00; width: 60px; text-align: center; font-weight: bold; border-radius: 5px; }
 
-    /* 🎮 CONTROL PANEL */
-    .control-panel {
-        background: var(--navy);
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid var(--gold);
-        margin-bottom: 25px;
-        display: flex;
-        gap: 20px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    select, .btn-action {
-        background: #000; color: gold; border: 1px solid #444; padding: 12px 20px;
-        border-radius: 10px; font-weight: 900; outline: none; cursor: pointer;
-    }
-
-    /* 📋 THE Hub Hub Hub Hub Hub Hub Hub TABLE */
-    .table-container {
-        background: #080808;
-        border-radius: 20px;
-        border: 1px solid #1a1a1a;
-        overflow: hidden;
-        position: relative;
-    }
-    .table-container::before {
-        content: ""; position: absolute; top:0; left:0; right:0; height:4px;
-        background: linear-gradient(to right, #000 33%, var(--ug-yellow) 33%, var(--ug-yellow) 66%, var(--ug-red) 66%);
-    }
-
-    .keb-table { width: 100%; border-collapse: collapse; }
-    .keb-table th { background: rgba(255,255,255,0.02); color: var(--gold); padding: 20px; text-align: left; font-size: 11px; letter-spacing: 2px; }
-    .keb-table td { padding: 15px 20px; border-bottom: 1px solid #111; font-size: 14px; }
-    .keb-table tr:hover { background: rgba(212, 175, 55, 0.05); }
-
-    .mark-input {
-        background: #111; border: 1px solid #333; color: #00ff00; 
-        width: 80px; padding: 8px; border-radius: 8px; text-align: center;
-        font-weight: bold; font-family: monospace;
-    }
-
-    .btn-download {
-        background: var(--ug-red); color: white; border: 1px solid var(--ug-yellow);
-        padding: 8px 15px; border-radius: 8px; text-decoration: none; font-weight: bold;
-        font-size: 10px; transition: 0.3s;
-    }
-    .btn-download:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--ug-red); }
-
-    .batch-btn {
-        background: var(--gold); color: black; padding: 15px 30px;
-        border-radius: 12px; font-weight: 900; text-decoration: none;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    }
+    .btn-search-trigger { background: var(--gold); color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; }
 </style>
 
-<div class="keb-wrapper">
-    <div class="keb-header">
-        <div>
-            <h1 style="margin: 0; letter-spacing: 3px;">KYADONDO EXAMINATIONS BOARD</h1>
-            <p style="color: var(--gold); font-weight: bold; font-size: 12px;">NATIONAL MOCK COMMAND & REGISTRY</p>
-        </div>
-        <a href="/api/batch-reports/?class={{ sel_class }}&type=KEB" class="batch-btn">
-            <i class="fas fa-file-pdf"></i> BATCH DOWNLOAD PASSLIPS (A4 DUAL)
-        </a>
-        <a href="/api/overall-performance/?class={{ sel_class }}" class="batch-btn" style="background: #008080; margin-left:10px;">
-            <i class="fas fa-chart-bar"></i> DOWNLOAD CLASS ANALYTICS PDF
-        </a>
+<div class="command-bar">
+    <div>
+        <h1 style="color: #fff; margin: 0; font-size: 24px; letter-spacing: 2px;">MOCK SUBJECT TERMINAL</h1>
+        <p style="color: var(--gold); font-size: 10px;">SUBJECT: {{ subjects.0.name|upper }}</p>
     </div>
+    <!-- 🔍 TRIGGER THE POPUP -->
+    <button class="btn-search-trigger" onclick="openSearchModal()"><i class="fas fa-search"></i> SEARCH SPECIFIC STUDENT</button>
+</div>
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <span style="color: var(--gold); font-size: 10px; letter-spacing: 2px;">TOTAL CANDIDATES</span>
-            <h2 style="font-size: 36px; margin: 5px 0;">{{ total_students }}</h2>
+<!-- 📋 ORIGINAL LOGIC: LIST ALL STUDENTS IN CLASS -->
+<div style="background: #080808; border-radius: 20px; overflow: hidden; border: 1px solid #1a1a1a;">
+    <form method="POST" action="/api/save-keb-marks/">
+        {% csrf_token %}
+        <input type="hidden" name="subject_id" value="{{ sel_sub }}">
+        <input type="hidden" name="class_name" value="{{ sel_class }}">
+        
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: var(--navy); color: var(--gold); text-align: left;">
+                    <th style="padding: 20px;">#</th>
+                    <th>CANDIDATE NAME</th>
+                    <th>PRN</th>
+                    <th>SCORE (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in audit %}
+                <tr style="border-bottom: 1px solid #111;">
+                    <td style="padding: 15px; color: #444;">{{ forloop.counter }}</td>
+                    <td style="color: white; font-weight: bold;">{{ item.student.full_name|upper }}</td>
+                    <td style="color: #666; font-family: monospace;">{{ item.student.payment_code }}</td>
+                    <td><input type="number" name="score_{{ item.student.id }}" value="{{ item.score }}" style="background:#111; color:#00ff00; border:1px solid #333; width:80px; padding:5px; text-align:center; font-weight:bold;"></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="padding: 20px; text-align: right;">
+            <button type="submit" class="btn btn-warning" style="font-weight: 900; padding: 15px 40px;">💾 COMMIT ALL MARKS</button>
         </div>
-        <div class="stat-card">
-            <span style="color: var(--gold); font-size: 10px; letter-spacing: 2px;">CURRENT CLASS</span>
-            <h2 style="font-size: 36px; margin: 5px 0;">{{ sel_class }}</h2>
-        </div>
-    </div>
-
-    <form method="GET" class="control-panel">
-        <span style="font-weight: bold;">Step 1: Select Class</span>
-        <select name="class" onchange="this.form.submit()">
-            {% for c in classes %}
-                <option value="{{ c }}" {% if sel_class == c %}selected{% endif %}>{{ c }}</option>
-            {% endfor %}
-        </select>
-
-        <span style="font-weight: bold; margin-left: 20px;">Step 2: Select Subject</span>
-        <select name="subject" onchange="this.form.submit()">
-        {% for s in subjects %}
-        <option value="{{ s.id }}" {% if sel_sub == s.id %}selected{% endif %}>
-            {{ s.name|upper }} ({{ s.code }})
-        </option>
-        {% endfor %}
-        </select>
     </form>
+</div>
 
-    <div class="table-container">
-        <form method="POST" action="/api/save-keb-marks/">
-            {% csrf_token %}
-            <input type="hidden" name="subject_id" value="{{ sel_sub }}">
-            <input type="hidden" name="class_name" value="{{ sel_class }}">
-            
-            <table class="keb-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>CANDIDATE NAME</th>
-                        <th>INDEX / PRN</th>
-                        <th>MOCK SCORE (%)</th>
-                        <th style="text-align: right;">INDIVIDUAL PASSLIP</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in audit %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td style="font-weight: bold;">{{ item.student.full_name|upper }}</td>
-                        <td style="color: #666; font-family: monospace;">{{ item.student.payment_code }}</td>
-                        <td>
-                            <input type="number" name="score_{{ item.student.id }}" 
-                                   value="{{ item.score|default:'' }}" 
-                                   class="mark-input" placeholder="0.0">
-                        </td>
-                        <td style="text-align: right;">
-                            <a href="/api/keb-passlip/{{ item.student.account_number }}/" class="btn-download">
-                                <i class="fas fa-download"></i> DOWNLOAD SLIP
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            
-            <div style="padding: 30px; text-align: center;">
-                <button type="submit" class="btn-action" style="width: 300px; background: var(--gold); color: black;">
-                    🚀 SAVE & SYNC TO NATIONAL REGISTRY
-                </button>
-            </div>
-        </form>
+<!-- 🖼️ THE Hub Hub Hub SEARCH MODAL -->
+<div id="searchModal" class="modal-overlay" onclick="closeSearchModal()">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <h2 style="color: #D4AF37; margin-bottom: 5px;">NATIONAL Hub SEARCH</h2>
+        <p style="color: #555; font-size: 10px; margin-bottom: 20px;">FIND CANDIDATE ACROSS THE ENTIRE REGISTRY</p>
+        
+        <input type="text" id="popupSearchInput" class="search-field" placeholder="Type Name or PRN..." onkeyup="executePopupSearch()">
+        
+        <div id="searchResults" style="max-height: 300px; overflow-y: auto;">
+            <!-- Results appear here -->
+        </div>
+
+        <button onclick="closeSearchModal()" style="margin-top:20px; background: transparent; color: #666; border: none; cursor: pointer;">CLOSE TERMINAL</button>
     </div>
 </div>
+
+<script>
+function openSearchModal() { document.getElementById('searchModal').style.display = 'flex'; }
+function closeSearchModal() { document.getElementById('searchModal').style.display = 'none'; }
+
+function executePopupSearch() {
+    const q = document.getElementById('popupSearchInput').value;
+    const resultsDiv = document.getElementById('searchResults');
+    const subId = "{{ sel_sub }}";
+
+    if (q.length < 3) return;
+
+    fetch(`/api/search-student-mock-ajax/?q=${q}&subject_id=${subId}`)
+    .then(res => res.json())
+    .then(data => {
+        resultsDiv.innerHTML = '';
+        data.results.forEach(std => {
+            resultsDiv.innerHTML += `
+                <div class="result-row">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="color:white; font-weight:bold;">${std.name}</div>
+                        <input type="number" id="quick_score_${std.id}" value="${std.existing_score}" class="mark-mini-input">
+                    </div>
+                    <div style="font-size:9px; color:#555;">CLASS: ${std.class} | PRN: ${std.prn}</div>
+                    <button onclick="saveSingleMark('${std.id}')" style="background:#00ff00; color:black; border:none; border-radius:4px; font-size:9px; margin-top:5px; cursor:pointer; font-weight:900;">⚡ QUICK SYNC</button>
+                </div>
+            `;
+        });
+    });
+}
+
+function saveSingleMark(stdId) {
+    const score = document.getElementById('quick_score_' + stdId).value;
+    const formData = new FormData();
+    formData.append('subject_id', "{{ sel_sub }}");
+    formData.append('class_name', "{{ sel_class }}");
+    formData.append('score_' + stdId, score);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    fetch('/api/save-keb-marks/', { method: 'POST', body: formData })
+    .then(() => {
+        alert("Sovereign Sync Successful!");
+        location.reload();
+    });
+}
+</script>
 {% endblock %}
