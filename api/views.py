@@ -5342,3 +5342,23 @@ def generate_overall_performance_pdf(request):
     except Exception as e:
         import traceback
         return HttpResponse(f"Executive Audit Error: {traceback.format_exc()}")
+
+@login_required
+def passlip_html_preview(request, student_id):
+    """💎 THE Hub Hub Hub Hub Hub HTML PASSLIP PREVIEW ENGINE"""
+    student = get_object_or_404(Student, account_number=student_id)
+    school = student.school
+    results = KEBMockResult.objects.filter(student=student)
+    
+    # Calculate Average & Grade
+    total = sum(r.score for r in results)
+    avg = total / results.count() if results.exists() else 0
+    grade = "A" if avg >= 80 else "B" if avg >= 70 else "C" if avg >= 60 else "D" if avg >= 50 else "E"
+
+    return render(request, 'admin/passlip_preview_snippet.html', {
+        'student': student,
+        'school': school,
+        'results': results,
+        'avg': round(avg, 1),
+        'grade': grade,
+    })
