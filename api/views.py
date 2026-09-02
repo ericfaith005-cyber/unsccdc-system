@@ -5073,3 +5073,4 @@ def save_report_design(request):
         template.save()
         
         return JsonResponse({"status": "SUCCESS", "msg": "National Design Templates Synchronized!"})
+
