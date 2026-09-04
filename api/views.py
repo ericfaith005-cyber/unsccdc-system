@@ -3938,27 +3938,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     subject_count = results_qs.count()
     all_fails = True 
 
-    for r in results_qs:
-        total_score_sum += r.score
-        if r.score >= 40: all_fails = False 
-        
-        if is_a_level:
-            # 🎓 NEW A-LEVEL 5-POINT SCALE (A=5 to E=1)
-            if r.score >= 80: total_uace_points += 5
-            elif r.score >= 70: total_uace_points += 4
-            elif r.score >= 60: total_uace_points += 3
-            elif r.score >= 50: total_uace_points += 2
-            elif r.score >= 40: total_uace_points += 1
-
-    # 🧮 CALCULATE THE VERDICT
-    final_average = total_score_sum / subject_count if subject_count > 0 else 0
-    
-    if final_average >= 80: final_overall_grade = "A"
-    elif final_average >= 70: final_overall_grade = "B"
-    elif final_average >= 60: final_overall_grade = "C"
-    elif final_average >= 50: final_overall_grade = "D"
-    else: final_overall_grade = "E"
-
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
     p.rect(10, base_y - 415, width - 20, 405, fill=1, stroke=0)
@@ -4035,14 +4014,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
     if is_a_level:
-        desc_y = height - 180
+        desc_y = height - 175
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
             
         # 🏛️ The Professional Description
         uace_desc = (
-            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
+            "This KEB Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
             "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
             "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
             "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
