@@ -4035,7 +4035,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
     if is_a_level:
-        desc_y = height - 200
+        desc_y = height - 180
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4054,9 +4054,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         para_desc.drawOn(p, 45, desc_y - 25)
             
         # Move the table start point down because of the paragraph
-        table_y_start = height - 300
+        table_y_start = height - 280
     else:
-        table_y_start = height - 300 # O-Level stays higher
+        table_y_start = height - 280 # O-Level stays higher
 
     # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
     if is_a_level:
