@@ -4133,19 +4133,19 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         row_score = r.score
         total_score_sum += row_score
             
-        if is_a_level:
+    if is_a_level:
         # 💎 Apply the Subsidiary vs Principal Logic
         grd, pts, interp = get_uace_final_metrics(row_score, r.subject.name)
         total_uace_points += pts
         data_rows.append([r.subject.name.upper(), f"{row_score:g}", grd, "", interp])
-        else:
-            if row_score >= 90: interp = "EXCEPTIONAL"
-            elif row_score >= 80: interp = "OUTSATANDING"
-            elif row_score >= 70: interp = "GOOD"
-            elif row_score >= 60: interp = "SATISFACTORY"
-            elif row_score >= 50: interp = "BASIC"
-            elif row_score >= 40: interp = "ELEMENTARY"
-            else: interp = "UNSATISFACTORY"
+    else:
+        if row_score >= 90: interp = "EXCEPTIONAL"
+        elif row_score >= 80: interp = "OUTSATANDING"
+        elif row_score >= 70: interp = "GOOD"
+        elif row_score >= 60: interp = "SATISFACTORY"
+        elif row_score >= 50: interp = "BASIC"
+        elif row_score >= 40: interp = "ELEMENTARY"
+        else: interp = "UNSATISFACTORY"
         data_rows.append([r.subject.name.upper(), f"{row_score:g}", r.grade, "", interp])
 
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
