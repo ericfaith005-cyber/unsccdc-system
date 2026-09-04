@@ -4100,6 +4100,30 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
     p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
+    if is_a_level:
+        desc_y = height - 280
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
+            
+        # 🏛️ The Professional Description
+        uace_desc = (
+            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
+            "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
+            "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
+            "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
+        )
+            
+        style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
+        para_desc = Paragraph(uace_desc, style_desc)
+        para_desc.wrapOn(p, width - 90, 50)
+        para_desc.drawOn(p, 45, desc_y - 25)
+            
+        # Move the table start point down because of the paragraph
+        table_y_start = height - 580 
+    else:
+        table_y_start = height - 550 # O-Level stays higher
+
     # 📊 9. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
     headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
     col_widths = [140, 45, 35, 130, 160] 
