@@ -3914,6 +3914,7 @@ def generate_national_report_pdf(request, student_id):
     except Exception as e:
         return HttpResponse(f"Registry Engine Error: {str(e)}", status=400)
 
+
 def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
     base_y = height - y_offset 
@@ -3937,12 +3938,32 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     subject_count = results_qs.count()
     all_fails = True 
 
+    for r in results_qs:
+        total_score_sum += r.score
+        if r.score >= 40: all_fails = False 
+        
+        if is_a_level:
+            # 🎓 NEW A-LEVEL 5-POINT SCALE (A=5 to E=1)
+            if r.score >= 80: total_uace_points += 5
+            elif r.score >= 70: total_uace_points += 4
+            elif r.score >= 60: total_uace_points += 3
+            elif r.score >= 50: total_uace_points += 2
+            elif r.score >= 40: total_uace_points += 1
+
+    # 🧮 CALCULATE THE VERDICT
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+    
+    if final_average >= 80: final_overall_grade = "A"
+    elif final_average >= 70: final_overall_grade = "B"
+    elif final_average >= 60: final_overall_grade = "C"
+    elif final_average >= 50: final_overall_grade = "D"
+    else: final_overall_grade = "E"
+
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
     p.rect(10, base_y - 415, width - 20, 405, fill=1, stroke=0)
     p.setLineWidth(2.5); p.setStrokeColor(gov_blue); p.rect(15, base_y - 410, width - 30, 395, stroke=1)
     p.setLineWidth(0.5); p.setStrokeColor(rich_gold); p.rect(18, base_y - 407, width - 36, 389, stroke=1)
-
     # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         p.saveState()
@@ -4012,30 +4033,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.setFillColor(colors.HexColor("#DCDCDC"))
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
-    
-    if is_a_level:
-        desc_y = height - 200
-        p.setFillColor(colors.black)
-        p.setFont("Times-Bold", 10)
-        p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
-            
-        # 🏛️ The Professional Description
-        uace_desc = (
-            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
-            "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
-            "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
-            "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
-        )
-            
-        style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
-        para_desc = Paragraph(uace_desc, style_desc)
-        para_desc.wrapOn(p, width - 90, 50)
-        para_desc.drawOn(p, 45, desc_y - 25)
-            
-        # Move the table start point down because of the paragraph
-        table_y_start = height - 300 
-    else:
-        table_y_start = height - 300 # O-Level stays higher
     
     # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
     if is_a_level:
