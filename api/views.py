@@ -3971,15 +3971,15 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
             )
             
-            style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
-            para_desc = Paragraph(uace_desc, style_desc)
-            para_desc.wrapOn(p, width - 90, 50)
-            para_desc.drawOn(p, 45, desc_y - 25)
+        style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
+        para_desc = Paragraph(uace_desc, style_desc)
+        para_desc.wrapOn(p, width - 90, 50)
+        para_desc.drawOn(p, 45, desc_y - 25)
             
-            # Move the table start point down because of the paragraph
-            table_y_start = height - 580 
-        else:
-            table_y_start = height - 550 # O-Level stays higher
+        # Move the table start point down because of the paragraph
+        table_y_start = height - 580 
+    else:
+        table_y_start = height - 550 # O-Level stays higher
 
     for r in results_qs:
         total_score_sum += r.score
