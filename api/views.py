@@ -4014,7 +4014,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
     if is_a_level:
-        desc_y = height - 175
+        desc_y = height - 180
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4089,36 +4089,32 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     final_average = total_score_sum / subject_count if subject_count > 0 else 0
     
     # 🏁 10. MERIT BAR (GREEN/GOLD)
-    bar_y = height - 295 
-        
-    # 🎨 Ensure colors are ready
-    success_green = colors.HexColor("#006400")
-    rich_gold = colors.HexColor("#D4AF37")
+    bar_y = base_y - 145
+    p.setFillColor(rich_gold)
+    p.rect(45, bar_y, 160, 22, fill=1, stroke=0)
+    p.setFillColor(success_green)
+    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
+
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    # 💎 Showing Average and the Calculated Grade
-    p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ({final_overall_grade}) ★★★")
+    p.drawCentredString(125, bar_y + 7, f"★★★ AVERAGE: {final_average:.1f}% ★★★")
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        # 🎓 A-Level: Points + Average Grade
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points}/17 PTS | GRADE: {final_overall_grade}"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
     else:
         res_tier = "RESULT 2" if all_fails else "RESULT 1"
-        rank_text = f"NATIONAL RANKING: {res_tier} | GRADE: {final_overall_grade}"
+        rank_text = f"KEB RANKING: {res_tier} (COMPETENCY VERIFIED)"
     p.drawString(215, bar_y + 7, rank_text)
 
-    # 11. DRAW THE TABLE
-   
+    # 📊 11. DRAW THE TABLE
+    # Add Summary Row
     summary_label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL AVERAGE"
     summary_val = f"{total_uace_points} / 17" if is_a_level else f"{final_average:.1f}%"
     
-    # 💎 The third item in the list is the 'GRD' column. We now insert 'final_overall_grade'
     if is_a_level:
-        # Columns: [Label, Value (Points), Grade, Graph(empty), Verdict]
-        data_rows.append([summary_label, f"{total_uace_points} PTS", final_overall_grade, "", "OFFICIAL VERDICT"])
+        data_rows.append([summary_label, summary_val, "", "", "", "OFFICIAL VERDICT"])
     else:
-        # Columns: [Label, Value (%), Grade, Graph(empty), Verdict]
-        data_rows.append([summary_label, f"{final_average:.1f}%", final_overall_grade, "", "OFFICIAL VERDICT"])
+        data_rows.append([summary_label, summary_val, "", "", "OFFICIAL VERDICT"])
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
