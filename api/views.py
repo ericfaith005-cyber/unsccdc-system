@@ -3914,17 +3914,18 @@ def generate_national_report_pdf(request, student_id):
     except Exception as e:
         return HttpResponse(f"Registry Engine Error: {str(e)}", status=400)
 
+
 def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
     base_y = height - y_offset 
     
     # 🎨 1. THE Hub Hub Hub IMPERIAL COLOR VAULT
-    gov_blue = colors.HexColor("#002366")      
-    rich_gold = colors.HexColor("#D4AF37")     
-    ug_yellow = colors.HexColor("#FCDC04")     
-    ug_red = colors.HexColor("#D90000")        
-    success_green = colors.HexColor("#006400") 
-    paper_cream = colors.HexColor("#FFF9E6")   
+    gov_blue = colors.HexColor("#002366")      # Royal Navy
+    rich_gold = colors.HexColor("#D4AF37")     # Imperial Gold
+    ug_yellow = colors.HexColor("#FCDC04")     # National Yellow
+    ug_red = colors.HexColor("#D90000")        # National Red
+    success_green = colors.HexColor("#006400") # Emerald Success
+    paper_cream = colors.HexColor("#FFF9E6")   # Premium Page Tint
 
     # 🔑 2. NATIONAL DATA & MATH INTELLIGENCE
     from collections import Counter
@@ -3946,9 +3947,37 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         p.saveState()
-        p.setFillAlpha(0.12) # 💎 Higher visibility to show through table
-        watermark_size = 270
-        p.drawImage(school.keb_logo.path, width/2 - 135, base_y - 320, width=watermark_size, height=watermark_size, mask='auto')
+        
+        # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
+        # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
+        p.setFillAlpha(0.08) 
+        
+        # 📍 MATHEMATICAL CENTERING
+        # A4 Width is 595. Slip height is roughly 400.
+        watermark_size = 270 # 💎 MASSIVE SIZE
+        center_x = (width / 2) - (watermark_size / 2)
+        # Position it right behind the marks table area
+        center_y = (base_y - 210) - (watermark_size / 2)
+        
+        # 🎨 DRAW THE GHOST IMAGE
+        p.drawImage(
+            school.keb_logo.path, 
+            center_x, 
+            center_y, 
+            width=watermark_size, 
+            height=watermark_size, 
+            mask='auto'
+        )
+        
+        p.restoreState() # 🛡️ Reset to full strength for the text
+    else:
+        # Fallback if no logo is found in the system
+        p.saveState()
+        p.setFont("Times-Bold", 50)
+        p.setFillColor(colors.lightgrey, alpha=0.06)
+        p.translate(width/2, base_y - 200)
+        p.rotate(35)
+        p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
         p.restoreState()
 
     # 🏛️ 5. NATIONAL TOP HEADERS
@@ -3961,22 +3990,60 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     lx, ly, lw, lh = 45, base_y - 120, 73, 73
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
+    else:
+        p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
 
     ix = 125
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
-    p.drawString(ix, base_y - 65, school.name.upper())
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
+    p.drawString(ix, base_y - 70, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(ix, base_y - 80, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(ix, base_y - 95, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(ix, base_y - 110, f"YEAR: 2026")
+    p.drawString(ix, base_y - 85, f"STUDENT: {student.full_name.upper()}")
+    p.drawString(ix, base_y - 100, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(ix, base_y - 115, f"YEAR: 2026")
     
-    # 📸 7. STUDENT PHOTO 
+    # 📸 7. STUDENT PHOTO (FAR RIGHT)
     px, py, pw, ph = width - 110, base_y - 120, 75, 90
     if student.photo and os.path.exists(student.photo.path):
-        p.setStrokeColor(gov_blue); p.setLineWidth(1.5); p.rect(px, py, pw, ph, stroke=1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
+        p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
     else:
-        draw_human_shadow(p, px, py, pw, ph)
+    # 👤 Draw the Vector Silhouette
+        p.setStrokeColor(colors.grey); p.rect(px, py, pw, ph, stroke=1)
+        p.setFillColor(colors.HexColor("#DCDCDC"))
+        p.circle(px + pw/2, py + ph - 25, 15, fill=1)
+        p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
+    # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
+    bar_y = base_y - 145
+    split_point = 160 
+    p.setFillColor(rich_gold)
+    p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
+    p.setFillColor(success_green)
+    p.rect(45 + split_point, bar_y, (width - 90) - split_point, 22, fill=1, stroke=0)
+
+    if is_a_level:
+        desc_y = height - 280
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
+            
+        # 🏛️ The Professional Description
+        uace_desc = (
+            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
+            "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
+            "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
+            "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
+        )
+            
+        style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
+        para_desc = Paragraph(uace_desc, style_desc)
+        para_desc.wrapOn(p, width - 90, 50)
+        para_desc.drawOn(p, 45, desc_y - 25)
+            
+        # Move the table start point down because of the paragraph
+        table_y_start = height - 300 
+    else:
+        table_y_start = height - 550 # O-Level stays higher
 
     # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
     if is_a_level:
@@ -4041,10 +4108,10 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
     else:
         res_tier = "RESULT 2" if all_fails else "RESULT 1"
-        rank_text = f"NATIONAL RANKING: {res_tier} (COMPETENCY VERIFIED)"
+        rank_text = f"KEB RANKING: {res_tier} (COMPETENCY VERIFIED)"
     p.drawString(215, bar_y + 7, rank_text)
 
     # 📊 11. DRAW THE TABLE
@@ -4083,13 +4150,13 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
     # ✍️ 13. FOOTER & SIGNATURE
-    p.setStrokeColor(gov_blue); p.line(45, base_y - 398, 200, base_y - 398)
-    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 408, "KEB EXAMINATIONS CHAIRMAN")
+    p.setStrokeColor(gov_blue)
+    p.setLineWidth(1)
+    p.line(45, base_y - 398, 200, base_y - 398) # The physical line
     
-    if school.chairman_signature and os.path.exists(school.chairman_signature.path):
-        p.drawImage(school.chairman_signature.path, 45, base_y - 398, width=80, height=25, mask='auto')
-        
+    p.setFillColor(colors.black)
+    p.setFont("Times-Bold", 8)
+    p.drawString(45, base_y - 405, "KEB EXAMINATIONS CHAIRMAN")
 # 🚀 THE Hub Hub Hub Hub Hub NATIONAL PAIRED BATCH ENGINE
 @login_required
 def batch_report_download(request):
