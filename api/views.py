@@ -4089,6 +4089,12 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     final_average = total_score_sum / subject_count if subject_count > 0 else 0
     
     # 🏁 10. MERIT BAR (GREEN/GOLD)
+    bar_y = height - 295 
+        
+    # 🎨 Ensure colors are ready
+    success_green = colors.HexColor("#006400")
+    rich_gold = colors.HexColor("#D4AF37")
+    
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     # 💎 Showing Average and the Calculated Grade
     p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ({final_overall_grade}) ★★★")
