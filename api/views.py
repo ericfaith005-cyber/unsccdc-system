@@ -3937,6 +3937,50 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     subject_count = results_qs.count()
     all_fails = True 
 
+    def get_uace_final_metrics(score, subject_name):
+        sub = subject_name.upper()
+        # 🛡️ SUBSIDIARY GUARD: GP, Sub-Math, ICT
+        is_subsidiary = any(x in sub for x in ["GENERAL PAPER", "GP", "SUB", "ICT"])
+            
+        if is_subsidiary:
+            # 💎 Law: Above 50 is 'O' (1pt), else 'F' (0pt)
+            if score >= 50:
+                return "O", 1, "SUBSIDIARY PASS"
+            else:
+                return "F", 0, "UNSATISFACTORY"
+            
+            # 🏆 PRINCIPAL SUBJECTS (New 15-Point Curriculum)
+            if score >= 80: return "A", 5, "EXCEPTIONAL"
+            if score >= 70: return "B", 4, "OUTSTANDING"
+            if score >= 60: return "C", 3, "SATISFACTORY"
+            if score >= 50: return "D", 2, "BASIC"
+            if score >= 40: return "E", 1, "ELEMENTARY"
+            return "F", 0, "UNSATISFACTORY"
+    
+    if is_a_level:
+        desc_y = height - 280
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
+            
+        # 🏛️ The Professional Description
+        uace_desc = (
+            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
+            "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
+            "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
+            "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
+            )
+            
+            style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
+            para_desc = Paragraph(uace_desc, style_desc)
+            para_desc.wrapOn(p, width - 90, 50)
+            para_desc.drawOn(p, 45, desc_y - 25)
+            
+            # Move the table start point down because of the paragraph
+            table_y_start = height - 580 
+        else:
+            table_y_start = height - 550 # O-Level stays higher
+
     for r in results_qs:
         total_score_sum += r.score
         if r.score >= 40: all_fails = False 
@@ -4047,10 +4091,10 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
     else:
         res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
-        rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
+        rank_text = f"KEB RANKING: {res_tier} | AVG: {final_average:.1f}%"
     p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
     # 📊 9. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
@@ -4068,6 +4112,17 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         elif row_score >= 40: interp = "ELEMENTARY"
         else: interp = "UNSATISFACTORY"
         data_rows.append([r.subject.name.upper(), f"{row_score:g}", r.grade, "", interp])
+
+        if is_a_level:
+            # 💎 Apply the Subsidiary vs Principal Logic
+            grd, pts, interp = get_uace_final_metrics(row_score, r.subject.name)
+            total_uace_points += pts
+            data_rows.append([r.subject.name.upper(), f"{row_score:g}", grd, "", interp])
+        else:
+            # O-Level standard logic
+            g = "A" if row_score >= 80 else "B" if row_score >= 70 else "C" if row_score >= 60 else "D" if row_score >= 50 else "E"
+            rem = "EXCEPTIONAL" if row_score >= 80 else "STRONG" if row_score >= 65 else "SATISFACTORY"
+            data_rows.append([r.subject.name.upper(), f"{row_score:g}", g, "", rem])
 
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
     data_rows.append(['OVERALL AVERAGE', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
@@ -4092,6 +4147,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             # 🏆 Summary Row (Bottom) stays Gold
             ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
             ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+            ('SPAN', (0, -1), (0, -1)), # First cell spanning
             ('SPAN', (3, -1), (4, -1)), 
         ]))
     table.wrapOn(p, width, height)
@@ -4223,11 +4279,13 @@ def keb_mock_portal_view(request):
         # 📊 Audit Data (Linking results to students)
         audit = []
         for s in students:
-            res = KEBMockResult.objects.filter(student=s, subject_id=sel_sub).first() if sel_sub else None
+            # Look for the mark of the CURRENTLY SELECTED subject
+            res = KEBMockResult.objects.filter(student=s, subject_id=sel_sub).first()
             audit.append({
                 'student': s,
-                'score': res.score if res else "",
-                'grade': res.grade if res else "--",
+                'score': res.score if res else None,
+                'grade': res.grade if res else None,
+                'has_marks': res is not None # 💎 The status light
             })
 
         context = {

@@ -79,9 +79,9 @@
             </thead>
             <tbody>
                 {% for item in audit %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td style="font-weight: bold;">{{ item.student.full_name|upper }}</td>
+                <tr style="border-bottom: 1px solid #111;">
+                    <td style="padding: 15px; color: #444;">{{ forloop.counter }}</td>
+                    <td style="color: white; font-weight: bold;">{{ item.student.full_name|upper }}</td>
                     <td>
                         <input type="number" name="score_{{ item.student.id }}" value="{{ item.score }}" 
                                style="background:#000; border:1px solid #333; color:var(--success); width:70px; text-align:center; font-weight:900; border-radius:5px;">
