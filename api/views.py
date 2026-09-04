@@ -3937,6 +3937,21 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = 0
     subject_count = results_qs.count()
     all_fails = True 
+    
+    if final_average >= 80: 
+        final_overall_grade = "A"
+    elif final_average >= 70: 
+        final_overall_grade = "B"
+    elif final_average >= 60: 
+        final_overall_grade = "C"
+    elif final_average >= 50: 
+        final_overall_grade = "D"
+    else: 
+        final_overall_grade = "E"
+    
+    # 🛡️ Safety Fallback: Ensure it is never empty
+    if not results_qs.exists():
+        final_overall_grade = "N/A"
 
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
