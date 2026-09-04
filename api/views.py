@@ -4190,7 +4190,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             data_rows.append([label, val, final_overall_grade, "", "OFFICIAL VERDICT"])
 
         # 💎 DRAW THE SEE-THROUGH TABLE
-        table_y = height - 600
+        table_y = height - 410
         table = Table(data_rows, colWidths=col_widths, rowHeights=22)
         
         # Styles for Transparency
