@@ -4094,17 +4094,17 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
     final_average = total_score_sum / subject_count if subject_count > 0 else 0
         
-        if final_average >= 80: final_overall_grade = "A"
-        elif final_average >= 70: final_overall_grade = "B"
-        elif final_average >= 60: final_overall_grade = "C"
-        elif final_average >= 50: final_overall_grade = "D"
-        else: final_overall_grade = "E"
+    if final_average >= 80: final_overall_grade = "A"
+    elif final_average >= 70: final_overall_grade = "B"
+    elif final_average >= 60: final_overall_grade = "C"
+    elif final_average >= 50: final_overall_grade = "D"
+    else: final_overall_grade = "E"
 
-        # 3. 🏆 ADD THE GOLDEN SUMMARY ROW (With % and No Graph)
-        label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL NATIONAL AVERAGE"
-        val = f"{total_uace_points} / 15" if is_a_level else f"{final_average:.1f}%"
+    # 3. 🏆 ADD THE GOLDEN SUMMARY ROW (With % and No Graph)
+    label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL NATIONAL AVERAGE"
+    val = f"{total_uace_points} / 15" if is_a_level else f"{final_average:.1f}%"
         
-        data_rows.append([label, val, final_overall_grade, "", "OFFICIAL VERDICT"])
+    data_rows.append([label, val, final_overall_grade, "", "OFFICIAL VERDICT"])
 
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
