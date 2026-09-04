@@ -4094,14 +4094,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
     else:
         res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
-        rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
+        rank_text = f"KEB RANKING: {res_tier} | AVG: {final_average:.1f}%"
     p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
     if is_a_level:
-        desc_y = height - 280
+        desc_y = height - 200
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4120,9 +4120,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         para_desc.drawOn(p, 45, desc_y - 25)
             
         # Move the table start point down because of the paragraph
-        table_y_start = height - 580 
+        table_y_start = height - 300
     else:
-        table_y_start = height - 550 # O-Level stays higher
+        table_y_start = height - 500 # O-Level stays higher
 
     # 📊 9. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
     headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
@@ -4131,13 +4131,21 @@ def draw_keb_slip_layout(p, student, school, y_offset):
 
     for r in results_qs:
         row_score = r.score
-        if row_score >= 90: interp = "EXCEPTIONAL"
-        elif row_score >= 80: interp = "OUTSATANDING"
-        elif row_score >= 70: interp = "GOOD"
-        elif row_score >= 60: interp = "SATISFACTORY"
-        elif row_score >= 50: interp = "BASIC"
-        elif row_score >= 40: interp = "ELEMENTARY"
-        else: interp = "UNSATISFACTORY"
+        total_score_sum += row_score
+            
+        if is_a_level:
+        # 💎 Apply the Subsidiary vs Principal Logic
+        grd, pts, interp = get_uace_final_metrics(row_score, r.subject.name)
+        total_uace_points += pts
+        data_rows.append([r.subject.name.upper(), f"{row_score:g}", grd, "", interp])
+        else:
+            if row_score >= 90: interp = "EXCEPTIONAL"
+            elif row_score >= 80: interp = "OUTSATANDING"
+            elif row_score >= 70: interp = "GOOD"
+            elif row_score >= 60: interp = "SATISFACTORY"
+            elif row_score >= 50: interp = "BASIC"
+            elif row_score >= 40: interp = "ELEMENTARY"
+            else: interp = "UNSATISFACTORY"
         data_rows.append([r.subject.name.upper(), f"{row_score:g}", r.grade, "", interp])
 
     # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
