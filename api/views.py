@@ -3914,7 +3914,6 @@ def generate_national_report_pdf(request, student_id):
     except Exception as e:
         return HttpResponse(f"Registry Engine Error: {str(e)}", status=400)
 
-
 def draw_keb_slip_layout(p, student, school, y_offset):
     width, height = A4
     base_y = height - y_offset 
@@ -4013,16 +4012,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.setFillColor(colors.HexColor("#DCDCDC"))
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
-    # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
-    bar_y = base_y - 145
-    split_point = 160 
-    p.setFillColor(rich_gold)
-    p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
-    p.setFillColor(success_green)
-    p.rect(45 + split_point, bar_y, (width - 90) - split_point, 22, fill=1, stroke=0)
-
+    
     if is_a_level:
-        desc_y = height - 280
+        desc_y = height - 200
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4043,8 +4035,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         # Move the table start point down because of the paragraph
         table_y_start = height - 300 
     else:
-        table_y_start = height - 550 # O-Level stays higher
-
+        table_y_start = height - 300 # O-Level stays higher
+    
     # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
     if is_a_level:
         headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PTS', 'PERFORMANCE GRAPH', 'INTERPRETATION']
@@ -4098,21 +4090,22 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
+    split_point = 160 
     p.setFillColor(rich_gold)
-    p.rect(45, bar_y, 160, 22, fill=1, stroke=0)
+    p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
     p.setFillColor(success_green)
-    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
+    p.rect(45 + split_point, bar_y, (width - 90) - split_point, 22, fill=1, stroke=0)
 
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ★★★")
+    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_overall_grade} ★★★")
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
+        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
     else:
-        res_tier = "RESULT 2" if all_fails else "RESULT 1"
-        rank_text = f"KEB RANKING: {res_tier} (COMPETENCY VERIFIED)"
-    p.drawString(215, bar_y + 7, rank_text)
+        res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
+        rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
+    p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
     # 📊 11. DRAW THE TABLE
     # Add Summary Row
@@ -4148,6 +4141,15 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         bc = success_green if r.score >= 80 else rich_gold if r.score >= 50 else ug_red
         p.setFillColor(bc)
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
+    
+    if is_a_level:
+        key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['INTERPRETATION:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
+    else:
+        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['INTERPRETATION:', 'EXCEPTIONAL', 'OUTSTANDING', 'SATISFACTORY', 'BASIC', 'ELEMEMENTARY']]
+    
+    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=17)
+    k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
+    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     # ✍️ 13. FOOTER & SIGNATURE
     p.setStrokeColor(gov_blue)
