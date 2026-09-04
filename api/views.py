@@ -3919,16 +3919,16 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     base_y = height - y_offset 
     
     # 🎨 1. THE Hub Hub Hub IMPERIAL COLOR VAULT
-    gov_blue = colors.HexColor("#002366")      # Royal Navy
-    rich_gold = colors.HexColor("#D4AF37")     # Imperial Gold
-    ug_yellow = colors.HexColor("#FCDC04")     # National Yellow
-    ug_red = colors.HexColor("#D90000")        # National Red
-    success_green = colors.HexColor("#006400") # Emerald Success
-    paper_cream = colors.HexColor("#FFF9E6")   # Premium Page Tint
+    gov_blue = colors.HexColor("#002366")      
+    rich_gold = colors.HexColor("#D4AF37")     
+    ug_yellow = colors.HexColor("#FCDC04")     
+    ug_red = colors.HexColor("#D90000")        
+    success_green = colors.HexColor("#006400") 
+    paper_cream = colors.HexColor("#FFF9E6")   
 
-    # 🔑 2. NATIONAL DATA & MATH INTELLIGENCE (TOP-LEVEL CALCULATION)
+    # 🔑 2. NATIONAL DATA & MATH INTELLIGENCE
     from collections import Counter
-    results_qs = KEBMockResult.objects.filter(student=student)
+    results_qs = KEBMockResult.objects.filter(student=student).select_related('subject')
     c_name = str(student.current_class).upper().replace(" ", "")
     is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "A-LEVEL"])
     
@@ -3936,27 +3936,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     total_uace_points = 0
     subject_count = results_qs.count()
     all_fails = True 
-
-    for r in results_qs:
-        total_score_sum += r.score
-        if r.score >= 40: all_fails = False 
-        
-        if is_a_level:
-            # 🎓 NEW A-LEVEL 5-POINT SCALE (A=5 to E=1)
-            if r.score >= 80: total_uace_points += 5
-            elif r.score >= 70: total_uace_points += 4
-            elif r.score >= 60: total_uace_points += 3
-            elif r.score >= 50: total_uace_points += 2
-            elif r.score >= 40: total_uace_points += 1
-
-    # 🧮 CALCULATE THE VERDICT
-    final_average = total_score_sum / subject_count if subject_count > 0 else 0
-    
-    if final_average >= 80: final_overall_grade = "A"
-    elif final_average >= 70: final_overall_grade = "B"
-    elif final_average >= 60: final_overall_grade = "C"
-    elif final_average >= 50: final_overall_grade = "D"
-    else: final_overall_grade = "E"
 
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
@@ -3967,37 +3946,9 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 🌌 4. KEB LOGO WATERMARK (GHOST EFFECT)
     if school.keb_logo and os.path.exists(school.keb_logo.path):
         p.saveState()
-        
-        # 💎 THE Hub Hub Hub Hub Hub VISIBILITY TUNING
-        # 0.07 is the "Perfect Visibility" - it's clear but doesn't block the marks!
-        p.setFillAlpha(0.08) 
-        
-        # 📍 MATHEMATICAL CENTERING
-        # A4 Width is 595. Slip height is roughly 400.
-        watermark_size = 270 # 💎 MASSIVE SIZE
-        center_x = (width / 2) - (watermark_size / 2)
-        # Position it right behind the marks table area
-        center_y = (base_y - 210) - (watermark_size / 2)
-        
-        # 🎨 DRAW THE GHOST IMAGE
-        p.drawImage(
-            school.keb_logo.path, 
-            center_x, 
-            center_y, 
-            width=watermark_size, 
-            height=watermark_size, 
-            mask='auto'
-        )
-        
-        p.restoreState() # 🛡️ Reset to full strength for the text
-    else:
-        # Fallback if no logo is found in the system
-        p.saveState()
-        p.setFont("Times-Bold", 50)
-        p.setFillColor(colors.lightgrey, alpha=0.06)
-        p.translate(width/2, base_y - 200)
-        p.rotate(35)
-        p.drawCentredString(0, 0, "KEB OFFICIAL RECORD")
+        p.setFillAlpha(0.12) # 💎 Higher visibility to show through table
+        watermark_size = 270
+        p.drawImage(school.keb_logo.path, width/2 - 135, base_y - 320, width=watermark_size, height=watermark_size, mask='auto')
         p.restoreState()
 
     # 🏛️ 5. NATIONAL TOP HEADERS
@@ -4006,133 +3957,123 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFont("Times-Bold", 14); p.setFillColor(gov_blue)
     p.drawCentredString(width/2, base_y - 42, "KYADONDO EXAMINATIONS BOARD")
     
-
-    # 🖼️ 6. SCHOOL LOGO (LEFT) & INFO (RIGHT)
+    # 🖼️ 6. SCHOOL LOGO & IDENTITY
     lx, ly, lw, lh = 45, base_y - 120, 73, 73
     if school.logo and os.path.exists(school.logo.path):
         p.drawImage(school.logo.path, lx, ly, width=lw, height=lh, mask='auto')
-    else:
-        p.setStrokeColor(gov_blue); p.rect(lx, ly, lw, lh, stroke=1)
 
     ix = 125
-    p.setFillColor(gov_blue); p.setFont("Times-Bold", 12)
-    p.drawString(ix, base_y - 70, school.name.upper())
+    p.setFillColor(gov_blue); p.setFont("Times-Bold", 11)
+    p.drawString(ix, base_y - 65, school.name.upper())
     p.setFillColor(colors.black); p.setFont("Times-Bold", 9)
-    p.drawString(ix, base_y - 85, f"STUDENT: {student.full_name.upper()}")
-    p.drawString(ix, base_y - 100, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
-    p.drawString(ix, base_y - 115, f"YEAR: 2026")
+    p.drawString(ix, base_y - 80, f"STUDENT: {student.full_name.upper()}")
+    p.drawString(ix, base_y - 95, f"LEVEL: {student.current_class} ({student.stream or 'NORTH'})")
+    p.drawString(ix, base_y - 110, f"YEAR: 2026")
     
-    # 📸 7. STUDENT PHOTO (FAR RIGHT)
+    # 📸 7. STUDENT PHOTO 
     px, py, pw, ph = width - 110, base_y - 120, 75, 90
     if student.photo and os.path.exists(student.photo.path):
-        p.setStrokeColor(gov_blue); p.setLineWidth(1.5)
-        p.rect(px, py, pw, ph, stroke=1)
+        p.setStrokeColor(gov_blue); p.setLineWidth(1.5); p.rect(px, py, pw, ph, stroke=1)
         p.drawImage(student.photo.path, px, py, width=pw, height=ph, mask='auto')
     else:
-    # 👤 Draw the Vector Silhouette
-        p.setStrokeColor(colors.grey); p.rect(px, py, pw, ph, stroke=1)
-        p.setFillColor(colors.HexColor("#DCDCDC"))
-        p.circle(px + pw/2, py + ph - 25, 15, fill=1)
-        p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
-    # ⭐ 8. THE SOVEREIGN MERIT & RANKING BAR (PRE-CALCULATED)
+        draw_human_shadow(p, px, py, pw, ph)
+
+    # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
+    if is_a_level:
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PTS', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [140, 45, 35, 35, 120, 135]
+    else:
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [160, 50, 40, 130, 130]
+
+    data_rows = [headers]
+
+    for r in results_qs:
+        score = r.score
+        total_score_sum += score
+        if score >= 40: all_fails = False
+        sub_name = r.subject.name.upper()
+        
+        # 🤖 START GRADING ENGINE
+        grd = "F"
+        pts = 0
+        interp = "UNSATISFACTORY"
+
+        if is_a_level:
+            # 🛡️ Identify Subsidiary (GP, Sub-Math, ICT)
+            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
+            if is_sub:
+                if score >= 40: # Pass mark for subsidiary
+                    grd, pts, interp = "O", 1, "PASS"
+                else:
+                    grd, pts, interp = "F", 0, "FAIL"
+            else:
+                # 🏆 Principal Subjects (A=5 to E=1)
+                if score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
+                elif score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
+                elif score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
+                elif score >= 50: grd, pts, interp = "D", 2, "BASIC"
+                elif score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
+            
+            total_uace_points += pts
+            data_rows.append([sub_name, f"{score:g}", grd, pts, "", interp])
+        else:
+            # O-Level Logic
+            if score >= 80: grd, interp = "A", "EXCEPTIONAL"
+            elif score >= 70: grd, interp = "B", "OUTSTANDING"
+            elif score >= 60: grd, interp = "C", "SATISFACTORY"
+            elif score >= 50: grd, interp = "D", "BASIC"
+            else: grd, interp = "E", "ELEMENTARY"
+            data_rows.append([sub_name, f"{score:g}", grd, "", interp])
+
+    # 🧮 9. FINAL CALCULATIONS
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+    
+    # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
-    split_point = 160 
     p.setFillColor(rich_gold)
-    p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
+    p.rect(45, bar_y, 160, 22, fill=1, stroke=0)
     p.setFillColor(success_green)
-    p.rect(45 + split_point, bar_y, (width - 90) - split_point, 22, fill=1, stroke=0)
+    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
 
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_overall_grade} ★★★")
+    p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ★★★")
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
         rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
     else:
-        res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
-        rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
-    p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
+        res_tier = "RESULT 2" if all_fails else "RESULT 1"
+        rank_text = f"NATIONAL RANKING: {res_tier} (COMPETENCY VERIFIED)"
+    p.drawString(215, bar_y + 7, rank_text)
 
-    # 📊 9. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
-    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
-    col_widths = [140, 45, 35, 130, 160] 
-    data_rows = [headers]
-
-    for r in results_qs:
-        row_score = r.score if r.score else 0
-        total_score_sum += row_score
-        sub_name = r.subject.name.upper()
-
-        # 🤖 INTERNAL GRADING ENGINE (UNEB STANDARDS)
-        if is_a_level:
-            # --- A-LEVEL SUBSIDIARY & PRINCIPAL LOGIC ---
-            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
-            if is_sub:
-                grd = "O" if row_score >= 50 else "F"
-                pts = 1 if row_score >= 50 else 0
-                interp = "SUBSIDIARY PASS" if pts == 1 else "UNSATISFACTORY"
-            else:
-                if row_score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
-                elif row_score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
-                elif row_score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
-                elif row_score >= 50: grd, pts, interp = "D", 2, "BASIC"
-                elif row_score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
-                else: grd, pts, interp = "F", 0, "UNSATISFACTORY"
-                
-            total_uace_points += pts
-            data_rows.append([sub_name, f"{row_score:g}", grd, pts, "", interp])
-        else:
-            # --- O-LEVEL COMPETENCY LOGIC ---
-            if row_score >= 80: grd, interp = "A", "EXCEPTIONAL"
-            elif row_score >= 70: grd, interp = "B", "OUTSTANDING"
-            elif row_score >= 60: grd, interp = "C", "SATISFACTORY"
-            elif row_score >= 50: grd, interp = "D", "BASIC"
-            else: grd, interp = "E", "ELEMENTARY"
-                
-            data_rows.append([sub_name, f"{row_score:g}", grd, "", interp])
-
-    # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
-    final_average = total_score_sum / subject_count if subject_count > 0 else 0
-        
-    if final_average >= 80: final_overall_grade = "A"
-    elif final_average >= 70: final_overall_grade = "B"
-    elif final_average >= 60: final_overall_grade = "C"
-    elif final_average >= 50: final_overall_grade = "D"
-    else: final_overall_grade = "E"
-
-    # 3. 🏆 ADD THE GOLDEN SUMMARY ROW (With % and No Graph)
-    label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL NATIONAL AVERAGE"
-    val = f"{total_uace_points} / 15" if is_a_level else f"{final_average:.1f}%"
-        
-    data_rows.append([label, val, final_overall_grade, "", "OFFICIAL VERDICT"])
+    # 📊 11. DRAW THE TABLE
+    # Add Summary Row
+    summary_label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL AVERAGE"
+    summary_val = f"{total_uace_points} / 17" if is_a_level else f"{final_average:.1f}%"
+    
+    if is_a_level:
+        data_rows.append([summary_label, summary_val, "", "", "", "OFFICIAL VERDICT"])
+    else:
+        data_rows.append([summary_label, summary_val, "", "", "OFFICIAL VERDICT"])
 
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
-            # Header stays solid for authority
-            ('BACKGROUND', (0,0), (-1,0), gov_blue), 
-            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
-            ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), 
-            ('FONTSIZE', (0,0), (-1,-1), 8),
-            ('GRID', (0,0), (-1,-1), 0.1, colors.black), 
-            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BACKGROUND', (0,0), (-1,0), gov_blue), ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), ('FONTSIZE', (0,0), (-1,-1), 8),
+        ('GRID', (0,0), (-1,-1), 0.1, colors.black), ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.transparent, colors.Color(0,0,0, alpha=0.03)]),
+        ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
+        ('SPAN', (4, -1), (5, -1)) if is_a_level else ('SPAN', (3, -1), (4, -1)), 
+    ]))
+    table.wrapOn(p, width, height); table.drawOn(p, 45, table_y)
 
-            # 🛡️ THE Hub Hub Hub TRANSPARENCY FIX:
-            # We REMOVE 'ROWBACKGROUNDS' so the watermark shows through!
-            # Instead, we use a very faint tint for alternating rows
-            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.transparent, colors.Color(0,0,0, alpha=0.03)]),
-            
-            # 🏆 Summary Row (Bottom) stays Gold
-            ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
-            ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-            ('SPAN', (3, -1), (4, -1)), 
-        ]))
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 45, table_y)
-
-    # 📈 10. SYNCED GRAPH BARS
-    graph_x = 45 + 140 + 45 + 35 + 15 
+    # 📈 12. SYNCED GRAPH BARS
+    graph_idx = 4 if is_a_level else 3
+    graph_x = 45 + sum(col_widths[:graph_idx]) + 10
     for i, r in enumerate(results_qs):
         bar_y_pos = (table_y + (len(data_rows) - i - 2) * 17) + 5.5
         p.setFillColor(colors.HexColor("#E0E0E0")) 
@@ -4141,37 +4082,14 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.setFillColor(bc)
         p.roundRect(graph_x, bar_y_pos, max(2, r.score), 5, 2.5, fill=1, stroke=0)
 
-    # 📐 11. DYNAMIC GRADING KEY
-    if is_a_level:
-        key_data = [['GRADE:', 'A(5)', 'B(4)', 'C(3)', 'D(2)', 'E(1)', 'O(1)', 'F(0)'],['INTERPRETATION:', 'Exceptional', 'Very Good', 'Good', 'Satisfactory', 'Fair', 'Sub. Pass', 'Fail']]
-    else:
-        key_data = [['GRADE:', 'A', 'B', 'C', 'D', 'E'],['INTERPRETATION:', 'EXCEPTIONAL', 'OUTSTANDING', 'SATISFACTORY', 'BASIC', 'ELEMEMENTARY']]
+    # ✍️ 13. FOOTER & SIGNATURE
+    p.setStrokeColor(gov_blue); p.line(45, base_y - 398, 200, base_y - 398)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 8)
+    p.drawString(45, base_y - 408, "KEB EXAMINATIONS CHAIRMAN")
     
-    k_table = Table(key_data, colWidths=63 if is_a_level else 85, rowHeights=17)
-    k_table.setStyle(TableStyle([('GRID', (0,0), (-1,-1), 0.5, colors.grey), ('FONTSIZE', (0,0), (-1,-1), 6), ('ALIGN', (0,0), (-1,-1), 'CENTER'), ('BACKGROUND', (0,0), (0,-1), colors.lightgrey)]))
-    k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
-
-    sig_x = 40
-    sig_y = base_y - 400 # Positioned to sit ON the line
-    
-    # 💎 DRAW THE DIGITAL SIGNATURE
     if school.chairman_signature and os.path.exists(school.chairman_signature.path):
-        try:
-            # We draw the signature with transparency (mask='auto')
-            # Width=80, Height=35 is perfect for a standard signature
-            p.drawImage(school.chairman_signature.path, sig_x, sig_y, width=85, height=20, mask='auto')
-        except Exception as e:
-            print(f"Signature Rendering Error: {e}")
-
-    # 📏 The Official Signature Line
-    p.setStrokeColor(gov_blue)
-    p.setLineWidth(1)
-    p.line(45, base_y - 398, 200, base_y - 398) # The physical line
-    
-    p.setFillColor(colors.black)
-    p.setFont("Times-Bold", 8)
-    p.drawString(45, base_y - 405, "KEB EXAMINATIONS CHAIRMAN")
-
+        p.drawImage(school.chairman_signature.path, 45, base_y - 398, width=80, height=25, mask='auto')
+        
 # 🚀 THE Hub Hub Hub Hub Hub NATIONAL PAIRED BATCH ENGINE
 @login_required
 def batch_report_download(request):
