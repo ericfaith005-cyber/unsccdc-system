@@ -4034,6 +4034,30 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.circle(px + pw/2, py + ph - 25, 15, fill=1)
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
+    if is_a_level:
+        desc_y = height - 200
+        p.setFillColor(colors.black)
+        p.setFont("Times-Bold", 10)
+        p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
+            
+        # 🏛️ The Professional Description
+        uace_desc = (
+            "This National Mock Result Slip evaluates the candidate based on the New UACE Competency Framework. "
+            "Principal subjects are weighted on a 5-point scale (A=5 to E=1). Subsidiary subjects, including General Paper, "
+            "Sub-Mathematics, and ICT, are graded on a binary scale where a score above 50% earns a Subsidiary Pass (O) "
+            "carrying 1 point. The total national weight is calculated out of a maximum of 15 points for principals."
+        )
+            
+        style_desc = ParagraphStyle('UaceDesc', fontName='Times-Roman', fontSize=9, leading=11)
+        para_desc = Paragraph(uace_desc, style_desc)
+        para_desc.wrapOn(p, width - 90, 50)
+        para_desc.drawOn(p, 45, desc_y - 25)
+            
+        # Move the table start point down because of the paragraph
+        table_y_start = height - 300
+    else:
+        table_y_start = height - 300 # O-Level stays higher
+
     # 📊 8. DATA MATRIX BUILDING (WITH A-LEVEL PRINCIPAL LOGIC)
     if is_a_level:
         headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PTS', 'PERFORMANCE GRAPH', 'INTERPRETATION']
@@ -4087,22 +4111,21 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     
     # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
-    split_point = 160 
     p.setFillColor(rich_gold)
-    p.rect(45, bar_y, split_point, 22, fill=1, stroke=0)
+    p.rect(45, bar_y, 160, 22, fill=1, stroke=0)
     p.setFillColor(success_green)
-    p.rect(45 + split_point, bar_y, (width - 90) - split_point, 22, fill=1, stroke=0)
+    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
 
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    p.drawCentredString(45 + (split_point/2), bar_y + 7, f"★★★ GRADE: {final_overall_grade} ★★★")
+    p.drawCentredString(125, bar_y + 7, f"★★★ AVERAGE: {final_average:.1f}% ★★★")
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points} / 17 POINTS"
+        rank_text = f"KEB WEIGHT: {total_uace_points} / 17 POINTS"
     else:
-        res_tier = "RESULT 2 (UNSATISFACTORY)" if all_fails else "RESULT 1 (QUALIFIED)"
-        rank_text = f"NATIONAL RANKING: {res_tier} | AVG: {final_average:.1f}%"
-    p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
+        res_tier = "RESULT 2" if all_fails else "RESULT 1"
+        rank_text = f"KEB RANKING: {res_tier} (COMPETENCY VERIFIED)"
+    p.drawString(215, bar_y + 7, rank_text)
 
     # 📊 11. DRAW THE TABLE
     # Add Summary Row
@@ -4113,7 +4136,6 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         data_rows.append([summary_label, summary_val, "", "", "", "OFFICIAL VERDICT"])
     else:
         data_rows.append([summary_label, summary_val, "", "", "OFFICIAL VERDICT"])
-
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
     table.setStyle(TableStyle([
