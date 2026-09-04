@@ -4101,7 +4101,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.drawString(45 + split_point + 10, bar_y + 7, rank_text)
 
     if is_a_level:
-        desc_y = height - 200
+        desc_y = height - 180
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4120,62 +4120,120 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         para_desc.drawOn(p, 45, desc_y - 25)
             
         # Move the table start point down because of the paragraph
-        table_y_start = height - 300
+        table_y_start = height - 270
     else:
         table_y_start = height - 500 # O-Level stays higher
 
-    # 📊 9. THE Hub Hub Hub Hub Hub ONE TRUE DATA MATRIX 
-    headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
-    col_widths = [140, 45, 35, 130, 160] 
-    data_rows = [headers]
-
-    for r in results_qs:
-        row_score = r.score
-        total_score_sum += row_score
-            
     if is_a_level:
-        # 💎 Apply the Subsidiary vs Principal Logic
-        grd, pts, interp = get_uace_final_metrics(row_score, r.subject.name)
-        total_uace_points += pts
-        data_rows.append([r.subject.name.upper(), f"{row_score:g}", grd, "", interp])
+        # UACE: Added 'PTS' (Points) column
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PTS', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [140, 45, 35, 35, 120, 135] # Total 510
     else:
-        if row_score >= 90: interp = "EXCEPTIONAL"
-        elif row_score >= 80: interp = "OUTSATANDING"
-        elif row_score >= 70: interp = "GOOD"
-        elif row_score >= 60: interp = "SATISFACTORY"
-        elif row_score >= 50: interp = "BASIC"
-        elif row_score >= 40: interp = "ELEMENTARY"
-        else: interp = "UNSATISFACTORY"
-        data_rows.append([r.subject.name.upper(), f"{row_score:g}", r.grade, "", interp])
+        # UCE: Standard Competency
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [160, 50, 40, 130, 130] # Total 510
 
-    # 💎 ADD THE GOLDEN SUMMARY ROW AT THE END
-    data_rows.append(['OVERALL AVERAGE', f"{final_average:.1f}%", final_overall_grade, "", f"FINAL GRADE: {final_overall_grade}"])
+        data_rows = [headers]
+        total_uace_points = 0
+        total_score_sum = 0
+        subject_count = results_qs.count()
 
-    table_y = base_y - 335
-    table = Table(data_rows, colWidths=col_widths, rowHeights=17)
-    table.setStyle(TableStyle([
-            # Header stays solid for authority
+        for r in results_qs:
+            row_score = r.score if r.score else 0
+            total_score_sum += row_score
+            sub_name = r.subject.name.upper()
+
+            # 🤖 INTERNAL GRADING ENGINE (UNEB STANDARDS)
+            if is_a_level:
+                # --- A-LEVEL SUBSIDIARY & PRINCIPAL LOGIC ---
+                is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
+                if is_sub:
+                    grd = "O" if row_score >= 50 else "F"
+                    pts = 1 if row_score >= 50 else 0
+                    interp = "SUBSIDIARY PASS" if pts == 1 else "UNSATISFACTORY"
+                else:
+                    if row_score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
+                    elif row_score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
+                    elif row_score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
+                    elif row_score >= 50: grd, pts, interp = "D", 2, "BASIC"
+                    elif row_score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
+                    else: grd, pts, interp = "F", 0, "UNSATISFACTORY"
+                
+                total_uace_points += pts
+                data_rows.append([sub_name, f"{row_score:g}", grd, pts, "", interp])
+            else:
+                # --- O-LEVEL COMPETENCY LOGIC ---
+                if row_score >= 80: grd, interp = "A", "EXCEPTIONAL"
+                elif row_score >= 70: grd, interp = "B", "OUTSTANDING"
+                elif row_score >= 60: grd, interp = "C", "SATISFACTORY"
+                elif row_score >= 50: grd, interp = "D", "BASIC"
+                else: grd, interp = "E", "ELEMENTARY"
+                
+                data_rows.append([sub_name, f"{row_score:g}", grd, "", interp])
+
+        # 🧮 CALCULATE THE NATIONAL VERDICT
+        final_average = total_score_sum / subject_count if subject_count > 0 else 0
+        if final_average >= 80: final_overall_grade = "A"
+        elif final_average >= 70: final_overall_grade = "B"
+        elif final_average >= 60: final_overall_grade = "C"
+        elif final_average >= 50: final_overall_grade = "D"
+        else: final_overall_grade = "E"
+
+        # 🏆 ADD THE GOLDEN SUMMARY ROW
+        label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL NATIONAL AVERAGE"
+        val = f"{total_uace_points} / 15" if is_a_level else f"{final_average:.1f}%"
+        
+        # We ensure the columns match the header count
+        if is_a_level:
+            data_rows.append([label, val, "", final_overall_grade, "", "OFFICIAL VERDICT"])
+        else:
+            data_rows.append([label, val, final_overall_grade, "", "OFFICIAL VERDICT"])
+
+        # 💎 DRAW THE SEE-THROUGH TABLE
+        table_y = height - 600
+        table = Table(data_rows, colWidths=col_widths, rowHeights=22)
+        
+        # Styles for Transparency
+        ts = [
             ('BACKGROUND', (0,0), (-1,0), gov_blue), 
             ('TEXTCOLOR', (0,0), (-1,0), colors.white),
             ('FONTNAME', (0,0), (-1,-1), 'Times-Bold'), 
-            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('FONTSIZE', (0,0), (-1,-1), 8.5),
             ('GRID', (0,0), (-1,-1), 0.1, colors.black), 
             ('ALIGN', (0,0), (-1,-1), 'CENTER'),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-
-            # 🛡️ THE Hub Hub Hub TRANSPARENCY FIX:
-            # We REMOVE 'ROWBACKGROUNDS' so the watermark shows through!
-            # Instead, we use a very faint tint for alternating rows
-            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.transparent, colors.Color(0,0,0, alpha=0.03)]),
-            
-            # 🏆 Summary Row (Bottom) stays Gold
+            # 🛡️ TRANSPARENCY FIX: This makes the school watermark visible!
+            ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.transparent, colors.Color(0,0,0, alpha=0.02)]),
+            # 📀 THE GOLDEN FOOTER
             ('BACKGROUND', (0, -1), (-1, -1), rich_gold),
             ('TEXTCOLOR', (0, -1), (-1, -1), colors.black),
-            ('SPAN', (3, -1), (4, -1)), 
-        ]))
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 45, table_y)
+        ]
+        
+        # Dynamic Spanning for the Footer
+        if is_a_level:
+            ts.append(('SPAN', (4, -1), (5, -1))) # Merge Graph and Interpretation
+        else:
+            ts.append(('SPAN', (3, -1), (4, -1)))
 
+        table.setStyle(TableStyle(ts))
+        table.wrapOn(p, width, height)
+        table.drawOn(p, 45, table_y)
+
+        # 📈 9.5 DRAW THE BARS (ONLY FOR SUBJECTS)
+        # Position after Subject, Score, Grade (and Pts if A-level)
+        graph_x_start = 45 + col_widths[0] + col_widths[1] + col_widths[2]
+        if is_a_level: graph_x_start += col_widths[3]
+        graph_x_start += 10 # Padding
+
+        for i, r in enumerate(results_qs):
+            bar_y = (table_y + (len(data_rows) - i - 2) * 22) + 8
+            p.setFillColor(colors.HexColor("#EEEEEE")) 
+            p.roundRect(graph_x_start, bar_y, 100, 5, 2.5, fill=1, stroke=0)
+            
+            # Color logic for bars
+            bc = success_green if r.score >= 80 else rich_gold if r.score >= 50 else ug_red
+            p.setFillColor(bc)
+            p.roundRect(graph_x_start, bar_y, max(2, r.score), 5, 2.5, fill=1, stroke=0)
     # 📈 10. SYNCED GRAPH BARS
     graph_x = 45 + 140 + 45 + 35 + 15 
     for i, r in enumerate(results_qs):
