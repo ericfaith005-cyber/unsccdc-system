@@ -4098,7 +4098,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(success_green)
     p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
 
-     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
+    p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
     # 💎 Showing Average and the Calculated Grade
     p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ({final_overall_grade}) ★★★")
 
