@@ -3928,52 +3928,69 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     paper_cream = colors.HexColor("#FFF9E6")   # Premium Page Tint
 
     # 🔑 2. NATIONAL DATA & MATH INTELLIGENCE
-    from collections import Counter
     results_qs = KEBMockResult.objects.filter(student=student).select_related('subject')
+    subject_count = results_qs.count()
     
-    # 💎 Step B: Initialize the Sovereign Vault
     total_score_sum = 0
     total_uace_points = 0
-    final_average = 0.0
-    final_overall_grade = "E" # 🛡️ Default to E (Minimum Competency) instead of N/A
-    subject_count = results_qs.count()
     all_fails = True
+    
+    # Determine Class Level
+    c_name = str(student.current_class).upper().replace(" ", "")
+    is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "A-LEVEL"])
 
-    # 🧮 Step C: THE Hub Hub Hub MATH PULSE
-    if subject_count > 0:
-        for r in results_qs:
-            score = r.score if r.score else 0
-            total_score_sum += score
-            if score >= 40: all_fails = False
-            
-            # A-Level Points Logic (New 15-Point Scale)
-            c_name = str(student.current_class).upper().replace(" ", "")
-            is_a_level = any(x in c_name for x in ["S5", "S.5", "S6", "S.6", "A-LEVEL"])
-            
-            if is_a_level:
-                sub_name = r.subject.name.upper()
-                is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
-                if is_sub:
-                    if score >= 40: total_uace_points += 1
-                else:
-                    if score >= 80: total_uace_points += 5
-                    elif score >= 70: total_uace_points += 4
-                    elif score >= 60: total_uace_points += 3
-                    elif score >= 50: total_uace_points += 2
-                    elif score >= 40: total_uace_points += 1
-
-        # 🏁 Step D: THE Hub Hub Hub FINAL VERDICT CALCULATION
-        final_average = total_score_sum / subject_count
-        
-        # 💎 THE FIX: Mapping the average to the Official Grade
-        if final_average >= 80: final_overall_grade = "A"
-        elif final_average >= 70: final_overall_grade = "B"
-        elif final_average >= 60: final_overall_grade = "C"
-        elif final_average >= 50: final_overall_grade = "D"
-        else: final_overall_grade = "E"
+    # 📊 3. DATA MATRIX BUILDING (Single Loop for Accuracy)
+    if is_a_level:
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PTS', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [140, 45, 35, 35, 120, 135]
     else:
-        # Only show N/A if there are absolutely ZERO marks in the registry
-        final_overall_grade = "N/A"
+        headers = ['SUBJECT NAME', 'SCORE', 'GRD', 'PERFORMANCE GRAPH', 'INTERPRETATION']
+        col_widths = [160, 50, 40, 130, 130]
+
+    data_rows = [headers]
+
+    for r in results_qs:
+        score = r.score if r.score else 0
+        total_score_sum += score  # Added ONLY ONCE here
+        if score >= 40: all_fails = False
+        
+        sub_name = r.subject.name.upper()
+        grd = "F"
+        pts = 0
+        interp = "UNSATISFACTORY"
+
+        if is_a_level:
+            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT", "MATH", "SUB MATH"])
+            if is_sub:
+                if score >= 40: grd, pts, interp = "O", 1, "PASS"
+                else: grd, pts, interp = "F", 0, "FAIL"
+            else:
+                if score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
+                elif score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
+                elif score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
+                elif score >= 50: grd, pts, interp = "D", 2, "BASIC"
+                elif score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
+            
+            total_uace_points += pts
+            data_rows.append([sub_name, f"{score:g}", grd, pts, "", interp])
+        else:
+            # O-Level Logic
+            if score >= 80: grd, interp = "A", "EXCEPTIONAL"
+            elif score >= 70: grd, interp = "B", "OUTSTANDING"
+            elif score >= 60: grd, interp = "C", "SATISFACTORY"
+            elif score >= 50: grd, interp = "D", "BASIC"
+            else: grd, interp = "E", "ELEMENTARY"
+            data_rows.append([sub_name, f"{score:g}", grd, "", interp])
+
+    # 🧮 4. FINAL CALCULATIONS (Performed after the loop)
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+    
+    # Mapping the average to the Official Grade
+    if final_average >= 80: final_overall_grade = "A"
+    elif final_average >= 70: final_overall_grade = "B"
+    elif final_average >= 60: final_overall_grade = "C"
+    elif final_average >= 50: final_overall_grade = "D"
+    else: final_overall_grade = "E"
 
     # 🖌️ 3. BACKGROUND & TRIPLE BORDERS
     p.setFillColor(paper_cream)
