@@ -1184,73 +1184,154 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Student, Staff
 
-@api_view(['POST'])
-@permission_classes([AllowAny])
+@csrf_exempt
 def student_identity_gate(request):
-    d = request.data
-    print(f"--- 🛡️ IDENTITY ATTEMPT: {d} ---") 
-    code_in = d.get('code', '').strip().upper()
-    student_in = d.get('student', '').strip().lower()
+    """STAGE 1: Verify the 4-Point Identity Match (Parent/Student)"""
+    if request.method == "OPTIONS": return sovereign_response({})
     
-    student = Student.objects.filter(payment_code__iexact=code_in).first()
-    
-    if not student:
-        print(f"❌ REJECTED: PRN {code_in} not found in DB.")
-        return Response({"status": "DENIED", "msg": "PRN NOT FOUND"}, status=401)
-    
-    if student.full_name.lower().strip() != student_in:
-        print(f"❌ REJECTED: Name {student_in} does not match {student.full_name.lower()}.")
-        return Response({"status": "DENIED", "msg": "STUDENT NAME MISMATCH"}, status=401)
+    try:
+        # 💎 THE Hub Hub Hub Hub FIX: Read the JSON Body
+        data = json.loads(request.body)
+        code = data.get('code', '').strip().upper()
+        s_name = data.get('student', '').strip()
+        p_name = data.get('parent', '').strip()
+        phone = data.get('phone', '').strip()
 
-    return Response({"status": "IDENTITY_CONFIRMED", "student_id": str(student.account_number)})
+        # 🕵️ Phone Sanitizer: Match last 9 digits (handles +256 vs 07...)
+        search_phone = phone[-9:] if len(phone) >= 9 else phone
 
-@api_view(['POST'])
+        match = Student.objects.filter(
+            payment_code__iexact=code,
+            full_name__iexact=s_name,
+            parent_link__full_name__iexact=p_name,
+            parent_link__phone_number__icontains=search_phone
+        ).first()
+
+        if match:
+            return sovereign_response({
+                'status': 'IDENTITY_CONFIRMED',
+                'student_id': match.account_number,
+                'message': f"Identity Confirmed for {match.full_name}"
+            })
+        
+        return sovereign_response({'msg': 'National Registry Mismatch. Please check spelling or PRN.'}, status=401)
+    except Exception as e:
+        return sovereign_response({'msg': 'Verification Gateway Error'}, status=500)
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+
+@csrf_exempt
+@api_view(['POST', 'OPTIONS'])
 @permission_classes([AllowAny])
 def staff_hub_auth(request):
-    d = request.data
-    # 🕵️ LOG THE INCOMING DATA
-    print(f"--- 👔 STAFF ATTEMPT: {d} ---")
-    
-    name_in = d.get('name', '').strip()
-    pin_in = d.get('pin', '').strip()
+    if request.method == "OPTIONS": return sovereign_response({})
+    try:
+        data = json.loads(request.body)
+        name_in = data.get('name', '').strip()
+        pin_in = str(data.get('pin', '')).strip()
 
-    staff = Staff.objects.filter(full_name__iexact=name_in, secure_pin=pin_in).first()
-    
-    if staff:
-        print(f"✅ AUTHORIZED: {staff.full_name}")
-        return Response({"status": "STAFF_AUTHORIZED", "name": staff.full_name, "role": "Teacher"})
-    
-    print(f"❌ REJECTED: Staff {name_in} with PIN {pin_in} not found.")
-    return Response({"status": "DENIED", "msg": "STAFF NOT FOUND"}, status=401)
+        # 🕵️ THE TRUTH: Based on your error log, the field is 'full_name'
+        staff = Staff.objects.filter(full_name__iexact=name_in, secure_pin=pin_in).first()
 
-@api_view(['POST'])
+        if staff:
+            return sovereign_response({
+                "status": "authenticated",
+                "type": "staff",
+                "name": staff.full_name,
+                "role": staff.get_role_display() if hasattr(staff, 'get_role_display') else "Staff",
+                "photo": request.build_absolute_uri(staff.photo.url) if staff.photo else "",
+                "schools": [{"school_name": staff.school.name if staff.school else "National Hub"}]
+            })
+        
+        return sovereign_response({'msg': 'Credentials Denied'}, status=401)
+    except Exception as e:
+        return sovereign_response({'msg': f'Internal Error: {str(e)}'}, status=500)
+
+# 📺 FIX FOR THE 404 NOT FOUND: /api/feed/
+@api_view(['GET'])
 @permission_classes([AllowAny])
-def pin_vault_auth(request):
-    d = request.data
-    sid = d.get('student_id')
-    pin = d.get('pin', '').strip()
+def get_national_feed(request):
+    """Returns the TikTok-style video broadcasts for schools"""
+    posts = SchoolPost.objects.all().order_by('-date')[:15]
+    feed = []
+    for p in posts:
+        feed.append({
+            "media": request.build_absolute_uri(p.media_file.url) if p.media_file else "",
+            "school": p.school.name,
+            "title": p.title,
+            "desc": getattr(p, 'content', 'Sovereign Broadcast'),
+            "likes": getattr(p, 'likes_count', 0),
+            "verified": True
+        })
+    return sovereign_response(feed)
 
-    student = Student.objects.filter(account_number=sid).first()
+from .utils import get_national_grading
+
+@csrf_exempt
+def pin_vault_auth(request):
+    """STAGE 2: Final PIN Unlock & Full Data Delivery"""
+    if request.method == "OPTIONS": return sovereign_response({})
     
-    if student and student.parent_link.secure_pin == pin:
-        # 🛡️ Instead of using Serializer (which might return a list), 
-        # we hand-pick the data into a PURE MAP.
-        marks = list(student.marks.values('subject__name', 'aoi_1', 'aoi_2', 'mid_term', 'aoi_3', 'aoi_4', 'eot_score'))
-        
-        data_packet = {
-            "full_name": student.full_name,
-            "account_number": student.account_number,
-            "current_class": student.current_class,
-            "stream": student.stream or "NORTH",
-            "school_name": student.school.name,
-            "academic_record": marks,
-            "financial_standing": {
-                "balance": 150000 # Example, or pull from tracker
-            }
-        }
-        return JsonResponse(data_packet, safe=False)
-        
-    return JsonResponse({"status": "WRONG_PIN", "msg": "Invalid Secure PIN"}, status=401)
+    try:
+        data = json.loads(request.body)
+        sid = data.get('student_id')
+        pin = data.get('pin', '').strip()
+
+        student = Student.objects.select_related('parent_link', 'school').get(account_number=sid)
+        parent = student.parent_link
+
+        if parent and parent.secure_pin == pin:
+            # 🚀 AUTHENTICATED: Build the Imperial Data Package
+            sch = student.school
+            
+            # A. Finance Logic
+            f_rec = getattr(student, 'fees', None)
+            total_due = getattr(f_rec, 'total_fees_due', 0)
+            paid = getattr(f_rec, 'total_fees_paid', 0)
+
+            # B. Marks Logic (KEB Mock & National)
+            national_report = {}
+            # (Your marks gathering logic here...)
+
+            # C. Marketing Feed (TikTok)
+            feed_data = []
+            for f in SchoolPost.objects.all().order_by('-date')[:10]:
+                feed_data.append({
+                    "media": request.build_absolute_uri(f.media_file.url) if f.media_file else "",
+                    "school": f.school.name,
+                    "title": f.title,
+                    "desc": getattr(f, 'content', 'Sovereign Excellence'),
+                    "likes": getattr(f, 'likes_count', 0),
+                    "verified": True
+                })
+
+            # D. National Top Performers (The Carousel)
+            performers = []
+            for t in NationalTopPerformer.objects.all().order_by('?')[:10]:
+                performers.append({
+                    "name": t.name,
+                    "school": t.school_name,
+                    "score": t.score,
+                    "photo": request.build_absolute_uri(t.photo.url) if t.photo else ""
+                })
+
+            return sovereign_response({
+                "status": "authenticated",
+                "name": student.full_name,
+                "id": student.account_number,
+                "payment_code": student.payment_code,
+                "photo": request.build_absolute_uri(student.photo.url) if student.photo else "",
+                "school": {"name": sch.name, "motto": sch.school_motto, "verified": True},
+                "finance": {"balance": total_due - paid, "paid": paid, "total_due": total_due},
+                "feed": feed_data,
+                "top_performers": performers,
+                "national_report": national_report
+            })
+
+        return sovereign_response({'msg': 'INVALID 6-DIGIT PIN'}, status=401)
+    except Exception as e:
+        return sovereign_response({'msg': 'Authorization Error'}, status=500)
 
 from django.core.management import call_command
 from django.db import connection
@@ -4145,36 +4226,29 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
     p.setFillColor(rich_gold)
-    p.rect(45, bar_y, 160, 22, fill=1, stroke=0)
+    p.rect(45, bar_y, 160, 22, fill=1)
     p.setFillColor(success_green)
-    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1, stroke=0)
+    p.rect(205, bar_y, (width - 90) - 160, 22, fill=1)
 
     p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-    # 💎 Showing Average and the Calculated Grade
     p.drawCentredString(125, bar_y + 7, f"★★★ AVG: {final_average:.1f}% ({final_overall_grade}) ★★★")
 
     p.setFillColor(colors.white); p.setFont("Times-Bold", 9)
     if is_a_level:
-        # 🎓 A-Level: Points + Average Grade
-        rank_text = f"NATIONAL WEIGHT: {total_uace_points}/17 PTS | GRADE: {final_overall_grade}"
+        rank_text = f"NATIONAL WEIGHT: {total_uace_points}/20 PTS | GRADE: {final_overall_grade}"
     else:
-        res_tier = "RESULT 2" if all_fails else "RESULT 1"
+        res_tier = "RESULT 1" if not all_fails else "RESULT 4"
         rank_text = f"NATIONAL RANKING: {res_tier} | GRADE: {final_overall_grade}"
     p.drawString(215, bar_y + 7, rank_text)
 
-    # 📊 11. DRAW THE TABLE
-    # Add Summary Row
-    
+    # 📊 6. DRAW THE TABLE SUMMARY ROW
     summary_label = "TOTAL UACE WEIGHT" if is_a_level else "OVERALL AVERAGE"
-    summary_val = f"{total_uace_points} / 17" if is_a_level else f"{final_average:.1f}%"
+    summary_val = f"{total_uace_points} PTS" if is_a_level else f"{final_average:.1f}%"
     
-    # 💎 The third item in the list is the 'GRD' column. We now insert 'final_overall_grade'
     if is_a_level:
-        # Columns: [Label, Value (Points), Grade, Graph(empty), Verdict]
-        data_rows.append([summary_label, f"{total_uace_points} PTS", final_overall_grade, "", "OFFICIAL VERDICT"])
+        data_rows.append([summary_label, summary_val, final_overall_grade, "", "", "OFFICIAL VERDICT"])
     else:
-        # Columns: [Label, Value (%), Grade, Graph(empty), Verdict]
-        data_rows.append([summary_label, f"{final_average:.1f}%", final_overall_grade, "", "OFFICIAL VERDICT"])
+        data_rows.append([summary_label, summary_val, final_overall_grade, "", "OFFICIAL VERDICT"])
 
     table_y = base_y - 335
     table = Table(data_rows, colWidths=col_widths, rowHeights=17)
@@ -5439,3 +5513,256 @@ def passlip_html_preview(request, student_id):
         'student': student, 'results': results, 'res_tier': res_tier,
         'photo_url': student.photo.url if student.photo else "https://via.placeholder.com/150"
     })
+
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from .models import Student, Parent, Staff, KEBMockResult, SchoolPayLedger, NationalTopPerformer, SchoolPost
+from .utils import get_national_grading # Assuming you have this helper
+
+def sovereign_response(data, status=200):
+    """Helper to ensure every response has correct CORS headers for the Web App"""
+    response = JsonResponse(data, status=status)
+    response["Access-Control-Allow-Origin"] = "*" # Use '*' for development
+    response["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    response["Access-Control-Allow-Headers"] = "Content-Type, X-Sovereign-Client"
+    return response
+
+@csrf_exempt
+def student_identity_gate(request):
+    """STAGE 1: Verify the 4-Point Identity Match"""
+    if request.method == "OPTIONS": return sovereign_response({})
+    
+    try:
+        # 💎 THE Hub Hub Hub Hub FIX: Read JSON Body instead of POST/GET
+        data = json.loads(request.body)
+        code = data.get('code', '').strip().upper()
+        s_name = data.get('student', '').strip()
+        p_name = data.get('parent', '').strip()
+        phone = data.get('phone', '').strip()
+
+        # 🕵️ Search logic (Ugandan Phone Number Sanitizer)
+        # Matches last 9 digits to ignore 07... vs +256... differences
+        search_phone = phone[-9:] if len(phone) >= 9 else phone
+
+        match = Student.objects.filter(
+            payment_code__iexact=code,
+            full_name__iexact=s_name,
+            parent_link__full_name__iexact=p_name,
+            parent_link__phone_number__icontains=search_phone
+        ).first()
+
+        if match:
+            return sovereign_response({
+                'status': 'IDENTITY_CONFIRMED',
+                'student_id': match.account_number,
+                'message': f"Identity Confirmed for {match.full_name}"
+            })
+        
+        return sovereign_response({'msg': 'National Registry Mismatch. Check spelling.'}, status=401)
+
+    except Exception as e:
+        return sovereign_response({'msg': f'System Error: {str(e)}'}, status=500)
+
+@csrf_exempt
+def pin_vault_auth(request):
+    """STAGE 2: Verify PIN and Deliver the Imperial Data Package"""
+    if request.method == "OPTIONS": return sovereign_response({})
+    
+    try:
+        data = json.loads(request.body)
+        student_id = data.get('student_id')
+        pin = data.get('pin', '').strip()
+
+        student = Student.objects.select_related('parent_link', 'school').get(account_number=student_id)
+        parent = student.parent_link
+
+        if parent and parent.secure_pin == pin:
+            # 🚀 IDENTITY SECURE - Generate massive data payload
+            # (Use the logic from your StudentViewSet.list here to build the response)
+            # Below is a condensed version to ensure it works immediately:
+            
+            payload = {
+                "status": "authenticated",
+                "name": student.full_name,
+                "id": student.account_number,
+                "payment_code": student.payment_code,
+                "class": student.current_class,
+                "photo": request.build_absolute_uri(student.photo.url) if student.photo else "",
+                "school": {
+                    "name": student.school.name,
+                    "motto": student.school.school_motto,
+                },
+                "finance": {
+                    "balance": 0, # Calculate your balance logic here
+                    "paid": 0
+                },
+                "feed": [], # Add your TikTok feed logic here
+                "national_report": {} # Add your marks logic here
+            }
+            return sovereign_response(payload)
+
+        return sovereign_response({'msg': 'SECURITY ALERT: Invalid 6-Digit PIN.'}, status=401)
+
+    except Exception as e:
+        return sovereign_response({'msg': 'Authorization Failed'}, status=500)
+
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import *
+
+@api_view(['POST'])
+def initiate_payment(request):
+    """
+    Requirement #7: Real School Fees/Report Payment Flow
+    """
+    user = request.user
+    student_id = request.data.get('student_id')
+    amount = request.data.get('amount')
+    purpose = request.data.get('type') # 'REPORT' or 'FEES'
+
+    # 1. Create Internal Transaction (Status: PENDING)
+    tx = PaymentTransaction.objects.create(
+        transaction_id=f"USDC-{uuid.uuid4().hex[:10].upper()}",
+        student_id=student_id,
+        amount=amount,
+        type=purpose,
+        status='PENDING'
+    )
+
+    # 2. Integrate with Payment Provider (Logic Placeholder)
+    # response = PaymentGateway.init(amount, tx.transaction_id)
+    
+    return Response({
+        "tx_id": tx.transaction_id,
+        "amount": amount,
+        "purpose": purpose,
+        "gateway_url": "https://gateway.ug/pay/..." 
+    })
+
+@api_view(['GET'])
+def get_parent_dashboard(request):
+    """
+    Requirement #8: Contextual Parent Dashboard
+    """
+    # Logic to identify parent's children across different schools
+    parent = Parent.objects.get(user=request.user)
+    students = student.objects.filter(parent_link=parent)
+    
+    data = []
+    for s in students:
+        fees = FeesTracker.objects.get(student=s)
+        data.append({
+            "student_name": s.full_name,
+            "school": s.school.name,
+            "verified": s.school.schoolverification.status == 'VERIFIED',
+            "balance": fees.fees_balance,
+            "latest_mark": s.marks.all().order_by('-id').first().eot_score
+        })
+    return Response(data)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from .serializers import UserIdentitySerializer
+from .models import Staff, Parent, Student, School
+
+class UnifiedUSDCAuth(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        role_type = request.data.get('login_mode') # 'staff' or 'parent'
+        identifier = request.data.get('id_code')   # PRN for parents, Name for staff
+        pin = str(request.data.get('pin')).strip()
+
+        try:
+            if role_type == 'staff':
+                # 🕵️ Search Existing Staff Registry
+                user_obj = Staff.objects.filter(full_name__iexact=identifier, secure_pin=pin).first()
+                if not user_obj:
+                    return Response({"msg": "Staff Credentials Denied"}, status=401)
+                
+                payload = {
+                    "token": "usdc_stf_" + user_obj.staff_id,
+                    "role": user_obj.role,
+                    "display_name": user_obj.full_name,
+                    "photo_url": user_obj.passport_photo.url if user_obj.passport_photo else None,
+                    "school_context": user_obj.school
+                }
+
+            else: # Parent Mode
+                # 🕵️ Search Existing Parent/Student Link
+                student = Student.objects.filter(payment_code=identifier).first()
+                if student and student.parent_link and student.parent_link.unique_code == pin:
+                    payload = {
+                        "token": "usdc_par_" + student.account_number,
+                        "role": "PARENT",
+                        "display_name": student.parent_link.full_name,
+                        "photo_url": student.photo.url if student.photo else None,
+                        "school_context": student.school
+                    }
+                else:
+                    return Response({"msg": "Identity Mismatch in Registry"}, status=401)
+
+            # Return the finalized Identity Packet
+            serializer = UserIdentitySerializer(payload, context={'request': request})
+            return Response(serializer.data)
+
+        except Exception as e:
+            return Response({"msg": f"System Error: {str(e)}"}, status=500)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
+from .models import Staff, Student, Parent
+from .serializers import UserIdentitySerializer # Import the serializer we just fixed
+
+class UnifiedImperialAuth(APIView):
+    permission_classes = [AllowAny] # The "Front Door" is open for login
+
+    def post(self, request):
+        mode = request.data.get('login_mode') # 'staff' or 'parent'
+        id_code = request.data.get('id_code') # Name or PRN
+        pin = str(request.data.get('pin')).strip()
+
+        if mode == 'staff':
+            member = Staff.objects.filter(full_name__iexact=id_code, secure_pin=pin).first()
+            if not member: return Response({"msg": "Invalid Staff Credentials"}, 401)
+            
+            # 🔗 Link to Security User
+            user, _ = User.objects.get_or_create(username=f"stf_{member.staff_id}")
+            member.user = user
+            member.save()
+            role = member.role
+            school = member.school
+
+        else: # Parent Mode
+            student = Student.objects.filter(payment_code=id_code).first()
+            if student and student.parent_link and student.parent_link.unique_code == pin:
+                parent = student.parent_link
+                user, _ = User.objects.get_or_create(username=f"par_{parent.phone_number}")
+                parent.user = user
+                parent.save()
+                member = parent
+                role = "PARENT"
+                school = student.school
+            else:
+                return Response({"msg": "Identity Mismatch"}, 401)
+
+        # 🎫 Issue Standard Token
+        token, _ = Token.objects.get_or_create(user=user)
+        
+        return Response({
+            "token": token.key,
+            "role": role,
+            "name": id_code,
+            "school": {
+                "name": school.name,
+                "logo": request.build_absolute_uri(school.logo.url) if school.logo else ""
+            }
+        })

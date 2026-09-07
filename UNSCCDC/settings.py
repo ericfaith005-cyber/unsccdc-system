@@ -21,7 +21,7 @@ if IS_RENDER:
 else:
     # --- 🏠 LOCAL LAB SETTINGS (LAPTOP) ---
     DEBUG = True
-    ALLOWED_HOSTS = ['*', '172.24.144.47', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['*', '192.168.137.1', 'localhost', '127.0.0.1']
     SECURE_SSL_REDIRECT = False
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
@@ -43,6 +43,10 @@ SECRET_KEY = 'django-insecure-un-sccdc-sovereign-national-master-2026'
 CORS_ALLOW_ALL_ORIGINS = True 
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_METHODS = [
+    "DELETE", "GET", "OPTIONS", "PATCH", "POST", "PUT",
+]
+
 
 CSRF_TRUSTED_ORIGINS = [
     "https://unsccdc-system.onrender.com",
@@ -59,6 +63,7 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+    "x-sovereign-client", # 💎 Add your custom header here
 ]
 
 INSTALLED_APPS = [
@@ -70,6 +75,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework.authtoken', # 💎 ADD THIS: It creates the 'authtoken_token' table
     'rest_framework',
     'api',          # THE SOVEREIGN CORE APP
 ]
@@ -85,6 +91,16 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
 
 TEMPLATES = [
     {
@@ -312,5 +328,5 @@ if IS_RENDER:
     CSRF_COOKIE_SECURE = True
 else:
     DEBUG = True
-    ALLOWED_HOSTS = ['*', '172.24.144.47', 'localhost', '127.0.0.1']
+    ALLOWED_HOSTS = ['*', '10.42.153.47', 'localhost', '127.0.0.1']
     SECURE_SSL_REDIRECT = False

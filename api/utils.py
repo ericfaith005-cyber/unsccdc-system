@@ -40,3 +40,33 @@ def auto_arrange_pdf_data(pdf_file_path, school_id):
                             'is_active': True
                         }
                     )
+
+# 🏛️ THE Hub Hub Hub Hub Hub NATIONAL GRADING ENGINE
+def get_national_grading(score, level="O-LEVEL"):
+    """
+    Converts raw scores into official grades based on Ugandan standards.
+    Supports O-Level (UCE) and A-Level (UACE).
+    """
+    if score is None: score = 0
+    
+    # 💎 1. A-LEVEL LOGIC (Principal Points)
+    if level.upper() in ["A-LEVEL", "UACE", "S5", "S6"]:
+        if score >= 80: return "A", 6, "EXCEPTIONAL", "Principal Pass"
+        if score >= 70: return "B", 5, "OUTSTANDING", "Principal Pass"
+        if score >= 60: return "C", 4, "VERY GOOD", "Principal Pass"
+        if score >= 50: return "D", 3, "GOOD", "Principal Pass"
+        if score >= 40: return "E", 2, "SATISFACTORY", "Principal Pass"
+        if score >= 35: return "O", 1, "BASIC", "Subsidiary Pass"
+        return "F", 0, "UNSATISFACTORY", "Fail"
+
+    # 💎 2. O-LEVEL LOGIC (Standard D1-F9)
+    else:
+        if score >= 80: return "D1", 1, "EXCEPTIONAL", "Distinction"
+        if score >= 75: return "D2", 2, "OUTSTANDING", "Distinction"
+        if score >= 70: return "C3", 3, "VERY GOOD", "Credit"
+        if score >= 65: return "C4", 4, "GOOD", "Credit"
+        if score >= 60: return "C5", 5, "ABOVE AVERAGE", "Credit"
+        if score >= 50: return "C6", 6, "SATISFACTORY", "Credit"
+        if score >= 45: return "P7", 7, "BASIC", "Pass"
+        if score >= 40: return "P8", 8, "ELEMENTARY", "Pass"
+        return "F9", 9, "UNSATISFACTORY", "Fail"

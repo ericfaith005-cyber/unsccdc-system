@@ -1,24 +1,24 @@
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def staff_hub_auth(request):
-    """OFFICIAL STAFF Hub Hub Hub COMMAND UPLINK"""
-    d = request.data
-    name = d.get('name', '').strip()
-    pin = d.get('pin', '').strip()
+from rest_framework import serializers
+from .models import School
 
-    # 🔎 Search the vault
-    staff = Staff.objects.filter(full_name__iexact=name, secure_pin=pin).first()
-    
-    if staff:
-        # 🕵️ CRITICAL THINKING: We detect the role name automatically
-        # to prevent the 'AttributeError'
-        staff_role = getattr(staff, 'role', getattr(staff, 'position', 'Official Staff'))
-        
-        return Response({
-            "status": "STAFF_AUTHORIZED",
-            "name": staff.full_name,
-            "role": staff_role, # 💎 FIX: Safe attribute access
-            "school": staff.school.name if staff.school else "National Hub"
-        })
-    
-    return Response({"status": "DENIED", "msg": "Invalid Command Credentials."}, status=401)
+class SchoolContextSerializer(serializers.ModelSerializer):
+    """Packages school branding for the mobile app"""
+    class Meta:
+        model = School
+        fields = ['id', 'name', 'school_motto', 'logo', 'is_verified', 'school_account_id']
+
+class UserIdentitySerializer(serializers.Serializer):
+    """The Universal USDC Identity Packet"""
+    token = serializers.CharField()
+    role = serializers.CharField()
+    display_name = serializers.CharField()
+    photo = serializers.SerializerMethodField()
+    school_context = SchoolContextSerializer()
+
+    def get_photo(self, obj):
+        request = self.context.get('request')
+        photo_url = obj.get('photo_url')
+        if photo_url and request:
+            # Ensures the image link works on the local network (192.168...)
+            return request.build_absolute_uri(photo_url)
+        return None

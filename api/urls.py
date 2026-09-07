@@ -15,10 +15,6 @@ urlpatterns = [
     path('profile/', views.profile_tab, name='profile'),
     path('academics/', views.academics_tab, name='academics'),
     path('finances/', views.finances_tab, name='finances'),
-
-    path('verify-identity/', views.student_identity_gate, name='verify_identity'),
-    path('authorize-pin/', views.pin_vault_auth, name='authorize_pin'),
-    path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
    
     path('', include(router.urls)), # DRF Student/Staff lists
     path('live-stats/', views.live_warroom_stats, name='live_stats'),
@@ -85,4 +81,11 @@ urlpatterns = [
     path('batch-keb-passlips/', views.batch_keb_passlip_download, name='batch_keb_passlips'),
     path('search-student-mock-ajax/', views.search_student_for_mock, name='search_mock_ajax'),
     path('passlip-preview-html/<str:student_id>/', views.passlip_html_preview, name='passlip_preview_html'),
+    path('verify-identity/', views.student_identity_gate),
+    path('authorize-pin/', views.pin_vault_auth),
+    path('staff-portal-auth/', views.staff_hub_auth),
+    path('auth/login/', views.UnifiedImperialAuth.as_view()),
+    path('v2/auth/unified-login/', views.UnifiedUSDCAuth.as_view(), name='unified_login'),
+    path('feed/', views.get_national_feed, name='national_feed'), # 💎 ADD THIS LINE
+    path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
 ]

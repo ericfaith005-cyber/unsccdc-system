@@ -303,6 +303,7 @@ class Staff(models.Model):
     ]
 
     full_name = models.CharField(max_length=255)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='staff_profile')
     passport_photo = models.ImageField(upload_to='staff/photos/', null=True, blank=True)
     national_id_copy = models.ImageField(upload_to='staff/ids/', null=True, blank=True)
     cv_pdf = models.FileField(upload_to='staff/cvs/', null=True, blank=True)
@@ -344,6 +345,7 @@ class Staff(models.Model):
 
 class Parent(models.Model):
     full_name = models.CharField(max_length=255); unique_code = models.CharField(max_length=50, unique=True); phone_number = models.CharField(max_length=15, unique=True) 
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='parent_profile')
     
 class BioAndCareer(models.Model):
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='bio'); future_career = models.CharField(max_length=255, default="Leader"); challenges_faced = models.TextField(default="None"); student_inspiration = models.TextField(default="Uganda")
@@ -790,3 +792,46 @@ class NationalMeritList(Student):
         proxy = True
         verbose_name = "National Merit List"
         verbose_name_plural = "National Merit List"
+
+from django.db import models
+from django.conf import settings
+
+class SchoolVerification(models.Model):
+    school = models.OneToOneField('School', on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=[
+        ('PENDING', 'Pending Verification'),
+        ('VERIFIED', 'Verified'),
+        ('SUSPENDED', 'Suspended')
+    ], default='PENDING')
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+class PaymentTransaction(models.Model):
+    """Real Financial Ledger"""
+    TX_TYPES = [('FEES', 'School Fees'), ('REPORT', 'Imperial Report'), ('SERVICE', 'School Service')]
+    STATUS = [('PENDING', 'Pending'), ('SUCCESS', 'Success'), ('FAILED', 'Failed')]
+    
+    transaction_id = models.CharField(max_length=100, unique=True)
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    type = models.CharField(max_length=20, choices=TX_TYPES)
+    status = models.CharField(max_length=20, choices=STATUS, default='PENDING')
+    payment_ref = models.CharField(max_length=255, blank=True) # Provider Ref (Flutterwave/DPO)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class ImperialReportOrder(models.Model):
+    """Requirement #5: 500 UGX Payment Lock"""
+    student = models.ForeignKey('Student', on_delete=models.CASCADE)
+    term = models.CharField(max_length=20)
+    year = models.IntegerField()
+    is_unlocked = models.BooleanField(default=False)
+    transaction = models.OneToOneField(PaymentTransaction, on_delete=models.SET_NULL, null=True)
+
+class EditorialPost(models.Model):
+    """Requirement #11: Original Education Feed (Not TikTok)"""
+    school = models.ForeignKey('School', on_delete=models.CASCADE)
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    media_url = models.URLField(blank=True)
+    media_type = models.CharField(max_length=10, choices=[('IMAGE', 'Image'), ('VIDEO', 'Video')])
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
