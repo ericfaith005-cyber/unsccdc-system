@@ -83,6 +83,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',           # 💎 THE Hub Hub Hub Hub Hub KEY FIX (MUST BE TOP)
     'django.middleware.security.SecurityMiddleware',
+    'django.middleware.common.BrokenLinkEmailsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
