@@ -4151,7 +4151,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         interp = "UNSATISFACTORY"
     
         if is_a_level:
-            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT", "SUBMATH", "SUB MATH"])
+            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
             if is_sub:
                 if score >= 40: grd, pts, interp = "O", 1, "PASS"
                 else: grd, pts, interp = "F", 0, "FAIL"
