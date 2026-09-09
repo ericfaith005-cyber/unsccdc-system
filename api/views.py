@@ -4106,7 +4106,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         p.roundRect(px + 10, py + 10, pw - 20, 40, 8, fill=1)
     
     if is_a_level:
-        desc_y = height - 184
+        desc_y = height - 174
         p.setFillColor(colors.black)
         p.setFont("Times-Bold", 10)
         p.drawString(45, desc_y + 15, "UACE PERFORMANCE EVALUATION STANDARDS:")
@@ -4140,32 +4140,27 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     data_rows = [headers]
 
     for r in results_qs:
-        score = r.score
-        total_score_sum += score
+        score = r.score if r.score else 0
+        total_score_sum += score  # Added ONLY ONCE here
         if score >= 40: all_fails = False
+            
         sub_name = r.subject.name.upper()
-        
-        # 🤖 START GRADING ENGINE
         grd = "F"
         pts = 0
         interp = "UNSATISFACTORY"
-
+    
         if is_a_level:
-            # 🛡️ Identify Subsidiary (GP, Sub-Math, ICT)
-            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
+            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT", "MATH", "SUB MATH"])
             if is_sub:
-                if score >= 40: # Pass mark for subsidiary
-                    grd, pts, interp = "O", 1, "PASS"
-                else:
-                    grd, pts, interp = "F", 0, "FAIL"
+                if score >= 40: grd, pts, interp = "O", 1, "PASS"
+                else: grd, pts, interp = "F", 0, "FAIL"
             else:
-                # 🏆 Principal Subjects (A=5 to E=1)
                 if score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
                 elif score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
                 elif score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
                 elif score >= 50: grd, pts, interp = "D", 2, "BASIC"
                 elif score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
-            
+                
             total_uace_points += pts
             data_rows.append([sub_name, f"{score:g}", grd, pts, "", interp])
         else:
@@ -4176,10 +4171,16 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             elif score >= 50: grd, interp = "D", "BASIC"
             else: grd, interp = "E", "ELEMENTARY"
             data_rows.append([sub_name, f"{score:g}", grd, "", interp])
-
-    # 🧮 9. FINAL CALCULATIONS
-    final_average = total_score_sum / subject_count if subject_count > 0 else 0
     
+    # 🧮 4. FINAL CALCULATIONS (Performed after the loop)
+    final_average = total_score_sum / subject_count if subject_count > 0 else 0
+        
+    # Mapping the average to the Official Grade
+    if final_average >= 80: final_overall_grade = "A"
+    elif final_average >= 70: final_overall_grade = "B"
+    elif final_average >= 60: final_overall_grade = "C"
+    elif final_average >= 50: final_overall_grade = "D"
+    else: final_overall_grade = "E"
     # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
     p.setFillColor(rich_gold)
