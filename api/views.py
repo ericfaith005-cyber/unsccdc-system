@@ -4244,6 +4244,22 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     # ✍️ 13. FOOTER & SIGNATURE
+    signature_path = "path/to/signature.png"  # Replace with the path to your image
+    sig_width = 120                           # Width in points
+    sig_height = 40                           # Height in points
+
+    # 2. Draw the signature image above the line
+    # The line is at y = base_y - 398, so place the bottom of the image at or slightly above it
+    p.drawImage(
+        signature_path,
+        x=45,                                 # Left-aligned with the line
+        y=base_y - 395,                       # Slightly above the line (adjust as needed)
+        width=sig_width,
+        height=sig_height,
+        mask='auto',                          # Preserves transparency for PNG images
+        preserveAspectRatio=True
+    )
+
     p.setStrokeColor(gov_blue)
     p.setLineWidth(1)
     p.line(45, base_y - 398, 200, base_y - 398) # The physical line
