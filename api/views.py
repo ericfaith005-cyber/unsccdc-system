@@ -4255,7 +4255,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
                 signature_image,
                 50,                  # X position
                 base_y - 396,        # Y position
-                width=55,           # smaller signature
+                width=50,           # smaller signature
                 height=40,           # smaller height
                 preserveAspectRatio=True,
                 anchor='sw',
