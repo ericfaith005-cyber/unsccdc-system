@@ -4255,7 +4255,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
                 signature_image,
                 50,                  # X position
                 base_y - 393,        # Y position
-                width=120,           # smaller signature
+                width=40,           # smaller signature
                 height=32,           # smaller height
                 preserveAspectRatio=True,
                 anchor='sw',
@@ -4275,7 +4275,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 405, "KEB EXAMINATIONS CHAIRMAN")
-    
+
 @login_required
 def batch_report_download(request):
     try:
