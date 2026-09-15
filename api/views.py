@@ -4244,10 +4244,33 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     # ✍️ 13. FOOTER & SIGNATURE
+    # ✍️ 13. FOOTER & REAL KEB CHAIRMAN SIGNATURE
+    try:
+        if school.chairman_signature:
+            signature_file = school.chairman_signature.open("rb")
+            signature_image = ImageReader(signature_file)
+
+            # REAL UPLOADED SIGNATURE
+            p.drawImage(
+                signature_image,
+                45,
+                base_y - 395,
+                width=155,
+                height=42,
+                preserveAspectRatio=True,
+                mask="auto"
+            )
+
+            signature_file.close()
+    except Exception:
+        pass
+
+    # Physical signature line
     p.setStrokeColor(gov_blue)
     p.setLineWidth(1)
-    p.line(45, base_y - 398, 200, base_y - 398) # The physical line
-    
+    p.line(45, base_y - 398, 200, base_y - 398)
+
+    # Chairman title
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 405, "KEB EXAMINATIONS CHAIRMAN")
