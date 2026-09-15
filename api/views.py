@@ -4244,21 +4244,22 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     k_table.wrapOn(p, width, height); k_table.drawOn(p, 45, base_y - 374)
 
     # ✍️ 13. FOOTER & SIGNATURE
-    # ✍️ 13. FOOTER & REAL KEB CHAIRMAN SIGNATURE
+    
     try:
         if school.chairman_signature:
             signature_file = school.chairman_signature.open("rb")
             signature_image = ImageReader(signature_file)
 
-            # REAL UPLOADED SIGNATURE
+            # REAL SIGNATURE — SMALL AND POSITIONED ABOVE THE LINE
             p.drawImage(
                 signature_image,
-                45,
-                base_y - 395,
-                width=155,
-                height=42,
+                50,                  # X position
+                base_y - 393,        # Y position
+                width=120,           # smaller signature
+                height=32,           # smaller height
                 preserveAspectRatio=True,
-                mask="auto"
+                anchor='sw',
+                mask='auto'
             )
 
             signature_file.close()
@@ -4274,7 +4275,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     p.setFillColor(colors.black)
     p.setFont("Times-Bold", 8)
     p.drawString(45, base_y - 405, "KEB EXAMINATIONS CHAIRMAN")
-# 🚀 THE Hub Hub Hub Hub Hub NATIONAL PAIRED BATCH ENGINE
+    
 @login_required
 def batch_report_download(request):
     try:
