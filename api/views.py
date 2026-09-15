@@ -4153,7 +4153,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         if is_a_level:
             is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
             if is_sub:
-                if score >= 40: grd, pts, interp = "O", 1, "PASS"
+                if score >= 50: grd, pts, interp = "O", 1, "PASS"
                 else: grd, pts, interp = "F", 0, "FAIL"
             else:
                 if score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
@@ -4168,8 +4168,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
             # O-Level Logic
             if score >= 80: grd, interp = "A", "EXCEPTIONAL"
             elif score >= 70: grd, interp = "B", "OUTSTANDING"
-            elif score >= 60: grd, interp = "C", "SATISFACTORY"
-            elif score >= 50: grd, interp = "D", "BASIC"
+            elif score >= 55: grd, interp = "C", "SATISFACTORY"
+            elif score >= 40: grd, interp = "D", "BASIC"
             else: grd, interp = "E", "ELEMENTARY"
             data_rows.append([sub_name, f"{score:g}", grd, "", interp])
     
@@ -4179,8 +4179,8 @@ def draw_keb_slip_layout(p, student, school, y_offset):
     # Mapping the average to the Official Grade
     if final_average >= 80: final_overall_grade = "A"
     elif final_average >= 70: final_overall_grade = "B"
-    elif final_average >= 60: final_overall_grade = "C"
-    elif final_average >= 50: final_overall_grade = "D"
+    elif final_average >= 55: final_overall_grade = "C"
+    elif final_average >= 40: final_overall_grade = "D"
     else: final_overall_grade = "E"
     # 🏁 10. MERIT BAR (GREEN/GOLD)
     bar_y = base_y - 145
