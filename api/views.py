@@ -4151,16 +4151,30 @@ def draw_keb_slip_layout(p, student, school, y_offset):
         interp = "UNSATISFACTORY"
     
         if is_a_level:
-            is_sub = any(x in sub_name for x in ["GP", "GENERAL", "SUB", "ICT"])
-            if is_sub:
+            is_subsidiary = (
+                "GENERAL PAPER" in sub_name
+                or sub_name == "GP"
+                or "ICT" in sub_name
+                or "SUBSIDIARY MATHEMATICS" in sub_name
+                or "SUB MATH" in sub_name
+                or "SUBSIDIARY MATH" in sub_name
+            )
+            if is_subsidiary:
                 if score >= 50: grd, pts, interp = "O", 1, "PASS"
                 else: grd, pts, interp = "F", 0, "FAIL"
             else:
-                if score >= 80: grd, pts, interp = "A", 5, "EXCEPTIONAL"
-                elif score >= 70: grd, pts, interp = "B", 4, "OUTSTANDING"
-                elif score >= 60: grd, pts, interp = "C", 3, "SATISFACTORY"
-                elif score >= 50: grd, pts, interp = "D", 2, "BASIC"
-                elif score >= 40: grd, pts, interp = "E", 1, "ELEMENTARY"
+                if score >= 80:
+                    grd, pts, interp = "A", 5, "EXCEPTIONAL"
+                elif score >= 70:
+                    grd, pts, interp = "B", 4, "OUTSTANDING"
+                elif score >= 60:
+                    grd, pts, interp = "C", 3, "SATISFACTORY"
+                elif score >= 50:
+                    grd, pts, interp = "D", 2, "BASIC"
+                elif score >= 40:
+                    grd, pts, interp = "E", 1, "ELEMENTARY"
+                else:
+                    grd, pts, interp = "F", 0, "FAIL"
                 
             total_uace_points += pts
             data_rows.append([sub_name, f"{score:g}", grd, pts, "", interp])
