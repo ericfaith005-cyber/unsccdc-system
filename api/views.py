@@ -4174,7 +4174,7 @@ def draw_keb_slip_layout(p, student, school, y_offset):
                 elif score >= 40:
                     grd, pts, interp = "E", 1, "ELEMENTARY"
                 else:
-                    grd, pts, interp = "F", 0, "FAIL"
+                    grd, pts, interp = "E", 1, "FAIL"
                 
             total_uace_points += pts
             data_rows.append([sub_name, f"{score:g}", grd, pts, "", interp])
