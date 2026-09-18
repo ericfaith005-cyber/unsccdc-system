@@ -936,7 +936,9 @@ def generate_payslip_pdf(request, payroll_id):
     except Exception as e:
         return HttpResponse(f"Dossier Error: {str(e)}", status=400)
      # --- 👑 THE SECRET KING-MAKER DOOR ---
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 def create_initial_king(request):
     # This is a secret URL to build the first admin in the clouds
