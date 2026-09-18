@@ -92,4 +92,8 @@ urlpatterns = [
     'download-class-analysis/<str:class_name>/',
     views.generate_class_analysis_pdf,
     name='download_class_analysis'),
+    path(
+    'download-subject-analysis/<str:class_name>/<int:subject_id>/',
+    views.generate_subject_analysis_pdf,
+    name='download_subject_analysis'),
 ]
