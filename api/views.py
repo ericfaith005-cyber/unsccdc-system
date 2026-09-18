@@ -5963,25 +5963,30 @@ def generate_class_analysis_pdf(request, class_name):
     
 def generate_subject_analysis_pdf(request, class_name, subject_id):
     """
-    Generates ONE professional PDF showing how every student
-    in the selected class performed in the selected subject.
-    Students are ordered by recorded score, highest to lowest.
+    Generates a professional institutional subject-performance report
+    for all recorded candidates in the selected class and subject.
     """
+
     try:
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.lib.enums import TA_CENTER
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
         from reportlab.platypus import (
-            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-            PageBreak
+            SimpleDocTemplate,
+            Paragraph,
+            Spacer,
+            Table,
+            TableStyle,
+            KeepTogether
         )
         from reportlab.lib.units import mm
         from datetime import datetime
 
         # ---------------------------------------------------------
-        # 1. SCHOOL + SUBJECT
+        # 1. SCHOOL / SUBJECT / STUDENTS
         # ---------------------------------------------------------
+
         school = (
             getattr(request.user, "school", None)
             or School.objects.first()
@@ -5992,9 +5997,6 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
             id=subject_id
         )
 
-        # ---------------------------------------------------------
-        # 2. GET STUDENTS + THEIR RESULT FOR THIS SUBJECT
-        # ---------------------------------------------------------
         students = list(
             Student.objects
             .filter(
@@ -6015,8 +6017,9 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
         )
 
         # ---------------------------------------------------------
-        # 3. RESPONSE
+        # 2. RESPONSE / FILE NAME
         # ---------------------------------------------------------
+
         response = HttpResponse(
             content_type="application/pdf"
         )
@@ -6032,115 +6035,181 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
         ).strip().replace(" ", "_")
 
         response["Content-Disposition"] = (
-            f'attachment; filename="SUBJECT_PERFORMANCE_'
+            f'attachment; filename="KEB_SUBJECT_REPORT_'
             f'{safe_class}_{safe_subject}.pdf"'
         )
 
         # ---------------------------------------------------------
-        # 4. COLORS
+        # 3. INSTITUTIONAL COLOURS
         # ---------------------------------------------------------
-        NAVY = colors.HexColor("#001B44")
-        BLUE = colors.HexColor("#003B73")
-        GOLD = colors.HexColor("#D4AF37")
-        LIGHT_GOLD = colors.HexColor("#F7F1D2")
-        LIGHT_BLUE = colors.HexColor("#EEF4FA")
-        LIGHT_GREY = colors.HexColor("#F4F5F7")
+
+        NAVY = colors.HexColor("#08224A")
+        DEEP_NAVY = colors.HexColor("#04152F")
+        BLUE = colors.HexColor("#164E86")
+        GOLD = colors.HexColor("#C9A227")
+        LIGHT_GOLD = colors.HexColor("#F7F0D2")
+        PALE_BLUE = colors.HexColor("#EEF4FA")
+        PALE_GREY = colors.HexColor("#F5F6F8")
+        BORDER = colors.HexColor("#D4DAE2")
+        DARK = colors.HexColor("#17202A")
+        GREY = colors.HexColor("#667085")
         WHITE = colors.white
-        BLACK = colors.HexColor("#111111")
-        GREY = colors.HexColor("#666666")
-        GREEN = colors.HexColor("#16833B")
+        GREEN = colors.HexColor("#197A45")
+        LIGHT_GREEN = colors.HexColor("#EAF6EF")
         RED = colors.HexColor("#B42318")
+        LIGHT_RED = colors.HexColor("#FDECEC")
+        SILVER = colors.HexColor("#E9EDF2")
+        BRONZE = colors.HexColor("#F4E7D5")
 
         # ---------------------------------------------------------
-        # 5. DOCUMENT
+        # 4. DOCUMENT
         # ---------------------------------------------------------
+
         doc = SimpleDocTemplate(
             response,
             pagesize=A4,
-            rightMargin=18 * mm,
-            leftMargin=18 * mm,
-            topMargin=18 * mm,
-            bottomMargin=18 * mm,
-            title=f"{subject.name} Performance - {class_name}",
-            author="UNSCCDC National Performance Registry"
+            rightMargin=17 * mm,
+            leftMargin=17 * mm,
+            topMargin=17 * mm,
+            bottomMargin=20 * mm,
+            title=f"{subject.name} Subject Performance Report",
+            author="UNSCCDC Performance Registry"
         )
 
         styles = getSampleStyleSheet()
 
-        title_style = ParagraphStyle(
-            "SubjectTitle",
-            parent=styles["Title"],
-            fontName="Times-Bold",
-            fontSize=18,
-            leading=22,
-            alignment=TA_CENTER,
-            textColor=NAVY,
-            spaceAfter=5
-        )
+        # ---------------------------------------------------------
+        # 5. TYPOGRAPHY
+        # ---------------------------------------------------------
 
-        subtitle_style = ParagraphStyle(
-            "SubjectSubtitle",
+        government_style = ParagraphStyle(
+            "GovernmentHeader",
             parent=styles["Normal"],
             fontName="Times-Bold",
-            fontSize=9,
+            fontSize=10,
             leading=12,
             alignment=TA_CENTER,
-            textColor=GREY
+            textColor=DARK
+        )
+
+        institution_style = ParagraphStyle(
+            "Institution",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=17,
+            leading=20,
+            alignment=TA_CENTER,
+            textColor=NAVY
+        )
+
+        report_title_style = ParagraphStyle(
+            "ReportTitle",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=11,
+            leading=14,
+            alignment=TA_CENTER,
+            textColor=GOLD
         )
 
         section_style = ParagraphStyle(
-            "SubjectSection",
+            "Section",
             parent=styles["Heading2"],
             fontName="Times-Bold",
             fontSize=11,
             leading=14,
             textColor=NAVY,
-            spaceBefore=8,
+            spaceBefore=9,
             spaceAfter=7
         )
 
-        normal_style = ParagraphStyle(
-            "SubjectNormal",
+        body_style = ParagraphStyle(
+            "Body",
             parent=styles["Normal"],
             fontName="Times-Roman",
-            fontSize=9.5,
+            fontSize=9.2,
             leading=14,
-            textColor=BLACK
+            textColor=DARK
+        )
+
+        body_bold_style = ParagraphStyle(
+            "BodyBold",
+            parent=body_style,
+            fontName="Times-Bold"
         )
 
         small_style = ParagraphStyle(
-            "SubjectSmall",
+            "Small",
             parent=styles["Normal"],
             fontName="Times-Roman",
-            fontSize=7.5,
+            fontSize=7.3,
             leading=10,
             textColor=GREY
         )
 
+        small_center = ParagraphStyle(
+            "SmallCenter",
+            parent=small_style,
+            alignment=TA_CENTER
+        )
+
+        metric_value_style = ParagraphStyle(
+            "MetricValue",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=16,
+            leading=18,
+            alignment=TA_CENTER,
+            textColor=NAVY
+        )
+
+        metric_label_style = ParagraphStyle(
+            "MetricLabel",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=7,
+            leading=9,
+            alignment=TA_CENTER,
+            textColor=GREY
+        )
+
         # ---------------------------------------------------------
-        # 6. PAGE FRAME
+        # 6. PAGE FRAME / HEADER / FOOTER
         # ---------------------------------------------------------
-        def draw_page(canvas, doc):
+
+        def draw_page(canvas, document):
             canvas.saveState()
 
             width, height = A4
 
+            # Outer institutional frame
             canvas.setStrokeColor(NAVY)
-            canvas.setLineWidth(2)
+            canvas.setLineWidth(1.8)
             canvas.rect(
-                10 * mm,
-                10 * mm,
-                width - 20 * mm,
-                height - 20 * mm
+                9 * mm,
+                9 * mm,
+                width - 18 * mm,
+                height - 18 * mm
             )
 
+            # Inner gold frame
             canvas.setStrokeColor(GOLD)
-            canvas.setLineWidth(0.7)
+            canvas.setLineWidth(0.6)
             canvas.rect(
-                13 * mm,
-                13 * mm,
-                width - 26 * mm,
-                height - 26 * mm
+                12 * mm,
+                12 * mm,
+                width - 24 * mm,
+                height - 24 * mm
+            )
+
+            # Footer separator
+            canvas.setStrokeColor(BORDER)
+            canvas.setLineWidth(0.5)
+            canvas.line(
+                17 * mm,
+                17 * mm,
+                width - 17 * mm,
+                17 * mm
             )
 
             canvas.setFont("Times-Roman", 7)
@@ -6148,87 +6217,29 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
 
             canvas.drawString(
                 18 * mm,
-                13 * mm,
-                "UNSCCDC • SUBJECT PERFORMANCE REGISTRY"
+                12.5 * mm,
+                "UNSCCDC • KEB MOCK PERFORMANCE REGISTRY"
             )
 
             canvas.drawRightString(
                 width - 18 * mm,
-                13 * mm,
-                f"PAGE {doc.page}"
+                12.5 * mm,
+                f"PAGE {document.page}"
             )
 
             canvas.restoreState()
 
-        story = []
-
-        school_name = (
-            school.name.upper()
-            if school and school.name
-            else "UNSCCDC NATIONAL HUB"
-        )
-
         # ---------------------------------------------------------
-        # 7. HEADER
+        # 7. CALCULATIONS
         # ---------------------------------------------------------
-        story.append(
-            Paragraph(
-                "THE REPUBLIC OF UGANDA",
-                ParagraphStyle(
-                    "Government",
-                    parent=subtitle_style,
-                    fontSize=10,
-                    textColor=BLACK
-                )
-            )
-        )
 
-        story.append(
-            Paragraph(
-                "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT",
-                subtitle_style
-            )
-        )
-
-        story.append(Spacer(1, 5))
-
-        story.append(
-            Paragraph(
-                school_name,
-                title_style
-            )
-        )
-
-        story.append(
-            Paragraph(
-                f"{str(subject.name).upper()} — SUBJECT PERFORMANCE REPORT",
-                ParagraphStyle(
-                    "SubjectReport",
-                    parent=subtitle_style,
-                    fontSize=11,
-                    textColor=GOLD
-                )
-            )
-        )
-
-        story.append(
-            Paragraph(
-                f"CLASS: {str(class_name).upper()}",
-                subtitle_style
-            )
-        )
-
-        story.append(Spacer(1, 12))
-
-        # ---------------------------------------------------------
-        # 8. CALCULATIONS
-        # ---------------------------------------------------------
         scores = [
-            float(result.score or 0)
-            for result in results
+            float(r.score or 0)
+            for r in results
         ]
 
         student_count = len(results)
+
         total_score = sum(scores)
 
         average = (
@@ -6250,135 +6261,422 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
             if lowest else 0
         )
 
-        above_50 = sum(
-            1 for score in scores
-            if score >= 50
+        score_range = (
+            highest_score - lowest_score
+            if results else 0
+        )
+
+        above_80 = sum(
+            1 for x in scores if x >= 80
+        )
+
+        between_70_79 = sum(
+            1 for x in scores if 70 <= x < 80
+        )
+
+        between_60_69 = sum(
+            1 for x in scores if 60 <= x < 70
+        )
+
+        between_50_59 = sum(
+            1 for x in scores if 50 <= x < 60
         )
 
         below_50 = sum(
-            1 for score in scores
-            if score < 50
+            1 for x in scores if x < 50
+        )
+
+        at_or_above_50 = sum(
+            1 for x in scores if x >= 50
         )
 
         pass_rate = (
-            (above_50 / student_count) * 100
+            (at_or_above_50 / student_count) * 100
             if student_count
             else 0
         )
 
         # ---------------------------------------------------------
-        # 9. SUBJECT OVERVIEW
+        # 8. STORY
         # ---------------------------------------------------------
+
+        story = []
+
+        school_name = (
+            school.name.upper()
+            if school and school.name
+            else "UNSCCDC NATIONAL HUB"
+        )
+
+        # ---------------------------------------------------------
+        # OFFICIAL HEADER
+        # ---------------------------------------------------------
+
         story.append(
             Paragraph(
-                "I. SUBJECT PERFORMANCE OVERVIEW",
+                "THE REPUBLIC OF UGANDA",
+                government_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT",
+                ParagraphStyle(
+                    "NationalHeader",
+                    parent=government_style,
+                    fontSize=8.5,
+                    textColor=GREY
+                )
+            )
+        )
+
+        story.append(Spacer(1, 5))
+
+        # Gold rule
+        rule = Table(
+            [[""]],
+            colWidths=[175 * mm],
+            rowHeights=[1.2 * mm]
+        )
+
+        rule.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), GOLD)
+            ])
+        )
+
+        story.append(rule)
+        story.append(Spacer(1, 7))
+
+        story.append(
+            Paragraph(
+                school_name,
+                institution_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"{str(subject.name).upper()} — SUBJECT PERFORMANCE REPORT",
+                report_title_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"CLASS: {str(class_name).upper()}",
+                ParagraphStyle(
+                    "ClassHeader",
+                    parent=small_center,
+                    fontName="Times-Bold",
+                    textColor=NAVY
+                )
+            )
+        )
+
+        story.append(Spacer(1, 9))
+
+        # ---------------------------------------------------------
+        # REPORT METADATA PANEL
+        # ---------------------------------------------------------
+
+        generated = datetime.now().strftime(
+            "%d %B %Y • %H:%M"
+        )
+
+        metadata = [
+            [
+                Paragraph("<b>DOCUMENT</b>", small_center),
+                Paragraph("<b>SUBJECT</b>", small_center),
+                Paragraph("<b>CLASS</b>", small_center),
+                Paragraph("<b>GENERATED</b>", small_center)
+            ],
+            [
+                Paragraph("KEB MOCK", small_center),
+                Paragraph(str(subject.name).upper(), small_center),
+                Paragraph(str(class_name).upper(), small_center),
+                Paragraph(generated, small_center)
+            ]
+        ]
+
+        metadata_table = Table(
+            metadata,
+            colWidths=[
+                43.5 * mm,
+                43.5 * mm,
+                43.5 * mm,
+                44.5 * mm
+            ]
+        )
+
+        metadata_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), PALE_BLUE),
+                ("BACKGROUND", (0, 1), (-1, 1), WHITE),
+                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
+                ("INNERGRID", (0, 0), (-1, -1), 0.35, BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
+            ])
+        )
+
+        story.append(metadata_table)
+        story.append(Spacer(1, 8))
+
+        # ---------------------------------------------------------
+        # I. EXECUTIVE PERFORMANCE SUMMARY
+        # ---------------------------------------------------------
+
+        story.append(
+            Paragraph(
+                "I. EXECUTIVE PERFORMANCE SUMMARY",
                 section_style
             )
         )
 
-        overview_data = [
+        metrics = [
             [
-                "STUDENTS WITH RESULTS",
-                "CLASS AVERAGE",
-                "HIGHEST SCORE",
-                "LOWEST SCORE"
+                Paragraph(
+                    f"{student_count}",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{average:.1f}%",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{highest_score:.1f}%",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{lowest_score:.1f}%",
+                    metric_value_style
+                )
             ],
             [
-                str(student_count),
-                f"{average:.1f}%",
-                f"{highest_score:.1f}%",
-                f"{lowest_score:.1f}%"
+                Paragraph(
+                    "RECORDED CANDIDATES",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "CLASS AVERAGE",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "HIGHEST SCORE",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "LOWEST SCORE",
+                    metric_label_style
+                )
             ]
         ]
 
-        overview_table = Table(
-            overview_data,
-            colWidths=[40 * mm] * 4
+        metrics_table = Table(
+            metrics,
+            colWidths=[43.5 * mm] * 4
         )
 
-        overview_table.setStyle(
+        metrics_table.setStyle(
             TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-                ("BACKGROUND", (0, 1), (-1, 1), LIGHT_GOLD),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
-                ("FONTNAME", (0, 1), (-1, 1), "Times-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("BOX", (0, 0), (-1, -1), 0.8, NAVY),
-                ("INNERGRID", (0, 0), (-1, -1), 0.3, WHITE),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("BACKGROUND", (0, 0), (-1, -1), WHITE),
+                ("BOX", (0, 0), (-1, -1), 0.9, NAVY),
+                ("INNERGRID", (0, 0), (-1, -1), 0.35, BORDER),
+                ("BACKGROUND", (0, 0), (-1, 0), LIGHT_GOLD),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
             ])
         )
 
-        story.append(overview_table)
-        story.append(Spacer(1, 9))
+        story.append(metrics_table)
+        story.append(Spacer(1, 8))
 
         # ---------------------------------------------------------
-        # 10. PERFORMANCE DISTRIBUTION
+        # SECONDARY METRICS
         # ---------------------------------------------------------
-        distribution_data = [
+
+        secondary = [
             [
-                Paragraph("<b>50% AND ABOVE</b>", small_style),
-                Paragraph("<b>BELOW 50%</b>", small_style),
-                Paragraph("<b>RECORDED RESULTS</b>", small_style)
+                Paragraph(
+                    f"{pass_rate:.1f}%",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{score_range:.1f}",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{at_or_above_50}",
+                    metric_value_style
+                ),
+                Paragraph(
+                    f"{below_50}",
+                    metric_value_style
+                )
             ],
             [
-                f"{above_50} students ({pass_rate:.1f}%)",
-                f"{below_50} students",
-                str(student_count)
+                Paragraph(
+                    "50%+ RATE",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "SCORE RANGE",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "50% AND ABOVE",
+                    metric_label_style
+                ),
+                Paragraph(
+                    "BELOW 50%",
+                    metric_label_style
+                )
+            ]
+        ]
+
+        secondary_table = Table(
+            secondary,
+            colWidths=[43.5 * mm] * 4
+        )
+
+        secondary_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), WHITE),
+                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
+                ("INNERGRID", (0, 0), (-1, -1), 0.35, BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5)
+            ])
+        )
+
+        story.append(secondary_table)
+
+        # ---------------------------------------------------------
+        # II. PERFORMANCE DISTRIBUTION
+        # ---------------------------------------------------------
+
+        story.append(
+            Paragraph(
+                "II. SCORE DISTRIBUTION",
+                section_style
+            )
+        )
+
+        distribution_rows = [
+            [
+                "SCORE BAND",
+                "CANDIDATES",
+                "PERCENTAGE"
+            ],
+            [
+                "80 – 100%",
+                str(above_80),
+                f"{(above_80 / student_count * 100) if student_count else 0:.1f}%"
+            ],
+            [
+                "70 – 79%",
+                str(between_70_79),
+                f"{(between_70_79 / student_count * 100) if student_count else 0:.1f}%"
+            ],
+            [
+                "60 – 69%",
+                str(between_60_69),
+                f"{(between_60_69 / student_count * 100) if student_count else 0:.1f}%"
+            ],
+            [
+                "50 – 59%",
+                str(between_50_59),
+                f"{(between_50_59 / student_count * 100) if student_count else 0:.1f}%"
+            ],
+            [
+                "Below 50%",
+                str(below_50),
+                f"{(below_50 / student_count * 100) if student_count else 0:.1f}%"
             ]
         ]
 
         distribution_table = Table(
-            distribution_data,
-            colWidths=[58 * mm, 58 * mm, 59 * mm]
+            distribution_rows,
+            colWidths=[
+                80 * mm,
+                45 * mm,
+                50 * mm
+            ],
+            repeatRows=1
         )
 
         distribution_table.setStyle(
             TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), LIGHT_BLUE),
-                ("BOX", (0, 0), (-1, -1), 0.6, NAVY),
-                ("INNERGRID", (0, 0), (-1, -1), 0.3,
-                 colors.HexColor("#D5DCE5")),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
                 ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
-                ("FONTNAME", (0, 1), (-1, 1), "Times-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8.5),
-                ("TOPPADDING", (0, 0), (-1, -1), 7),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ("ALIGN", (1, 1), (-1, -1), "CENTER"),
+                ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
             ])
         )
 
+        # Alternate score rows
+        for row in range(1, len(distribution_rows)):
+            if row % 2 == 0:
+                distribution_table.setStyle(
+                    TableStyle([
+                        (
+                            "BACKGROUND",
+                            (0, row),
+                            (-1, row),
+                            PALE_GREY
+                        )
+                    ])
+                )
+
         story.append(distribution_table)
-        story.append(Spacer(1, 10))
 
         # ---------------------------------------------------------
-        # 11. RANKED STUDENT PERFORMANCE
+        # III. CANDIDATE RANKING
         # ---------------------------------------------------------
+
         story.append(
             Paragraph(
-                "II. STUDENT PERFORMANCE RANKING",
+                "III. CANDIDATE PERFORMANCE RANKING",
                 section_style
             )
         )
 
         ranking_rows = [
             [
-                "POSITION",
-                "STUDENT",
-                "SCORE (%)",
+                "RANK",
+                "CANDIDATE",
+                "SCORE",
                 "GRADE",
                 "POINTS"
             ]
         ]
 
         for position, result in enumerate(results, start=1):
+
+            score = float(result.score or 0)
+
             ranking_rows.append([
                 str(position),
-                result.student.full_name.upper(),
-                f"{float(result.score or 0):.1f}",
+                Paragraph(
+                    result.student.full_name.upper(),
+                    ParagraphStyle(
+                        "CandidateName",
+                        fontName="Times-Bold",
+                        fontSize=8.5,
+                        leading=10
+                    )
+                ),
+                f"{score:.1f}%",
                 result.grade or "—",
                 str(result.points or 0)
             ])
@@ -6395,103 +6693,239 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
         ranking_table = Table(
             ranking_rows,
             colWidths=[
-                25 * mm,
-                75 * mm,
-                30 * mm,
-                25 * mm,
-                25 * mm
+                20 * mm,
+                85 * mm,
+                28 * mm,
+                22 * mm,
+                20 * mm
             ],
             repeatRows=1
         )
 
-        commands = [
-            ("BACKGROUND", (0, 0), (-1, 0), NAVY),
-            ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
-            ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
-            ("FONTSIZE", (0, 0), (-1, 0), 8),
-            ("GRID", (0, 0), (-1, -1), 0.35,
-             colors.HexColor("#BFC7D1")),
-            ("ALIGN", (0, 0), (0, -1), "CENTER"),
-            ("ALIGN", (2, 1), (-1, -1), "CENTER"),
-            ("FONTNAME", (0, 1), (-1, -1), "Times-Roman"),
-            ("FONTSIZE", (0, 1), (-1, -1), 8.5),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 5),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ]
+        ranking_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), DEEP_NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 8),
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                ("ALIGN", (2, 1), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("GRID", (0, 0), (-1, -1), 0.35, BORDER),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6)
+            ])
+        )
 
-        for row_num in range(1, len(ranking_rows)):
-            if row_num % 2 == 0:
-                commands.append(
-                    (
-                        "BACKGROUND",
-                        (0, row_num),
-                        (-1, row_num),
-                        LIGHT_GREY
-                    )
+        # Alternating rows
+        for row in range(1, len(ranking_rows)):
+            if row % 2 == 0:
+                ranking_table.setStyle(
+                    TableStyle([
+                        (
+                            "BACKGROUND",
+                            (0, row),
+                            (-1, row),
+                            PALE_GREY
+                        )
+                    ])
                 )
 
-        ranking_table.setStyle(TableStyle(commands))
+        # Highlight podium positions
+        if len(ranking_rows) > 1:
+            ranking_table.setStyle(
+                TableStyle([
+                    (
+                        "BACKGROUND",
+                        (0, 1),
+                        (-1, 1),
+                        LIGHT_GOLD
+                    ),
+                    (
+                        "TEXTCOLOR",
+                        (0, 1),
+                        (0, 1),
+                        NAVY
+                    ),
+                    (
+                        "FONTNAME",
+                        (0, 1),
+                        (0, 1),
+                        "Times-Bold"
+                    )
+                ])
+            )
+
+        if len(ranking_rows) > 2:
+            ranking_table.setStyle(
+                TableStyle([
+                    (
+                        "BACKGROUND",
+                        (0, 2),
+                        (-1, 2),
+                        colors.HexColor("#F0F2F5")
+                    )
+                ])
+            )
+
+        if len(ranking_rows) > 3:
+            ranking_table.setStyle(
+                TableStyle([
+                    (
+                        "BACKGROUND",
+                        (0, 3),
+                        (-1, 3),
+                        BRONZE
+                    )
+                ])
+            )
 
         story.append(ranking_table)
 
         # ---------------------------------------------------------
-        # 12. SUBJECT ANALYSIS
+        # IV. TOP PERFORMANCE ANALYSIS
         # ---------------------------------------------------------
+
         story.append(
             Paragraph(
-                "III. SUBJECT ANALYSIS",
+                "IV. TOP PERFORMANCE ANALYSIS",
+                section_style
+            )
+        )
+
+        if highest:
+
+            top_name = highest.student.full_name.upper()
+
+            second_score = (
+                float(results[1].score or 0)
+                if len(results) > 1
+                else None
+            )
+
+            if second_score is not None:
+                lead = highest_score - second_score
+                comparison = (
+                    f"The leading recorded score exceeds the second-highest "
+                    f"score by <b>{lead:.1f} percentage points</b>."
+                )
+            else:
+                comparison = (
+                    "Only one recorded result is available for this subject."
+                )
+
+            analysis = (
+                f"<b>{top_name}</b> recorded the highest performance in "
+                f"<b>{str(subject.name).upper()}</b> with a score of "
+                f"<b>{highest_score:.1f}%</b>. "
+                f"The class average is <b>{average:.1f}%</b>, giving the "
+                f"highest recorded performance a difference of "
+                f"<b>{highest_score - average:.1f} percentage points</b> "
+                f"above the class average. "
+                f"{comparison}"
+            )
+
+            story.append(
+                Paragraph(
+                    analysis,
+                    body_style
+                )
+            )
+
+            story.append(Spacer(1, 6))
+
+            top_card = Table(
+                [
+                    [
+                        Paragraph(
+                            "HIGHEST RECORDED PERFORMANCE",
+                            ParagraphStyle(
+                                "TopCardHeader",
+                                parent=small_style,
+                                fontName="Times-Bold",
+                                textColor=WHITE
+                            )
+                        ]
+                    ],
+                    [
+                        Paragraph(
+                            f"<b>{top_name}</b><br/>"
+                            f"{str(subject.name).upper()}<br/>"
+                            f"<b>{highest_score:.1f}%</b> "
+                            f"• Grade {highest.grade or '—'} "
+                            f"• Points {highest.points or 0}",
+                            body_style
+                        )
+                    ]
+                ],
+                colWidths=[175 * mm]
+            )
+
+            top_card.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                    ("BACKGROUND", (0, 1), (-1, 1), LIGHT_GOLD),
+                    ("BOX", (0, 0), (-1, -1), 0.9, GOLD),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8)
+                ])
+            )
+
+            story.append(top_card)
+
+        else:
+
+            story.append(
+                Paragraph(
+                    "No recorded mock results are available for the selected "
+                    "subject and class.",
+                    body_style
+                )
+            )
+
+        # ---------------------------------------------------------
+        # V. PERFORMANCE INTERPRETATION
+        # ---------------------------------------------------------
+
+        story.append(
+            Paragraph(
+                "V. PERFORMANCE INTERPRETATION",
                 section_style
             )
         )
 
         if results:
 
-            top_student = results[0]
-
-            analysis_text = (
-                f"<b>{top_student.student.full_name.upper()}</b> recorded "
-                f"the highest score in {subject.name.upper()} with "
-                f"<b>{float(top_student.score or 0):.1f}%</b>. "
-                f"The recorded class average for this subject is "
-                f"<b>{average:.1f}%</b>. "
-            )
-
-            if student_count > 1:
-                margin = (
-                    float(top_student.score or 0)
-                    - float(results[1].score or 0)
+            if pass_rate >= 80:
+                interpretation = (
+                    f"The recorded results show that {pass_rate:.1f}% of "
+                    f"candidates achieved scores of 50% or above. "
+                    f"The class average stands at {average:.1f}%, while "
+                    f"{above_80} candidate(s) recorded scores of 80% or above."
                 )
 
-                analysis_text += (
-                    f"The difference between the highest and second-highest "
-                    f"recorded scores is <b>{margin:.1f} percentage points</b>."
+            elif pass_rate >= 50:
+                interpretation = (
+                    f"The recorded results show a mixed performance profile. "
+                    f"{pass_rate:.1f}% of candidates achieved scores of 50% "
+                    f"or above, while {below_50} candidate(s) recorded below "
+                    f"50%. The class average is {average:.1f}%."
                 )
 
-            story.append(
-                Paragraph(
-                    analysis_text,
-                    normal_style
-                )
-            )
-
-            story.append(Spacer(1, 5))
-
-            if above_50:
-                distribution_text = (
-                    f"{above_50} of {student_count} students "
-                    f"({pass_rate:.1f}%) recorded a score of 50% or above, "
-                    f"while {below_50} recorded a score below 50%."
-                )
             else:
-                distribution_text = (
-                    f"All {student_count} recorded scores are below 50%."
+                interpretation = (
+                    f"The recorded results show that fewer than half of the "
+                    f"candidates achieved scores of 50% or above. "
+                    f"The class average is {average:.1f}%, with "
+                    f"{below_50} candidate(s) below 50%."
                 )
 
             story.append(
                 Paragraph(
-                    distribution_text,
-                    normal_style
+                    interpretation,
+                    body_style
                 )
             )
 
@@ -6499,89 +6933,120 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
 
             story.append(
                 Paragraph(
-                    "The ranking above is based solely on the recorded "
-                    "score for this subject. It does not represent a "
-                    "national ranking or comparison with students outside "
-                    "the selected class.",
+                    "The ranking is calculated only from the recorded "
+                    "scores within the selected class and subject. "
+                    "Students without a recorded result are not included "
+                    "in the ranking table.",
                     small_style
                 )
             )
 
-        else:
-            story.append(
-                Paragraph(
-                    "No recorded mock results are available for this "
-                    "subject in the selected class.",
-                    normal_style
-                )
+        # ---------------------------------------------------------
+        # VI. ADMINISTRATIVE RECORD
+        # ---------------------------------------------------------
+
+        story.append(
+            Paragraph(
+                "VI. ADMINISTRATIVE RECORD",
+                section_style
             )
+        )
+
+        admin_rows = [
+            ["FIELD", "RECORDED VALUE"],
+            ["Institution", school_name],
+            ["Class", str(class_name).upper()],
+            ["Subject", str(subject.name).upper()],
+            ["Recorded candidates", str(student_count)],
+            ["Highest score", f"{highest_score:.1f}%"],
+            ["Lowest score", f"{lowest_score:.1f}%"],
+            ["Class average", f"{average:.1f}%"],
+            ["50%+ rate", f"{pass_rate:.1f}%"]
+        ]
+
+        admin_table = Table(
+            admin_rows,
+            colWidths=[65 * mm, 110 * mm],
+            repeatRows=1
+        )
+
+        admin_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTNAME", (0, 1), (0, -1), "Times-Bold"),
+                ("BACKGROUND", (0, 1), (0, -1), PALE_BLUE),
+                ("BACKGROUND", (1, 1), (1, -1), WHITE),
+                ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5)
+            ])
+        )
+
+        story.append(admin_table)
+        story.append(Spacer(1, 10))
 
         # ---------------------------------------------------------
-        # 13. TOP PERFORMER HIGHLIGHT
+        # CERTIFICATION / FOOT NOTE
         # ---------------------------------------------------------
-        if highest:
-            story.append(Spacer(1, 10))
 
-            highlight_data = [
+        certification = Table(
+            [
                 [
                     Paragraph(
-                        "TOP RECORDED PERFORMANCE",
+                        "<b>OFFICIAL RECORD NOTICE</b>",
                         ParagraphStyle(
-                            "TopHeading",
+                            "NoticeHeader",
                             parent=small_style,
-                            textColor=WHITE,
-                            fontName="Times-Bold"
+                            fontName="Times-Bold",
+                            textColor=NAVY
                         )
                     )
                 ],
                 [
                     Paragraph(
-                        f"<b>{highest.student.full_name.upper()}</b><br/>"
-                        f"{subject.name.upper()} — "
-                        f"<b>{float(highest.score or 0):.1f}%</b><br/>"
-                        f"Grade: {highest.grade or '—'} &nbsp;&nbsp; "
-                        f"Points: {highest.points or 0}",
-                        normal_style
+                        "This document is generated from the KEB mock "
+                        "performance records currently stored in the "
+                        "institutional performance registry. It is intended "
+                        "for academic monitoring, internal analysis and "
+                        "administrative reporting.",
+                        small_style
                     )
                 ]
-            ]
+            ],
+            colWidths=[175 * mm]
+        )
 
-            highlight_table = Table(
-                highlight_data,
-                colWidths=[175 * mm]
-            )
+        certification.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), PALE_BLUE),
+                ("BACKGROUND", (0, 1), (-1, 1), WHITE),
+                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
+                ("LEFTPADDING", (0, 0), (-1, -1), 9),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7)
+            ])
+        )
 
-            highlight_table.setStyle(
-                TableStyle([
-                    ("BACKGROUND", (0, 0), (0, 0), NAVY),
-                    ("BACKGROUND", (0, 1), (0, 1), LIGHT_GOLD),
-                    ("BOX", (0, 0), (-1, -1), 1, GOLD),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 8),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ])
-            )
+        story.append(certification)
 
-            story.append(highlight_table)
-
-        # ---------------------------------------------------------
-        # 14. FOOTNOTE
-        # ---------------------------------------------------------
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 8))
 
         story.append(
             Paragraph(
-                "Report generated from the KEB mock results currently "
-                "stored in the UNSCCDC performance registry. "
-                f"Generated: {datetime.now().strftime('%d %B %Y, %H:%M')}.",
-                small_style
+                f"Generated electronically on {generated}.",
+                small_center
             )
         )
 
         # ---------------------------------------------------------
-        # 15. BUILD
+        # BUILD PDF
         # ---------------------------------------------------------
+
         doc.build(
             story,
             onFirstPage=draw_page,
@@ -6591,13 +7056,14 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
         return response
 
     except Exception as e:
+
         import traceback
 
         return HttpResponse(
             f"""
             <body style="
                 background:#050505;
-                color:#ff4444;
+                color:#ff5555;
                 padding:50px;
                 font-family:Arial;
             ">
