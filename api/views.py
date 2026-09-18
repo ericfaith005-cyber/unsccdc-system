@@ -4661,111 +4661,1305 @@ def generate_graph_stream(labels, values, title, color="#002366"):
 
 # 1. 🎓 INDIVIDUAL STUDENT INTELLIGENCE REPORT
 def generate_analysis_pdf(request, student_id):
+    """
+    Professional student KEB Mock Performance Report.
+    Uses the student's existing KEBMockResult records.
+    """
     try:
-        student = get_object_or_404(Student, account_number=student_id)
-        school = student.school
-        marks = KEBMockResult.objects.filter(student=student).select_related('subject')
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="AUDIT_{student.full_name}.pdf"'
-        
-        p = canvas.Canvas(response, pagesize=A4)
-        width, height = A4
-        gov_blue, rich_gold = colors.HexColor("#002366"), colors.HexColor("#D4AF37")
-        off_white = colors.HexColor("#FDFDF5")
-
-        # 🎨 1. THE Hub Hub Hub Hub Hub BACKGROUND & TRIPLE BORDERS
-        p.setFillColor(off_white); p.rect(0, 0, width, height, fill=1, stroke=0)
-        p.setLineWidth(5); p.setStrokeColor(gov_blue); p.rect(15, 15, width-30, height-30)
-        p.setLineWidth(1); p.setStrokeColor(colors.HexColor("#FCDC04")); p.rect(22, 22, width-44, height-44)
-
-        # 🏛️ 2. HEADERS
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 10)
-        p.drawCentredString(width/2, height-45, "THE REPUBLIC OF UGANDA")
-        p.drawCentredString(width/2, height-58, "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT")
-        
-        p.setFont("Times-Bold", 18); p.setFillColor(gov_blue)
-        p.drawCentredString(width/2, height-90, school.name.upper())
-        p.setStrokeColor(rich_gold); p.line(45, height-105, width-45, height-105)
-
-        # 👤 3. CANDIDATE PROFILE
-        p.setFillColor(colors.black); p.setFont("Times-Bold", 11)
-        p.drawString(50, height-130, f"CANDIDATE: {student.full_name.upper()}")
-        p.setFont("Times-Roman", 10)
-        p.drawString(50, height-145, f"NATIONAL PRN: {student.payment_code} | LEVEL: {student.current_class}")
-        
-        # 📈 4. THE Hub Hub Hub Hub Hub ADVANCED GRAPH
-        if marks.exists():
-            labels = [m.subject.name.upper() for m in marks]
-            values = [float(m.score) for m in marks]
-            graph = generate_pro_analytics_graph(labels, values)
-            # Draw graph in the center
-            p.drawImage(graph, 45, height-420, width=500, height=250)
-
-        # ✍️ 5. THE Hub Hub Hub Hub Hub INTELLIGENCE ANALYSIS (Wrapped Text)
-        styles = ParagraphStyle('Main', fontName='Times-Roman', fontSize=10, leading=14)
-        bold_style = ParagraphStyle('Bold', fontName='Times-Bold', fontSize=11, textColor=gov_blue)
-
-        p.drawInlineImage(None, 50, height-440) # Spacing
-        
-        # Determine Strengths & Weaknesses
-        best_sub = marks.order_by('-score').first()
-        weak_subs = marks.filter(score__lt=50)
-        
-        summary_title = Paragraph("<b>I. EXECUTIVE COGNITIVE SUMMARY:</b>", bold_style)
-        summary_title.wrapOn(p, 500, 20)
-        summary_title.drawOn(p, 50, height-460)
-
-        analysis_text = (
-            f"Following the 2026 KEB National Mock cycle, the candidate displays a dominant cognitive aptitude in "
-            f"<b>{best_sub.subject.name.upper()}</b> with a peak score of {best_sub.score:g}%. This performance "
-            f"is well above the national median, suggesting a high potential for professional specialization in this field."
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from reportlab.platypus import (
+            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+            PageBreak, KeepTogether
         )
-        
-        para = Paragraph(analysis_text, styles)
-        para.wrapOn(p, 500, 100)
-        para.drawOn(p, 50, height-520)
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.pdfbase import pdfmetrics
+        from io import BytesIO
+        from datetime import datetime
 
-        # 🚩 6. AREAS FOR IMMEDIATE EFFORT
-        effort_title = Paragraph("<b>II. CRITICAL INTERVENTION ZONES:</b>", bold_style)
-        effort_title.wrapOn(p, 500, 20)
-        effort_title.drawOn(p, 50, height-550)
+        student = get_object_or_404(
+            Student.objects.select_related('school', 'parent_link'),
+            account_number=student_id
+        )
 
-        if weak_subs.exists():
-            weak_names = ", ".join([w.subject.name.upper() for w in weak_subs])
-            effort_text = (
-                f"The audit has flagged <b>{weak_names}</b> as under-performing zones (Below 50%). "
-                f"Immediate remedial focus is required. The candidate must increase 'Activity of Integration' engagement "
-                f"to achieve the minimum UCE/UACE competency standards."
+        school = student.school
+
+        # ---------------------------------------------------------
+        # 1. FETCH EXISTING MOCK RESULTS
+        # ---------------------------------------------------------
+        marks = list(
+            KEBMockResult.objects
+            .filter(student=student)
+            .select_related('subject')
+            .order_by('subject__name')
+        )
+
+        # ---------------------------------------------------------
+        # 2. RESPONSE
+        # ---------------------------------------------------------
+        buffer = BytesIO()
+
+        safe_name = "".join(
+            c for c in student.full_name
+            if c.isalnum() or c in (" ", "-", "_")
+        ).strip().replace(" ", "_")
+
+        filename = f"MOCK_PERFORMANCE_{safe_name}.pdf"
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+
+        # ---------------------------------------------------------
+        # 3. COLORS
+        # ---------------------------------------------------------
+        NAVY = colors.HexColor("#001B44")
+        BLUE = colors.HexColor("#003B73")
+        GOLD = colors.HexColor("#D4AF37")
+        LIGHT_GOLD = colors.HexColor("#F7F1D2")
+        LIGHT_BLUE = colors.HexColor("#EEF4FA")
+        WHITE = colors.white
+        BLACK = colors.HexColor("#111111")
+        GREY = colors.HexColor("#666666")
+        LIGHT_GREY = colors.HexColor("#F4F5F7")
+        GREEN = colors.HexColor("#16833B")
+        RED = colors.HexColor("#B42318")
+
+        # ---------------------------------------------------------
+        # 4. DOCUMENT
+        # ---------------------------------------------------------
+        doc = SimpleDocTemplate(
+            response,
+            pagesize=A4,
+            rightMargin=18 * mm,
+            leftMargin=18 * mm,
+            topMargin=18 * mm,
+            bottomMargin=18 * mm,
+            title=f"Mock Performance Report - {student.full_name}",
+            author="UNSCCDC National Performance Registry"
+        )
+
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            "ReportTitle",
+            parent=styles["Title"],
+            fontName="Times-Bold",
+            fontSize=18,
+            leading=22,
+            alignment=TA_CENTER,
+            textColor=NAVY,
+            spaceAfter=5
+        )
+
+        subtitle_style = ParagraphStyle(
+            "Subtitle",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=9,
+            leading=12,
+            alignment=TA_CENTER,
+            textColor=GREY
+        )
+
+        section_style = ParagraphStyle(
+            "Section",
+            parent=styles["Heading2"],
+            fontName="Times-Bold",
+            fontSize=11,
+            leading=14,
+            textColor=NAVY,
+            spaceBefore=8,
+            spaceAfter=7
+        )
+
+        normal_style = ParagraphStyle(
+            "NormalReport",
+            parent=styles["Normal"],
+            fontName="Times-Roman",
+            fontSize=9.5,
+            leading=14,
+            textColor=BLACK
+        )
+
+        small_style = ParagraphStyle(
+            "Small",
+            parent=styles["Normal"],
+            fontName="Times-Roman",
+            fontSize=8,
+            leading=11,
+            textColor=GREY
+        )
+
+        # ---------------------------------------------------------
+        # 5. PAGE HEADER / FOOTER
+        # ---------------------------------------------------------
+        def draw_page(canvas, doc):
+            canvas.saveState()
+
+            width, height = A4
+
+            # Outer border
+            canvas.setStrokeColor(NAVY)
+            canvas.setLineWidth(2)
+            canvas.rect(
+                10 * mm,
+                10 * mm,
+                width - 20 * mm,
+                height - 20 * mm
             )
+
+            # Inner gold border
+            canvas.setStrokeColor(GOLD)
+            canvas.setLineWidth(0.7)
+            canvas.rect(
+                13 * mm,
+                13 * mm,
+                width - 26 * mm,
+                height - 26 * mm
+            )
+
+            # Footer
+            canvas.setFont("Times-Roman", 7.5)
+            canvas.setFillColor(GREY)
+            canvas.drawString(
+                18 * mm,
+                13 * mm,
+                "UNSCCDC • STUDENT PERFORMANCE REGISTRY"
+            )
+
+            canvas.drawRightString(
+                width - 18 * mm,
+                13 * mm,
+                f"PAGE {doc.page}"
+            )
+
+            canvas.restoreState()
+
+        # ---------------------------------------------------------
+        # 6. CALCULATIONS
+        # ---------------------------------------------------------
+        scores = [float(m.score or 0) for m in marks]
+
+        subject_count = len(marks)
+        total_score = sum(scores)
+        average_score = (
+            total_score / subject_count
+            if subject_count
+            else 0
+        )
+
+        total_points = sum(
+            int(m.points or 0)
+            for m in marks
+        )
+
+        highest = max(marks, key=lambda x: float(x.score or 0)) if marks else None
+
+        below_50 = [
+            m for m in marks
+            if float(m.score or 0) < 50
+        ]
+
+        # ---------------------------------------------------------
+        # 7. BUILD REPORT
+        # ---------------------------------------------------------
+        story = []
+
+        # Header
+        story.append(
+            Paragraph(
+                "THE REPUBLIC OF UGANDA",
+                ParagraphStyle(
+                    "Gov",
+                    parent=subtitle_style,
+                    fontSize=10,
+                    textColor=BLACK
+                )
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT",
+                subtitle_style
+            )
+        )
+
+        story.append(Spacer(1, 6))
+
+        school_name = (
+            school.name.upper()
+            if school and school.name
+            else "UNSCCDC NATIONAL HUB"
+        )
+
+        story.append(
+            Paragraph(
+                school_name,
+                title_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "STUDENT MOCK PERFORMANCE REPORT",
+                ParagraphStyle(
+                    "ReportSubtitle",
+                    parent=subtitle_style,
+                    fontSize=11,
+                    textColor=GOLD
+                )
+            )
+        )
+
+        story.append(Spacer(1, 10))
+
+        # ---------------------------------------------------------
+        # STUDENT PROFILE
+        # ---------------------------------------------------------
+        story.append(
+            Paragraph(
+                "I. STUDENT PROFILE",
+                section_style
+            )
+        )
+
+        profile_data = [
+            [
+                Paragraph("<b>STUDENT NAME</b>", small_style),
+                Paragraph(
+                    student.full_name.upper(),
+                    normal_style
+                ),
+                Paragraph("<b>PRN / ACCOUNT</b>", small_style),
+                Paragraph(
+                    str(student.payment_code or student.account_number or "—"),
+                    normal_style
+                ),
+            ],
+            [
+                Paragraph("<b>CLASS / LEVEL</b>", small_style),
+                Paragraph(
+                    str(student.current_class or "—"),
+                    normal_style
+                ),
+                Paragraph("<b>SCHOOL</b>", small_style),
+                Paragraph(
+                    school_name,
+                    normal_style
+                ),
+            ],
+        ]
+
+        profile_table = Table(
+            profile_data,
+            colWidths=[
+                30 * mm,
+                55 * mm,
+                32 * mm,
+                55 * mm
+            ]
+        )
+
+        profile_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (0, -1), LIGHT_BLUE),
+                ("BACKGROUND", (2, 0), (2, -1), LIGHT_BLUE),
+                ("BOX", (0, 0), (-1, -1), 0.8, NAVY),
+                ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#D5DCE5")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ])
+        )
+
+        story.append(profile_table)
+        story.append(Spacer(1, 10))
+
+        # ---------------------------------------------------------
+        # PERFORMANCE SUMMARY
+        # ---------------------------------------------------------
+        story.append(
+            Paragraph(
+                "II. PERFORMANCE SUMMARY",
+                section_style
+            )
+        )
+
+        summary_data = [
+            [
+                Paragraph("<b>SUBJECTS</b>", small_style),
+                Paragraph("<b>TOTAL SCORE</b>", small_style),
+                Paragraph("<b>AVERAGE</b>", small_style),
+                Paragraph("<b>TOTAL POINTS</b>", small_style),
+            ],
+            [
+                str(subject_count),
+                f"{total_score:.1f}",
+                f"{average_score:.1f}%",
+                str(total_points),
+            ],
+        ]
+
+        summary_table = Table(
+            summary_data,
+            colWidths=[40 * mm] * 4
+        )
+
+        summary_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("BACKGROUND", (0, 1), (-1, 1), LIGHT_GOLD),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTNAME", (0, 1), (-1, 1), "Times-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                ("BOX", (0, 0), (-1, -1), 0.8, NAVY),
+                ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.white),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ])
+        )
+
+        story.append(summary_table)
+        story.append(Spacer(1, 10))
+
+        # ---------------------------------------------------------
+        # SUBJECT PERFORMANCE TABLE
+        # ---------------------------------------------------------
+        story.append(
+            Paragraph(
+                "III. SUBJECT-BY-SUBJECT PERFORMANCE",
+                section_style
+            )
+        )
+
+        result_rows = [
+            [
+                "#",
+                "SUBJECT",
+                "SCORE (%)",
+                "GRADE",
+                "POINTS"
+            ]
+        ]
+
+        for index, mark in enumerate(marks, start=1):
+            result_rows.append([
+                str(index),
+                mark.subject.name.upper(),
+                f"{float(mark.score or 0):.1f}",
+                mark.grade or "—",
+                str(mark.points if mark.points is not None else 0)
+            ])
+
+        if not marks:
+            result_rows.append([
+                "—",
+                "NO MOCK RESULTS RECORDED",
+                "—",
+                "—",
+                "—"
+            ])
+
+        result_table = Table(
+            result_rows,
+            colWidths=[
+                12 * mm,
+                85 * mm,
+                28 * mm,
+                25 * mm,
+                25 * mm
+            ],
+            repeatRows=1
+        )
+
+        table_commands = [
+            ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+            ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+            ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 8.5),
+            ("ALIGN", (0, 0), (0, -1), "CENTER"),
+            ("ALIGN", (2, 1), (-1, -1), "CENTER"),
+            ("FONTNAME", (0, 1), (-1, -1), "Times-Roman"),
+            ("FONTSIZE", (0, 1), (-1, -1), 9),
+            ("TEXTCOLOR", (0, 1), (-1, -1), BLACK),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#BFC7D1")),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), 7),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ]
+
+        for row_num in range(1, len(result_rows)):
+            if row_num % 2 == 0:
+                table_commands.append(
+                    ("BACKGROUND", (0, row_num), (-1, row_num), LIGHT_GREY)
+                )
+
+        result_table.setStyle(TableStyle(table_commands))
+
+        story.append(result_table)
+
+        # ---------------------------------------------------------
+        # PERFORMANCE ANALYSIS
+        # ---------------------------------------------------------
+        story.append(
+            Paragraph(
+                "IV. PERFORMANCE ANALYSIS",
+                section_style
+            )
+        )
+
+        if marks:
+            highest_text = (
+                f"The highest recorded subject score is "
+                f"<b>{highest.subject.name.upper()}</b> at "
+                f"<b>{float(highest.score or 0):.1f}%</b>."
+            )
+
+            story.append(
+                Paragraph(highest_text, normal_style)
+            )
+
+            story.append(Spacer(1, 5))
+
+            if below_50:
+                weak_names = ", ".join(
+                    m.subject.name.upper()
+                    for m in below_50
+                )
+
+                effort_text = (
+                    f"The following subjects have recorded scores below "
+                    f"50% in the available mock results: "
+                    f"<b>{weak_names}</b>. These areas may warrant "
+                    f"additional revision and targeted practice."
+                )
+            else:
+                effort_text = (
+                    "No recorded subject score is below 50% in the "
+                    "available mock results."
+                )
+
+            story.append(
+                Paragraph(
+                    effort_text,
+                    normal_style
+                )
+            )
+
+            story.append(Spacer(1, 5))
+
+            story.append(
+                Paragraph(
+                    "This analysis is generated directly from the "
+                    "mock results currently recorded in the UNSCCDC "
+                    "performance registry. It does not constitute a "
+                    "national ranking or comparison.",
+                    small_style
+                )
+            )
+
         else:
-            effort_text = "No critical weaknesses detected. The candidate is currently maintaining a balanced national profile."
+            story.append(
+                Paragraph(
+                    "No mock examination results are currently recorded "
+                    "for this student.",
+                    normal_style
+                )
+            )
 
-        para2 = Paragraph(effort_text, styles)
-        para2.wrapOn(p, 500, 100)
-        para2.drawOn(p, 50, height-610)
+        # ---------------------------------------------------------
+        # RECORD INFORMATION
+        # ---------------------------------------------------------
+        story.append(Spacer(1, 12))
 
-        # 🏆 7. SYSTEM Hub Hub Hub Hub Hub RECOMMENDATIONS
-        p.setFillColor(gov_blue); p.rect(45, 80, width-90, 80, fill=0, stroke=1)
-        p.setFont("Times-Bold", 10)
-        p.drawString(60, 145, "NATIONAL SYSTEM ADVISORY & RECOMMENDATIONS")
-        
-        p.setFont("Times-Roman", 9)
-        p.drawString(65, 125, "• Enroll candidate in subject-specific weekend bootcamps for flagged zones.")
-        p.drawString(65, 110, "• Utilize the Digital Library 'Revision Vault' for past KEB/UNEB papers.")
-        p.drawString(65, 95, "• Monitor weekly progress through the UNSCCDC Mobile Hub interface.")
+        generated = datetime.now().strftime(
+            "%d %B %Y, %H:%M"
+        )
 
-        # 🛡️ 8. SEAL & STAMP
-        p.setStrokeColor(colors.teal); p.circle(width-80, 120, 35, stroke=1, fill=0)
-        p.setFont("Times-Bold", 8)
-        p.drawCentredString(width-80, 125, "UNSCCDC")
-        p.drawCentredString(width-80, 115, "AUDITED")
+        record_data = [
+            [
+                Paragraph("<b>REPORT STATUS</b>", small_style),
+                Paragraph(
+                    "OFFICIAL SYSTEM RECORD",
+                    normal_style
+                )
+            ],
+            [
+                Paragraph("<b>GENERATED</b>", small_style),
+                Paragraph(generated, normal_style)
+            ],
+            [
+                Paragraph("<b>REPORT TYPE</b>", small_style),
+                Paragraph(
+                    "STUDENT MOCK PERFORMANCE REPORT",
+                    normal_style
+                )
+            ],
+        ]
 
-        p.showPage(); p.save()
+        record_table = Table(
+            record_data,
+            colWidths=[42 * mm, 133 * mm]
+        )
+
+        record_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (0, -1), LIGHT_BLUE),
+                ("BOX", (0, 0), (-1, -1), 0.6, NAVY),
+                ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.HexColor("#D5DCE5")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ])
+        )
+
+        story.append(record_table)
+
+        story.append(Spacer(1, 12))
+
+        story.append(
+            Paragraph(
+                "UNSCCDC NATIONAL PERFORMANCE REGISTRY",
+                ParagraphStyle(
+                    "Registry",
+                    parent=subtitle_style,
+                    fontSize=9,
+                    textColor=NAVY
+                )
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "Computer-generated report • Verify against the official school record.",
+                small_style
+            )
+        )
+
+        # ---------------------------------------------------------
+        # 8. BUILD PDF
+        # ---------------------------------------------------------
+        doc.build(
+            story,
+            onFirstPage=draw_page,
+            onLaterPages=draw_page
+        )
+
         return response
+
     except Exception as e:
         import traceback
-        return HttpResponse(f"Audit Error: {traceback.format_exc()}")
+        return HttpResponse(
+            f"""
+            <body style="background:#050505;color:#ff4444;
+                         padding:50px;font-family:Arial;">
+                <h1>Performance Report Engine Error</h1>
+                <pre>{traceback.format_exc()}</pre>
+            </body>
+            """,
+            status=500
+        )
+
+def generate_class_analysis_pdf(request, class_name):
+    """
+    Generates ONE PDF containing the mock performance reports
+    for every student in the selected class.
+    One student occupies one page.
+    """
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER
+        from reportlab.platypus import (
+            SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+            PageBreak
+        )
+        from reportlab.lib.units import mm
+        from datetime import datetime
+
+        # ---------------------------------------------------------
+        # 1. GET SCHOOL
+        # ---------------------------------------------------------
+        school = (
+            getattr(request.user, "school", None)
+            or School.objects.first()
+        )
+
+        # ---------------------------------------------------------
+        # 2. GET ALL STUDENTS IN SELECTED CLASS
+        # ---------------------------------------------------------
+        students = list(
+            Student.objects
+            .filter(
+                school=school,
+                current_class=class_name
+            )
+            .order_by("full_name")
+        )
+
+        # ---------------------------------------------------------
+        # 3. PDF RESPONSE
+        # ---------------------------------------------------------
+        response = HttpResponse(
+            content_type="application/pdf"
+        )
+
+        safe_class = "".join(
+            c for c in str(class_name)
+            if c.isalnum() or c in (" ", "-", "_")
+        ).strip().replace(" ", "_")
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="CLASS_MOCK_PERFORMANCE_{safe_class}.pdf"'
+        )
+
+        # ---------------------------------------------------------
+        # 4. COLORS
+        # ---------------------------------------------------------
+        NAVY = colors.HexColor("#001B44")
+        GOLD = colors.HexColor("#D4AF37")
+        LIGHT_GOLD = colors.HexColor("#F7F1D2")
+        LIGHT_BLUE = colors.HexColor("#EEF4FA")
+        LIGHT_GREY = colors.HexColor("#F4F5F7")
+        WHITE = colors.white
+        BLACK = colors.HexColor("#111111")
+        GREY = colors.HexColor("#666666")
+        RED = colors.HexColor("#B42318")
+
+        # ---------------------------------------------------------
+        # 5. DOCUMENT
+        # ---------------------------------------------------------
+        doc = SimpleDocTemplate(
+            response,
+            pagesize=A4,
+            rightMargin=18 * mm,
+            leftMargin=18 * mm,
+            topMargin=18 * mm,
+            bottomMargin=18 * mm,
+            title=f"Class Mock Performance Report - {class_name}",
+            author="UNSCCDC National Performance Registry"
+        )
+
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            "ClassTitle",
+            parent=styles["Title"],
+            fontName="Times-Bold",
+            fontSize=17,
+            leading=21,
+            alignment=TA_CENTER,
+            textColor=NAVY,
+            spaceAfter=4
+        )
+
+        subtitle_style = ParagraphStyle(
+            "ClassSubtitle",
+            parent=styles["Normal"],
+            fontName="Times-Bold",
+            fontSize=9,
+            leading=12,
+            alignment=TA_CENTER,
+            textColor=GREY
+        )
+
+        section_style = ParagraphStyle(
+            "ClassSection",
+            parent=styles["Heading2"],
+            fontName="Times-Bold",
+            fontSize=10.5,
+            leading=13,
+            textColor=NAVY,
+            spaceBefore=7,
+            spaceAfter=6
+        )
+
+        normal_style = ParagraphStyle(
+            "ClassNormal",
+            parent=styles["Normal"],
+            fontName="Times-Roman",
+            fontSize=9,
+            leading=13,
+            textColor=BLACK
+        )
+
+        small_style = ParagraphStyle(
+            "ClassSmall",
+            parent=styles["Normal"],
+            fontName="Times-Roman",
+            fontSize=7.5,
+            leading=10,
+            textColor=GREY
+        )
+
+        # ---------------------------------------------------------
+        # 6. PAGE DECORATION
+        # ---------------------------------------------------------
+        def draw_page(canvas, doc):
+            canvas.saveState()
+
+            width, height = A4
+
+            # Navy outer frame
+            canvas.setStrokeColor(NAVY)
+            canvas.setLineWidth(2)
+            canvas.rect(
+                10 * mm,
+                10 * mm,
+                width - 20 * mm,
+                height - 20 * mm
+            )
+
+            # Gold inner frame
+            canvas.setStrokeColor(GOLD)
+            canvas.setLineWidth(0.7)
+            canvas.rect(
+                13 * mm,
+                13 * mm,
+                width - 26 * mm,
+                height - 26 * mm
+            )
+
+            # Footer
+            canvas.setFont("Times-Roman", 7)
+            canvas.setFillColor(GREY)
+
+            canvas.drawString(
+                18 * mm,
+                13 * mm,
+                "UNSCCDC • CLASS MOCK PERFORMANCE REGISTRY"
+            )
+
+            canvas.drawRightString(
+                width - 18 * mm,
+                13 * mm,
+                f"PAGE {doc.page}"
+            )
+
+            canvas.restoreState()
+
+        story = []
+
+        # ---------------------------------------------------------
+        # 7. CLASS COVER / REPORT HEADER
+        # ---------------------------------------------------------
+        school_name = (
+            school.name.upper()
+            if school and school.name
+            else "UNSCCDC NATIONAL HUB"
+        )
+
+        story.append(
+            Paragraph(
+                "THE REPUBLIC OF UGANDA",
+                ParagraphStyle(
+                    "Government",
+                    parent=subtitle_style,
+                    fontSize=10,
+                    textColor=BLACK
+                )
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT",
+                subtitle_style
+            )
+        )
+
+        story.append(Spacer(1, 5))
+
+        story.append(
+            Paragraph(
+                school_name,
+                title_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"CLASS MOCK PERFORMANCE DOSSIER — {str(class_name).upper()}",
+                ParagraphStyle(
+                    "DossierTitle",
+                    parent=subtitle_style,
+                    fontSize=11,
+                    textColor=GOLD
+                )
+            )
+        )
+
+        story.append(Spacer(1, 12))
+
+        # Class-level information
+        students_with_results = 0
+        total_class_subject_results = 0
+
+        for student in students:
+            count = KEBMockResult.objects.filter(
+                student=student
+            ).count()
+
+            if count > 0:
+                students_with_results += 1
+                total_class_subject_results += count
+
+        cover_data = [
+            [
+                Paragraph("<b>CLASS</b>", small_style),
+                Paragraph(str(class_name).upper(), normal_style),
+                Paragraph("<b>STUDENTS</b>", small_style),
+                Paragraph(str(len(students)), normal_style),
+            ],
+            [
+                Paragraph("<b>WITH RESULTS</b>", small_style),
+                Paragraph(str(students_with_results), normal_style),
+                Paragraph("<b>GENERATED</b>", small_style),
+                Paragraph(
+                    datetime.now().strftime("%d %B %Y"),
+                    normal_style
+                ),
+            ]
+        ]
+
+        cover_table = Table(
+            cover_data,
+            colWidths=[
+                32 * mm,
+                53 * mm,
+                32 * mm,
+                53 * mm
+            ]
+        )
+
+        cover_table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (0, -1), LIGHT_BLUE),
+                ("BACKGROUND", (2, 0), (2, -1), LIGHT_BLUE),
+                ("BOX", (0, 0), (-1, -1), 0.8, NAVY),
+                ("INNERGRID", (0, 0), (-1, -1), 0.3,
+                 colors.HexColor("#D5DCE5")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 7),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 7),
+                ("TOPPADDING", (0, 0), (-1, -1), 7),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+            ])
+        )
+
+        story.append(cover_table)
+
+        story.append(Spacer(1, 15))
+
+        story.append(
+            Paragraph(
+                "STUDENT PERFORMANCE RECORDS",
+                section_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                "This dossier contains the individual mock performance "
+                "records currently stored for students in the selected "
+                "class. Each student is presented on a separate report "
+                "page.",
+                normal_style
+            )
+        )
+
+        # ---------------------------------------------------------
+        # 8. INDIVIDUAL STUDENT REPORTS
+        # ---------------------------------------------------------
+        for student_index, student in enumerate(students):
+
+            # New page for every student
+            story.append(PageBreak())
+
+            marks = list(
+                KEBMockResult.objects
+                .filter(student=student)
+                .select_related("subject")
+                .order_by("subject__name")
+            )
+
+            scores = [
+                float(m.score or 0)
+                for m in marks
+            ]
+
+            subject_count = len(marks)
+            total_score = sum(scores)
+
+            average_score = (
+                total_score / subject_count
+                if subject_count
+                else 0
+            )
+
+            total_points = sum(
+                int(m.points or 0)
+                for m in marks
+            )
+
+            highest = (
+                max(
+                    marks,
+                    key=lambda x: float(x.score or 0)
+                )
+                if marks
+                else None
+            )
+
+            below_50 = [
+                m for m in marks
+                if float(m.score or 0) < 50
+            ]
+
+            # -----------------------------------------------------
+            # STUDENT HEADER
+            # -----------------------------------------------------
+            story.append(
+                Paragraph(
+                    school_name,
+                    title_style
+                )
+            )
+
+            story.append(
+                Paragraph(
+                    "STUDENT MOCK PERFORMANCE REPORT",
+                    ParagraphStyle(
+                        "StudentReportTitle",
+                        parent=subtitle_style,
+                        fontSize=10,
+                        textColor=GOLD
+                    )
+                )
+            )
+
+            story.append(Spacer(1, 8))
+
+            profile_data = [
+                [
+                    Paragraph("<b>STUDENT</b>", small_style),
+                    Paragraph(
+                        student.full_name.upper(),
+                        normal_style
+                    ),
+                    Paragraph("<b>PRN / ACCOUNT</b>", small_style),
+                    Paragraph(
+                        str(
+                            student.payment_code
+                            or student.account_number
+                            or "—"
+                        ),
+                        normal_style
+                    ),
+                ],
+                [
+                    Paragraph("<b>CLASS</b>", small_style),
+                    Paragraph(
+                        str(student.current_class or class_name),
+                        normal_style
+                    ),
+                    Paragraph("<b>STUDENT NO.</b>", small_style),
+                    Paragraph(
+                        str(student_index + 1),
+                        normal_style
+                    ),
+                ]
+            ]
+
+            profile_table = Table(
+                profile_data,
+                colWidths=[
+                    28 * mm,
+                    57 * mm,
+                    35 * mm,
+                    50 * mm
+                ]
+            )
+
+            profile_table.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (0, -1), LIGHT_BLUE),
+                    ("BACKGROUND", (2, 0), (2, -1), LIGHT_BLUE),
+                    ("BOX", (0, 0), (-1, -1), 0.8, NAVY),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3,
+                     colors.HexColor("#D5DCE5")),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ])
+            )
+
+            story.append(profile_table)
+            story.append(Spacer(1, 8))
+
+            # -----------------------------------------------------
+            # SUMMARY
+            # -----------------------------------------------------
+            story.append(
+                Paragraph(
+                    "I. PERFORMANCE SUMMARY",
+                    section_style
+                )
+            )
+
+            summary_table = Table(
+                [
+                    [
+                        "SUBJECTS",
+                        "TOTAL SCORE",
+                        "AVERAGE",
+                        "TOTAL POINTS"
+                    ],
+                    [
+                        str(subject_count),
+                        f"{total_score:.1f}",
+                        f"{average_score:.1f}%",
+                        str(total_points)
+                    ]
+                ],
+                colWidths=[40 * mm] * 4
+            )
+
+            summary_table.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                    ("BACKGROUND", (0, 1), (-1, 1), LIGHT_GOLD),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                    ("FONTNAME", (0, 1), (-1, 1), "Times-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+                    ("BOX", (0, 0), (-1, -1), 0.7, NAVY),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.3, WHITE),
+                    ("TOPPADDING", (0, 0), (-1, -1), 7),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+                ])
+            )
+
+            story.append(summary_table)
+            story.append(Spacer(1, 8))
+
+            # -----------------------------------------------------
+            # SUBJECT RESULTS
+            # -----------------------------------------------------
+            story.append(
+                Paragraph(
+                    "II. SUBJECT-BY-SUBJECT PERFORMANCE",
+                    section_style
+                )
+            )
+
+            result_rows = [
+                [
+                    "#",
+                    "SUBJECT",
+                    "SCORE (%)",
+                    "GRADE",
+                    "POINTS"
+                ]
+            ]
+
+            for i, mark in enumerate(marks, start=1):
+                result_rows.append([
+                    str(i),
+                    mark.subject.name.upper(),
+                    f"{float(mark.score or 0):.1f}",
+                    mark.grade or "—",
+                    str(mark.points or 0)
+                ])
+
+            if not marks:
+                result_rows.append([
+                    "—",
+                    "NO RESULTS RECORDED",
+                    "—",
+                    "—",
+                    "—"
+                ])
+
+            result_table = Table(
+                result_rows,
+                colWidths=[
+                    12 * mm,
+                    85 * mm,
+                    28 * mm,
+                    25 * mm,
+                    25 * mm
+                ],
+                repeatRows=1
+            )
+
+            commands = [
+                ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), WHITE),
+                ("FONTNAME", (0, 0), (-1, 0), "Times-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 8),
+                ("ALIGN", (0, 0), (0, -1), "CENTER"),
+                ("ALIGN", (2, 1), (-1, -1), "CENTER"),
+                ("GRID", (0, 0), (-1, -1), 0.35,
+                 colors.HexColor("#BFC7D1")),
+                ("FONTNAME", (0, 1), (-1, -1), "Times-Roman"),
+                ("FONTSIZE", (0, 1), (-1, -1), 8.5),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]
+
+            for row_num in range(1, len(result_rows)):
+                if row_num % 2 == 0:
+                    commands.append(
+                        (
+                            "BACKGROUND",
+                            (0, row_num),
+                            (-1, row_num),
+                            LIGHT_GREY
+                        )
+                    )
+
+            result_table.setStyle(TableStyle(commands))
+
+            story.append(result_table)
+            story.append(Spacer(1, 7))
+
+            # -----------------------------------------------------
+            # ANALYSIS
+            # -----------------------------------------------------
+            story.append(
+                Paragraph(
+                    "III. PERFORMANCE ANALYSIS",
+                    section_style
+                )
+            )
+
+            if marks:
+
+                if highest:
+                    story.append(
+                        Paragraph(
+                            f"Highest recorded score: "
+                            f"<b>{highest.subject.name.upper()}</b> — "
+                            f"<b>{float(highest.score or 0):.1f}%</b>.",
+                            normal_style
+                        )
+                    )
+
+                story.append(Spacer(1, 3))
+
+                if below_50:
+                    weak_names = ", ".join(
+                        m.subject.name.upper()
+                        for m in below_50
+                    )
+
+                    analysis = (
+                        f"Subjects with recorded scores below 50%: "
+                        f"<b>{weak_names}</b>. These subjects may "
+                        f"benefit from additional revision and targeted "
+                        f"practice."
+                    )
+                else:
+                    analysis = (
+                        "No recorded subject score is below 50% "
+                        "in the available mock results."
+                    )
+
+                story.append(
+                    Paragraph(
+                        analysis,
+                        normal_style
+                    )
+                )
+
+            else:
+                story.append(
+                    Paragraph(
+                        "No mock results are currently recorded for "
+                        "this student.",
+                        normal_style
+                    )
+                )
+
+            story.append(Spacer(1, 8))
+
+            # -----------------------------------------------------
+            # REPORT FOOTNOTE
+            # -----------------------------------------------------
+            story.append(
+                Paragraph(
+                    "This report is generated from the mock results "
+                    "currently stored in the UNSCCDC performance "
+                    "registry.",
+                    small_style
+                )
+            )
+
+        # ---------------------------------------------------------
+        # 9. EMPTY CLASS SAFETY
+        # ---------------------------------------------------------
+        if not students:
+            story.append(PageBreak())
+
+            story.append(
+                Paragraph(
+                    "NO STUDENTS FOUND",
+                    title_style
+                )
+            )
+
+            story.append(
+                Paragraph(
+                    f"No students were found in class "
+                    f"<b>{class_name}</b> for the selected school.",
+                    normal_style
+                )
+            )
+
+        # ---------------------------------------------------------
+        # 10. BUILD
+        # ---------------------------------------------------------
+        doc.build(
+            story,
+            onFirstPage=draw_page,
+            onLaterPages=draw_page
+        )
+
+        return response
+
+    except Exception as e:
+        import traceback
+
+        return HttpResponse(
+            f"""
+            <body style="
+                background:#050505;
+                color:#ff4444;
+                padding:50px;
+                font-family:Arial;
+            ">
+                <h1>Class Performance Report Engine Error</h1>
+                <pre>{traceback.format_exc()}</pre>
+            </body>
+            """,
+            status=500
+        )
     
 @login_required
 def academic_cockpit_view(request):

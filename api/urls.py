@@ -88,4 +88,8 @@ urlpatterns = [
     path('v2/auth/unified-login/', views.UnifiedUSDCAuth.as_view(), name='unified_login'),
     path('feed/', views.get_national_feed, name='national_feed'), # 💎 ADD THIS LINE
     path('staff-portal-auth/', views.staff_hub_auth, name='staff_auth'),
+    path(
+    'download-class-analysis/<str:class_name>/',
+    views.generate_class_analysis_pdf,
+    name='download_class_analysis'),
 ]
