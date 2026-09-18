@@ -6845,7 +6845,7 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
                                 fontName="Times-Bold",
                                 textColor=WHITE
                             )
-                        ]
+                        )
                     ],
                     [
                         Paragraph(
@@ -6860,7 +6860,6 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
                 ],
                 colWidths=[175 * mm]
             )
-
             top_card.setStyle(
                 TableStyle([
                     ("BACKGROUND", (0, 0), (-1, 0), NAVY),
