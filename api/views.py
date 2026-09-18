@@ -6321,7 +6321,7 @@ def generate_subject_analysis_pdf(request, class_name, subject_id):
 
         story.append(
             Paragraph(
-                "NATIONAL PERFORMANCE INTELLIGENCE & AUDIT",
+                "KEB PERFORMANCE INTELLIGENCE & AUDIT",
                 ParagraphStyle(
                     "NationalHeader",
                     parent=government_style,
