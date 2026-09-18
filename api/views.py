@@ -8069,3 +8069,218 @@ class UnifiedImperialAuth(APIView):
                 "logo": request.build_absolute_uri(school.logo.url) if school.logo else ""
             }
         })
+
+# ============================================================
+# DIRECTOR PUBLIC REGISTRATION
+# ============================================================
+
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def director_register(request):
+    """
+    Public registration for School Directors.
+
+    Creates:
+        User
+        UserProfile
+        Staff record with DIRECTOR role
+        Authentication token
+    """
+
+    try:
+        full_name = request.data.get('full_name', '').strip()
+        school_id = request.data.get('school_id')
+        email = request.data.get('email', '').strip().lower()
+        phone = request.data.get('phone', '').strip()
+        password = request.data.get('password', '')
+        confirm_password = request.data.get('confirm_password', '')
+
+        # -----------------------------
+        # Basic validation
+        # -----------------------------
+        if not full_name or not school_id or not email or not phone or not password:
+            return Response(
+                {"msg": "All registration fields are required."},
+                status=400
+            )
+
+        if password != confirm_password:
+            return Response(
+                {"msg": "Passwords do not match."},
+                status=400
+            )
+
+        if len(password) < 8:
+            return Response(
+                {"msg": "Password must be at least 8 characters."},
+                status=400
+            )
+
+        school = School.objects.filter(id=school_id).first()
+
+        if not school:
+            return Response(
+                {"msg": "Selected school was not found."},
+                status=404
+            )
+
+        # -----------------------------
+        # Prevent duplicate email
+        # -----------------------------
+        if User.objects.filter(email__iexact=email).exists():
+            return Response(
+                {"msg": "An account with this email already exists."},
+                status=400
+            )
+
+        # -----------------------------
+        # Generate unique username
+        # -----------------------------
+        base_username = email.split('@')[0][:120]
+        username = base_username
+        counter = 1
+
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        # -----------------------------
+        # Create normal User
+        # -----------------------------
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=full_name
+        )
+
+        # IMPORTANT:
+        # Director must NOT become superuser.
+        user.is_superuser = False
+        user.is_staff = False
+        user.is_staff_member = True
+        user.save()
+
+        # -----------------------------
+        # Connect Director to school
+        # -----------------------------
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                'school': school,
+                'is_school_admin': True,
+            }
+        )
+
+        # -----------------------------
+        # Create/link Staff Director
+        # -----------------------------
+        staff = Staff.objects.filter(
+            user=user
+        ).first()
+
+        if not staff:
+            staff = Staff.objects.create(
+                full_name=full_name,
+                user=user,
+                role='DIRECTOR',
+                school=school,
+                phone=phone,
+            )
+        else:
+            staff.full_name = full_name
+            staff.role = 'DIRECTOR'
+            staff.school = school
+            staff.phone = phone
+            staff.save()
+
+        # -----------------------------
+        # Issue login token
+        # -----------------------------
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({
+            "status": "registered",
+            "message": "Director account created successfully.",
+            "token": token.key,
+            "user_id": user.id,
+            "name": full_name,
+            "role": "DIRECTOR",
+            "school": {
+                "id": school.id,
+                "name": school.name,
+            }
+        }, status=201)
+
+    except Exception as e:
+        return Response(
+            {"msg": f"Registration failed: {str(e)}"},
+            status=500
+        )
+
+# ============================================================
+# DIRECTOR LOGIN
+# ============================================================
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def director_login(request):
+    """
+    Public login for registered School Directors.
+    """
+
+    try:
+        email = request.data.get('email', '').strip().lower()
+        password = request.data.get('password', '')
+
+        if not email or not password:
+            return Response(
+                {"msg": "Email and password are required."},
+                status=400
+            )
+
+        user = User.objects.filter(email__iexact=email).first()
+
+        if not user or not user.check_password(password):
+            return Response(
+                {"msg": "Invalid email or password."},
+                status=401
+            )
+
+        profile = getattr(user, 'profile', None)
+
+        if not profile or not profile.school:
+            return Response(
+                {"msg": "This account is not linked to a school."},
+                status=403
+            )
+
+        if not profile.is_school_admin:
+            return Response(
+                {"msg": "This account is not registered as a School Director."},
+                status=403
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({
+            "status": "authenticated",
+            "token": token.key,
+            "user_id": user.id,
+            "name": user.first_name or user.username,
+            "role": "DIRECTOR",
+            "school": {
+                "id": profile.school.id,
+                "name": profile.school.name,
+            }
+        })
+
+    except Exception as e:
+        return Response(
+            {"msg": f"Login failed: {str(e)}"},
+            status=500
+        )

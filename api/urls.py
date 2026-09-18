@@ -96,4 +96,6 @@ urlpatterns = [
     'download-subject-analysis/<str:class_name>/<int:subject_id>/',
     views.generate_subject_analysis_pdf,
     name='download_subject_analysis'),
+    path('director/register/', views.director_register, name='director_register'),
+    path('director/login/', views.director_login, name='director_login'),
 ]
