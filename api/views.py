@@ -8411,35 +8411,44 @@ def director_login(request):
             status=500
         )
 
-# ============================================================
-# SUBJECT AUDIT PDF — INDEPENDENT REPORT
-# Does NOT replace or modify generate_overall_performance_pdf()
-# ============================================================
-
 @login_required
 def generate_subject_audit_pdf(request):
     """
-    Generates one complete PDF auditing and ranking every subject
-    for a selected class.
+    COMPLETE SUBJECT PERFORMANCE AUDIT
 
-    Data source:
-        KEBMockResult
+    Independent report. This method does NOT modify or replace
+    generate_overall_performance_pdf().
+
+    S.4:
+        Grade columns: A, B, C, D, E
+        F/O are excluded from the report.
+
+    S.6:
+        Grade columns: A, B, C, D, E, F, O
 
     Ranking:
-        1. Highest mean score
-        2. Highest pass percentage
-        3. Highest A count
-        4. Highest score
-        5. Subject name (alphabetical tie-break)
+        1. Mean score - primary ranking
+        2. Pass percentage - first tie-breaker
+        3. Number of A grades - second tie-breaker
+        4. Highest individual score - third tie-breaker
+        5. Subject name - final deterministic tie-breaker
+
+    Source:
+        KEBMockResult
     """
 
     try:
         from collections import defaultdict
+
         from django.http import HttpResponse
+
         from reportlab.lib import colors
-        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from reportlab.lib.enums import TA_CENTER
         from reportlab.lib.pagesizes import A4, landscape
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.styles import (
+            getSampleStyleSheet,
+            ParagraphStyle,
+        )
         from reportlab.lib.units import mm
         from reportlab.platypus import (
             SimpleDocTemplate,
@@ -8450,9 +8459,10 @@ def generate_subject_audit_pdf(request):
             PageBreak,
         )
 
-        # ----------------------------------------------------
-        # 1. SCHOOL
-        # ----------------------------------------------------
+        # ========================================================
+        # 1. DETERMINE THE DIRECTOR'S SCHOOL
+        # ========================================================
+
         profile = getattr(request.user, 'profile', None)
 
         if profile and profile.school:
@@ -8466,25 +8476,60 @@ def generate_subject_audit_pdf(request):
                 status=403
             )
 
-        # ----------------------------------------------------
-        # 2. SELECTED CLASS
-        # ----------------------------------------------------
+        # ========================================================
+        # 2. SELECT CLASS
+        # ========================================================
+
         selected_class = request.GET.get(
             'class',
             request.GET.get('class_name', 'S.4')
         ).strip().upper()
 
-        # ----------------------------------------------------
-        # 3. GET ALL MOCK RESULTS FOR THIS CLASS
-        # ----------------------------------------------------
+        if not selected_class:
+            selected_class = 'S.4'
+
+        # ========================================================
+        # 3. DETERMINE GRADING LEVEL
+        # ========================================================
+
+        is_six = selected_class in {
+            'S.6',
+            'S6',
+            'S.6 NORTH',
+            'S.6 SOUTH',
+            'S.6 EAST',
+            'S.6 WEST',
+        }
+
+        # S.4 only uses A-E.
+        # S.6 may use A-E, F and O.
+        if is_six:
+            visible_grades = ['A', 'B', 'C', 'D', 'E', 'F', 'O']
+            pass_grades = {'A', 'B', 'C', 'D', 'E', 'O'}
+            fail_grades = {'F'}
+        else:
+            visible_grades = ['A', 'B', 'C', 'D', 'E']
+            pass_grades = {'A', 'B', 'C', 'D', 'E'}
+            fail_grades = set()
+
+        # ========================================================
+        # 4. FETCH MOCK RESULTS
+        # ========================================================
+
         results = (
             KEBMockResult.objects
             .filter(
                 student__school=school,
                 student__current_class=selected_class
             )
-            .select_related('student', 'subject')
-            .order_by('subject__name', 'student__full_name')
+            .select_related(
+                'student',
+                'subject'
+            )
+            .order_by(
+                'subject__name',
+                'student__full_name'
+            )
         )
 
         if not results.exists():
@@ -8493,104 +8538,142 @@ def generate_subject_audit_pdf(request):
                 status=404
             )
 
-        # ----------------------------------------------------
-        # 4. GROUP RESULTS BY SUBJECT
-        # ----------------------------------------------------
-        subject_data = defaultdict(list)
+        # ========================================================
+        # 5. GROUP RESULTS BY SUBJECT
+        # ========================================================
+
+        subject_results = defaultdict(list)
 
         for result in results:
+
+            if not result.subject:
+                continue
+
             subject_name = (
                 result.subject.name.strip()
-                if result.subject and result.subject.name
+                if result.subject.name
                 else "UNKNOWN SUBJECT"
             )
 
-            subject_data[subject_name].append(result)
+            subject_results[subject_name].append(result)
 
-        # ----------------------------------------------------
-        # 5. BUILD SUBJECT STATISTICS
-        # ----------------------------------------------------
+        if not subject_results:
+            return HttpResponse(
+                f"No valid subject results found for {selected_class}.",
+                status=404
+            )
+
+        # ========================================================
+        # 6. CALCULATE SUBJECT STATISTICS
+        # ========================================================
+
         subject_stats = []
 
-        for subject_name, marks in subject_data.items():
+        for subject_name, marks in subject_results.items():
 
-            scores = [
-                float(m.score)
-                for m in marks
-                if m.score is not None
-            ]
+            scores = []
+
+            grade_counts = {
+                grade: 0
+                for grade in visible_grades
+            }
+
+            unrecognised_grades = 0
+
+            # -----------------------------------------------
+            # Read every candidate's actual stored result
+            # -----------------------------------------------
+
+            for mark in marks:
+
+                if mark.score is not None:
+                    try:
+                        score = float(mark.score)
+                        scores.append(score)
+                    except (TypeError, ValueError):
+                        continue
+
+                stored_grade = str(
+                    mark.grade or ''
+                ).strip().upper()
+
+                if not stored_grade:
+                    continue
+
+                # Only show grades appropriate to this class.
+                if stored_grade in grade_counts:
+                    grade_counts[stored_grade] += 1
+                else:
+                    unrecognised_grades += 1
 
             if not scores:
                 continue
 
-            # Existing grades stored by the system
-            grade_counts = defaultdict(int)
-
-            for mark in marks:
-                grade = str(mark.grade or '').strip().upper()
-
-                if not grade:
-                    grade = "UNGRADED"
-
-                grade_counts[grade] += 1
+            # -----------------------------------------------
+            # Core statistics
+            # -----------------------------------------------
 
             candidate_count = len(scores)
 
             total_score = sum(scores)
-            mean_score = total_score / candidate_count
+
+            mean_score = (
+                total_score / candidate_count
+                if candidate_count
+                else 0
+            )
 
             highest_score = max(scores)
             lowest_score = min(scores)
 
-            # ------------------------------------------------
-            # PASS LOGIC
-            # Existing stored grades are respected.
-            #
-            # A-E = pass
-            # F = fail
-            # O is treated as a pass because it represents
-            # a subsidiary pass in your existing system.
-            # ------------------------------------------------
-            pass_grades = {'A', 'B', 'C', 'D', 'E', 'O'}
+            # -----------------------------------------------
+            # Pass / fail
+            # -----------------------------------------------
 
             pass_count = sum(
-                count
-                for grade, count in grade_counts.items()
-                if grade in pass_grades
+                grade_counts.get(grade, 0)
+                for grade in pass_grades
             )
 
             fail_count = sum(
-                count
-                for grade, count in grade_counts.items()
-                if grade == 'F'
+                grade_counts.get(grade, 0)
+                for grade in fail_grades
             )
 
-            # Anything else is not silently classified as pass/fail
-            classified_count = pass_count + fail_count
+            classified_count = (
+                pass_count + fail_count
+            )
 
-            if classified_count:
+            if classified_count > 0:
                 pass_percentage = (
                     pass_count / classified_count
                 ) * 100
             else:
                 pass_percentage = 0
 
-            # ------------------------------------------------
-            # RANKING INFORMATION
-            # ------------------------------------------------
+            # -----------------------------------------------
+            # A grade count
+            # -----------------------------------------------
+
             a_count = grade_counts.get('A', 0)
+
+            # -----------------------------------------------
+            # Store complete subject record
+            # -----------------------------------------------
 
             subject_stats.append({
                 'subject': subject_name,
                 'candidates': candidate_count,
+                'total': total_score,
                 'mean': mean_score,
                 'highest': highest_score,
                 'lowest': lowest_score,
                 'pass': pass_count,
                 'fail': fail_count,
                 'pass_percentage': pass_percentage,
-                'grades': dict(grade_counts),
+                'grades': grade_counts,
                 'a_count': a_count,
+                'unrecognised_grades': unrecognised_grades,
             })
 
         if not subject_stats:
@@ -8599,45 +8682,53 @@ def generate_subject_audit_pdf(request):
                 status=404
             )
 
-        # ----------------------------------------------------
-        # 6. RANK SUBJECTS
-        # ----------------------------------------------------
+        # ========================================================
+        # 7. RANK ALL SUBJECTS
+        # ========================================================
+
         subject_stats.sort(
-            key=lambda x: (
-                -x['mean'],
-                -x['pass_percentage'],
-                -x['a_count'],
-                -x['highest'],
-                x['subject'].upper()
+            key=lambda item: (
+                -item['mean'],
+                -item['pass_percentage'],
+                -item['a_count'],
+                -item['highest'],
+                item['subject'].upper()
             )
         )
 
-        for rank, item in enumerate(subject_stats, start=1):
+        for rank, item in enumerate(
+            subject_stats,
+            start=1
+        ):
             item['rank'] = rank
 
         best_subject = subject_stats[0]
 
-        # ----------------------------------------------------
-        # 7. PDF RESPONSE
-        # ----------------------------------------------------
+        # ========================================================
+        # 8. PDF RESPONSE
+        # ========================================================
+
         response = HttpResponse(
             content_type='application/pdf'
         )
 
-        response[
-            'Content-Disposition'
-        ] = (
-            f'attachment; '
-            f'filename="SUBJECT_AUDIT_{selected_class}.pdf"'
+        response['Content-Disposition'] = (
+            'attachment; '
+            f'filename="SUBJECT_PERFORMANCE_AUDIT_'
+            f'{selected_class.replace(" ", "_")}.pdf"'
         )
+
+        # ========================================================
+        # 9. PDF DOCUMENT
+        # ========================================================
 
         doc = SimpleDocTemplate(
             response,
             pagesize=landscape(A4),
-            rightMargin=12 * mm,
-            leftMargin=12 * mm,
-            topMargin=12 * mm,
-            bottomMargin=12 * mm,
+            rightMargin=10 * mm,
+            leftMargin=10 * mm,
+            topMargin=10 * mm,
+            bottomMargin=10 * mm,
         )
 
         styles = getSampleStyleSheet()
@@ -8645,35 +8736,35 @@ def generate_subject_audit_pdf(request):
         title_style = ParagraphStyle(
             'SubjectAuditTitle',
             parent=styles['Title'],
-            fontSize=22,
-            leading=26,
+            fontSize=21,
+            leading=25,
             alignment=TA_CENTER,
-            spaceAfter=8,
+            spaceAfter=6,
         )
 
         subtitle_style = ParagraphStyle(
             'SubjectAuditSubtitle',
             parent=styles['Normal'],
             fontSize=10,
-            leading=14,
+            leading=13,
             alignment=TA_CENTER,
-            spaceAfter=15,
+            spaceAfter=12,
         )
 
         heading_style = ParagraphStyle(
             'SubjectAuditHeading',
             parent=styles['Heading2'],
-            fontSize=14,
-            leading=18,
-            spaceBefore=8,
-            spaceAfter=8,
+            fontSize=13,
+            leading=16,
+            spaceBefore=6,
+            spaceAfter=7,
         )
 
-        normal_style = ParagraphStyle(
-            'SubjectAuditNormal',
+        body_style = ParagraphStyle(
+            'SubjectAuditBody',
             parent=styles['Normal'],
-            fontSize=9,
-            leading=12,
+            fontSize=8.5,
+            leading=11,
         )
 
         small_style = ParagraphStyle(
@@ -8685,9 +8776,10 @@ def generate_subject_audit_pdf(request):
 
         story = []
 
-        # ----------------------------------------------------
-        # 8. COVER / SUMMARY
-        # ----------------------------------------------------
+        # ========================================================
+        # 10. TITLE PAGE / EXECUTIVE SUMMARY
+        # ========================================================
+
         story.append(
             Paragraph(
                 "SUBJECT PERFORMANCE AUDIT",
@@ -8704,41 +8796,17 @@ def generate_subject_audit_pdf(request):
 
         story.append(
             Paragraph(
-                f"Complete analysis of {len(subject_stats)} subjects "
-                f"using recorded KEB mock results.",
-                normal_style
+                f"Complete audit of {len(subject_stats)} "
+                f"subjects using the recorded KEB mock results.",
+                body_style
             )
         )
 
         story.append(Spacer(1, 10))
 
-        # ----------------------------------------------------
-        # BEST SUBJECT
-        # ----------------------------------------------------
-        best_grades = best_subject['grades']
-
-        grade_summary = []
-
-        # Display the grades that actually occur
-        for grade in sorted(best_grades.keys()):
-            grade_summary.append(
-                f"{grade}: {best_grades[grade]}"
-            )
-
-        grade_text = " | ".join(grade_summary)
-
-        best_explanation = (
-            f"<b>{best_subject['subject'].upper()}</b> ranked "
-            f"<b>#1</b> because it recorded the highest mean score "
-            f"of <b>{best_subject['mean']:.2f}%</b> among all "
-            f"{len(subject_stats)} audited subjects. "
-            f"It assessed <b>{best_subject['candidates']}</b> candidates, "
-            f"with a highest score of <b>{best_subject['highest']:.2f}%</b> "
-            f"and a lowest score of <b>{best_subject['lowest']:.2f}%</b>. "
-            f"It recorded <b>{best_subject['pass']}</b> classified passes "
-            f"({best_subject['pass_percentage']:.2f}%). "
-            f"Its recorded grade distribution was: {grade_text}."
-        )
+        # ========================================================
+        # 11. BEST SUBJECT
+        # ========================================================
 
         story.append(
             Paragraph(
@@ -8747,74 +8815,189 @@ def generate_subject_audit_pdf(request):
             )
         )
 
-        best_table = Table(
+        best_grade_parts = []
+
+        for grade in visible_grades:
+            count = best_subject['grades'].get(
+                grade,
+                0
+            )
+
+            best_grade_parts.append(
+                f"{grade}: {count}"
+            )
+
+        best_grade_text = " | ".join(
+            best_grade_parts
+        )
+
+        best_table_data = [
             [
-                [
-                    "Rank",
-                    "Subject",
-                    "Mean",
-                    "Candidates",
-                    "Highest",
-                    "Lowest",
-                    "Pass",
-                    "Pass %",
-                    "Grade Distribution",
-                ],
-                [
-                    best_subject['rank'],
-                    best_subject['subject'],
-                    f"{best_subject['mean']:.2f}%",
-                    best_subject['candidates'],
-                    f"{best_subject['highest']:.2f}%",
-                    f"{best_subject['lowest']:.2f}%",
-                    best_subject['pass'],
-                    f"{best_subject['pass_percentage']:.2f}%",
-                    grade_text,
-                ]
+                "Rank",
+                "Subject",
+                "Candidates",
+                "Mean %",
+                "Highest %",
+                "Lowest %",
+                "Pass",
+                "Fail",
+                "Pass %",
+                "Grade Distribution",
             ],
+            [
+                best_subject['rank'],
+                best_subject['subject'],
+                best_subject['candidates'],
+                f"{best_subject['mean']:.2f}",
+                f"{best_subject['highest']:.2f}",
+                f"{best_subject['lowest']:.2f}",
+                best_subject['pass'],
+                best_subject['fail'],
+                f"{best_subject['pass_percentage']:.2f}",
+                best_grade_text,
+            ]
+        ]
+
+        best_table = Table(
+            best_table_data,
             colWidths=[
                 15 * mm,
-                40 * mm,
+                42 * mm,
                 25 * mm,
-                27 * mm,
-                27 * mm,
-                27 * mm,
+                23 * mm,
+                25 * mm,
+                25 * mm,
+                20 * mm,
                 20 * mm,
                 25 * mm,
-                65 * mm,
+                80 * mm,
             ]
         )
 
         best_table.setStyle(
             TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16213E')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                (
+                    'BACKGROUND',
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor('#16213E')
+                ),
+                (
+                    'TEXTCOLOR',
+                    (0, 0),
+                    (-1, 0),
+                    colors.white
+                ),
+                (
+                    'FONTNAME',
+                    (0, 0),
+                    (-1, 0),
+                    'Helvetica-Bold'
+                ),
+                (
+                    'FONTNAME',
+                    (0, 1),
+                    (-1, 1),
+                    'Helvetica-Bold'
+                ),
+                (
+                    'GRID',
+                    (0, 0),
+                    (-1, -1),
+                    0.5,
+                    colors.grey
+                ),
+                (
+                    'ALIGN',
+                    (0, 0),
+                    (-1, -1),
+                    'CENTER'
+                ),
+                (
+                    'VALIGN',
+                    (0, 0),
+                    (-1, -1),
+                    'MIDDLE'
+                ),
+                (
+                    'FONTSIZE',
+                    (0, 0),
+                    (-1, -1),
+                    8
+                ),
+                (
+                    'TOPPADDING',
+                    (0, 0),
+                    (-1, -1),
+                    6
+                ),
+                (
+                    'BOTTOMPADDING',
+                    (0, 0),
+                    (-1, -1),
+                    6
+                ),
             ])
         )
 
         story.append(best_table)
         story.append(Spacer(1, 10))
 
+        # ========================================================
+        # 12. BEST SUBJECT EXPLANATION
+        # ========================================================
+
+        best_explanation = (
+            f"<b>{best_subject['subject'].upper()}</b> ranked "
+            f"<b>#1</b> because it recorded the highest mean score "
+            f"of <b>{best_subject['mean']:.2f}%</b> among all "
+            f"{len(subject_stats)} audited subjects. "
+            f"It had <b>{best_subject['candidates']}</b> candidates, "
+            f"a highest score of <b>{best_subject['highest']:.2f}%</b>, "
+            f"a lowest score of <b>{best_subject['lowest']:.2f}%</b>, "
+            f"and <b>{best_subject['pass']}</b> classified passes "
+            f"representing <b>"
+            f"{best_subject['pass_percentage']:.2f}%"
+            f"</b> of classified results. "
+            f"The recorded grade distribution was "
+            f"<b>{best_grade_text}</b>."
+        )
+
         story.append(
             Paragraph(
                 best_explanation,
-                normal_style
+                body_style
+            )
+        )
+
+        story.append(Spacer(1, 12))
+
+        # ========================================================
+        # 13. RANKING RULE
+        # ========================================================
+
+        ranking_explanation = (
+            "<b>Ranking methodology:</b> Subjects are ranked primarily "
+            "by mean score, from highest to lowest. Where two subjects "
+            "have the same mean, pass percentage is used as the first "
+            "tie-breaker, followed by the number of A grades, then the "
+            "highest individual score. Subject name is used only as the "
+            "final deterministic tie-breaker."
+        )
+
+        story.append(
+            Paragraph(
+                ranking_explanation,
+                small_style
             )
         )
 
         story.append(PageBreak())
 
-        # ----------------------------------------------------
-        # 9. COMPLETE SUBJECT RANKING
-        # ----------------------------------------------------
+        # ========================================================
+        # 14. COMPLETE SUBJECT RANKING
+        # ========================================================
+
         story.append(
             Paragraph(
                 f"COMPLETE SUBJECT RANKING — {selected_class}",
@@ -8832,22 +9015,19 @@ def generate_subject_audit_pdf(request):
             "Pass",
             "Fail",
             "Pass %",
-            "A",
-            "B",
-            "C",
-            "D",
-            "E",
-            "F",
-            "O",
         ]
 
-        ranking_rows = [ranking_header]
+        ranking_header += visible_grades
+
+        ranking_rows = [
+            ranking_header
+        ]
 
         for item in subject_stats:
 
             grades = item['grades']
 
-            ranking_rows.append([
+            row = [
                 item['rank'],
                 item['subject'],
                 item['candidates'],
@@ -8857,49 +9037,99 @@ def generate_subject_audit_pdf(request):
                 item['pass'],
                 item['fail'],
                 f"{item['pass_percentage']:.2f}",
-                grades.get('A', 0),
-                grades.get('B', 0),
-                grades.get('C', 0),
-                grades.get('D', 0),
-                grades.get('E', 0),
-                grades.get('F', 0),
-                grades.get('O', 0),
-            ])
+            ]
+
+            row += [
+                grades.get(grade, 0)
+                for grade in visible_grades
+            ]
+
+            ranking_rows.append(row)
+
+        # --------------------------------------------------------
+        # Dynamic column widths
+        # --------------------------------------------------------
+
+        col_widths = [
+            13 * mm,   # Rank
+            43 * mm,   # Subject
+            23 * mm,   # Candidates
+            22 * mm,   # Mean
+            24 * mm,   # Highest
+            24 * mm,   # Lowest
+            18 * mm,   # Pass
+            18 * mm,   # Fail
+            24 * mm,   # Pass %
+        ]
+
+        col_widths += [
+            14 * mm
+            for _ in visible_grades
+        ]
 
         ranking_table = Table(
             ranking_rows,
             repeatRows=1,
-            colWidths=[
-                13 * mm,
-                43 * mm,
-                23 * mm,
-                22 * mm,
-                24 * mm,
-                24 * mm,
-                18 * mm,
-                18 * mm,
-                24 * mm,
-                14 * mm,
-                14 * mm,
-                14 * mm,
-                14 * mm,
-                14 * mm,
-                14 * mm,
-                14 * mm,
-            ]
+            colWidths=col_widths
         )
 
         ranking_table.setStyle(
             TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16213E')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('GRID', (0, 0), (-1, -1), 0.35, colors.grey),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('FONTSIZE', (0, 0), (-1, -1), 7),
-                ('TOPPADDING', (0, 0), (-1, -1), 5),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                (
+                    'BACKGROUND',
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor('#16213E')
+                ),
+                (
+                    'TEXTCOLOR',
+                    (0, 0),
+                    (-1, 0),
+                    colors.white
+                ),
+                (
+                    'FONTNAME',
+                    (0, 0),
+                    (-1, 0),
+                    'Helvetica-Bold'
+                ),
+                (
+                    'GRID',
+                    (0, 0),
+                    (-1, -1),
+                    0.35,
+                    colors.grey
+                ),
+                (
+                    'ALIGN',
+                    (0, 0),
+                    (-1, -1),
+                    'CENTER'
+                ),
+                (
+                    'VALIGN',
+                    (0, 0),
+                    (-1, -1),
+                    'MIDDLE'
+                ),
+                (
+                    'FONTSIZE',
+                    (0, 0),
+                    (-1, -1),
+                    7
+                ),
+                (
+                    'TOPPADDING',
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
+                (
+                    'BOTTOMPADDING',
+                    (0, 0),
+                    (-1, -1),
+                    5
+                ),
             ])
         )
 
@@ -8907,12 +9137,13 @@ def generate_subject_audit_pdf(request):
 
         story.append(PageBreak())
 
-        # ----------------------------------------------------
-        # 10. DETAILED SUBJECT-BY-SUBJECT AUDIT
-        # ----------------------------------------------------
+        # ========================================================
+        # 15. DETAILED SUBJECT AUDIT
+        # ========================================================
+
         story.append(
             Paragraph(
-                "DETAILED SUBJECT AUDIT",
+                "DETAILED SUBJECT-BY-SUBJECT AUDIT",
                 heading_style
             )
         )
@@ -8921,7 +9152,8 @@ def generate_subject_audit_pdf(request):
 
             story.append(
                 Paragraph(
-                    f"#{item['rank']} — {item['subject'].upper()}",
+                    f"#{item['rank']} — "
+                    f"{item['subject'].upper()}",
                     heading_style
                 )
             )
@@ -8929,59 +9161,128 @@ def generate_subject_audit_pdf(request):
             grades = item['grades']
 
             grade_distribution = " | ".join(
-                f"{grade}: {count}"
-                for grade, count in sorted(grades.items())
+                f"{grade}: {grades.get(grade, 0)}"
+                for grade in visible_grades
             )
 
             detail_rows = [
-                ["Candidates", str(item['candidates'])],
-                ["Mean Score", f"{item['mean']:.2f}%"],
-                ["Highest Score", f"{item['highest']:.2f}%"],
-                ["Lowest Score", f"{item['lowest']:.2f}%"],
-                ["Pass Count", str(item['pass'])],
-                ["Fail Count", str(item['fail'])],
-                ["Pass Percentage", f"{item['pass_percentage']:.2f}%"],
-                ["Grade Distribution", grade_distribution],
+                [
+                    "Candidates",
+                    str(item['candidates'])
+                ],
+                [
+                    "Mean Score",
+                    f"{item['mean']:.2f}%"
+                ],
+                [
+                    "Highest Score",
+                    f"{item['highest']:.2f}%"
+                ],
+                [
+                    "Lowest Score",
+                    f"{item['lowest']:.2f}%"
+                ],
+                [
+                    "Pass Count",
+                    str(item['pass'])
+                ],
+                [
+                    "Fail Count",
+                    str(item['fail'])
+                ],
+                [
+                    "Pass Percentage",
+                    f"{item['pass_percentage']:.2f}%"
+                ],
+                [
+                    "Grade Distribution",
+                    grade_distribution
+                ],
             ]
 
             detail_table = Table(
                 detail_rows,
                 colWidths=[
-                    45 * mm,
-                    210 * mm,
+                    48 * mm,
+                    205 * mm,
                 ]
             )
 
             detail_table.setStyle(
                 TableStyle([
-                    ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E8ECF4')),
-                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                    ('GRID', (0, 0), (-1, -1), 0.35, colors.grey),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 8),
-                    ('TOPPADDING', (0, 0), (-1, -1), 5),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                    (
+                        'BACKGROUND',
+                        (0, 0),
+                        (0, -1),
+                        colors.HexColor('#E8ECF4')
+                    ),
+                    (
+                        'FONTNAME',
+                        (0, 0),
+                        (0, -1),
+                        'Helvetica-Bold'
+                    ),
+                    (
+                        'GRID',
+                        (0, 0),
+                        (-1, -1),
+                        0.35,
+                        colors.grey
+                    ),
+                    (
+                        'VALIGN',
+                        (0, 0),
+                        (-1, -1),
+                        'MIDDLE'
+                    ),
+                    (
+                        'FONTSIZE',
+                        (0, 0),
+                        (-1, -1),
+                        8
+                    ),
+                    (
+                        'TOPPADDING',
+                        (0, 0),
+                        (-1, -1),
+                        5
+                    ),
+                    (
+                        'BOTTOMPADDING',
+                        (0, 0),
+                        (-1, -1),
+                        5
+                    ),
                 ])
             )
 
             story.append(detail_table)
             story.append(Spacer(1, 8))
 
-            # Explain the subject's position using actual data
+            # ----------------------------------------------------
+            # Explain this subject's ranking
+            # ----------------------------------------------------
+
             if item['rank'] == 1:
-                audit_text = (
-                    f"This subject ranks first because its mean score "
-                    f"of {item['mean']:.2f}% is the highest in the class."
-                )
-            else:
-                previous = subject_stats[item['rank'] - 2]
 
                 audit_text = (
-                    f"This subject ranks #{item['rank']} with a mean score "
-                    f"of {item['mean']:.2f}%. "
+                    f"This subject ranks #1 because its mean score "
+                    f"of {item['mean']:.2f}% is the highest recorded "
+                    f"mean among the audited subjects."
+                )
+
+            else:
+
+                previous = subject_stats[
+                    item['rank'] - 2
+                ]
+
+                audit_text = (
+                    f"This subject ranks #{item['rank']} with a "
+                    f"mean score of {item['mean']:.2f}%. "
                     f"The subject immediately above it, "
-                    f"{previous['subject']}, recorded "
-                    f"{previous['mean']:.2f}%."
+                    f"<b>{previous['subject']}</b>, recorded "
+                    f"a mean of {previous['mean']:.2f}%."
                 )
 
             story.append(
@@ -8991,20 +9292,21 @@ def generate_subject_audit_pdf(request):
                 )
             )
 
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 10))
 
-            # Avoid unnecessary page breaks if this is the last item
             if index < len(subject_stats) - 1:
                 story.append(PageBreak())
 
-        # ----------------------------------------------------
-        # 11. BUILD PDF
-        # ----------------------------------------------------
+        # ========================================================
+        # 16. BUILD PDF
+        # ========================================================
+
         doc.build(story)
 
         return response
 
     except Exception as e:
+
         return HttpResponse(
             f"Subject Audit PDF Error: {str(e)}",
             status=500
