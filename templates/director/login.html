@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Director Login</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            background: #07111f;
+            color: white;
+        }
+
+        .login-box {
+            width: min(420px, 92%);
+            padding: 35px;
+            background: #102235;
+            border: 1px solid #29445d;
+            border-radius: 18px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.35);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+        }
+
+        .subtitle {
+            color: #aebdca;
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            color: #c9d5df;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border-radius: 9px;
+            border: 1px solid #38536b;
+            background: #081725;
+            color: white;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 24px;
+            padding: 14px;
+            border: 0;
+            border-radius: 9px;
+            background: #d4af37;
+            color: #07111f;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .error {
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #5a1d24;
+            color: #ffd9dc;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+
+    <h1>Director Login</h1>
+
+    <div class="subtitle">
+        School Management System
+    </div>
+
+    {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <label for="email">Email</label>
+        <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            autocomplete="email"
+        >
+
+        <label for="password">Password</label>
+        <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            autocomplete="current-password"
+        >
+
+        <button type="submit">
+            Sign In
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

@@ -98,4 +98,10 @@ urlpatterns = [
     name='download_subject_analysis'),
     path('director/register/', views.director_register, name='director_register'),
     path('director/login/', views.director_login, name='director_login'),
+    path('director/dashboard/', views.director_dashboard, name='director_dashboard'),
+    path('director/web-login/', views.director_web_login, name='director_web_login'),
+    path(
+    'reports/subject-audit/',
+    views.generate_subject_audit_pdf,
+    name='generate_subject_audit_pdf'),
 ]

@@ -8082,13 +8082,21 @@ from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
 
 
+# ============================================================
+# DIRECTOR PUBLIC REGISTRATION
+# ============================================================
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def director_register(request):
     """
     Public registration for School Directors.
 
+    The Director creates their school during registration.
+    No existing school_id can be supplied by the public user.
+
     Creates:
+        School
         User
         UserProfile
         Staff record with DIRECTOR role
@@ -8097,7 +8105,7 @@ def director_register(request):
 
     try:
         full_name = request.data.get('full_name', '').strip()
-        school_id = request.data.get('school_id')
+        school_name = request.data.get('school_name', '').strip()
         email = request.data.get('email', '').strip().lower()
         phone = request.data.get('phone', '').strip()
         password = request.data.get('password', '')
@@ -8106,9 +8114,9 @@ def director_register(request):
         # -----------------------------
         # Basic validation
         # -----------------------------
-        if not full_name or not school_id or not email or not phone or not password:
+        if not full_name or not school_name or not email or not phone or not password:
             return Response(
-                {"msg": "All registration fields are required."},
+                {"msg": "Full name, school name, email, phone and password are required."},
                 status=400
             )
 
@@ -8124,20 +8132,21 @@ def director_register(request):
                 status=400
             )
 
-        school = School.objects.filter(id=school_id).first()
-
-        if not school:
-            return Response(
-                {"msg": "Selected school was not found."},
-                status=404
-            )
-
         # -----------------------------
         # Prevent duplicate email
         # -----------------------------
         if User.objects.filter(email__iexact=email).exists():
             return Response(
                 {"msg": "An account with this email already exists."},
+                status=400
+            )
+
+        # -----------------------------
+        # Prevent duplicate school names
+        # -----------------------------
+        if School.objects.filter(name__iexact=school_name).exists():
+            return Response(
+                {"msg": "A school with this name is already registered."},
                 status=400
             )
 
@@ -8153,7 +8162,16 @@ def director_register(request):
             counter += 1
 
         # -----------------------------
-        # Create normal User
+        # Create the NEW school
+        # -----------------------------
+        school = School.objects.create(
+            name=school_name,
+            director=full_name,
+            email=email,
+        )
+
+        # -----------------------------
+        # Create Director User
         # -----------------------------
         user = User.objects.create_user(
             username=username,
@@ -8162,45 +8180,31 @@ def director_register(request):
             first_name=full_name
         )
 
-        # IMPORTANT:
-        # Director must NOT become superuser.
         user.is_superuser = False
         user.is_staff = False
         user.is_staff_member = True
+        user.school = school
         user.save()
 
         # -----------------------------
         # Connect Director to school
         # -----------------------------
-        UserProfile.objects.update_or_create(
+        UserProfile.objects.create(
             user=user,
-            defaults={
-                'school': school,
-                'is_school_admin': True,
-            }
+            school=school,
+            is_school_admin=True,
         )
 
         # -----------------------------
-        # Create/link Staff Director
+        # Create Director Staff record
         # -----------------------------
-        staff = Staff.objects.filter(
-            user=user
-        ).first()
-
-        if not staff:
-            staff = Staff.objects.create(
-                full_name=full_name,
-                user=user,
-                role='DIRECTOR',
-                school=school,
-                phone=phone,
-            )
-        else:
-            staff.full_name = full_name
-            staff.role = 'DIRECTOR'
-            staff.school = school
-            staff.phone = phone
-            staff.save()
+        staff = Staff.objects.create(
+            full_name=full_name,
+            user=user,
+            role='DIRECTOR',
+            school=school,
+            phone=phone,
+        )
 
         # -----------------------------
         # Issue login token
@@ -8209,7 +8213,7 @@ def director_register(request):
 
         return Response({
             "status": "registered",
-            "message": "Director account created successfully.",
+            "message": "Director account and school created successfully.",
             "token": token.key,
             "user_id": user.id,
             "name": full_name,
@@ -8217,6 +8221,7 @@ def director_register(request):
             "school": {
                 "id": school.id,
                 "name": school.name,
+                "school_account_id": school.school_account_id,
             }
         }, status=201)
 
@@ -8226,6 +8231,123 @@ def director_register(request):
             status=500
         )
 
+# ============================================================
+# DIRECTOR DASHBOARD
+# ============================================================
+
+@login_required
+def director_dashboard(request):
+    """
+    Private dashboard for a School Director.
+
+    The Director can only access data belonging to
+    the school linked to their UserProfile.
+    """
+
+    user = request.user
+
+    # Director must have a school profile
+    profile = getattr(user, 'profile', None)
+
+    if not profile or not profile.school:
+        return HttpResponse(
+            "Your Director account is not linked to a school.",
+            status=403
+        )
+
+    if not profile.is_school_admin:
+        return HttpResponse(
+            "Director access required.",
+            status=403
+        )
+
+    school = profile.school
+
+    # Only retrieve records belonging to THIS school
+    students = Student.objects.filter(school=school)
+    staff = Staff.objects.filter(school=school)
+
+    context = {
+        'director': user,
+        'school': school,
+        'students': students,
+        'staff': staff,
+        'student_count': students.count(),
+        'staff_count': staff.count(),
+    }
+
+    return render(
+        request,
+        'director/dashboard.html',
+        context
+    )
+
+# ============================================================
+# DIRECTOR WEB LOGIN
+# ============================================================
+
+@api_view(['GET', 'POST'])
+@permission_classes([AllowAny])
+def director_web_login(request):
+    """
+    Browser-based login for School Directors.
+
+    GET  -> displays the login page.
+    POST -> authenticates the Director and creates a Django session.
+    """
+
+    if request.method == 'GET':
+        return render(request, 'director/login.html')
+
+    try:
+        email = request.data.get('email', '').strip().lower()
+        password = request.data.get('password', '')
+
+        if not email or not password:
+            return render(
+                request,
+                'director/login.html',
+                {'error': 'Email and password are required.'}
+            )
+
+        user = User.objects.filter(
+            email__iexact=email
+        ).first()
+
+        if not user or not user.check_password(password):
+            return render(
+                request,
+                'director/login.html',
+                {'error': 'Invalid email or password.'}
+            )
+
+        profile = getattr(user, 'profile', None)
+
+        if not profile or not profile.school:
+            return render(
+                request,
+                'director/login.html',
+                {'error': 'This account is not linked to a school.'}
+            )
+
+        if not profile.is_school_admin:
+            return render(
+                request,
+                'director/login.html',
+                {'error': 'This account is not registered as a School Director.'}
+            )
+
+        # Create Django browser session
+        login(request, user)
+
+        return redirect('/api/director/dashboard/')
+
+    except Exception as e:
+        return render(
+            request,
+            'director/login.html',
+            {'error': f'Login failed: {str(e)}'}
+        )
 # ============================================================
 # DIRECTOR LOGIN
 # ============================================================
@@ -8286,5 +8408,604 @@ def director_login(request):
     except Exception as e:
         return Response(
             {"msg": f"Login failed: {str(e)}"},
+            status=500
+        )
+
+# ============================================================
+# SUBJECT AUDIT PDF — INDEPENDENT REPORT
+# Does NOT replace or modify generate_overall_performance_pdf()
+# ============================================================
+
+@login_required
+def generate_subject_audit_pdf(request):
+    """
+    Generates one complete PDF auditing and ranking every subject
+    for a selected class.
+
+    Data source:
+        KEBMockResult
+
+    Ranking:
+        1. Highest mean score
+        2. Highest pass percentage
+        3. Highest A count
+        4. Highest score
+        5. Subject name (alphabetical tie-break)
+    """
+
+    try:
+        from collections import defaultdict
+        from django.http import HttpResponse
+        from reportlab.lib import colors
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import (
+            SimpleDocTemplate,
+            Paragraph,
+            Spacer,
+            Table,
+            TableStyle,
+            PageBreak,
+        )
+
+        # ----------------------------------------------------
+        # 1. SCHOOL
+        # ----------------------------------------------------
+        profile = getattr(request.user, 'profile', None)
+
+        if profile and profile.school:
+            school = profile.school
+        else:
+            school = getattr(request.user, 'school', None)
+
+        if not school:
+            return HttpResponse(
+                "Your account is not linked to a school.",
+                status=403
+            )
+
+        # ----------------------------------------------------
+        # 2. SELECTED CLASS
+        # ----------------------------------------------------
+        selected_class = request.GET.get(
+            'class',
+            request.GET.get('class_name', 'S.4')
+        ).strip().upper()
+
+        # ----------------------------------------------------
+        # 3. GET ALL MOCK RESULTS FOR THIS CLASS
+        # ----------------------------------------------------
+        results = (
+            KEBMockResult.objects
+            .filter(
+                student__school=school,
+                student__current_class=selected_class
+            )
+            .select_related('student', 'subject')
+            .order_by('subject__name', 'student__full_name')
+        )
+
+        if not results.exists():
+            return HttpResponse(
+                f"No mock results found for {selected_class}.",
+                status=404
+            )
+
+        # ----------------------------------------------------
+        # 4. GROUP RESULTS BY SUBJECT
+        # ----------------------------------------------------
+        subject_data = defaultdict(list)
+
+        for result in results:
+            subject_name = (
+                result.subject.name.strip()
+                if result.subject and result.subject.name
+                else "UNKNOWN SUBJECT"
+            )
+
+            subject_data[subject_name].append(result)
+
+        # ----------------------------------------------------
+        # 5. BUILD SUBJECT STATISTICS
+        # ----------------------------------------------------
+        subject_stats = []
+
+        for subject_name, marks in subject_data.items():
+
+            scores = [
+                float(m.score)
+                for m in marks
+                if m.score is not None
+            ]
+
+            if not scores:
+                continue
+
+            # Existing grades stored by the system
+            grade_counts = defaultdict(int)
+
+            for mark in marks:
+                grade = str(mark.grade or '').strip().upper()
+
+                if not grade:
+                    grade = "UNGRADED"
+
+                grade_counts[grade] += 1
+
+            candidate_count = len(scores)
+
+            total_score = sum(scores)
+            mean_score = total_score / candidate_count
+
+            highest_score = max(scores)
+            lowest_score = min(scores)
+
+            # ------------------------------------------------
+            # PASS LOGIC
+            # Existing stored grades are respected.
+            #
+            # A-E = pass
+            # F = fail
+            # O is treated as a pass because it represents
+            # a subsidiary pass in your existing system.
+            # ------------------------------------------------
+            pass_grades = {'A', 'B', 'C', 'D', 'E', 'O'}
+
+            pass_count = sum(
+                count
+                for grade, count in grade_counts.items()
+                if grade in pass_grades
+            )
+
+            fail_count = sum(
+                count
+                for grade, count in grade_counts.items()
+                if grade == 'F'
+            )
+
+            # Anything else is not silently classified as pass/fail
+            classified_count = pass_count + fail_count
+
+            if classified_count:
+                pass_percentage = (
+                    pass_count / classified_count
+                ) * 100
+            else:
+                pass_percentage = 0
+
+            # ------------------------------------------------
+            # RANKING INFORMATION
+            # ------------------------------------------------
+            a_count = grade_counts.get('A', 0)
+
+            subject_stats.append({
+                'subject': subject_name,
+                'candidates': candidate_count,
+                'mean': mean_score,
+                'highest': highest_score,
+                'lowest': lowest_score,
+                'pass': pass_count,
+                'fail': fail_count,
+                'pass_percentage': pass_percentage,
+                'grades': dict(grade_counts),
+                'a_count': a_count,
+            })
+
+        if not subject_stats:
+            return HttpResponse(
+                f"No usable subject results found for {selected_class}.",
+                status=404
+            )
+
+        # ----------------------------------------------------
+        # 6. RANK SUBJECTS
+        # ----------------------------------------------------
+        subject_stats.sort(
+            key=lambda x: (
+                -x['mean'],
+                -x['pass_percentage'],
+                -x['a_count'],
+                -x['highest'],
+                x['subject'].upper()
+            )
+        )
+
+        for rank, item in enumerate(subject_stats, start=1):
+            item['rank'] = rank
+
+        best_subject = subject_stats[0]
+
+        # ----------------------------------------------------
+        # 7. PDF RESPONSE
+        # ----------------------------------------------------
+        response = HttpResponse(
+            content_type='application/pdf'
+        )
+
+        response[
+            'Content-Disposition'
+        ] = (
+            f'attachment; '
+            f'filename="SUBJECT_AUDIT_{selected_class}.pdf"'
+        )
+
+        doc = SimpleDocTemplate(
+            response,
+            pagesize=landscape(A4),
+            rightMargin=12 * mm,
+            leftMargin=12 * mm,
+            topMargin=12 * mm,
+            bottomMargin=12 * mm,
+        )
+
+        styles = getSampleStyleSheet()
+
+        title_style = ParagraphStyle(
+            'SubjectAuditTitle',
+            parent=styles['Title'],
+            fontSize=22,
+            leading=26,
+            alignment=TA_CENTER,
+            spaceAfter=8,
+        )
+
+        subtitle_style = ParagraphStyle(
+            'SubjectAuditSubtitle',
+            parent=styles['Normal'],
+            fontSize=10,
+            leading=14,
+            alignment=TA_CENTER,
+            spaceAfter=15,
+        )
+
+        heading_style = ParagraphStyle(
+            'SubjectAuditHeading',
+            parent=styles['Heading2'],
+            fontSize=14,
+            leading=18,
+            spaceBefore=8,
+            spaceAfter=8,
+        )
+
+        normal_style = ParagraphStyle(
+            'SubjectAuditNormal',
+            parent=styles['Normal'],
+            fontSize=9,
+            leading=12,
+        )
+
+        small_style = ParagraphStyle(
+            'SubjectAuditSmall',
+            parent=styles['Normal'],
+            fontSize=7.5,
+            leading=9,
+        )
+
+        story = []
+
+        # ----------------------------------------------------
+        # 8. COVER / SUMMARY
+        # ----------------------------------------------------
+        story.append(
+            Paragraph(
+                "SUBJECT PERFORMANCE AUDIT",
+                title_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"{school.name} — {selected_class} MOCK EXAMINATION",
+                subtitle_style
+            )
+        )
+
+        story.append(
+            Paragraph(
+                f"Complete analysis of {len(subject_stats)} subjects "
+                f"using recorded KEB mock results.",
+                normal_style
+            )
+        )
+
+        story.append(Spacer(1, 10))
+
+        # ----------------------------------------------------
+        # BEST SUBJECT
+        # ----------------------------------------------------
+        best_grades = best_subject['grades']
+
+        grade_summary = []
+
+        # Display the grades that actually occur
+        for grade in sorted(best_grades.keys()):
+            grade_summary.append(
+                f"{grade}: {best_grades[grade]}"
+            )
+
+        grade_text = " | ".join(grade_summary)
+
+        best_explanation = (
+            f"<b>{best_subject['subject'].upper()}</b> ranked "
+            f"<b>#1</b> because it recorded the highest mean score "
+            f"of <b>{best_subject['mean']:.2f}%</b> among all "
+            f"{len(subject_stats)} audited subjects. "
+            f"It assessed <b>{best_subject['candidates']}</b> candidates, "
+            f"with a highest score of <b>{best_subject['highest']:.2f}%</b> "
+            f"and a lowest score of <b>{best_subject['lowest']:.2f}%</b>. "
+            f"It recorded <b>{best_subject['pass']}</b> classified passes "
+            f"({best_subject['pass_percentage']:.2f}%). "
+            f"Its recorded grade distribution was: {grade_text}."
+        )
+
+        story.append(
+            Paragraph(
+                "BEST-PERFORMING SUBJECT",
+                heading_style
+            )
+        )
+
+        best_table = Table(
+            [
+                [
+                    "Rank",
+                    "Subject",
+                    "Mean",
+                    "Candidates",
+                    "Highest",
+                    "Lowest",
+                    "Pass",
+                    "Pass %",
+                    "Grade Distribution",
+                ],
+                [
+                    best_subject['rank'],
+                    best_subject['subject'],
+                    f"{best_subject['mean']:.2f}%",
+                    best_subject['candidates'],
+                    f"{best_subject['highest']:.2f}%",
+                    f"{best_subject['lowest']:.2f}%",
+                    best_subject['pass'],
+                    f"{best_subject['pass_percentage']:.2f}%",
+                    grade_text,
+                ]
+            ],
+            colWidths=[
+                15 * mm,
+                40 * mm,
+                25 * mm,
+                27 * mm,
+                27 * mm,
+                27 * mm,
+                20 * mm,
+                25 * mm,
+                65 * mm,
+            ]
+        )
+
+        best_table.setStyle(
+            TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16213E')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ])
+        )
+
+        story.append(best_table)
+        story.append(Spacer(1, 10))
+
+        story.append(
+            Paragraph(
+                best_explanation,
+                normal_style
+            )
+        )
+
+        story.append(PageBreak())
+
+        # ----------------------------------------------------
+        # 9. COMPLETE SUBJECT RANKING
+        # ----------------------------------------------------
+        story.append(
+            Paragraph(
+                f"COMPLETE SUBJECT RANKING — {selected_class}",
+                heading_style
+            )
+        )
+
+        ranking_header = [
+            "Rank",
+            "Subject",
+            "Candidates",
+            "Mean %",
+            "Highest %",
+            "Lowest %",
+            "Pass",
+            "Fail",
+            "Pass %",
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "O",
+        ]
+
+        ranking_rows = [ranking_header]
+
+        for item in subject_stats:
+
+            grades = item['grades']
+
+            ranking_rows.append([
+                item['rank'],
+                item['subject'],
+                item['candidates'],
+                f"{item['mean']:.2f}",
+                f"{item['highest']:.2f}",
+                f"{item['lowest']:.2f}",
+                item['pass'],
+                item['fail'],
+                f"{item['pass_percentage']:.2f}",
+                grades.get('A', 0),
+                grades.get('B', 0),
+                grades.get('C', 0),
+                grades.get('D', 0),
+                grades.get('E', 0),
+                grades.get('F', 0),
+                grades.get('O', 0),
+            ])
+
+        ranking_table = Table(
+            ranking_rows,
+            repeatRows=1,
+            colWidths=[
+                13 * mm,
+                43 * mm,
+                23 * mm,
+                22 * mm,
+                24 * mm,
+                24 * mm,
+                18 * mm,
+                18 * mm,
+                24 * mm,
+                14 * mm,
+                14 * mm,
+                14 * mm,
+                14 * mm,
+                14 * mm,
+                14 * mm,
+                14 * mm,
+            ]
+        )
+
+        ranking_table.setStyle(
+            TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#16213E')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.35, colors.grey),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, -1), 7),
+                ('TOPPADDING', (0, 0), (-1, -1), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ])
+        )
+
+        story.append(ranking_table)
+
+        story.append(PageBreak())
+
+        # ----------------------------------------------------
+        # 10. DETAILED SUBJECT-BY-SUBJECT AUDIT
+        # ----------------------------------------------------
+        story.append(
+            Paragraph(
+                "DETAILED SUBJECT AUDIT",
+                heading_style
+            )
+        )
+
+        for index, item in enumerate(subject_stats):
+
+            story.append(
+                Paragraph(
+                    f"#{item['rank']} — {item['subject'].upper()}",
+                    heading_style
+                )
+            )
+
+            grades = item['grades']
+
+            grade_distribution = " | ".join(
+                f"{grade}: {count}"
+                for grade, count in sorted(grades.items())
+            )
+
+            detail_rows = [
+                ["Candidates", str(item['candidates'])],
+                ["Mean Score", f"{item['mean']:.2f}%"],
+                ["Highest Score", f"{item['highest']:.2f}%"],
+                ["Lowest Score", f"{item['lowest']:.2f}%"],
+                ["Pass Count", str(item['pass'])],
+                ["Fail Count", str(item['fail'])],
+                ["Pass Percentage", f"{item['pass_percentage']:.2f}%"],
+                ["Grade Distribution", grade_distribution],
+            ]
+
+            detail_table = Table(
+                detail_rows,
+                colWidths=[
+                    45 * mm,
+                    210 * mm,
+                ]
+            )
+
+            detail_table.setStyle(
+                TableStyle([
+                    ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#E8ECF4')),
+                    ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                    ('GRID', (0, 0), (-1, -1), 0.35, colors.grey),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                    ('FONTSIZE', (0, 0), (-1, -1), 8),
+                    ('TOPPADDING', (0, 0), (-1, -1), 5),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                ])
+            )
+
+            story.append(detail_table)
+            story.append(Spacer(1, 8))
+
+            # Explain the subject's position using actual data
+            if item['rank'] == 1:
+                audit_text = (
+                    f"This subject ranks first because its mean score "
+                    f"of {item['mean']:.2f}% is the highest in the class."
+                )
+            else:
+                previous = subject_stats[item['rank'] - 2]
+
+                audit_text = (
+                    f"This subject ranks #{item['rank']} with a mean score "
+                    f"of {item['mean']:.2f}%. "
+                    f"The subject immediately above it, "
+                    f"{previous['subject']}, recorded "
+                    f"{previous['mean']:.2f}%."
+                )
+
+            story.append(
+                Paragraph(
+                    audit_text,
+                    small_style
+                )
+            )
+
+            story.append(Spacer(1, 12))
+
+            # Avoid unnecessary page breaks if this is the last item
+            if index < len(subject_stats) - 1:
+                story.append(PageBreak())
+
+        # ----------------------------------------------------
+        # 11. BUILD PDF
+        # ----------------------------------------------------
+        doc.build(story)
+
+        return response
+
+    except Exception as e:
+        return HttpResponse(
+            f"Subject Audit PDF Error: {str(e)}",
             status=500
         )

@@ -331,3 +331,5 @@ else:
     DEBUG = True
     ALLOWED_HOSTS = ['*', '10.42.153.47', 'localhost', '127.0.0.1']
     SECURE_SSL_REDIRECT = False
+
+LOGIN_URL = '/api/director/login/'
