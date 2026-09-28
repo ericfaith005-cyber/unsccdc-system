@@ -1272,79 +1272,397 @@ from .utils import get_national_grading
 
 @csrf_exempt
 def pin_vault_auth(request):
-    """STAGE 2: Final PIN Unlock & Full Data Delivery"""
-    if request.method == "OPTIONS": return sovereign_response({})
-    
-    try:
-        data = json.loads(request.body)
-        sid = data.get('student_id')
-        pin = data.get('pin', '').strip()
+    """
+    STAGE 2:
+    Verify the parent's PIN and return the REAL student portal data.
+    """
 
-        student = Student.objects.select_related('parent_link', 'school').get(account_number=sid)
+    if request.method == "OPTIONS":
+        return sovereign_response({})
+
+    try:
+        data = json.loads(request.body or "{}")
+
+        student_id = str(data.get("student_id", "")).strip()
+        pin = str(data.get("pin", "")).strip()
+
+        if not student_id or not pin:
+            return sovereign_response(
+                {"msg": "Student ID and PIN are required."},
+                status=400
+            )
+
+        # ---------------------------------------------------------
+        # 1. FIND THE REAL STUDENT
+        # ---------------------------------------------------------
+        student = (
+            Student.objects
+            .select_related("parent_link", "school")
+            .get(account_number=student_id)
+        )
+
         parent = student.parent_link
 
-        if parent and parent.secure_pin == pin:
-            # 🚀 AUTHENTICATED: Build the Imperial Data Package
-            sch = student.school
-            
-            # A. Finance Logic
-            f_rec = getattr(student, 'fees', None)
-            total_due = getattr(f_rec, 'total_fees_due', 0)
-            paid = getattr(f_rec, 'total_fees_paid', 0)
+        if not parent:
+            return sovereign_response(
+                {"msg": "No parent account is linked to this student."},
+                status=401
+            )
 
-            # B. Marks Logic (KEB Mock & National)
+        # Support the current secure_pin field while also remaining
+        # compatible with older Parent records using unique_code.
+        stored_pin = str(
+            getattr(parent, "secure_pin", "") or
+            getattr(parent, "unique_code", "")
+        ).strip()
+
+        if stored_pin != pin:
+            return sovereign_response(
+                {"msg": "SECURITY ALERT: Invalid 6-Digit PIN."},
+                status=401
+            )
+
+        school = student.school
+
+        # ---------------------------------------------------------
+        # 2. REAL STUDENT PROFILE
+        # ---------------------------------------------------------
+        photo_url = ""
+
+        if student.photo:
+            photo_url = request.build_absolute_uri(student.photo.url)
+
+        bio_obj = getattr(student, "bio", None)
+
+        bio_data = {
+            "career": getattr(
+                bio_obj,
+                "future_career",
+                "Not yet provided"
+            ),
+            "challenges": getattr(
+                bio_obj,
+                "challenges_faced",
+                "None"
+            ),
+            "inspiration": getattr(
+                bio_obj,
+                "student_inspiration",
+                "Uganda"
+            ),
+            "gender": getattr(student, "gender", ""),
+            "stream": getattr(student, "stream", ""),
+        }
+
+        # ---------------------------------------------------------
+        # 3. REAL ATTENDANCE
+        # ---------------------------------------------------------
+        try:
+            attendance_records = student.attendance_records.all()
+
+            total_days = attendance_records.count()
+            present_days = attendance_records.filter(
+                status="PRESENT"
+            ).count()
+
+            late_days = attendance_records.filter(
+                status="LATE"
+            ).count()
+
+            if total_days > 0:
+                attendance_percentage = (
+                    (present_days + (late_days * 0.5))
+                    / total_days
+                ) * 100
+            else:
+                attendance_percentage = 0
+
+            bio_data["attendance"] = (
+                f"{attendance_percentage:.1f}%"
+            )
+
+        except Exception:
+            bio_data["attendance"] = "0%"
+
+        # ---------------------------------------------------------
+        # 4. REAL FEES
+        # ---------------------------------------------------------
+        fees_record = getattr(student, "fees_tracker", None)
+
+        if fees_record:
+            total_due = float(
+                fees_record.total_fees_due or 0
+            )
+
+            total_paid = float(
+                fees_record.total_fees_paid or 0
+            )
+
+            balance = total_due - total_paid
+        else:
+            total_due = 0
+            total_paid = 0
+            balance = 0
+
+        finance = {
+            "total_due": total_due,
+            "paid": total_paid,
+            "balance": balance,
+        }
+
+        # ---------------------------------------------------------
+        # 5. REAL ACADEMIC RESULTS
+        # ---------------------------------------------------------
+        national_report = {}
+
+        period_map = {
+            "AOI1": "aoi_1",
+            "AOI2": "aoi_2",
+            "MidTerm": "mid_term",
+            "AOI3": "aoi_3",
+            "AOI4": "aoi_4",
+            "EOT": "eot_score",
+        }
+
+        try:
+            mark_records = (
+                student.marks
+                .select_related("subject")
+                .all()
+            )
+
+            for period_name, score_field in period_map.items():
+
+                period_marks = []
+                total_points = 0
+
+                for mark in mark_records:
+
+                    score = float(
+                        getattr(mark, score_field, 0) or 0
+                    )
+
+                    try:
+                        grade, points, status, remark = (
+                            get_national_grading(
+                                score,
+                                student.level_category
+                            )
+                        )
+                    except Exception:
+                        grade = ""
+                        points = 0
+                        status = ""
+                        remark = ""
+
+                    if period_name == "EOT":
+                        try:
+                            total_points += int(points or 0)
+                        except Exception:
+                            pass
+
+                    period_marks.append({
+                        "sub": mark.subject.name,
+                        "score": score,
+                        "grade": grade,
+                        "aoi1": float(mark.aoi_1 or 0),
+                        "aoi2": float(mark.aoi_2 or 0),
+                        "mid": float(mark.mid_term or 0),
+                        "aoi3": float(mark.aoi_3 or 0),
+                        "aoi4": float(mark.aoi_4 or 0),
+                        "project": float(mark.project_work or 0),
+                        "teacher": "STAFF",
+                        "status": status,
+                        "remark": remark,
+                    })
+
+                if period_marks:
+                    national_report[period_name] = {
+                        "marks": period_marks,
+                        "agg": total_points,
+                        "div": (
+                            "DIV 1"
+                            if total_points <= 12
+                            else "VERIFIED"
+                        ),
+                    }
+
+        except Exception:
             national_report = {}
-            # (Your marks gathering logic here...)
 
-            # C. Marketing Feed (TikTok)
-            feed_data = []
-            for f in SchoolPost.objects.all().order_by('-date')[:10]:
+        # ---------------------------------------------------------
+        # 6. REAL SCHOOLPAY TRANSACTION HISTORY
+        # ---------------------------------------------------------
+        transactions = []
+
+        try:
+            ledger_records = (
+                SchoolPayLedger.objects
+                .filter(student=student)
+                .order_by("-timestamp")[:30]
+            )
+
+            for tx in ledger_records:
+                transactions.append({
+                    "receipt": tx.receipt_number,
+                    "amount": float(tx.amount or 0),
+                    "timestamp": (
+                        tx.timestamp.isoformat()
+                        if tx.timestamp
+                        else ""
+                    ),
+                    "reversed": bool(
+                        getattr(tx, "is_reversed", False)
+                    ),
+                })
+
+        except Exception:
+            transactions = []
+
+        # ---------------------------------------------------------
+        # 7. REAL SCHOOL FEED
+        # ---------------------------------------------------------
+        feed_data = []
+
+        try:
+            posts = (
+                SchoolPost.objects
+                .filter(school=school)
+                .order_by("-date")[:20]
+            )
+
+            for post in posts:
+
+                media_url = ""
+
+                if post.media_file:
+                    media_url = request.build_absolute_uri(
+                        post.media_file.url
+                    )
+
                 feed_data.append({
-                    "media": request.build_absolute_uri(f.media_file.url) if f.media_file else "",
-                    "school": f.school.name,
-                    "title": f.title,
-                    "desc": getattr(f, 'content', 'Sovereign Excellence'),
-                    "likes": getattr(f, 'likes_count', 0),
-                    "verified": True
+                    "media": media_url,
+                    "school": school.name,
+                    "title": post.title,
+                    "desc": getattr(
+                        post,
+                        "description",
+                        ""
+                    ) or "",
+                    "likes": getattr(
+                        post,
+                        "likes_count",
+                        0
+                    ),
+                    "verified": bool(
+                        getattr(post, "verified", True)
+                    ),
                 })
 
-            # D. National Top Performers (The Carousel)
-            performers = []
-            for t in NationalTopPerformer.objects.all().order_by('?')[:10]:
+        except Exception:
+            feed_data = []
+
+        # ---------------------------------------------------------
+        # 8. NATIONAL TOP PERFORMERS
+        # ---------------------------------------------------------
+        performers = []
+
+        try:
+            top_records = (
+                NationalTopPerformer.objects
+                .all()
+                .order_by("-id")[:10]
+            )
+
+            for performer in top_records:
+
+                performer_photo = ""
+
+                if performer.photo:
+                    performer_photo = request.build_absolute_uri(
+                        performer.photo.url
+                    )
+
                 performers.append({
-                    "name": t.name,
-                    "school": t.school_name,
-                    "score": t.score,
-                    "photo": request.build_absolute_uri(t.photo.url) if t.photo else ""
+                    "name": performer.name,
+                    "school": performer.school_name,
+                    "score": performer.score,
+                    "photo": performer_photo,
                 })
 
-            return sovereign_response({
-                "status": "authenticated",
-                "name": student.full_name,
-                "id": student.account_number,
-                "payment_code": student.payment_code,
-                "photo": request.build_absolute_uri(student.photo.url) if student.photo else "",
-                "school": {"name": sch.name, "motto": sch.school_motto, "verified": True},
-                "finance": {"balance": total_due - paid, "paid": paid, "total_due": total_due},
-                "feed": feed_data,
-                "top_performers": performers,
-                "national_report": national_report
-            })
+        except Exception:
+            performers = []
 
-        return sovereign_response({'msg': 'INVALID 6-DIGIT PIN'}, status=401)
+        # ---------------------------------------------------------
+        # 9. FINAL REAL PARENT PORTAL RESPONSE
+        # ---------------------------------------------------------
+        return sovereign_response({
+            "status": "authenticated",
+
+            "parent": {
+                "name": parent.full_name,
+                "phone": getattr(
+                    parent,
+                    "phone_number",
+                    ""
+                ),
+            },
+
+            "name": student.full_name,
+            "id": student.account_number,
+            "payment_code": student.payment_code,
+
+            "class": student.current_class,
+            "stream": getattr(
+                student,
+                "stream",
+                ""
+            ),
+
+            "photo": photo_url,
+
+            "school": {
+                "name": school.name,
+                "motto": getattr(
+                    school,
+                    "school_motto",
+                    ""
+                ),
+                "verified": True,
+            },
+
+            "bio": bio_data,
+
+            "finance": finance,
+
+            "transactions": transactions,
+
+            "national_report": national_report,
+
+            "feed": feed_data,
+
+            "top_performers": performers,
+        })
+
+    except Student.DoesNotExist:
+        return sovereign_response(
+            {"msg": "Student account was not found."},
+            status=404
+        )
+
     except Exception as e:
-        return sovereign_response({'msg': 'Authorization Error'}, status=500)
+        import traceback
 
-from django.core.management import call_command
-from django.db import connection
+        print("PARENT PORTAL ERROR:")
+        print(traceback.format_exc())
 
-def force_registry_rebuild(request):
-    try:
-        # This physically builds your 100-character tables in Supabase
-        call_command('migrate', interactive=False)
-        return HttpResponse("<h1>NATIONAL REGISTRY BUILT SUCCESSFULLY! 🏆</h1>")
-    except Exception as e:
-        return HttpResponse(f"Registry Error: {str(e)}")
+        return sovereign_response(
+            {
+                "msg": "Parent authorization failed.",
+                "error": str(e),
+            },
+            status=500
+        )
 
 
 # --- 💰 THE SCHOOLPAY SETTLEMENT SIMULATOR ---
@@ -7871,47 +8189,157 @@ def student_identity_gate(request):
 
 @csrf_exempt
 def pin_vault_auth(request):
-    """STAGE 2: Verify PIN and Deliver the Imperial Data Package"""
-    if request.method == "OPTIONS": return sovereign_response({})
-    
-    try:
-        data = json.loads(request.body)
-        student_id = data.get('student_id')
-        pin = data.get('pin', '').strip()
+    """Parent Portal Stage 2: authenticate a real parent and return the real student dashboard."""
+    if request.method == "OPTIONS":
+        return sovereign_response({})
 
-        student = Student.objects.select_related('parent_link', 'school').get(account_number=student_id)
+    if request.method != "POST":
+        return sovereign_response({"msg": "POST required"}, status=405)
+
+    try:
+        data = json.loads(request.body or "{}")
+        student_id = str(data.get("student_id", "")).strip()
+        pin = str(data.get("pin", "")).strip()
+
+        if not student_id or not pin:
+            return sovereign_response(
+                {"msg": "Student account number and parent PIN are required."},
+                status=400
+            )
+
+        student = (
+            Student.objects
+            .select_related("parent_link", "school")
+            .filter(account_number__iexact=student_id)
+            .first()
+        )
+
+        if not student or not student.parent_link:
+            return sovereign_response(
+                {"msg": "Student account not found."},
+                status=401
+            )
+
         parent = student.parent_link
 
-        if parent and parent.secure_pin == pin:
-            # 🚀 IDENTITY SECURE - Generate massive data payload
-            # (Use the logic from your StudentViewSet.list here to build the response)
-            # Below is a condensed version to ensure it works immediately:
-            
-            payload = {
-                "status": "authenticated",
-                "name": student.full_name,
-                "id": student.account_number,
-                "payment_code": student.payment_code,
-                "class": student.current_class,
-                "photo": request.build_absolute_uri(student.photo.url) if student.photo else "",
-                "school": {
-                    "name": student.school.name,
-                    "motto": student.school.school_motto,
-                },
-                "finance": {
-                    "balance": 0, # Calculate your balance logic here
-                    "paid": 0
-                },
-                "feed": [], # Add your TikTok feed logic here
-                "national_report": {} # Add your marks logic here
-            }
-            return sovereign_response(payload)
+        # The real Parent model uses unique_code.
+        if str(parent.unique_code).strip() != pin:
+            return sovereign_response(
+                {"msg": "Invalid parent PIN."},
+                status=401
+            )
 
-        return sovereign_response({'msg': 'SECURITY ALERT: Invalid 6-Digit PIN.'}, status=401)
+        # REAL FEES
+        fees = FeesTracker.objects.filter(student=student).first()
+
+        total_due = float(fees.total_fees_due) if fees else 0
+        total_paid = float(fees.total_fees_paid) if fees else 0
+        balance = max(total_due - total_paid, 0)
+
+        # REAL SCHOOLPAY TRANSACTIONS
+        ledger_rows = (
+            SchoolPayLedger.objects
+            .filter(student=student)
+            .order_by("-timestamp")
+        )
+
+        transactions = []
+
+        for tx in ledger_rows:
+            transactions.append({
+                "receipt_number": tx.receipt_number or "",
+                "amount": float(tx.amount or 0),
+                "timestamp": tx.timestamp.isoformat() if tx.timestamp else None,
+                "is_reversed": bool(tx.is_reversed),
+                "reversal_reason": tx.reversal_reason or ""
+            })
+
+        # REAL ACADEMIC RESULTS
+        result_rows = (
+            KEBMockResult.objects
+            .filter(student=student)
+            .select_related("subject")
+            .order_by("subject__name")
+        )
+
+        marks = []
+
+        for result in result_rows:
+            marks.append({
+                "subject": result.subject.name if result.subject else "",
+                "score": float(result.score) if result.score is not None else 0,
+                "grade": result.grade or "",
+                "points": float(result.points) if result.points is not None else 0
+            })
+
+        # STUDENT PHOTO
+        photo_url = ""
+
+        if student.photo:
+            try:
+                photo_url = request.build_absolute_uri(student.photo.url)
+            except Exception:
+                photo_url = ""
+
+        # REAL PARENT DASHBOARD
+        payload = {
+            "status": "authenticated",
+            "role": "PARENT",
+
+            "name": student.full_name,
+            "id": student.account_number,
+            "account_number": student.account_number,
+            "payment_code": student.payment_code or "",
+            "class": student.current_class or "",
+            "gender": student.gender or "",
+            "age": student.age,
+            "stream": student.stream or "",
+            "photo": photo_url,
+
+            "parent": {
+                "name": parent.full_name,
+                "phone": parent.phone_number or ""
+            },
+
+            "school": {
+                "name": student.school.name if student.school else "",
+                "motto": getattr(student.school, "school_motto", "") or ""
+            },
+
+            "finance": {
+                "balance": balance,
+                "paid": total_paid,
+                "total_due": total_due
+            },
+
+            "fees": {
+                "total_fees_due": total_due,
+                "total_fees_paid": total_paid,
+                "balance": balance
+            },
+
+            "transactions": transactions,
+
+            "marks": marks,
+
+            # Kept for compatibility with the existing Flutter dashboard.
+            "feed": [],
+
+            "national_report": {
+                "results_count": len(marks)
+            }
+        }
+
+        return sovereign_response(payload)
 
     except Exception as e:
-        return sovereign_response({'msg': 'Authorization Failed'}, status=500)
+        import traceback
+        print(traceback.format_exc())
 
+        return sovereign_response(
+            {"msg": "Authorization Error", "detail": str(e)},
+            status=500
+        )
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -8240,51 +8668,126 @@ def director_dashboard(request):
     """
     Private dashboard for a School Director.
 
-    The Director can only access data belonging to
-    the school linked to their UserProfile.
+    SECURITY:
+        The director can only see students, staff and reports
+        belonging to the school linked to their UserProfile.
+
+    This method is the central data source for the Director Portal.
     """
 
+    # ---------------------------------------------------------
+    # 1. GET THE LOGGED-IN USER'S PROFILE
+    # ---------------------------------------------------------
     user = request.user
 
-    # Director must have a school profile
     profile = getattr(user, 'profile', None)
 
-    if not profile or not profile.school:
+    if not profile:
         return HttpResponse(
-            "Your Director account is not linked to a school.",
+            "Your Director account does not have a UserProfile.",
             status=403
         )
 
+    # ---------------------------------------------------------
+    # 2. VERIFY DIRECTOR ACCESS
+    # ---------------------------------------------------------
     if not profile.is_school_admin:
         return HttpResponse(
             "Director access required.",
             status=403
         )
 
+    # ---------------------------------------------------------
+    # 3. GET THE DIRECTOR'S SCHOOL
+    # ---------------------------------------------------------
     school = profile.school
 
-    # Only retrieve records belonging to THIS school
-    students = Student.objects.filter(school=school)
-    staff = Staff.objects.filter(school=school)
+    if not school:
+        return HttpResponse(
+            "Your Director account is not linked to a school.",
+            status=403
+        )
 
+    # ---------------------------------------------------------
+    # 4. GET ONLY THIS SCHOOL'S STUDENTS
+    # ---------------------------------------------------------
+    students = (
+        Student.objects
+        .filter(school=school)
+        .order_by('current_class', 'full_name')
+    )
+
+    # ---------------------------------------------------------
+    # 5. GET ONLY THIS SCHOOL'S STAFF
+    # ---------------------------------------------------------
+    staff = (
+        Staff.objects
+        .filter(school=school)
+        .order_by('role', 'full_name')
+    )
+
+    # ---------------------------------------------------------
+    # 6. GET THE DIRECTOR'S STAFF RECORD
+    # ---------------------------------------------------------
+    director_staff = (
+        staff
+        .filter(
+            role__iexact='DIRECTOR'
+        )
+        .first()
+    )
+
+    # ---------------------------------------------------------
+    # 7. DETERMINE THE DISPLAYED DIRECTOR NAME
+    # ---------------------------------------------------------
+    director_name = (
+        getattr(school, 'director', None)
+        or getattr(user, 'get_full_name', lambda: '')()
+        or getattr(user, 'username', 'School Director')
+    )
+
+    # ---------------------------------------------------------
+    # 8. BUILD DASHBOARD COUNTS
+    # ---------------------------------------------------------
+    student_count = students.count()
+    staff_count = staff.count()
+
+    # ---------------------------------------------------------
+    # 9. PREPARE DASHBOARD CONTEXT
+    # ---------------------------------------------------------
     context = {
+        # Logged-in account
         'director': user,
+
+        # School
         'school': school,
+        'director_name': director_name,
+
+        # School records
         'students': students,
         'staff': staff,
-        'student_count': students.count(),
-        'staff_count': staff.count(),
+        'director_staff': director_staff,
+
+        # Counts
+        'student_count': student_count,
+        'staff_count': staff_count,
+
+        # Compatibility with the existing template
+        'students_count': student_count,
+
+        # Portal flags
+        'is_director': True,
+        'is_school_admin': True,
     }
 
+    # ---------------------------------------------------------
+    # 10. RENDER DIRECTOR DASHBOARD
+    # ---------------------------------------------------------
     return render(
         request,
         'director/dashboard.html',
         context
     )
-
-# ============================================================
-# DIRECTOR WEB LOGIN
-# ============================================================
 
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
@@ -9311,3 +9814,12 @@ def generate_subject_audit_pdf(request):
             f"Subject Audit PDF Error: {str(e)}",
             status=500
         )
+
+from django.core.management import call_command
+
+def force_registry_rebuild(request):
+    try:
+        call_command('migrate', interactive=False)
+        return HttpResponse("<h1>NATIONAL REGISTRY BUILT SUCCESSFULLY!</h1>")
+    except Exception as e:
+        return HttpResponse(f"Registry Error: {str(e)}")
