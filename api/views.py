@@ -1269,151 +1269,111 @@ def get_national_feed(request):
     return sovereign_response(feed)
 
 from .utils import get_national_grading
-
 @csrf_exempt
 def pin_vault_auth(request):
     """
-    STAGE 2:
-    Verify the parent's PIN and return the REAL student portal data.
+    STAGE 2: Real Parent Authentication
+    Returns real student identity, finance, AcademicResult marks,
+    national_report and NationalTopPerformer data.
     """
-
     if request.method == "OPTIONS":
         return sovereign_response({})
 
-    try:
-        data = json.loads(request.body or "{}")
+    if request.method != "POST":
+        return sovereign_response(
+            {"msg": "POST method required"},
+            status=405
+        )
 
-        student_id = str(data.get("student_id", "")).strip()
-        pin = str(data.get("pin", "")).strip()
+    try:
+        body = json.loads(request.body or "{}")
+
+        student_id = str(body.get("student_id", "")).strip()
+        pin = str(body.get("pin", "")).strip()
 
         if not student_id or not pin:
             return sovereign_response(
-                {"msg": "Student ID and PIN are required."},
+                {"msg": "Student ID and PIN are required"},
                 status=400
             )
 
-        # ---------------------------------------------------------
-        # 1. FIND THE REAL STUDENT
-        # ---------------------------------------------------------
         student = (
             Student.objects
             .select_related("parent_link", "school")
-            .get(account_number=student_id)
+            .get(account_number__iexact=student_id)
         )
 
         parent = student.parent_link
 
         if not parent:
             return sovereign_response(
-                {"msg": "No parent account is linked to this student."},
+                {"msg": "No parent is linked to this student"},
                 status=401
             )
 
-        # Support the current secure_pin field while also remaining
-        # compatible with older Parent records using unique_code.
-        stored_pin = str(
-            getattr(parent, "secure_pin", "") or
-            getattr(parent, "unique_code", "")
-        ).strip()
-
-        if stored_pin != pin:
+        # Real Parent model uses unique_code.
+        if str(parent.unique_code).strip() != pin:
             return sovereign_response(
-                {"msg": "SECURITY ALERT: Invalid 6-Digit PIN."},
+                {"msg": "SECURITY ALERT: Invalid parent PIN"},
                 status=401
             )
 
         school = student.school
 
-        # ---------------------------------------------------------
-        # 2. REAL STUDENT PROFILE
-        # ---------------------------------------------------------
-        photo_url = ""
+        # =========================================================
+        # 1. FINANCE
+        # =========================================================
+        fees = (
+            FeesTracker.objects
+            .filter(student=student)
+            .first()
+        )
 
-        if student.photo:
-            photo_url = request.build_absolute_uri(student.photo.url)
+        total_due = float(fees.total_fees_due or 0) if fees else 0.0
+        paid = float(fees.total_fees_paid or 0) if fees else 0.0
 
-        bio_obj = getattr(student, "bio", None)
-
-        bio_data = {
-            "career": getattr(
-                bio_obj,
-                "future_career",
-                "Not yet provided"
-            ),
-            "challenges": getattr(
-                bio_obj,
-                "challenges_faced",
-                "None"
-            ),
-            "inspiration": getattr(
-                bio_obj,
-                "student_inspiration",
-                "Uganda"
-            ),
-            "gender": getattr(student, "gender", ""),
-            "stream": getattr(student, "stream", ""),
-        }
-
-        # ---------------------------------------------------------
-        # 3. REAL ATTENDANCE
-        # ---------------------------------------------------------
-        try:
-            attendance_records = student.attendance_records.all()
-
-            total_days = attendance_records.count()
-            present_days = attendance_records.filter(
-                status="PRESENT"
-            ).count()
-
-            late_days = attendance_records.filter(
-                status="LATE"
-            ).count()
-
-            if total_days > 0:
-                attendance_percentage = (
-                    (present_days + (late_days * 0.5))
-                    / total_days
-                ) * 100
-            else:
-                attendance_percentage = 0
-
-            bio_data["attendance"] = (
-                f"{attendance_percentage:.1f}%"
-            )
-
-        except Exception:
-            bio_data["attendance"] = "0%"
-
-        # ---------------------------------------------------------
-        # 4. REAL FEES
-        # ---------------------------------------------------------
-        fees_record = getattr(student, "fees_tracker", None)
-
-        if fees_record:
-            total_due = float(
-                fees_record.total_fees_due or 0
-            )
-
-            total_paid = float(
-                fees_record.total_fees_paid or 0
-            )
-
-            balance = total_due - total_paid
-        else:
-            total_due = 0
-            total_paid = 0
-            balance = 0
+        transactions = []
+        for tx in (
+            SchoolPayLedger.objects
+            .filter(student=student)
+            .order_by("-timestamp")
+        ):
+            transactions.append({
+                "receipt": tx.receipt_number or "",
+                "amount": float(tx.amount or 0),
+                "date": tx.timestamp.isoformat() if tx.timestamp else "",
+                "channel": "SchoolPay"
+            })
 
         finance = {
             "total_due": total_due,
-            "paid": total_paid,
-            "balance": balance,
+            "paid": paid,
+            "balance": total_due - paid,
+            "transactions": transactions,
         }
 
-        # ---------------------------------------------------------
-        # 5. REAL ACADEMIC RESULTS
-        # ---------------------------------------------------------
-        national_report = {}
+        # =========================================================
+        # 2. REAL ACADEMIC RESULTS
+        # =========================================================
+        academic_rows = list(
+            AcademicResult.objects
+            .filter(student=student)
+            .select_related("subject")
+            .order_by("subject__name")
+        )
+
+        def uce_grade(score):
+            score = float(score or 0)
+
+            if score >= 80:
+                return "A", 1
+            if score >= 70:
+                return "B", 2
+            if score >= 60:
+                return "C", 3
+            if score >= 50:
+                return "D", 4
+            return "E", 5
 
         period_map = {
             "AOI1": "aoi_1",
@@ -1424,242 +1384,913 @@ def pin_vault_auth(request):
             "EOT": "eot_score",
         }
 
-        try:
-            mark_records = (
-                student.marks
-                .select_related("subject")
-                .all()
+        national_report = {}
+        all_marks = []
+
+        for period_key, model_field in period_map.items():
+
+            period_marks = []
+            period_scores = []
+            period_points = 0
+
+            for result in academic_rows:
+                score = float(
+                    getattr(result, model_field, 0) or 0
+                )
+
+                grade, points = uce_grade(score)
+
+                row = {
+                    "subject": result.subject.name,
+                    "sub": result.subject.name,
+
+                    "score": score,
+
+                    "aoi1": float(result.aoi_1 or 0),
+                    "aoi2": float(result.aoi_2 or 0),
+                    "mid": float(result.mid_term or 0),
+                    "aoi3": float(result.aoi_3 or 0),
+                    "aoi4": float(result.aoi_4 or 0),
+                    "project": float(result.project_work or 0),
+                    "eot": float(result.eot_score or 0),
+
+                    "grade": grade,
+                    "points": points,
+
+                    "teacher": "REGISTRY"
+                }
+
+                period_marks.append(row)
+                period_scores.append(score)
+                period_points += points
+
+            average = (
+                sum(period_scores) / len(period_scores)
+                if period_scores
+                else 0
             )
 
-            for period_name, score_field in period_map.items():
+            national_report[period_key] = {
+                "marks": period_marks,
+                "average": round(average, 2),
+                "agg": period_points,
+                "div": (
+                    "DIVISION 1"
+                    if period_marks
+                    else "NO DATA"
+                ),
+            }
 
-                period_marks = []
-                total_points = 0
+        # Top-level marks for Flutter fallback/compatibility.
+        for result in academic_rows:
+            score = float(result.eot_score or 0)
+            grade, points = uce_grade(score)
 
-                for mark in mark_records:
+            all_marks.append({
+                "subject": result.subject.name,
+                "sub": result.subject.name,
+                "score": score,
+                "aoi1": float(result.aoi_1 or 0),
+                "aoi2": float(result.aoi_2 or 0),
+                "mid": float(result.mid_term or 0),
+                "aoi3": float(result.aoi_3 or 0),
+                "aoi4": float(result.aoi_4 or 0),
+                "project": float(result.project_work or 0),
+                "eot": float(result.eot_score or 0),
+                "grade": grade,
+                "points": points,
+            })
 
-                    score = float(
-                        getattr(mark, score_field, 0) or 0
-                    )
-
-                    try:
-                        grade, points, status, remark = (
-                            get_national_grading(
-                                score,
-                                student.level_category
-                            )
-                        )
-                    except Exception:
-                        grade = ""
-                        points = 0
-                        status = ""
-                        remark = ""
-
-                    if period_name == "EOT":
-                        try:
-                            total_points += int(points or 0)
-                        except Exception:
-                            pass
-
-                    period_marks.append({
-                        "sub": mark.subject.name,
-                        "score": score,
-                        "grade": grade,
-                        "aoi1": float(mark.aoi_1 or 0),
-                        "aoi2": float(mark.aoi_2 or 0),
-                        "mid": float(mark.mid_term or 0),
-                        "aoi3": float(mark.aoi_3 or 0),
-                        "aoi4": float(mark.aoi_4 or 0),
-                        "project": float(mark.project_work or 0),
-                        "teacher": "STAFF",
-                        "status": status,
-                        "remark": remark,
-                    })
-
-                if period_marks:
-                    national_report[period_name] = {
-                        "marks": period_marks,
-                        "agg": total_points,
-                        "div": (
-                            "DIV 1"
-                            if total_points <= 12
-                            else "VERIFIED"
-                        ),
-                    }
-
-        except Exception:
-            national_report = {}
-
-        # ---------------------------------------------------------
-        # 6. REAL SCHOOLPAY TRANSACTION HISTORY
-        # ---------------------------------------------------------
-        transactions = []
-
-        try:
-            ledger_records = (
-                SchoolPayLedger.objects
-                .filter(student=student)
-                .order_by("-timestamp")[:30]
-            )
-
-            for tx in ledger_records:
-                transactions.append({
-                    "receipt": tx.receipt_number,
-                    "amount": float(tx.amount or 0),
-                    "timestamp": (
-                        tx.timestamp.isoformat()
-                        if tx.timestamp
-                        else ""
-                    ),
-                    "reversed": bool(
-                        getattr(tx, "is_reversed", False)
-                    ),
-                })
-
-        except Exception:
-            transactions = []
-
-        # ---------------------------------------------------------
-        # 7. REAL SCHOOL FEED
-        # ---------------------------------------------------------
-        feed_data = []
-
-        try:
-            posts = (
-                SchoolPost.objects
-                .filter(school=school)
-                .order_by("-date")[:20]
-            )
-
-            for post in posts:
-
-                media_url = ""
-
-                if post.media_file:
-                    media_url = request.build_absolute_uri(
-                        post.media_file.url
-                    )
-
-                feed_data.append({
-                    "media": media_url,
-                    "school": school.name,
-                    "title": post.title,
-                    "desc": getattr(
-                        post,
-                        "description",
-                        ""
-                    ) or "",
-                    "likes": getattr(
-                        post,
-                        "likes_count",
-                        0
-                    ),
-                    "verified": bool(
-                        getattr(post, "verified", True)
-                    ),
-                })
-
-        except Exception:
-            feed_data = []
-
-        # ---------------------------------------------------------
-        # 8. NATIONAL TOP PERFORMERS
-        # ---------------------------------------------------------
+        # =========================================================
+        # 3. NATIONAL TOP PERFORMERS
+        # =========================================================
         performers = []
 
-        try:
-            top_records = (
-                NationalTopPerformer.objects
-                .all()
-                .order_by("-id")[:10]
-            )
-
-            for performer in top_records:
-
-                performer_photo = ""
-
-                if performer.photo:
-                    performer_photo = request.build_absolute_uri(
+        for performer in (
+            NationalTopPerformer.objects
+            .all()
+            .order_by("id")
+        ):
+            performers.append({
+                "name": performer.name,
+                "school": performer.school_name,
+                "school_name": performer.school_name,
+                "score": performer.score,
+                "photo": (
+                    request.build_absolute_uri(
                         performer.photo.url
                     )
-
-                performers.append({
-                    "name": performer.name,
-                    "school": performer.school_name,
-                    "score": performer.score,
-                    "photo": performer_photo,
-                })
-
-        except Exception:
-            performers = []
-
-        # ---------------------------------------------------------
-        # 9. FINAL REAL PARENT PORTAL RESPONSE
-        # ---------------------------------------------------------
-        return sovereign_response({
-            "status": "authenticated",
-
-            "parent": {
-                "name": parent.full_name,
-                "phone": getattr(
-                    parent,
-                    "phone_number",
-                    ""
+                    if performer.photo
+                    else ""
                 ),
-            },
+            })
+
+        # =========================================================
+        # 4. REAL SCHOOL FEED
+        # =========================================================
+        feed_data = []
+
+        for post in (
+            SchoolPost.objects
+            .all()
+            .order_by("-date")[:20]
+        ):
+            feed_data.append({
+                "id": post.id,
+                "school": post.school.name if post.school else "",
+                "school_name": post.school.name if post.school else "",
+                "title": post.title,
+                "content": post.title,
+                "media": (
+                    request.build_absolute_uri(
+                        post.media_file.url
+                    )
+                    if post.media_file
+                    else ""
+                ),
+                "likes": getattr(post, "likes_count", 0),
+                "verified": getattr(post, "verified", True),
+            })
+
+        # =========================================================
+        # 5. FINAL NATIONAL DATA PACKAGE
+        # =========================================================
+        payload = {
+            "status": "authenticated",
+            "role": "PARENT",
+            "type": "parent",
 
             "name": student.full_name,
             "id": student.account_number,
+            "account_number": student.account_number,
             "payment_code": student.payment_code,
 
             "class": student.current_class,
-            "stream": getattr(
-                student,
-                "stream",
-                ""
+            "gender": student.gender,
+            "age": student.age,
+            "stream": student.stream,
+            "level_category": student.level_category,
+
+            "photo": (
+                request.build_absolute_uri(
+                    student.photo.url
+                )
+                if student.photo
+                else ""
             ),
 
-            "photo": photo_url,
+            "parent": {
+                "name": parent.full_name,
+                "phone": parent.phone_number,
+            },
+
+            "parent_name": parent.full_name,
 
             "school": {
-                "name": school.name,
-                "motto": getattr(
-                    school,
-                    "school_motto",
-                    ""
+                "name": school.name if school else "",
+                "motto": (
+                    school.school_motto
+                    if school
+                    else ""
                 ),
                 "verified": True,
             },
 
-            "bio": bio_data,
-
             "finance": finance,
 
-            "transactions": transactions,
+            "marks": all_marks,
 
             "national_report": national_report,
 
-            "feed": feed_data,
+            "academic_summary": {
+                "subjects_count": len(academic_rows),
+                "has_data": bool(academic_rows),
+                "periods": list(national_report.keys()),
+            },
 
             "top_performers": performers,
-        })
+
+            "feed": feed_data,
+        }
+
+        return sovereign_response(payload)
 
     except Student.DoesNotExist:
         return sovereign_response(
-            {"msg": "Student account was not found."},
+            {"msg": "Student account not found"},
             status=404
         )
 
     except Exception as e:
         import traceback
-
-        print("PARENT PORTAL ERROR:")
         print(traceback.format_exc())
 
         return sovereign_response(
             {
-                "msg": "Parent authorization failed.",
-                "error": str(e),
+                "msg": "Authorization Error",
+                "detail": str(e),
+            },
+            status=500
+        )
+
+@csrf_exempt
+def pin_vault_auth(request):
+    """
+    Parent Portal Stage 2.
+
+    Authenticates the real parent and returns:
+    - real student identity
+    - real fees
+    - real SchoolPay transactions
+    - real AcademicResult assessment data
+    - period-by-period national_report
+    - real national top performers
+    - real school feed data
+    """
+
+    if request.method == "OPTIONS":
+        return sovereign_response({})
+
+    if request.method != "POST":
+        return sovereign_response(
+            {"msg": "POST required"},
+            status=405
+        )
+
+    try:
+        data = json.loads(request.body or "{}")
+
+        student_id = str(
+            data.get("student_id", "")
+        ).strip()
+
+        pin = str(
+            data.get("pin", "")
+        ).strip()
+
+        if not student_id or not pin:
+            return sovereign_response(
+                {
+                    "msg": (
+                        "Student account number and parent PIN "
+                        "are required."
+                    )
+                },
+                status=400
+            )
+
+        # ============================================================
+        # 1. REAL STUDENT + PARENT IDENTITY
+        # ============================================================
+
+        student = (
+            Student.objects
+            .select_related("parent_link", "school")
+            .filter(account_number__iexact=student_id)
+            .first()
+        )
+
+        if not student:
+            return sovereign_response(
+                {"msg": "Student account not found."},
+                status=401
+            )
+
+        if not student.parent_link:
+            return sovereign_response(
+                {
+                    "msg": (
+                        "This student is not linked to "
+                        "a parent registry account."
+                    )
+                },
+                status=401
+            )
+
+        parent = student.parent_link
+
+        # The real Parent PIN is unique_code.
+        if str(parent.unique_code or "").strip() != pin:
+            return sovereign_response(
+                {"msg": "Invalid parent PIN."},
+                status=401
+            )
+
+        # ============================================================
+        # 2. REAL FEES
+        # ============================================================
+
+        fees = (
+            FeesTracker.objects
+            .filter(student=student)
+            .first()
+        )
+
+        total_due = (
+            float(fees.total_fees_due)
+            if fees and fees.total_fees_due is not None
+            else 0.0
+        )
+
+        total_paid = (
+            float(fees.total_fees_paid)
+            if fees and fees.total_fees_paid is not None
+            else 0.0
+        )
+
+        balance = max(total_due - total_paid, 0.0)
+
+        # ============================================================
+        # 3. REAL SCHOOLPAY TRANSACTIONS
+        # ============================================================
+
+        ledger_rows = (
+            SchoolPayLedger.objects
+            .filter(student=student)
+            .order_by("-timestamp")
+        )
+
+        transactions = []
+
+        for tx in ledger_rows:
+            transactions.append({
+                "receipt_number": tx.receipt_number or "",
+                "amount": float(tx.amount or 0),
+                "timestamp": (
+                    tx.timestamp.isoformat()
+                    if tx.timestamp
+                    else None
+                ),
+                "is_reversed": bool(tx.is_reversed),
+                "reversal_reason": (
+                    tx.reversal_reason or ""
+                ),
+            })
+
+        # ============================================================
+        # 4. REAL ACADEMIC REGISTRY
+        #
+        # IMPORTANT:
+        # DO NOT USE KEBMockResult HERE.
+        #
+        # AcademicResult contains:
+        # AOI 1, AOI 2, MID TERM, AOI 3, AOI 4,
+        # PROJECT and END OF TERM.
+        # ============================================================
+
+        result_rows = (
+            AcademicResult.objects
+            .filter(student=student)
+            .select_related("subject")
+            .order_by("subject__name")
+        )
+
+        academic_rows = []
+
+        # ------------------------------------------------------------
+        # Grading helpers
+        # ------------------------------------------------------------
+
+        class_name = str(
+            student.current_class or ""
+        ).upper()
+
+        is_a_level = any(
+            x in class_name
+            for x in ["S.5", "S5", "S.6", "S6"]
+        )
+
+        def safe_float(value):
+            try:
+                return float(value or 0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        def subject_is_subsidiary(subject_name):
+            subject_upper = str(
+                subject_name or ""
+            ).upper()
+
+            return any(
+                key in subject_upper
+                for key in [
+                    "GENERAL PAPER",
+                    "GP",
+                    "SUB",
+                    "SUBSIDIARY",
+                    "ICT",
+                ]
+            )
+
+        def grade_for_score(score, subject_name):
+            score = safe_float(score)
+
+            # A-LEVEL / UACE
+            if is_a_level:
+                if subject_is_subsidiary(subject_name):
+                    return "O" if score >= 40 else "F"
+
+                if score >= 80:
+                    return "A"
+                if score >= 70:
+                    return "B"
+                if score >= 60:
+                    return "C"
+                if score >= 50:
+                    return "D"
+                if score >= 40:
+                    return "E"
+                if score >= 35:
+                    return "O"
+
+                return "F"
+
+            # O-LEVEL
+            if score >= 80:
+                return "A"
+            if score >= 70:
+                return "B"
+            if score >= 60:
+                return "C"
+            if score >= 50:
+                return "D"
+
+            return "E"
+
+        def points_for_score(score, subject_name):
+            score = safe_float(score)
+
+            # O-LEVEL does not use the UACE 6-point
+            # principal/subsidiary system.
+            if not is_a_level:
+                return 0
+
+            # Subsidiary subjects.
+            if subject_is_subsidiary(subject_name):
+                return 1 if score >= 40 else 0
+
+            # Principal UACE subjects.
+            if score >= 80:
+                return 6
+            if score >= 70:
+                return 5
+            if score >= 60:
+                return 4
+            if score >= 50:
+                return 3
+            if score >= 40:
+                return 2
+            if score >= 35:
+                return 1
+
+            return 0
+
+        def assessment_row(result):
+            subject_name = (
+                result.subject.name
+                if result.subject
+                else ""
+            )
+
+            aoi1 = safe_float(
+                getattr(result, "aoi_1", 0)
+            )
+
+            aoi2 = safe_float(
+                getattr(result, "aoi_2", 0)
+            )
+
+            mid_term = safe_float(
+                getattr(result, "mid_term", 0)
+            )
+
+            aoi3 = safe_float(
+                getattr(result, "aoi_3", 0)
+            )
+
+            aoi4 = safe_float(
+                getattr(result, "aoi_4", 0)
+            )
+
+            project_work = safe_float(
+                getattr(result, "project_work", 0)
+            )
+
+            eot = safe_float(
+                getattr(result, "eot_score", 0)
+            )
+
+            eot_grade = grade_for_score(
+                eot,
+                subject_name
+            )
+
+            eot_points = points_for_score(
+                eot,
+                subject_name
+            )
+
+            return {
+                # Current Flutter compatibility keys.
+                "subject": subject_name,
+                "sub": subject_name,
+                "score": eot,
+                "grade": eot_grade,
+                "points": eot_points,
+
+                # Detailed assessment matrix.
+                "aoi1": aoi1,
+                "aoi2": aoi2,
+                "mid": mid_term,
+                "aoi3": aoi3,
+                "aoi4": aoi4,
+                "project": project_work,
+                "eot": eot,
+
+                # Explicit maximums.
+                "aoi1_max": safe_float(
+                    getattr(result, "aoi_1_max", 10)
+                ),
+                "aoi2_max": safe_float(
+                    getattr(result, "aoi_2_max", 10)
+                ),
+                "mid_max": safe_float(
+                    getattr(result, "mid_max", 100)
+                ),
+                "aoi3_max": safe_float(
+                    getattr(result, "aoi_3_max", 10)
+                ),
+                "aoi4_max": safe_float(
+                    getattr(result, "aoi_4_max", 10)
+                ),
+                "project_max": safe_float(
+                    getattr(result, "project_max", 20)
+                ),
+                "eot_max": safe_float(
+                    getattr(result, "eot_max", 100)
+                ),
+
+                "teacher": "REGISTRY",
+            }
+
+        for result in result_rows:
+            academic_rows.append(
+                assessment_row(result)
+            )
+
+        # ============================================================
+        # 5. PERIOD-BY-PERIOD REPORT
+        # ============================================================
+
+        period_sources = {
+            "AOI1": "aoi1",
+            "AOI2": "aoi2",
+            "MidTerm": "mid",
+            "AOI3": "aoi3",
+            "AOI4": "aoi4",
+            "EOT": "eot",
+        }
+
+        national_report = {}
+
+        for period_key, score_key in period_sources.items():
+
+            period_marks = []
+
+            total_points = 0.0
+            score_total = 0.0
+
+            for row in academic_rows:
+
+                period_score = safe_float(
+                    row.get(score_key, 0)
+                )
+
+                subject_name = row.get(
+                    "subject",
+                    ""
+                )
+
+                period_grade = grade_for_score(
+                    period_score,
+                    subject_name
+                )
+
+                period_points = points_for_score(
+                    period_score,
+                    subject_name
+                )
+
+                period_row = dict(row)
+
+                # These two fields always represent
+                # the currently selected assessment period.
+                period_row["score"] = period_score
+                period_row["grade"] = period_grade
+                period_row["points"] = period_points
+
+                period_marks.append(
+                    period_row
+                )
+
+                score_total += period_score
+                total_points += period_points
+
+            average_score = (
+                score_total / len(period_marks)
+                if period_marks
+                else 0.0
+            )
+
+            national_report[period_key] = {
+                "marks": period_marks,
+                "average": round(
+                    average_score,
+                    2
+                ),
+                "agg": (
+                    round(total_points, 2)
+                    if period_key == "EOT"
+                    else round(
+                        average_score,
+                        2
+                    )
+                ),
+                "results_count": len(
+                    period_marks
+                ),
+                "div": (
+                    f"{round(average_score, 1)}%"
+                    if period_marks
+                    else "NO RESULTS"
+                ),
+            }
+
+        # ============================================================
+        # 6. TOP NATIONAL LEARNERS
+        # ============================================================
+
+        top_performers = []
+
+        try:
+            performer_rows = (
+                NationalTopPerformer.objects
+                .all()
+                .order_by("?")[:12]
+            )
+
+            for performer in performer_rows:
+
+                performer_photo = ""
+
+                if performer.photo:
+                    try:
+                        performer_photo = (
+                            request.build_absolute_uri(
+                                performer.photo.url
+                            )
+                        )
+                    except Exception:
+                        performer_photo = ""
+
+                top_performers.append({
+                    "name": performer.name or "",
+                    "school_name": (
+                        performer.school_name or ""
+                    ),
+                    "score": performer.score or "",
+                    "photo": performer_photo,
+                })
+
+        except Exception as performer_error:
+            print(
+                "TOP_PERFORMER_SYNC_ERROR:",
+                performer_error
+            )
+            top_performers = []
+
+        # ============================================================
+        # 7. REAL SCHOOL FEED
+        # ============================================================
+
+        feed_data = []
+
+        try:
+            feed_rows = (
+                SchoolPost.objects
+                .select_related("school")
+                .order_by("-date")[:20]
+            )
+
+            for post in feed_rows:
+
+                media_url = ""
+
+                if post.media_file:
+                    try:
+                        media_url = (
+                            request.build_absolute_uri(
+                                post.media_file.url
+                            )
+                        )
+                    except Exception:
+                        media_url = ""
+
+                feed_data.append({
+                    "id": post.id,
+                    "school_name": (
+                        post.school.name
+                        if post.school
+                        else ""
+                    ),
+                    "content": post.title or "",
+                    "description": (
+                        post.description or ""
+                    ),
+                    "media": media_url,
+                    "likes": post.likes_count or 0,
+                    "verified": bool(
+                        getattr(
+                            post,
+                            "verified",
+                            True
+                        )
+                    ),
+                })
+
+        except Exception as feed_error:
+            print(
+                "FEED_SYNC_ERROR:",
+                feed_error
+            )
+            feed_data = []
+
+        # ============================================================
+        # 8. STUDENT PHOTO
+        # ============================================================
+
+        photo_url = ""
+
+        if student.photo:
+            try:
+                photo_url = (
+                    request.build_absolute_uri(
+                        student.photo.url
+                    )
+                )
+            except Exception:
+                photo_url = ""
+
+        # ============================================================
+        # 9. FINAL PARENT DATA PACKAGE
+        # ============================================================
+
+        school_name = (
+            student.school.name
+            if student.school
+            else ""
+        )
+
+        school_motto = ""
+
+        if student.school:
+            school_motto = (
+                getattr(
+                    student.school,
+                    "school_motto",
+                    ""
+                )
+                or ""
+            )
+
+        payload = {
+            "status": "authenticated",
+            "role": "PARENT",
+            "type": "parent",
+
+            # --------------------------------------------------------
+            # Identity
+            # --------------------------------------------------------
+
+            "name": student.full_name,
+            "id": student.account_number,
+            "account_number": student.account_number,
+            "payment_code": student.payment_code or "",
+            "class": student.current_class or "",
+            "gender": student.gender or "",
+            "age": student.age,
+            "stream": student.stream or "",
+            "level_category": (
+                getattr(
+                    student,
+                    "level_category",
+                    ""
+                )
+                or ""
+            ),
+            "photo": photo_url,
+
+            "parent": {
+                "name": parent.full_name or "",
+                "phone": parent.phone_number or "",
+            },
+
+            "parent_name": parent.full_name or "",
+
+            # --------------------------------------------------------
+            # School
+            # --------------------------------------------------------
+
+            "school": {
+                "name": school_name,
+                "motto": school_motto,
+            },
+
+            # --------------------------------------------------------
+            # Finance
+            # --------------------------------------------------------
+
+            "finance": {
+                "balance": balance,
+                "paid": total_paid,
+                "total_due": total_due,
+            },
+
+            "fees": {
+                "total_fees_due": total_due,
+                "total_fees_paid": total_paid,
+                "balance": balance,
+            },
+
+            # --------------------------------------------------------
+            # Transactions
+            # --------------------------------------------------------
+
+            "transactions": transactions,
+
+            "payment_history": [
+                {
+                    "receipt": tx["receipt_number"],
+                    "amount": tx["amount"],
+                    "date": tx["timestamp"],
+                    "channel": "SchoolPay / Ledger",
+                    "is_reversed": tx["is_reversed"],
+                }
+                for tx in transactions
+            ],
+
+            # --------------------------------------------------------
+            # Academic compatibility
+            # --------------------------------------------------------
+
+            # Main EOT/current-result list used by the new Parent UI.
+            "marks": national_report["EOT"]["marks"],
+
+            # Complete assessment engine.
+            "national_report": national_report,
+
+            "academic_summary": {
+                "subject_count": len(
+                    academic_rows
+                ),
+                "eot_average": national_report[
+                    "EOT"
+                ]["average"],
+                "eot_points": national_report[
+                    "EOT"
+                ]["agg"],
+            },
+
+            # --------------------------------------------------------
+            # Home / 3D Carousel
+            # --------------------------------------------------------
+
+            "top_performers": top_performers,
+
+            # --------------------------------------------------------
+            # Public feed
+            # --------------------------------------------------------
+
+            "feed": feed_data,
+        }
+
+        return sovereign_response(payload)
+
+    except Exception as e:
+        import traceback
+
+        print(
+            "PARENT_PORTAL_AUTH_ERROR:"
+        )
+        print(
+            traceback.format_exc()
+        )
+
+        return sovereign_response(
+            {
+                "msg": (
+                    "Authorization Error"
+                )
             },
             status=500
         )
@@ -8186,160 +8817,6 @@ def student_identity_gate(request):
 
     except Exception as e:
         return sovereign_response({'msg': f'System Error: {str(e)}'}, status=500)
-
-@csrf_exempt
-def pin_vault_auth(request):
-    """Parent Portal Stage 2: authenticate a real parent and return the real student dashboard."""
-    if request.method == "OPTIONS":
-        return sovereign_response({})
-
-    if request.method != "POST":
-        return sovereign_response({"msg": "POST required"}, status=405)
-
-    try:
-        data = json.loads(request.body or "{}")
-        student_id = str(data.get("student_id", "")).strip()
-        pin = str(data.get("pin", "")).strip()
-
-        if not student_id or not pin:
-            return sovereign_response(
-                {"msg": "Student account number and parent PIN are required."},
-                status=400
-            )
-
-        student = (
-            Student.objects
-            .select_related("parent_link", "school")
-            .filter(account_number__iexact=student_id)
-            .first()
-        )
-
-        if not student or not student.parent_link:
-            return sovereign_response(
-                {"msg": "Student account not found."},
-                status=401
-            )
-
-        parent = student.parent_link
-
-        # The real Parent model uses unique_code.
-        if str(parent.unique_code).strip() != pin:
-            return sovereign_response(
-                {"msg": "Invalid parent PIN."},
-                status=401
-            )
-
-        # REAL FEES
-        fees = FeesTracker.objects.filter(student=student).first()
-
-        total_due = float(fees.total_fees_due) if fees else 0
-        total_paid = float(fees.total_fees_paid) if fees else 0
-        balance = max(total_due - total_paid, 0)
-
-        # REAL SCHOOLPAY TRANSACTIONS
-        ledger_rows = (
-            SchoolPayLedger.objects
-            .filter(student=student)
-            .order_by("-timestamp")
-        )
-
-        transactions = []
-
-        for tx in ledger_rows:
-            transactions.append({
-                "receipt_number": tx.receipt_number or "",
-                "amount": float(tx.amount or 0),
-                "timestamp": tx.timestamp.isoformat() if tx.timestamp else None,
-                "is_reversed": bool(tx.is_reversed),
-                "reversal_reason": tx.reversal_reason or ""
-            })
-
-        # REAL ACADEMIC RESULTS
-        result_rows = (
-            KEBMockResult.objects
-            .filter(student=student)
-            .select_related("subject")
-            .order_by("subject__name")
-        )
-
-        marks = []
-
-        for result in result_rows:
-            marks.append({
-                "subject": result.subject.name if result.subject else "",
-                "score": float(result.score) if result.score is not None else 0,
-                "grade": result.grade or "",
-                "points": float(result.points) if result.points is not None else 0
-            })
-
-        # STUDENT PHOTO
-        photo_url = ""
-
-        if student.photo:
-            try:
-                photo_url = request.build_absolute_uri(student.photo.url)
-            except Exception:
-                photo_url = ""
-
-        # REAL PARENT DASHBOARD
-        payload = {
-            "status": "authenticated",
-            "role": "PARENT",
-
-            "name": student.full_name,
-            "id": student.account_number,
-            "account_number": student.account_number,
-            "payment_code": student.payment_code or "",
-            "class": student.current_class or "",
-            "gender": student.gender or "",
-            "age": student.age,
-            "stream": student.stream or "",
-            "photo": photo_url,
-
-            "parent": {
-                "name": parent.full_name,
-                "phone": parent.phone_number or ""
-            },
-
-            "school": {
-                "name": student.school.name if student.school else "",
-                "motto": getattr(student.school, "school_motto", "") or ""
-            },
-
-            "finance": {
-                "balance": balance,
-                "paid": total_paid,
-                "total_due": total_due
-            },
-
-            "fees": {
-                "total_fees_due": total_due,
-                "total_fees_paid": total_paid,
-                "balance": balance
-            },
-
-            "transactions": transactions,
-
-            "marks": marks,
-
-            # Kept for compatibility with the existing Flutter dashboard.
-            "feed": [],
-
-            "national_report": {
-                "results_count": len(marks)
-            }
-        }
-
-        return sovereign_response(payload)
-
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-
-        return sovereign_response(
-            {"msg": "Authorization Error", "detail": str(e)},
-            status=500
-        )
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
