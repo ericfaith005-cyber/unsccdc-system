@@ -10425,7 +10425,7 @@ def classroom_token(request):
                     status=403,
                 )
 
-            # Your existing parent authorization uses secure_pin.
+            # Existing parent authorization uses secure_pin.
             authorized_pins = {
             str(getattr(parent, "secure_pin", "")).strip(),
             str(getattr(parent, "unique_code", "")).strip(),
