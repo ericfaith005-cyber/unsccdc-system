@@ -10300,3 +10300,315 @@ def force_registry_rebuild(request):
         return HttpResponse("<h1>NATIONAL REGISTRY BUILT SUCCESSFULLY!</h1>")
     except Exception as e:
         return HttpResponse(f"Registry Error: {str(e)}")
+
+import datetime
+import os
+import uuid
+
+from livekit import api
+
+@csrf_exempt
+def classroom_token(request):
+    """
+    Secure LiveKit token endpoint for the UNSCCDC Digital Classroom.
+
+    Parent/student request:
+        {
+            "mode": "parent",
+            "student_id": "STUDENT_ACCOUNT_NUMBER",
+            "pin": "PARENT_PIN",
+            "room_name": "s4-north-biology"
+        }
+
+    Staff request:
+        {
+            "mode": "staff",
+            "staff_name": "STAFF FULL NAME",
+            "pin": "STAFF_PIN",
+            "room_name": "s4-north-biology"
+        }
+
+    The LiveKit API secret NEVER leaves Django.
+    """
+
+    if request.method == "OPTIONS":
+        return sovereign_response({})
+
+    if request.method != "POST":
+        return sovereign_response(
+            {"msg": "POST method required."},
+            status=405,
+        )
+
+    try:
+        import os
+        import re
+        import uuid
+        from livekit import api
+
+        payload = json.loads(request.body or "{}")
+
+        mode = str(payload.get("mode", "parent")).strip().lower()
+        room_name = str(
+            payload.get("room_name", "unsccdc-classroom")
+        ).strip()
+
+        # --------------------------------------------------------
+        # 1. Validate room name
+        # Prevent arbitrary/unsafe room names.
+        # --------------------------------------------------------
+        if not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9_-]{2,79}",
+            room_name,
+        ):
+            return sovereign_response(
+                {"msg": "Invalid classroom room name."},
+                status=400,
+            )
+
+        # --------------------------------------------------------
+        # 2. Verify the UNSCCDC user
+        # --------------------------------------------------------
+
+        participant_role = "participant"
+        participant_label = "Registered User"
+
+        if mode in ("parent", "student"):
+            student_id = str(
+                payload.get("student_id", "")
+            ).strip()
+
+            pin = str(
+                payload.get("pin", "")
+            ).strip()
+
+            if not student_id or not pin:
+                return sovereign_response(
+                    {
+                        "msg": (
+                            "Student account and PIN "
+                            "are required."
+                        )
+                    },
+                    status=400,
+                )
+
+            student = (
+                Student.objects
+                .select_related(
+                    "parent_link",
+                    "school",
+                )
+                .filter(
+                    account_number=student_id,
+                    is_active=True,
+                )
+                .first()
+            )
+
+            if not student:
+                return sovereign_response(
+                    {"msg": "Student account not found."},
+                    status=404,
+                )
+
+            parent = student.parent_link
+
+            if not parent:
+                return sovereign_response(
+                    {
+                        "msg": (
+                            "No authorized parent account "
+                            "is linked to this student."
+                        )
+                    },
+                    status=403,
+                )
+
+            # Your existing parent authorization uses secure_pin.
+            stored_pin = str(
+                getattr(parent, "secure_pin", "")
+            ).strip()
+
+            if not stored_pin or stored_pin != pin:
+                return sovereign_response(
+                    {"msg": "Invalid classroom authorization PIN."},
+                    status=401,
+                )
+
+            participant_role = "parent"
+            participant_label = "Parent"
+
+            if mode == "student":
+                participant_role = "student"
+                participant_label = "Student"
+
+        elif mode == "staff":
+            staff_name = str(
+                payload.get("staff_name", "")
+            ).strip()
+
+            pin = str(
+                payload.get("pin", "")
+            ).strip()
+
+            if not staff_name or not pin:
+                return sovereign_response(
+                    {
+                        "msg": (
+                            "Staff name and PIN "
+                            "are required."
+                        )
+                    },
+                    status=400,
+                )
+
+            staff = (
+                Staff.objects
+                .select_related("school")
+                .filter(
+                    full_name__iexact=staff_name,
+                    secure_pin=pin,
+                )
+                .first()
+            )
+
+            if not staff:
+                return sovereign_response(
+                    {"msg": "Invalid staff classroom credentials."},
+                    status=401,
+                )
+
+            participant_role = "staff"
+            participant_label = (
+                getattr(
+                    staff,
+                    "role",
+                    None,
+                )
+                or "Staff"
+            )
+
+        else:
+            return sovereign_response(
+                {"msg": "Unsupported classroom access mode."},
+                status=400,
+            )
+
+        # --------------------------------------------------------
+        # 3. Make sure LiveKit credentials exist
+        # --------------------------------------------------------
+
+        livekit_api_key = os.getenv("LIVEKIT_API_KEY")
+        livekit_api_secret = os.getenv("LIVEKIT_API_SECRET")
+        livekit_url = os.getenv("LIVEKIT_URL")
+
+        if not livekit_api_key or not livekit_api_secret:
+            return sovereign_response(
+                {
+                    "msg": (
+                        "Live classroom service is not "
+                        "configured on the server."
+                    )
+                },
+                status=503,
+            )
+
+        if not livekit_url:
+            return sovereign_response(
+                {
+                    "msg": (
+                        "Live classroom server URL is "
+                        "not configured."
+                    )
+                },
+                status=503,
+            )
+
+        # --------------------------------------------------------
+        # 4. Use an opaque identity.
+        #
+        # Do NOT put a student's real name, phone number,
+        # email, or PRN into the LiveKit identity.
+        # --------------------------------------------------------
+
+        participant_identity = (
+            f"unsccdc-{uuid.uuid4().hex}"
+        )
+
+        # --------------------------------------------------------
+        # 5. Create LiveKit permissions
+        # --------------------------------------------------------
+
+        grants = api.VideoGrants(
+            room_join=True,
+            room=room_name,
+            can_publish=True,
+            can_subscribe=True,
+            can_publish_data=True,
+            can_publish_sources=[
+                "camera",
+                "microphone",
+                "screen_share",
+                "screen_share_audio",
+            ],
+            can_update_own_metadata=True,
+        )
+
+        # --------------------------------------------------------
+        # 6. Mint the JWT
+        # --------------------------------------------------------
+
+        access_token = (
+            api.AccessToken(
+                livekit_api_key,
+                livekit_api_secret,
+            )
+            .with_identity(participant_identity)
+            .with_metadata(
+                json.dumps(
+                    {
+                        "role": participant_role,
+                        "label": str(participant_label),
+                    }
+                )
+            )
+            .with_grants(grants)
+            .to_jwt()
+        )
+
+        # --------------------------------------------------------
+        # 7. Return ONLY the connection data.
+        # The API secret is never returned.
+        # --------------------------------------------------------
+
+        return sovereign_response(
+            {
+                "status": "success",
+                "token": access_token,
+                "url": livekit_url,
+                "room_name": room_name,
+                "participant_identity": participant_identity,
+                "role": participant_role,
+                "message": "Classroom authorization granted.",
+            }
+        )
+
+    except json.JSONDecodeError:
+        return sovereign_response(
+            {"msg": "Invalid JSON request."},
+            status=400,
+        )
+
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+
+        return sovereign_response(
+            {
+                "msg": "Classroom authorization failed.",
+                "error": str(e),
+            },
+            status=500,
+        )
