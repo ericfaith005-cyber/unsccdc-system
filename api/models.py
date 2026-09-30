@@ -835,3 +835,14 @@ class EditorialPost(models.Model):
     media_type = models.CharField(max_length=10, choices=[('IMAGE', 'Image'), ('VIDEO', 'Video')])
     is_approved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+from .learning_models import (
+    LearningAssignment,
+    LearningAssignmentSubmission,
+    LearningLesson,
+    LearningProgress,
+    LearningQuiz,
+    LearningQuizAttempt,
+    LearningQuizQuestion,
+    LearningTopic,
+)

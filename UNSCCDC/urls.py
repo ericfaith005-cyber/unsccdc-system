@@ -34,12 +34,20 @@ urlpatterns = [
         content_type='application/json'
     ), name='manifest.json'),
 
+    path("api/learning/", include("api.learning_urls")),
+
     # 🛰️ Redirection Shields for Icons
     path('flutter_service_worker.js', RedirectView.as_view(url='/static/flutter_service_worker.js')),
     path('icons/Icon-192.png', RedirectView.as_view(url='/static/icons/Icon-192.png')),
     path('icons/Icon-512.png', RedirectView.as_view(url='/static/icons/Icon-512.png')),
     path('favicon.png', RedirectView.as_view(url='/static/favicon.png')),
     path('', views.web_app_home, name='web_home'),  
+    path(
+    "api/classroom/token/",
+    views.classroom_token,
+    name="classroom_token",
+),
+
 ]
 
 # 🖼️ FORCING MEDIA AND STATIC FILES TO APPEAR
