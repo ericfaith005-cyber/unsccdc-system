@@ -10426,15 +10426,18 @@ def classroom_token(request):
                 )
 
             # Your existing parent authorization uses secure_pin.
-            stored_pin = str(
-                getattr(parent, "secure_pin", "")
-            ).strip()
+            authorized_pins = {
+            str(getattr(parent, "secure_pin", "")).strip(),
+            str(getattr(parent, "unique_code", "")).strip(),
+            }
 
-            if not stored_pin or stored_pin != pin:
+            authorized_pins.discard("")
+
+            if not pin or pin not in authorized_pins:
                 return sovereign_response(
-                    {"msg": "Invalid classroom authorization PIN."},
-                    status=401,
-                )
+                {"msg": "Invalid classroom authorization PIN."},
+                status=401,
+            )
 
             participant_role = "parent"
             participant_label = "Parent"
