@@ -16,4 +16,4 @@ beautifulsoup4
 requests
 matplotlib
 numpy
-openpyxl
+openpyxllivekit-api==1.2.1
