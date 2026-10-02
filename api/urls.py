@@ -8,6 +8,8 @@ router = DefaultRouter()
 router.register(r'students', views.StudentViewSet, basename='studenthub')
 router.register(r'staff', views.StaffViewSet, basename='staffhub')
 
+from .classroom_views import classroom_create, classroom_info, classroom_join_request, classroom_join_status, classroom_requests, classroom_decision, classroom_settings, classroom_end, classroom_token, classroom_recording_list
+
 urlpatterns = [
     # 🏛️ 2. THE Hub Hub ENTERPRISE COMMAND CENTER (WEB UI TABS)
     path('home/', views.home_tab, name='home'),
@@ -83,6 +85,7 @@ urlpatterns = [
     path('passlip-preview-html/<str:student_id>/', views.passlip_html_preview, name='passlip_preview_html'),
     path('verify-identity/', views.student_identity_gate),
     path('authorize-pin/', views.pin_vault_auth),
+    path('classroom/token/', classroom_token),
     path('staff-portal-auth/', views.staff_hub_auth),
     path('auth/login/', views.UnifiedImperialAuth.as_view()),
     path('v2/auth/unified-login/', views.UnifiedUSDCAuth.as_view(), name='unified_login'),
@@ -104,4 +107,16 @@ urlpatterns = [
     'reports/subject-audit/',
     views.generate_subject_audit_pdf,
     name='generate_subject_audit_pdf'),
+]
+# Classroom 2.0
+urlpatterns += [
+    path('classroom/create/', classroom_create),
+    path('classroom/info/', classroom_info),
+    path('classroom/join-request/', classroom_join_request),
+    path('classroom/join-status/', classroom_join_status),
+    path('classroom/requests/', classroom_requests),
+    path('classroom/decision/', classroom_decision),
+    path('classroom/settings/', classroom_settings),
+    path('classroom/end/', classroom_end),
+    path('classroom/recordings/', classroom_recording_list),
 ]

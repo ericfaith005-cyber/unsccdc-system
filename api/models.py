@@ -846,3 +846,10 @@ from .learning_models import (
     LearningQuizQuestion,
     LearningTopic,
 )
+# Classroom 2.0 models
+from .classroom_models import (
+    ClassroomAttendance,
+    ClassroomJoinRequest,
+    ClassroomRecording,
+    ClassroomSession,
+)

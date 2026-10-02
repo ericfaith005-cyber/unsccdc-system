@@ -969,3 +969,5 @@ class NationalBookOrderAdmin(admin.ModelAdmin):
 class DataExchangeProxyAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         return redirect('/api/exchange-center/')
+# Classroom 2.0 admin registrations
+from . import classroom_admin
