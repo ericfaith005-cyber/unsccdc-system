@@ -323,6 +323,15 @@ a:hover, .page-link:hover {
     animation: ugandanFlagWave 2.8s ease-in-out infinite;
 }
 
+.sidebar-brand .brand-image.unsccdc-site-logo,
+.app-header .brand-image.unsccdc-site-logo {
+    width: auto !important;
+    height: 40px !important;
+    max-width: 72px;
+    object-fit: contain;
+    border-radius: 0 !important;
+}
+
 @keyframes ugandanFlagWave {
     0%, 100% { transform: perspective(180px) rotateY(0deg) skewY(0deg); }
     25% { transform: perspective(180px) rotateY(-9deg) skewY(-1deg); }

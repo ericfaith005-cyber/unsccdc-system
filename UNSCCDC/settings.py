@@ -154,16 +154,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 JAZZMIN_SETTINGS = {
    
     "site_title": "UNSCCDC GLOBAL",
-    "site_header": "UNSCCDC",
-    "site_brand": "UNSCCDC",
+    "site_title": "Uganda Schools Digital Center",
+    "site_header": "Uganda Schools Digital Center",
+    "site_brand": "Uganda Schools Digital Center",
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL 2026",
+    "site_logo": "admin/img/logo.png",
+    "site_logo_classes": "unsccdc-site-logo",
     "custom_css": None,
     "custom_js": None,
     "user_avatar": lambda _user: f"{STATIC_URL}admin/icons/ugandan-flag.svg",
     
     "theme": "darkly",
-    "site_brand": "UNSCCDC",
+    "site_brand": "Uganda Schools Digital Center",
    
     # 🔗 THE ANIMATED TOP TABS (The "Website" inside the System)
     "topmenu_links": [
