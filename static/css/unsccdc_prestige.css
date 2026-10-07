@@ -178,3 +178,136 @@ body::before {
 /* Scrollbar Control */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: #FCDC04; }
+
+/* UNSCCDC dark admin palette */
+:root {
+    --admin-midnight: #0F172A;
+    --admin-surface: #172238;
+    --admin-border: #2B3850;
+    --admin-text: #E2E8F0;
+    --admin-muted: #94A3B8;
+    --admin-indigo: #6366F1;
+    --admin-indigo-hover: #818CF8;
+}
+
+body, .wrapper, .content-wrapper, .main-sidebar, .main-footer, .login-page {
+    color: var(--admin-text) !important;
+    background: var(--admin-midnight) !important;
+    background-image: none !important;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif !important;
+}
+
+body::before, body::after {
+    display: none !important;
+}
+
+.main-header, .main-sidebar .brand-link {
+    background: var(--admin-midnight) !important;
+    border-color: var(--admin-border) !important;
+}
+
+.brand-text {
+    color: var(--admin-text) !important;
+    background: none !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+    animation: none !important;
+}
+
+.card, .content-wrapper .card {
+    color: var(--admin-text) !important;
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-border) !important;
+    box-shadow: none !important;
+}
+
+.nav-sidebar .nav-link {
+    color: var(--admin-muted) !important;
+    border-left-color: transparent !important;
+}
+
+.nav-sidebar .nav-link:hover,
+.nav-sidebar .nav-link.active {
+    color: #FFFFFF !important;
+    background: rgba(99, 102, 241, 0.16) !important;
+    border-left-color: var(--admin-indigo) !important;
+}
+
+a, .page-link {
+    color: var(--admin-indigo-hover);
+}
+
+a:hover, .page-link:hover {
+    color: #A5B4FC;
+}
+
+.btn-primary, .btn-success, .btn-info, .addlink, .changelink {
+    color: #FFFFFF !important;
+    background: var(--admin-indigo) !important;
+    border: 1px solid var(--admin-indigo) !important;
+    border-radius: 5px !important;
+    box-shadow: none !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+.btn-primary:hover, .btn-success:hover, .btn-info:hover,
+.addlink:hover, .changelink:hover {
+    background: var(--admin-indigo-hover) !important;
+    border-color: var(--admin-indigo-hover) !important;
+}
+
+/* SVG masks replace font glyphs while leaving Jazzmin's links intact. */
+.nav-sidebar .nav-link[href="/admin/api/academicresultscenter/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/student/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/staff/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/feestracker/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/sovereignregistry/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/sovereignparentregistry/"] .nav-icon {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: transparent !important;
+    background-color: var(--admin-indigo-hover);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.nav-sidebar .nav-link[href="/admin/api/academicresultscenter/"] .nav-icon {
+    -webkit-mask-image: url("/static/admin/icons/academic-hub.svg");
+    mask-image: url("/static/admin/icons/academic-hub.svg");
+}
+
+.nav-sidebar .nav-link[href="/admin/api/student/"] .nav-icon {
+    -webkit-mask-image: url("/static/admin/icons/students.svg");
+    mask-image: url("/static/admin/icons/students.svg");
+}
+
+.nav-sidebar .nav-link[href="/admin/api/staff/"] .nav-icon {
+    -webkit-mask-image: url("/static/admin/icons/staffs.svg");
+    mask-image: url("/static/admin/icons/staffs.svg");
+}
+
+.nav-sidebar .nav-link[href="/admin/api/feestracker/"] .nav-icon {
+    -webkit-mask-image: url("/static/admin/icons/fees.svg");
+    mask-image: url("/static/admin/icons/fees.svg");
+}
+
+.nav-sidebar .nav-link[href="/admin/api/sovereignregistry/"] .nav-icon,
+.nav-sidebar .nav-link[href="/admin/api/sovereignparentregistry/"] .nav-icon {
+    -webkit-mask-image: url("/static/admin/icons/registries.svg");
+    mask-image: url("/static/admin/icons/registries.svg");
+}
+
+.nav-sidebar .nav-link[href="/admin/api/academicresultscenter/"] .nav-icon::before,
+.nav-sidebar .nav-link[href="/admin/api/student/"] .nav-icon::before,
+.nav-sidebar .nav-link[href="/admin/api/staff/"] .nav-icon::before,
+.nav-sidebar .nav-link[href="/admin/api/feestracker/"] .nav-icon::before,
+.nav-sidebar .nav-link[href="/admin/api/sovereignregistry/"] .nav-icon::before,
+.nav-sidebar .nav-link[href="/admin/api/sovereignparentregistry/"] .nav-icon::before {
+    content: none !important;
+}

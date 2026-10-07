@@ -227,6 +227,7 @@ JAZZMIN_SETTINGS = {
         "api.OperationsHub": "fas fa-th-large",
         "api.DataIngestionVault": "fas fa-file-upload", 
         "api.SovereignRegistry": "fas fa-shield-alt",
+        "api.SovereignParentRegistry": "fas fa-address-book",
         "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "api.AcademicResultsCenter": "fas fa-medal",      # THE MASTER HUB
