@@ -311,3 +311,27 @@ a:hover, .page-link:hover {
 .nav-sidebar .nav-link[href="/admin/api/sovereignparentregistry/"] .nav-icon::before {
     content: none !important;
 }
+
+.user-panel .image img {
+    width: 42px !important;
+    height: 28px !important;
+    object-fit: cover;
+    border: 1px solid rgba(165, 180, 252, 0.75) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25), 0 0 12px rgba(99, 102, 241, 0.3) !important;
+    transform-origin: left center;
+    animation: ugandanFlagWave 2.8s ease-in-out infinite;
+}
+
+@keyframes ugandanFlagWave {
+    0%, 100% { transform: perspective(180px) rotateY(0deg) skewY(0deg); }
+    25% { transform: perspective(180px) rotateY(-9deg) skewY(-1deg); }
+    50% { transform: perspective(180px) rotateY(0deg) skewY(1deg); }
+    75% { transform: perspective(180px) rotateY(9deg) skewY(-1deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .user-panel .image img {
+        animation: none;
+    }
+}

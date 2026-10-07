@@ -158,9 +158,9 @@ JAZZMIN_SETTINGS = {
     "site_brand": "UNSCCDC",
     "welcome_sign": "Uganda National Schools Central Control Digital Centre",
     "copyright": "UNSCCDC GLOBAL 2026",
-    "custom_css": "css/unsccdc_prestige.css",
+    "custom_css": None,
     "custom_js": None,
-    "user_avatar": "photo",
+    "user_avatar": lambda _user: f"{STATIC_URL}admin/icons/ugandan-flag.svg",
     
     "theme": "darkly",
     "site_brand": "UNSCCDC",
