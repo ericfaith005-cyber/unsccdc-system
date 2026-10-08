@@ -1,3 +1,4 @@
+from .education_market_api import education_stream, education_verify_code, education_upload, education_view, education_save, education_moderate, book_market, book_create_order, book_deposit_confirm, book_order_status, book_dispatch
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views 
@@ -17,12 +18,22 @@ urlpatterns = [
     path('profile/', views.profile_tab, name='profile'),
     path('academics/', views.academics_tab, name='academics'),
     path('finances/', views.finances_tab, name='finances'),
+    path('fees/receipt/<str:transaction_id>/', views.digital_fee_receipt, name='digital_fee_receipt'),
+    path('explore/', education_stream, name='explore'),
+    path('books/', book_market, name='books'),
    
     path('', include(router.urls)), # DRF Student/Staff lists
     path('live-stats/', views.live_warroom_stats, name='live_stats'),
     path('analytics/', views.UNSCCDC_Analytics, name='analytics'),
     path('bursar-stream/<int:school_id>/', views.bursar_notification_stream, name='bursar_stream'),
     path('staff-marks-engine/', views.staff_marks_engine, name='staff_marks_engine'),
+    path('academic/teacher-assignments/', views.teacher_assignments, name='teacher_assignments'),
+    path('academic/bulk-marks/', views.bulk_marks_upload, name='bulk_marks_upload'),
+    path('staff/wallet/balance/', views.staff_wallet_balance, name='staff_wallet_balance'),
+    path('staff/wallet/withdraw/', views.staff_wallet_withdraw, name='staff_wallet_withdraw'),
+    path('staff/wallet/transfer/', views.staff_wallet_transfer, name='staff_wallet_transfer'),
+    path('staff/lesson/generate/', views.generate_lesson_session, name='generate_lesson_session'),
+    path('staff/lesson/end/', views.end_lesson_session, name='end_lesson_session'),
 
     # 🖨️ 5. THE Hub Hub Hub Hub Hub Hub IMPERIAL DOCUMENT ENGINE (PDFs)
     path('download-report/<str:student_id>/', views.generate_national_report_pdf, name='download_report'),
@@ -119,4 +130,18 @@ urlpatterns += [
     path('classroom/settings/', classroom_settings),
     path('classroom/end/', classroom_end),
     path('classroom/recordings/', classroom_recording_list),
+]
+urlpatterns += [
+    path('education/stream/', education_stream),
+    path('education/verify-upload-code/', education_verify_code),
+    path('education/upload/', education_upload),
+    path('education/<int:pk>/view/', education_view),
+    path('education/<int:pk>/save/', education_save),
+    path('education/<int:pk>/moderate/', education_moderate),
+    path('books/market/', book_market),
+    path('books/orders/create/', book_create_order),
+    path('books/orders/<str:order_id>/', book_order_status),
+    path('books/orders/<str:order_id>/dispatch/', book_dispatch),
+    path('books/payments/deposit-confirm/', book_deposit_confirm),
+    path('school-connect/', include('chat.urls')),
 ]

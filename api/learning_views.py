@@ -177,6 +177,7 @@ def _serialize_lesson(student, lesson):
         "subject_name": lesson.topic.subject.name,
         "progress_percent": round(value, 2),
         "completed": bool(progress and progress.completed),
+
     }
 
 

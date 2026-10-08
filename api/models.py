@@ -251,8 +251,13 @@ class SubjectAssignment(models.Model):
         return f"{self.staff.full_name} - {self.subject.name} ({self.target_class})"
 
 class AcademicResult(models.Model):
+    ASSESSMENT_TYPES = [
+        ('NORMAL_EXAM', 'Normal Examinations'),
+        ('KEB_MOCK', 'KEB Mock'),
+    ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='marks')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    assessment_type = models.CharField(max_length=20, choices=ASSESSMENT_TYPES, default='NORMAL_EXAM')
     aoi_1 = models.FloatField(default=0)
     aoi_2 = models.FloatField(default=0) # 💎 NEWly added
     aoi_3 = models.FloatField(default=0) # 💎 NEWly added
@@ -268,9 +273,12 @@ class AcademicResult(models.Model):
     mid_max = models.IntegerField(default=100)
     eot_max = models.IntegerField(default=100)
     project_max = models.IntegerField(default=20)
+
+    class Meta:
+        unique_together = ('student', 'subject', 'assessment_type')
     
     def __str__(self):
-        return f"{self.student.full_name} - {self.subject.name}"
+        return f"{self.student.full_name} - {self.subject.name} [{self.assessment_type}]"
 
     
 class Transaction(models.Model):
@@ -394,6 +402,7 @@ class FeesTracker(models.Model):
     student = models.OneToOneField('Student', on_delete=models.CASCADE, related_name='fees_tracker')
     total_fees_due = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total_fees_paid = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    due_date = models.DateField(null=True, blank=True)
 
     # 💎 THE Hub Hub Hub Hub Hub AUTOMATIC BALANCE FORMULA
     @property
@@ -665,39 +674,64 @@ class StaffSalary(models.Model):
         verbose_name = "STAFF PAYROLL RECORD"
         verbose_name_plural = "STAFF PAYROLL RECORDS"
 
+
+class StaffWallet(models.Model):
+    STATUS_CHOICES = [('ACTIVE', 'Active'), ('PENDING', 'Pending'), ('LOCKED', 'Locked')]
+
+    staff = models.OneToOneField('Staff', on_delete=models.CASCADE, related_name='wallet')
+    total_salary_earned = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    available_balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_withdrawn = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+    currency = models.CharField(max_length=10, default='UGX')
+    transaction_history = models.JSONField(default=list, blank=True)
+    last_transaction_at = models.DateTimeField(auto_now=True)
+
+    def add_transaction(self, transaction_type, amount, direction, note=''):
+        entry = {
+            'type': transaction_type,
+            'amount': str(amount),
+            'direction': direction,
+            'note': note,
+            'timestamp': timezone.now().isoformat(),
+        }
+        history = list(self.transaction_history or [])
+        history.append(entry)
+        self.transaction_history = history
+        self.last_transaction_at = timezone.now()
+        self.save(update_fields=['transaction_history', 'last_transaction_at'])
+        return entry
+
+    def __str__(self):
+        return f"{self.staff.full_name} wallet"
+
+
+class LessonSession(models.Model):
+    teacher = models.ForeignKey('Staff', on_delete=models.CASCADE, related_name='lesson_sessions')
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    class_name = models.CharField(max_length=50)
+    unique_lesson_id = models.CharField(max_length=10, unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.unique_lesson_id:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            while LessonSession.objects.filter(unique_lesson_id=code).exists():
+                code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            self.unique_lesson_id = code
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.teacher.full_name} - {self.subject.name} ({self.unique_lesson_id})"
+
 # 💎 THE PROXY TAB FOR THE SIDEBAR
 class PayrollCommand(StaffSalary):
     class Meta:
         proxy = True
         verbose_name = "NATIONAL STAFF PAYROLL"
         verbose_name_plural = "NATIONAL STAFF PAYROLL"
-
-class AcademicResult(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='marks')
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    aoi_1 = models.FloatField(default=0)
-    aoi_2 = models.FloatField(default=0) # 💎 NEWly added
-    aoi_3 = models.FloatField(default=0) # 💎 NEWly added
-    aoi_4 = models.FloatField(default=0) # 💎 NEWly added
-    mid_term = models.FloatField(default=0)
-    eot_score = models.FloatField(default=0)
-    project_work = models.FloatField(default=0)
-
-    aoi_1_max = models.IntegerField(default=10)
-    aoi_2_max = models.IntegerField(default=10)
-    aoi_3_max = models.IntegerField(default=10)
-    aoi_4_max = models.IntegerField(default=10)
-    mid_max = models.IntegerField(default=100)
-    eot_max = models.IntegerField(default=100)
-    project_max = models.IntegerField(default=20)
-    
-    def __str__(self):
-        return f"{self.student.full_name} - {self.subject.name}"
-
-    @property
-    def total_percentage(self):
-        # Weighted calculation or simple average? Let's do simple average for now
-        return ((self.eot_score / self.eot_max) * 100) if self.eot_max > 0 else 0
 
 class KEBMockResult(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='keb_results')
@@ -853,3 +887,268 @@ from .classroom_models import (
     ClassroomRecording,
     ClassroomSession,
 )
+
+
+# ============================================================
+# 🎓 UNSCCDC EDUCATION STREAM
+# SECURE SCHOOL VIDEO UPLOAD AUTHORIZATION
+# ============================================================
+
+import secrets
+import string
+from django.utils import timezone
+
+
+class EducationUploadAuthorization(models.Model):
+    """
+    Secure authorization issued by UNSCCDC to a school.
+    A school must possess a valid authorization code before
+    it can submit educational videos.
+    """
+
+    STATUS_CHOICES = [
+        ("ACTIVE", "Active"),
+        ("EXPIRED", "Expired"),
+        ("REVOKED", "Revoked"),
+        ("SUSPENDED", "Suspended"),
+    ]
+
+    school = models.ForeignKey(
+        "School",
+        on_delete=models.CASCADE,
+        related_name="education_upload_authorizations",
+    )
+
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        db_index=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="ACTIVE",
+    )
+
+    expires_at = models.DateTimeField()
+
+    max_uploads = models.PositiveIntegerField(
+        default=10
+    )
+
+    uploads_used = models.PositiveIntegerField(
+        default=0
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    notes = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    def is_valid(self):
+        """
+        Server-side authorization check.
+        """
+        if self.status != "ACTIVE":
+            return False
+
+        if self.expires_at <= timezone.now():
+            return False
+
+        if self.uploads_used >= self.max_uploads:
+            return False
+
+        return True
+
+    def consume(self):
+        """
+        Consume one authorized upload.
+        """
+        if not self.is_valid():
+            raise ValueError(
+                "This school upload authorization is no longer valid."
+            )
+
+        self.uploads_used += 1
+        self.last_used_at = timezone.now()
+
+        if self.uploads_used >= self.max_uploads:
+            self.status = "EXPIRED"
+
+        self.save(
+            update_fields=[
+                "uploads_used",
+                "last_used_at",
+                "status",
+            ]
+        )
+
+    @staticmethod
+    def generate_code():
+        """
+        Generates a code such as:
+        EDU-K7P4-92QX
+        """
+
+        alphabet = string.ascii_uppercase + string.digits
+
+        part_one = "".join(
+            secrets.choice(alphabet)
+            for _ in range(4)
+        )
+
+        part_two = "".join(
+            secrets.choice(alphabet)
+            for _ in range(4)
+        )
+
+        return f"EDU-{part_one}-{part_two}"
+
+    def __str__(self):
+        return (
+            f"{self.school.name} | "
+            f"{self.code} | "
+            f"{self.status}"
+        )
+
+
+class EducationVideo(models.Model):
+    """
+    Official educational video submitted through the
+    secure school authorization system.
+    """
+
+    MODERATION_CHOICES = [
+        ("PENDING", "Pending Review"),
+        ("APPROVED", "Approved"),
+        ("REJECTED", "Rejected"),
+        ("SUSPENDED", "Suspended"),
+    ]
+
+    school = models.ForeignKey(
+        "School",
+        on_delete=models.CASCADE,
+        related_name="education_videos",
+    )
+
+    authorization = models.ForeignKey(
+        EducationUploadAuthorization,
+        on_delete=models.PROTECT,
+        related_name="videos",
+    )
+
+    title = models.CharField(
+        max_length=255
+    )
+
+    description = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    video_file = models.FileField(
+        upload_to="education/videos/"
+    )
+
+    thumbnail = models.ImageField(
+        upload_to="education/thumbnails/",
+        null=True,
+        blank=True,
+    )
+
+    subject = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    education_level = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    class_name = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+    )
+
+    topic = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    teacher_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+    )
+
+    category = models.CharField(
+        max_length=100,
+        blank=True,
+        default="LESSON",
+    )
+
+    moderation_status = models.CharField(
+        max_length=20,
+        choices=MODERATION_CHOICES,
+        default="PENDING",
+    )
+
+    moderation_reason = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    views_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    saves_count = models.PositiveIntegerField(
+        default=0
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    approved_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_education_videos",
+    )
+
+    is_featured = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return (
+            f"{self.school.name} | "
+            f"{self.title}"
+        )

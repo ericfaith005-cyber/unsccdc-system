@@ -971,3 +971,15 @@ class DataExchangeProxyAdmin(admin.ModelAdmin):
         return redirect('/api/exchange-center/')
 # Classroom 2.0 admin registrations
 from . import classroom_admin
+
+@admin.register(EducationUploadAuthorization)
+class EducationUploadAuthorizationAdmin(admin.ModelAdmin):
+    list_display=('school','code','status','expires_at','uploads_used','max_uploads')
+    list_filter=('status','school')
+    search_fields=('code','school__name')
+
+@admin.register(EducationVideo)
+class EducationVideoAdmin(admin.ModelAdmin):
+    list_display=('title','school','subject','moderation_status','views_count','saves_count','is_featured')
+    list_filter=('moderation_status','category','education_level','is_featured')
+    search_fields=('title','topic','teacher_name','school__name')

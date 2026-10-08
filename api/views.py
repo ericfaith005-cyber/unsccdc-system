@@ -1,8 +1,12 @@
 import json
+import re
+from decimal import Decimal
+from io import BytesIO
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.core.signing import Signer
 from django.db.models import Q, Avg, Sum
 
 # 💎 THE Hub Hub Hub Hub REST FRAMEWORK Hub Hub Hub Hub 💎
@@ -466,6 +470,275 @@ def staff_marks_engine(request):
     except Exception as e:
         return Response({"msg": f"Registry Error: {str(e)}"}, status=400)
 
+@api_view(['GET', 'POST'])
+def teacher_assignments(request):
+    """Return the active teacher's assigned subjects, classes, and class/subject pairs."""
+    teacher_id = request.query_params.get('teacher_id') or request.data.get('teacher_id') or request.query_params.get('staff_id') or request.data.get('staff_id')
+    if not teacher_id:
+        return Response({"detail": "teacher_id is required."}, status=400)
+
+    staff = Staff.objects.filter(staff_id=teacher_id).first() or Staff.objects.filter(id=teacher_id).first()
+    if not staff:
+        return Response({"detail": "Teacher not found."}, status=404)
+
+    assignments = SubjectAssignment.objects.filter(staff=staff).select_related('subject', 'school').order_by('target_class', 'subject__name')
+    subject_list = []
+    class_list = []
+    item_list = []
+
+    for assignment in assignments:
+        subject_entry = {
+            'id': assignment.subject_id,
+            'name': assignment.subject.name,
+            'code': assignment.subject.code,
+        }
+        if subject_entry not in subject_list:
+            subject_list.append(subject_entry)
+
+        class_name = assignment.target_class
+        if class_name not in class_list:
+            class_list.append(class_name)
+
+        item_list.append({
+            'id': assignment.id,
+            'school_name': assignment.school.name,
+            'subject': assignment.subject.name,
+            'subject_id': assignment.subject_id,
+            'target_class': class_name,
+            'teacher_id': staff.staff_id,
+        })
+
+    return Response({
+        'teacher': {'id': staff.staff_id, 'name': staff.full_name, 'role': staff.role},
+        'subjects': subject_list,
+        'classes': class_list,
+        'assignments': item_list,
+    })
+
+
+@api_view(['POST'])
+def bulk_marks_upload(request):
+    """Bulk-save marks for a selected class and subject using a single request."""
+    teacher_id = request.data.get('teacher_id') or request.data.get('staff_id')
+    subject_id = request.data.get('subject_id')
+    class_name = request.data.get('class_name') or request.data.get('class')
+    assessment_type = (request.data.get('assessment_type') or 'NORMAL_EXAM').upper()
+    marks = request.data.get('marks') or []
+
+    if not teacher_id or not subject_id or not class_name or not marks:
+        return Response({"detail": "teacher_id, subject_id, class_name, and marks are required."}, status=400)
+
+    staff = Staff.objects.filter(staff_id=teacher_id).first() or Staff.objects.filter(id=teacher_id).first()
+    if not staff:
+        return Response({"detail": "Teacher not found."}, status=404)
+
+    try:
+        subject = Subject.objects.get(id=subject_id)
+    except Subject.DoesNotExist:
+        return Response({"detail": "Subject not found."}, status=404)
+
+    saved = 0
+    for item in marks:
+        if not isinstance(item, dict):
+            continue
+        student_ref = item.get('student_id') or item.get('student') or item.get('account_number')
+        if student_ref is None:
+            continue
+
+        student = Student.objects.filter(id=student_ref).first() or Student.objects.filter(account_number=str(student_ref)).first()
+        if not student:
+            continue
+
+        if student.current_class and class_name and student.current_class.upper() != class_name.upper():
+            pass
+
+        result, _ = AcademicResult.objects.get_or_create(
+            student=student,
+            subject=subject,
+            assessment_type=assessment_type,
+        )
+        score = item.get('score', 0)
+        try:
+            numeric_score = float(score)
+        except (TypeError, ValueError):
+            numeric_score = 0.0
+
+        result.eot_score = numeric_score
+        result.mid_term = numeric_score if assessment_type == 'KEB_MOCK' else result.mid_term
+        result.save()
+        saved += 1
+
+    return Response({
+        'status': 'success',
+        'teacher': staff.full_name,
+        'subject': subject.name,
+        'class_name': class_name,
+        'assessment_type': assessment_type,
+        'saved': saved,
+    })
+
+
+@api_view(['GET', 'POST'])
+def staff_wallet_balance(request):
+    """Return the current wallet balance and salary earning state for a staff member."""
+    staff_id = request.query_params.get('staff_id') or request.data.get('staff_id') or request.query_params.get('teacher_id') or request.data.get('teacher_id')
+    if not staff_id:
+        return Response({"detail": "staff_id is required."}, status=400)
+
+    staff = Staff.objects.filter(staff_id=staff_id).first() or Staff.objects.filter(id=staff_id).first()
+    if not staff:
+        return Response({"detail": "Staff not found."}, status=404)
+
+    wallet, _ = StaffWallet.objects.get_or_create(staff=staff)
+    payroll_total = StaffPayroll.objects.filter(staff=staff).aggregate(total=Sum('net_pay'))['total'] or Decimal('0')
+    wallet.total_salary_earned = Decimal(str(payroll_total))
+    wallet.available_balance = Decimal(str(wallet.total_salary_earned)) - Decimal(str(wallet.total_withdrawn))
+    wallet.status = 'ACTIVE' if wallet.available_balance > 0 else 'PENDING'
+    wallet.save()
+
+    return Response({
+        'staff_id': staff.staff_id,
+        'staff_name': staff.full_name,
+        'currency': wallet.currency,
+        'total_salary_earned': str(wallet.total_salary_earned),
+        'available_balance': str(wallet.available_balance),
+        'total_withdrawn': str(wallet.total_withdrawn),
+        'status': wallet.status,
+        'transaction_history': wallet.transaction_history,
+    })
+
+
+@api_view(['POST'])
+def staff_wallet_withdraw(request):
+    """Withdraw funds from the staff wallet after verifying the app PIN."""
+    staff_id = request.data.get('staff_id') or request.data.get('teacher_id')
+    amount = request.data.get('amount')
+    method = request.data.get('method') or 'MOBILE_MONEY'
+    pin = request.data.get('pin') or ''
+
+    if not staff_id or amount is None:
+        return Response({"detail": "staff_id and amount are required."}, status=400)
+
+    staff = Staff.objects.filter(staff_id=staff_id).first() or Staff.objects.filter(id=staff_id).first()
+    if not staff:
+        return Response({"detail": "Staff not found."}, status=404)
+
+    wallet, _ = StaffWallet.objects.get_or_create(staff=staff)
+    amount_value = Decimal(str(amount))
+    if pin and str(staff.secure_pin).strip() != str(pin).strip():
+        return Response({"detail": "PIN verification failed."}, status=401)
+
+    if wallet.available_balance < amount_value:
+        return Response({"detail": "Insufficient available balance."}, status=400)
+
+    wallet.available_balance -= amount_value
+    wallet.total_withdrawn += amount_value
+    wallet.add_transaction('WITHDRAWAL', amount_value, 'debit', f"{method} withdrawal")
+    return Response({
+        'status': 'success',
+        'message': 'Withdrawal initiated.',
+        'available_balance': str(wallet.available_balance),
+        'method': method,
+    })
+
+
+@api_view(['POST'])
+def staff_wallet_transfer(request):
+    """Transfer funds from a staff wallet to another staff or parent wallet reference."""
+    staff_id = request.data.get('staff_id') or request.data.get('teacher_id')
+    recipient = request.data.get('recipient') or request.data.get('recipient_id')
+    amount = request.data.get('amount')
+    note = request.data.get('note') or 'Staff transfer'
+    pin = request.data.get('pin') or ''
+
+    if not staff_id or not recipient or amount is None:
+        return Response({"detail": "staff_id, recipient, and amount are required."}, status=400)
+
+    sender = Staff.objects.filter(staff_id=staff_id).first() or Staff.objects.filter(id=staff_id).first()
+    if not sender:
+        return Response({"detail": "Sender staff not found."}, status=404)
+
+    if pin and str(sender.secure_pin).strip() != str(pin).strip():
+        return Response({"detail": "PIN verification failed."}, status=401)
+
+    sender_wallet, _ = StaffWallet.objects.get_or_create(staff=sender)
+    amount_value = Decimal(str(amount))
+    if sender_wallet.available_balance < amount_value:
+        return Response({"detail": "Insufficient available balance."}, status=400)
+
+    sender_wallet.available_balance -= amount_value
+    sender_wallet.total_withdrawn += amount_value
+    sender_wallet.add_transaction('TRANSFER', amount_value, 'debit', f"Transfer to {recipient}. {note}")
+    return Response({
+        'status': 'success',
+        'message': 'Transfer completed.',
+        'recipient': recipient,
+        'amount': str(amount_value),
+        'available_balance': str(sender_wallet.available_balance),
+    })
+
+
+@api_view(['POST'])
+def generate_lesson_session(request):
+    """Create a new active live lesson session with a unique 6-digit code."""
+    teacher_id = request.data.get('teacher_id') or request.data.get('staff_id')
+    subject_id = request.data.get('subject_id')
+    class_name = request.data.get('class_name') or request.data.get('class')
+
+    if not teacher_id or not subject_id or not class_name:
+        return Response({"detail": "teacher_id, subject_id, and class_name are required."}, status=400)
+
+    teacher = Staff.objects.filter(staff_id=teacher_id).first() or Staff.objects.filter(id=teacher_id).first()
+    if not teacher:
+        return Response({"detail": "Teacher not found."}, status=404)
+
+    try:
+        subject = Subject.objects.get(id=subject_id)
+    except Subject.DoesNotExist:
+        return Response({"detail": "Subject not found."}, status=404)
+
+    existing = LessonSession.objects.filter(teacher=teacher, is_active=True).order_by('-created_at').first()
+    if existing:
+        existing.is_active = False
+        existing.ended_at = timezone.now()
+        existing.save(update_fields=['is_active', 'ended_at'])
+
+    lesson = LessonSession.objects.create(teacher=teacher, subject=subject, class_name=class_name)
+    return Response({
+        'status': 'success',
+        'lesson_id': lesson.unique_lesson_id,
+        'subject': subject.name,
+        'class_name': class_name,
+        'teacher': teacher.full_name,
+        'active': True,
+    })
+
+
+@api_view(['POST'])
+def end_lesson_session(request):
+    """End the active lesson session for a teacher or by lesson ID."""
+    lesson_id = request.data.get('lesson_id')
+    teacher_id = request.data.get('teacher_id') or request.data.get('staff_id')
+
+    lesson = None
+    if lesson_id:
+        lesson = LessonSession.objects.filter(unique_lesson_id=lesson_id).first()
+    elif teacher_id:
+        lesson = LessonSession.objects.filter(teacher__staff_id=teacher_id, is_active=True).order_by('-created_at').first()
+
+    if not lesson:
+        return Response({"detail": "No active lesson session found."}, status=404)
+
+    lesson.is_active = False
+    lesson.ended_at = timezone.now()
+    lesson.save(update_fields=['is_active', 'ended_at'])
+    return Response({
+        'status': 'success',
+        'lesson_id': lesson.unique_lesson_id,
+        'ended': True,
+    })
+
+
 # --- 6. REAL-TIME CATEGORIZED SETTLEMENT ---
 @api_view(['POST'])
 def pay_fees(request):
@@ -483,6 +756,80 @@ def pay_fees(request):
         Transaction.objects.create(transaction_id=txn_id, school=sch, student=s, amount_paid=amt, system_tax=tax, category=cat)
         return Response({"status": "Verified", "txn": txn_id})
     except: return Response({"msg": "Gateway Error"}, status=400)
+
+
+@api_view(['GET'])
+def digital_fee_receipt(request, transaction_id):
+    transaction = Transaction.objects.select_related('student', 'school').filter(
+        transaction_id=transaction_id,
+    ).first()
+    if transaction is None:
+        return Response({"detail": "Receipt not found."}, status=404)
+
+    student = transaction.student
+    tracker = FeesTracker.objects.filter(student=student).first() if student else None
+    amount = Decimal(str(transaction.amount_paid or 0))
+    charges = Decimal(str(transaction.system_tax or 0))
+    due = Decimal(str(tracker.total_fees_due or 0)) if tracker else Decimal('0')
+    paid = Decimal(str(tracker.total_fees_paid or 0)) if tracker else Decimal('0')
+    balance = due - paid
+    timestamp = timezone.localtime(transaction.timestamp)
+    receipt = {
+        "transaction_id": transaction.transaction_id,
+        "student_name": student.full_name if student else "Student record unavailable",
+        "prn": (student.payment_code or "") if student else "",
+        "date_time": timestamp.isoformat(),
+        "date_time_display": timestamp.strftime('%d %b %Y, %H:%M %Z'),
+        "amount_paid": str(amount.quantize(Decimal('0.01'))),
+        "tax_breakdown": {
+            "vat": "0.00",
+            "charges": str(charges.quantize(Decimal('0.01'))),
+            "total_tax": str(charges.quantize(Decimal('0.01'))),
+        },
+        "total_paid": str((amount + charges).quantize(Decimal('0.01'))),
+        "remaining_balance": str(balance.quantize(Decimal('0.01'))),
+        "payment_gateway_ref": transaction.transaction_id,
+        "school": transaction.school.name,
+    }
+    signer = Signer(salt='unsccdc.digital-fee-receipt.v1')
+    receipt['digital_signature'] = signer.signature(json.dumps(receipt, sort_keys=True))
+
+    if request.query_params.get('download', '').lower() == 'pdf':
+        output = BytesIO()
+        pdf = canvas.Canvas(output, pagesize=A4)
+        pdf.setTitle(f"Fee receipt {transaction.transaction_id}")
+        pdf.setFont('Helvetica-Bold', 18)
+        pdf.drawString(54, 790, 'UNSCCDC DIGITAL FEE RECEIPT')
+        pdf.setFont('Helvetica', 11)
+        details = [
+            ('Student Name', receipt['student_name']),
+            ('PRN', receipt['prn'] or 'Not recorded'),
+            ('Date/Time', receipt['date_time_display']),
+            ('Amount Paid', f"UGX {amount:,.2f}"),
+            ('VAT', f"UGX {Decimal(receipt['tax_breakdown']['vat']):,.2f}"),
+            ('Charges', f"UGX {charges:,.2f}"),
+            ('Total Paid', f"UGX {amount + charges:,.2f}"),
+            ('Remaining Balance', f"UGX {balance:,.2f}"),
+            ('Payment Gateway Ref', transaction.transaction_id),
+            ('Digital Signature', receipt['digital_signature']),
+        ]
+        y = 744
+        for label, value in details:
+            pdf.setFont('Helvetica-Bold', 10)
+            pdf.drawString(54, y, f'{label}:')
+            pdf.setFont('Helvetica', 10)
+            pdf.drawString(190, y, str(value)[:100])
+            y -= 28
+        pdf.setFont('Helvetica-Oblique', 8)
+        pdf.drawString(54, 60, f"School: {transaction.school.name} | Category: {transaction.category}")
+        pdf.save()
+        filename = re.sub(r'[^A-Za-z0-9_-]', '-', transaction.transaction_id)
+        response = HttpResponse(output.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="receipt-{filename}.pdf"'
+        return response
+
+    receipt['pdf_download_url'] = request.build_absolute_uri(f'{request.path}?download=pdf')
+    return Response(receipt)
 
 # --- 7. STAFF PORTAL VIEWSET ---
 class StaffViewSet(viewsets.ViewSet):

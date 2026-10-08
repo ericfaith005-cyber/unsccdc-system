@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Director Registration</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px;
+            font-family: Arial, sans-serif;
+            background: #07111f;
+            color: #ffffff;
+        }
+
+        .register-box {
+            width: 100%;
+            max-width: 520px;
+            background: #102235;
+            border: 1px solid #243b53;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 27px;
+        }
+
+        .subtitle {
+            margin: 0 0 28px;
+            color: #9fb0bf;
+            line-height: 1.5;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 7px;
+            color: #dbe6ef;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #2d4962;
+            border-radius: 9px;
+            background: #07111f;
+            color: #ffffff;
+            outline: none;
+            font-size: 15px;
+        }
+
+        input:focus {
+            border-color: #d4af37;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 9px;
+            background: #d4af37;
+            color: #000000;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #e3bf45;
+        }
+
+        .message {
+            display: none;
+            margin-bottom: 18px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            background: #3b1717;
+            border: 1px solid #733333;
+            color: #ffbaba;
+        }
+
+        .success {
+            background: #12351f;
+            border: 1px solid #2f7045;
+            color: #b9f3c8;
+        }
+
+        .login-link {
+            margin-top: 22px;
+            text-align: center;
+            color: #9fb0bf;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #d4af37;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="register-box">
+
+    <h1>Director Registration</h1>
+
+    <p class="subtitle">
+        Create your School Director account and register your school.
+    </p>
+
+    <div id="message" class="message"></div>
+
+    <form id="registerForm">
+
+        <div class="field">
+            <label for="full_name">Director Full Name</label>
+            <input
+                type="text"
+                id="full_name"
+                name="full_name"
+                placeholder="Enter your full name"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <label for="school_name">School Name</label>
+            <input
+                type="text"
+                id="school_name"
+                name="school_name"
+                placeholder="Enter school name"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <label for="email">Email Address</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <label for="phone">Phone Number</label>
+            <input
+                type="text"
+                id="phone"
+                name="phone"
+                placeholder="Enter phone number"
+                required
+            >
+        </div>
+
+        <div class="field">
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Create a password"
+                required
+            >
+        </div>
+
+        <button type="submit">
+            CREATE DIRECTOR ACCOUNT
+        </button>
+
+    </form>
+
+    <div class="login-link">
+        Already registered?
+        <a href="/api/director/web-login/">
+            Login here
+        </a>
+    </div>
+
+</div>
+
+
+<script>
+
+document.getElementById("registerForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const message = document.getElementById("message");
+
+    message.style.display = "none";
+    message.className = "message";
+
+    const payload = {
+        full_name: document.getElementById("full_name").value.trim(),
+        school_name: document.getElementById("school_name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        password: document.getElementById("password").value
+    };
+
+    try {
+
+        const response = await fetch("/api/director/register/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+
+            message.className = "message error";
+            message.textContent =
+                data.msg ||
+                data.message ||
+                "Registration failed.";
+
+            message.style.display = "block";
+
+            return;
+        }
+
+        message.className = "message success";
+
+        message.textContent =
+            data.message ||
+            "Director account created successfully. Redirecting to login...";
+
+        message.style.display = "block";
+
+        setTimeout(function() {
+            window.location.href = "/api/director/web-login/";
+        }, 1200);
+
+    } catch (error) {
+
+        message.className = "message error";
+
+        message.textContent =
+            "Unable to connect to the server. Please try again.";
+
+        message.style.display = "block";
+    }
+
+});
+
+</script>
+
+</body>
+</html>

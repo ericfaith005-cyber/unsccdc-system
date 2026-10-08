@@ -69,6 +69,8 @@ CORS_ALLOW_HEADERS = [
 INSTALLED_APPS = [
     'corsheaders',
     'jazzmin',
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,7 +80,20 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # 💎 ADD THIS: It creates the 'authtoken_token' table
     'rest_framework',
     'api',          # THE SOVEREIGN CORE APP
+    'chat.apps.ChatConfig',
 ]
+
+ASGI_APPLICATION = 'UNSCCDC.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {'hosts': [os.environ['REDIS_URL']]},
+    }
+    if os.environ.get('REDIS_URL')
+    else {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+}
+FIREBASE_SERVICE_ACCOUNT_JSON = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON', '')
+GOOGLE_TRANSLATE_API_KEY = os.environ.get('GOOGLE_TRANSLATE_API_KEY', '')
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',           # 💎 THE Hub Hub Hub Hub Hub KEY FIX (MUST BE TOP)

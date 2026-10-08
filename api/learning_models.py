@@ -89,7 +89,6 @@ class LearningAssignment(models.Model):
     def __str__(self):
         return self.title
 
-
 class LearningQuiz(models.Model):
     school = models.ForeignKey(
         "School",
