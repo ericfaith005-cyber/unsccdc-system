@@ -4,6 +4,62 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def merge_duplicate_academic_results(apps, schema_editor):
+    from django.db.models import Count
+
+    AcademicResult = apps.get_model('api', 'AcademicResult')
+    database = schema_editor.connection.alias
+    score_fields = (
+        'aoi_1', 'aoi_2', 'aoi_3', 'aoi_4', 'mid_term', 'eot_score',
+        'project_work',
+    )
+    maximum_fields = (
+        'aoi_1_max', 'aoi_2_max', 'aoi_3_max', 'aoi_4_max', 'mid_max',
+        'eot_max', 'project_max',
+    )
+    duplicate_groups = (
+        AcademicResult.objects.using(database)
+        .values('student_id', 'subject_id', 'assessment_type')
+        .annotate(row_count=Count('pk'))
+        .filter(row_count__gt=1)
+    )
+
+    for group in duplicate_groups.iterator():
+        results = list(
+            AcademicResult.objects.using(database)
+            .filter(
+                student_id=group['student_id'],
+                subject_id=group['subject_id'],
+                assessment_type=group['assessment_type'],
+            )
+            .order_by('pk')
+        )
+        retained = results[-1]
+        updated_fields = []
+
+        for field in score_fields:
+            if getattr(retained, field) == 0:
+                for older_result in reversed(results[:-1]):
+                    value = getattr(older_result, field)
+                    if value != 0:
+                        setattr(retained, field, value)
+                        updated_fields.append(field)
+                        break
+
+        for field in maximum_fields:
+            value = max(getattr(result, field) for result in results)
+            if getattr(retained, field) != value:
+                setattr(retained, field, value)
+                updated_fields.append(field)
+
+        if updated_fields:
+            retained.save(using=database, update_fields=updated_fields)
+
+        AcademicResult.objects.using(database).filter(
+            pk__in=[result.pk for result in results[:-1]],
+        ).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -15,6 +71,10 @@ class Migration(migrations.Migration):
             model_name='academicresult',
             name='assessment_type',
             field=models.CharField(choices=[('NORMAL_EXAM', 'Normal Examinations'), ('KEB_MOCK', 'KEB Mock')], default='NORMAL_EXAM', max_length=20),
+        ),
+        migrations.RunPython(
+            merge_duplicate_academic_results,
+            migrations.RunPython.noop,
         ),
         migrations.AlterUniqueTogether(
             name='academicresult',
